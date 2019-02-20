@@ -1,5 +1,6 @@
 
 # ADD_SUBDIRECTORY(hello)
+ADD_SUBDIRECTORY(datastore)
 
 ADD_EXECUTABLE(hvsd main.cc)
 #TARGET_LINK_LIBRARIES(hvsd hello)

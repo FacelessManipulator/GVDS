@@ -9,7 +9,9 @@ include(CTest)
 # include directories
 INCLUDE_DIRECTORIES(
   ${PROJECT_SOURCE_DIR}/src/include
-
+# we should add the top level directory to support the 
+# scene that .h and .cc in a subdirectory
+  ${PROJECT_SOURCE_DIR}/src
   /usr/local/include
   /usr/include
 )

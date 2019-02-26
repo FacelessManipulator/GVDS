@@ -1,7 +1,7 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
-PROJECT(playground CXX C)
+PROJECT(HVSONE CXX C)
 set(VERSION 0.1.0)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -9,7 +9,8 @@ include(CTest)
 # include directories
 INCLUDE_DIRECTORIES(
   ${PROJECT_SOURCE_DIR}/src/include
-# we should add the top level directory to support the 
+
+# we should add the top level directory to support the
 # scene that .h and .cc in a subdirectory
   ${PROJECT_SOURCE_DIR}/src
   /usr/local/include

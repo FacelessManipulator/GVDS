@@ -3,6 +3,8 @@
 SET(CommonSRCS
         common/Thread.cc
         log/Log.cc
+        config/ConfigureWrapper.cc
+        config/SettingUtils.cc
 )
 
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})

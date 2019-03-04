@@ -49,7 +49,7 @@ Log::Log()
       m_log_buf(nullptr),
       m_log_buf_pos(0),
       m_stop(false),
-      log_level(0) {
+      log_level(10) {
   int ret;
 
   ret = pthread_mutex_init(&m_flush_mutex, nullptr);

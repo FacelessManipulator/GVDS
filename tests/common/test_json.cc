@@ -1,6 +1,7 @@
 #include <iostream>
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
+#include "context.h"
 #include "gtest/gtest.h"
 
 class Pet : public hvs::JsonSerializer {
@@ -74,7 +75,13 @@ class User : public hvs::JsonSerializer {
   }
 };
 
-TEST(HVSJsonTest, Simple) {
+class HVSJsonTest : public ::testing::Test {
+ protected:
+  void SetUp() override { hvs::init_context(); }
+  void TearDown() override { hvs::destroy_context(); }
+};
+
+TEST_F(HVSJsonTest, Simple) {
   User u1("bob", 10, 173.4, false, "jojo");
   User u2;
   u1.assign();
@@ -86,7 +93,7 @@ TEST(HVSJsonTest, Simple) {
   // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
 }
 
-TEST(HVSJsonTest, Datastore) {
+TEST_F(HVSJsonTest, Datastore) {
   User u1("bob", 10, 173.4, false, "jojo");
   u1.assign();
   std::string u1_value = u1.serialize();

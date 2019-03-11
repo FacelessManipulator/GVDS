@@ -40,6 +40,23 @@ int Log::append_time(const Log::log_lock::time_point &t, char *out,
   return r;
 }
 
+hvs::Log *init_logger() {
+  // TODO: use config module to get log path
+  std::string log_path = "/tmp/hvs.test.log";
+  hvs::Log *log = new hvs::Log;
+  log->set_log_file(log_path);
+  log->set_log_level(20);
+  log->reopen_log_file();
+  log->start();
+  return log;
+}
+
+void stop_log(hvs::Log *log) {
+  log->flush();
+  log->stop();
+  delete log;
+}
+
 Log::Log()
     : m_queue_mutex_holder(0),
       m_flush_mutex_holder(0),
@@ -93,7 +110,7 @@ void Log::reopen_log_file() {
   if (m_fstream.is_open()) m_fstream.close();
   if (m_log_file.length()) {
     m_fstream.open(m_log_file, std::ios_base::app | std::ios_base::out);
-    if (errno != 0) {
+    if (m_fstream.bad()) {
       std::cerr << "failed to open log file " << m_log_file << ": "
                 << strerror(errno) << std::endl;
     }
@@ -160,7 +177,7 @@ void Log::flush() {
 void Log::_log_safe_write(const char *what, size_t write_len) {
   if (!m_fstream.is_open()) return;
   m_fstream.write(what, write_len);
-  if (errno != 0)
+  if (m_fstream.bad())
     std::cerr << "problem writing to " << m_log_file << ": " << strerror(errno)
               << std::endl;
 }

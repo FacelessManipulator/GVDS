@@ -1,5 +1,4 @@
 #pragma once
-
 /***********************************************************
  * @file  Log.h
  * @brief 日志类文件，提供了日志组件的基础功能
@@ -182,4 +181,6 @@ class Log : private Thread {
   static inline int append_time(const Log::log_lock::time_point &t, char *out,
                                 size_t outlen);
 };
+extern hvs::Log* init_logger();
+extern void stop_log(hvs::Log* log);
 }  // namespace hvs

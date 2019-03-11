@@ -13,6 +13,7 @@ SET(CommonSRCS
         log/Log.cc
         datastore/datastore.cc
         datastore/couchbase_helper.cc
+        common/context.cc
 )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase

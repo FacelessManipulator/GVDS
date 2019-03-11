@@ -1,13 +1,20 @@
+#include "context.h"
 #include "datastore/datastore.h"
 #include "gtest/gtest.h"
 
-TEST(DatastoreTest, CouchbaseInit) {
+class DatastoreTest : public ::testing::Test {
+ protected:
+  void SetUp() override { hvs::init_context(); }
+  void TearDown() override { hvs::destroy_context(); }
+};
+
+TEST_F(DatastoreTest, CouchbaseInit) {
   hvs::DatastorePtr dbPtr = hvs::DatastoreFactory::create_datastore(
       "test", hvs::DatastoreType::couchbase);
   EXPECT_EQ("couchbase", dbPtr->get_typename());
 }
 
-TEST(DatastoreTest, Connect) {
+TEST_F(DatastoreTest, Connect) {
   hvs::DatastorePtr dbPtr;
   dbPtr = hvs::DatastoreFactory::create_datastore(
       "test", hvs::DatastoreType::couchbase);
@@ -17,7 +24,7 @@ TEST(DatastoreTest, Connect) {
   EXPECT_EQ(2, dbPtr->init());
 }
 
-TEST(DatastoreTest, CouchbaseCURD) {
+TEST_F(DatastoreTest, CouchbaseCURD) {
   std::string key = "test_key";
   std::string value = "test_value";
   hvs::DatastorePtr dbPtr = hvs::DatastoreFactory::create_datastore(

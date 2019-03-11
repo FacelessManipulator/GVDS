@@ -5,8 +5,9 @@
 
 #include <memory>
 #include <string>
+#include "log/Log.h"
+
 namespace hvs {
-class Log;
 class HvsContext {
  public:
   static HvsContext* get_context() {
@@ -19,5 +20,7 @@ class HvsContext {
  private:
   static HvsContext* _context_p;
 };
-HvsContext* HvsContext::_context_p = nullptr;
+
+extern void init_context();
+extern void destroy_context();
 }  // namespace hvs

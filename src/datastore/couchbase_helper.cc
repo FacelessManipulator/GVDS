@@ -1,5 +1,6 @@
-#include "couchbase_helper.h"
+#include "datastore/couchbase_helper.h"
 #include <memory>
+#include "common/debug.h"
 #include "libcouchbase/couchbase++.h"
 // #include "config.h"
 
@@ -32,13 +33,15 @@ int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
   std::unique_ptr<char[]> connstr_p(new char[nsize]);
   snprintf(connstr_p.get(), nsize, connstr_f.c_str(), server_address.c_str(),
            bucket.c_str());
-  HVS_LOG("DEBUG: format couchbase connection string: %s\n", connstr_p.get());
+  dout(20) << "DEBUG: format couchbase connection string: " << connstr_p.get()
+           << dendl;
 
   client = std::shared_ptr<Couchbase::Client>(
       new Couchbase::Client(connstr_p.get(), passwd, username));
   Couchbase::Status rc = client->connect();
   if (!rc.success()) {
-    HVS_LOG("ERROR: couldn't connect to couchbase. %s\n", rc.description());
+    dout(-1) << "ERROR: couldn't connect to couchbase. " << rc.description()
+             << dendl;
   }
   // assert(rc.success());
   return rc.errcode();
@@ -48,8 +51,9 @@ int hvs::CouchbaseDatastore::_set(const std::string& key,
                                   const std::string& doc) {
   Couchbase::StoreResponse rs = client->upsert(key, doc);
   if (!rs.status().success()) {
-    HVS_LOG("ERROR: Couchbase helper couldn't set kv pair %s-%s, Reason:%s\n",
-            key.c_str(), doc.c_str(), rs.status().description());
+    dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
+            << "-" << doc.c_str() << ", Reason: " << rs.status().description()
+            << dendl;
   }
   return rs.status().errcode();
 }
@@ -63,8 +67,8 @@ int hvs::CouchbaseDatastore::_set(const std::string& key,
 std::string hvs::CouchbaseDatastore::_get(const std::string& key) {
   Couchbase::GetResponse rs = client->get(key);
   if (!rs.status().success()) {
-    HVS_LOG("ERROR: Couchbase helper couldn't get kv pair %s, Reason: %s\n",
-            key.c_str(), rs.status().description());
+    dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
+            << ", Reason: " << rs.status().description() << dendl;
   }
   return rs.value().to_string();
 }
@@ -72,8 +76,8 @@ std::string hvs::CouchbaseDatastore::_get(const std::string& key) {
 int hvs::CouchbaseDatastore::_remove(const std::string& key) {
   Couchbase::RemoveResponse rs = client->remove(key);
   if (!rs.status().success()) {
-    HVS_LOG("ERROR: Couchbase helper couldn't remove kv pair %s, Reason:%s\n",
-            key.c_str(), rs.status().description());
+    dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
+            << ", Reason: " << rs.status().description() << dendl;
   }
   return rs.status().errcode();
 }

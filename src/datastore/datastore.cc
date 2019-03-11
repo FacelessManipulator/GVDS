@@ -1,5 +1,6 @@
 #include "datastore.h"
-#include "couchbase_helper.h"
+#include "datastore/couchbase_helper.h"
+#include "common/debug.h"
 
 using namespace hvs;
 DatastorePtr DatastoreFactory::create_datastore(std::string name,
@@ -8,8 +9,7 @@ DatastorePtr DatastoreFactory::create_datastore(std::string name,
   switch (type) {
     case couchbase:
       dsp = std::make_shared<CouchbaseDatastore>(CouchbaseDatastore(name));
-      HVS_LOG("DatastoreFactory: create %s instance\n",
-              dsp->get_typename().c_str());
+      dout(10) << "DatastoreFactory: create datastoree instance " << dsp->get_typename() << dendl;
       break;
     case memcached:
       break;

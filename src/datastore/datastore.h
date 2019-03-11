@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-#define HVS_LOG(format, args...) fprintf(stdout, format, args)
 namespace hvs {
 class Datastore;
 

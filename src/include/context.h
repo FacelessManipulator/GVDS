@@ -1,9 +1,7 @@
 //
 // Created by miller on 2/26/19.
 //
-
-#ifndef HVS_CONTEXT_H
-#define HVS_CONTEXT_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -23,4 +21,3 @@ class HvsContext {
 };
 HvsContext* HvsContext::_context_p = nullptr;
 }  // namespace hvs
-#endif  // HVS_CONTEXT_H

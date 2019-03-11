@@ -1,8 +1,7 @@
 // -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
-#ifndef HVS_LOG_ENTRY_H_
-#define HVS_LOG_ENTRY_H
+#pragma once
 
 #include <assert.h>
 #include <pthread.h>
@@ -64,5 +63,3 @@ class Entry {
 
 using EntryPtr = std::shared_ptr<Entry>;
 }  // namespace hvs
-
-#endif

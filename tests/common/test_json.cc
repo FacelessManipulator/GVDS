@@ -1,5 +1,6 @@
 #include <iostream>
 #include "common/JsonSerializer.h"
+#include "datastore/datastore.h"
 #include "gtest/gtest.h"
 
 class Pet : public hvs::JsonSerializer {
@@ -45,7 +46,6 @@ class User : public hvs::JsonSerializer {
     put("pet", pet);
   }
 
-
   void deserialize_impl() override {
     get("name", name);
     get("age", age);
@@ -55,27 +55,47 @@ class User : public hvs::JsonSerializer {
     get("pets_age", pets_age);
     get("pet", pet);
   }
+
  public:
   User(std::string n, int a, float h, bool m, std::string pet_name)
       : age(a), name(n), height(h), married(m), pet(pet_name) {}
-      User() = default;
+  User() = default;
+
+ public:
+  void assign() {
+    pets_name.emplace_back("jojo1");
+    pets_name.emplace_back("jojo2");
+    pets_name.emplace_back("jojo3");
+    pets_age["jojo1"] = 1;
+    pets_age["jojo2"] = 2;
+    pets_age["jojo3"] = 3;
+    pet.children_name.emplace_back("jojo2");
+    pet.children_age["jojo2"] = 0;
+  }
 };
 
 TEST(HVSJsonTest, Simple) {
-    User u1("bob", 10, 173.4, false, "jojo");
-    User u2;
-  u1.pets_name.emplace_back("jojo1");
-  u1.pets_name.emplace_back("jojo2");
-  u1.pets_name.emplace_back("jojo3");
-  u1.pets_age["jojo1"] = 1;
-  u1.pets_age["jojo2"] = 2;
-  u1.pets_age["jojo3"] = 3;
-  u1.pet.children_name.emplace_back("jojo2");
-  u1.pet.children_age["jojo2"] = 0;
+  User u1("bob", 10, 173.4, false, "jojo");
+  User u2;
+  u1.assign();
   std::string u1_json = u1.serialize();
   std::cout << u1_json << std::endl;
   u2.deserialize(u1_json);
   std::cout << u2.serialize() << std::endl;
 
   // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
+}
+
+TEST(HVSJsonTest, Datastore) {
+  User u1("bob", 10, 173.4, false, "jojo");
+  u1.assign();
+  std::string u1_value = u1.serialize();
+  std::string u1_key = u1.name;
+  hvs::DatastorePtr dbPtr = hvs::DatastoreFactory::create_datastore(
+      "test", hvs::DatastoreType::couchbase);
+  dbPtr->init();
+  EXPECT_EQ(0, dbPtr->set(u1_key, u1_value));
+  EXPECT_EQ(u1_value, *(dbPtr->get(u1_key)));
+  //    EXPECT_EQ(0, dbPtr->remove(u1_key));
+  //    EXPECT_EQ("", *(dbPtr->get(u1_key)));
 }

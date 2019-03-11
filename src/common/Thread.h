@@ -1,5 +1,4 @@
-#ifndef HVS_THREAD_H
-#define HVS_THREAD_H
+#pragma once
 
 /***********************************************************
  * @file  Thread.h
@@ -31,7 +30,7 @@
 /**
  * @author: 周汉杰
  * @date: 2018/3/1
- * 
+ *
  * 线程类基于linux线程库libpthread进行开发，引用后编译时需要 -lpthread。
  */
 class Thread {
@@ -68,4 +67,3 @@ class Thread {
   int detach();
   int set_affinity(int cpuid);
 };
-#endif

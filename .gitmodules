@@ -1,6 +1,1 @@
-[submodule "googletest"]
-	path = googletest
-	url = https://github.com/abseil/googletest.git
-[submodule "src/datastore/CouchbaseHelper/libcouchbase-cxx"]
-	path = src/datastore/CouchbaseHelper/libcouchbase-cxx
-	url = https://github.com/couchbaselabs/libcouchbase-cxx.git
+

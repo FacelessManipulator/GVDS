@@ -4,8 +4,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 PROJECT(HVSONE CXX C)
 set(VERSION 0.1.0)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-include(CTest)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # include directories
 INCLUDE_DIRECTORIES(
   ${PROJECT_SOURCE_DIR}/src/include
@@ -34,16 +34,22 @@ ADD_SUBDIRECTORY(src)
 # The tests are not built by default. To build them, set the 
 # build_tests option to ON. You can do it by running ccmake
 # or specifying the -Dbuild_tests=ON flag when running cmake.
+option(BUILD_TESTING "Build test" ON)
 if(BUILD_TESTING)
-	ADD_SUBDIRECTORY(googletest)
-	ADD_SUBDIRECTORY(tests)
+  find_package(GTest REQUIRED)
+  if (GTEST_FOUND)
+    ADD_SUBDIRECTORY(tests)
+    enable_testing()
+  else (GTEST_FOUND)
+    message("please install googletest first")
+  endif(GTEST_FOUND)
 endif(BUILD_TESTING)
 
 # 是否需要构建文档
 option(BUILD_DOC "Build document" ON)
-
-find_package(Doxygen)
-if (DOXYGEN_FOUND)
+if(BUILD_DOC)
+  find_package(Doxygen)
+  if (DOXYGEN_FOUND)
     # set input and output files
     set(DOXYGEN_IN ${PROJECT_SOURCE_DIR}/doc/Doxyfile.in)
     set(DOXYGEN_OUT ${PROJECT_BINARY_DIR}/doc/Doxyfile)
@@ -53,9 +59,10 @@ if (DOXYGEN_FOUND)
     message("Doxygen build started")
     add_custom_target( doc_doxygen ALL
 	    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM )
-else (DOXYGEN_FOUND)
-  message("Doxygen need to be installed to generate the doxygen documentation")
-endif (DOXYGEN_FOUND)
+      WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen"
+      VERBATIM )
+  else (DOXYGEN_FOUND)
+    message("Doxygen need to be installed to generate the doxygen documentation")
+ endif (DOXYGEN_FOUND)
+endif(BUILD_DOC)

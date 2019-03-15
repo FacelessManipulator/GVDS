@@ -10,7 +10,6 @@ class Datastore;
 using DatastorePtr = std::shared_ptr<Datastore>;
 using DatastoreKey = std::string;
 using DatastoreValue = std::string;
-using DatastoreValuePtr = std::shared_ptr<DatastoreValue>;
 enum DatastoreType {
   null,
   couchbase,
@@ -33,9 +32,8 @@ class Datastore {
   virtual std::string get_typename() { return "NULL"; }
   virtual int init(){};
   virtual int set(DatastoreKey key,
-                  DatastoreValuePtr value){};                 // not implement
-  virtual int set(DatastoreKey key, DatastoreValue value){};  // not implement
-  virtual DatastoreValuePtr get(DatastoreKey key){};
+                  DatastoreValue& value){};                 // not implement
+  virtual DatastoreValue&& get(DatastoreKey key){};
   virtual int remove(DatastoreKey key){};
 };
 

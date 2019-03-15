@@ -188,6 +188,14 @@ Client::mctx_observe(Handler *handler, Internal::MultiObsContext& out) {
     return Status();
 }
 
+template <lcb_SUBDOCOP T>
+SubdocResponse
+Client::subdoc(const SubdocCommand<T>& cmd) {
+    SubdocResponse resp;
+    run(cmd, resp);
+    return resp;
+}
+
 void
 GetResponse::handle_response(Client&, int, const lcb_RESPBASE *resp)
 {
@@ -398,4 +406,33 @@ DurableResponse<T>::dur_bail(Status& st)
     m_state = State::STATE_ERROR;
 }
 
+SubdocResponse::SubdocResponse() : Response() {
+    u.resp.bufh = NULL;
+}
+
+void
+SubdocResponse::handle_response(Client&, int, const lcb_RESPBASE *resp)
+{
+    u.resp = *(lcb_RESPSUBDOC *)resp;
+    if (status().success()) {
+        if (u.resp.bufh) {
+            lcb_backbuf_ref((lcb_BACKBUF) u.resp.bufh);
+        }
+        size_t iter = 0;
+        if (!lcb_sdresult_next(&(u.resp), &m_entry, &iter)) {
+            fprintf(stderr, "No result!\n");
+        }
+    } else {
+        u.resp.bufh = NULL;
+    }
+}
+
+inline void
+SubdocResponse::clear()
+{
+    if (u.resp.bufh != NULL) {
+        lcb_backbuf_unref((lcb_BACKBUF)u.resp.bufh);
+    }
+    u.resp.bufh = NULL;
+}
 } // namespace Couchbase

@@ -6,16 +6,12 @@
 
 int hvs::CouchbaseDatastore::init() { return _connect(name); }
 
-int hvs::CouchbaseDatastore::set(DatastoreKey key, DatastoreValuePtr value) {
-  return _set(key, *value);
-}
-
-int hvs::CouchbaseDatastore::set(DatastoreKey key, DatastoreValue value) {
+int hvs::CouchbaseDatastore::set(DatastoreKey key, DatastoreValue& value) {
   return _set(key, value);
 }
 
-hvs::DatastoreValuePtr hvs::CouchbaseDatastore::get(DatastoreKey key) {
-  return std::make_shared<std::string>(_get(key));
+hvs::DatastoreValue&& hvs::CouchbaseDatastore::get(DatastoreKey key) {
+  return std::move(_get(key));
 }
 
 int hvs::CouchbaseDatastore::remove(DatastoreKey key) { return _remove(key); }
@@ -61,16 +57,30 @@ int hvs::CouchbaseDatastore::_set(const std::string& key,
 int hvs::CouchbaseDatastore::_set(const std::string& key,
                                   const std::string& path,
                                   const std::string& subdoc) {
-  assert(false);  // SUBDOC feature not implemented yet
+  Couchbase::SubdocResponse rs = client->upsert_sub(key, path, subdoc);
+  if (!rs.status().success()) {
+    dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
+            << ", Reason: " << rs.status().description() << dendl;
+  }
+  return rs.status().errcode();
 }
 
-std::string hvs::CouchbaseDatastore::_get(const std::string& key) {
+std::string&& hvs::CouchbaseDatastore::_get(const std::string& key) {
   Couchbase::GetResponse rs = client->get(key);
   if (!rs.status().success()) {
     dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;
   }
-  return rs.value().to_string();
+  return std::move(rs.value().to_string());
+}
+
+std::string&& hvs::CouchbaseDatastore::_get(const std::string& key, const std::string& path) {
+  Couchbase::SubdocResponse rs = client->get_sub(key, path);
+  if (!rs.status().success()) {
+    dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
+            << ", Reason: " << rs.status().description() << dendl;
+  }
+  return std::move(rs.value().to_string());
 }
 
 int hvs::CouchbaseDatastore::_remove(const std::string& key) {

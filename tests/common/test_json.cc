@@ -2,6 +2,7 @@
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
 #include "context.h"
+#include "common/json.h"
 #include "gtest/gtest.h"
 
 class Pet : public hvs::JsonSerializer {
@@ -20,6 +21,14 @@ class Pet : public hvs::JsonSerializer {
     get("name", name);
     get("children_name", children_name);
     get("children_age", children_age);
+  }
+
+  bool operator==(const Pet& othr) const {
+    if (name == othr.name && children_name == othr.children_name &&
+        children_age == othr.children_age) {
+      return true;
+    }
+    return false;
   }
 
  public:
@@ -57,52 +66,71 @@ class User : public hvs::JsonSerializer {
     get("pet", pet);
   }
 
+  bool operator==(const User& othr) const {
+    if (age == othr.age && name == othr.name && height == othr.height &&
+        married == othr.married && pet == othr.pet)
+      return true;
+    return false;
+  }
+
  public:
   User(std::string n, int a, float h, bool m, std::string pet_name)
       : age(a), name(n), height(h), married(m), pet(pet_name) {}
   User() = default;
-
- public:
-  void assign() {
-    pets_name.emplace_back("jojo1");
-    pets_name.emplace_back("jojo2");
-    pets_name.emplace_back("jojo3");
-    pets_age["jojo1"] = 1;
-    pets_age["jojo2"] = 2;
-    pets_age["jojo3"] = 3;
-    pet.children_name.emplace_back("jojo2");
-    pet.children_age["jojo2"] = 0;
-  }
 };
 
-class HVSJsonTest : public ::testing::Test {
- protected:
-  void SetUp() override { hvs::init_context(); }
-  void TearDown() override { hvs::destroy_context(); }
-};
+User generate_user() {
+  User user("bob", 10, 173.4, false, "jojo");
+  user.pets_name.emplace_back("jojo1");
+  user.pets_name.emplace_back("jojo2");
+  user.pets_name.emplace_back("jojo3");
+  user.pets_age["jojo1"] = 1;
+  user.pets_age["jojo2"] = 2;
+  user.pets_age["jojo3"] = 3;
+  user.pet.children_name.emplace_back("jojo2");
+  user.pet.children_age["jojo2"] = 0;
+  return user;
+}
 
-TEST_F(HVSJsonTest, Simple) {
-  User u1("bob", 10, 173.4, false, "jojo");
+TEST(HVSJsonTest, Simple) {
+  User u1 = generate_user();
   User u2;
-  u1.assign();
   std::string u1_json = u1.serialize();
   std::cout << u1_json << std::endl;
   u2.deserialize(u1_json);
   std::cout << u2.serialize() << std::endl;
-
-  // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
+  EXPECT_EQ(u1, u2);
 }
 
-TEST_F(HVSJsonTest, Datastore) {
-  User u1("bob", 10, 173.4, false, "jojo");
-  u1.assign();
-  std::string u1_value = u1.serialize();
-  std::string u1_key = u1.name;
-  hvs::DatastorePtr dbPtr = hvs::DatastoreFactory::create_datastore(
-      "test", hvs::DatastoreType::couchbase);
-  dbPtr->init();
-  EXPECT_EQ(0, dbPtr->set(u1_key, u1_value));
-  EXPECT_EQ(u1_value, *(dbPtr->get(u1_key)));
-  //    EXPECT_EQ(0, dbPtr->remove(u1_key));
-  //    EXPECT_EQ("", *(dbPtr->get(u1_key)));
+TEST(HVSJsonTest, DencVector) {
+  std::vector<int> vec = {1, 2, 3, 4, 5};
+  std::string json_str = hvs::json_encode(vec);
+  std::cout << json_str << std::endl;
+  std::vector<int> vec2 = {2, 3, 4};
+  hvs::json_decode(json_str, vec2);
+  EXPECT_EQ(vec, vec2);
+}
+
+TEST(HVSJsonTest, DencUser) {
+  User u1 = generate_user();
+  // decode sub object
+  std::string json_str = hvs::json_encode(u1.pet);
+  User u2;
+  hvs::json_decode(json_str, u2.pet);
+  EXPECT_EQ(u1.pet, u2.pet);
+
+  // decode normal type
+  json_str = hvs::json_encode(u1.height);
+  hvs::json_decode(json_str, u2.height);
+  EXPECT_EQ(u1.height, u2.height);
+
+  // decode map type
+  json_str = hvs::json_encode(u1.pets_age);
+  hvs::json_decode(json_str, u2.pets_age);
+  EXPECT_EQ(u1.pets_age, u2.pets_age);
+
+  // decode all
+  json_str = hvs::json_encode(u1);
+  hvs::json_decode(json_str, u2);
+  EXPECT_EQ(u1, u2);
 }

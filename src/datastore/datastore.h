@@ -31,10 +31,11 @@ class Datastore {
   Datastore() : Datastore("default") {}
   virtual std::string get_typename() { return "NULL"; }
   virtual int init(){};
-  virtual int set(DatastoreKey key,
+  virtual int set(const DatastoreKey& key,
                   DatastoreValue& value){};                 // not implement
-  virtual DatastoreValue&& get(DatastoreKey key){};
-  virtual int remove(DatastoreKey key){};
+  virtual DatastoreValue get(const DatastoreKey& key){};
+  virtual DatastoreValue get(const DatastoreKey& key, const std::string& subpath){};
+  virtual int remove(const DatastoreKey& key){};
 };
 
 class DatastoreFactory {

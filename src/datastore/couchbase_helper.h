@@ -12,9 +12,10 @@ class CouchbaseDatastore : public hvs::Datastore {
 
  public:
   std::string get_typename() override { return "couchbase"; }
-  int set(DatastoreKey key, DatastoreValue& value) override;
-  DatastoreValue&& get(DatastoreKey key) override;
-  int remove(DatastoreKey key) override;
+  int set(const DatastoreKey& key, DatastoreValue& value) override;
+  DatastoreValue get(const DatastoreKey& key) override;
+  DatastoreValue get(const DatastoreKey& key, const std::string& subpath) override;
+  int remove(const DatastoreKey& key) override;
   int init() override;
 
  private:
@@ -22,8 +23,8 @@ class CouchbaseDatastore : public hvs::Datastore {
   int _set(const std::string& key, const std::string& doc);
   int _set(const std::string& key, const std::string& path,
            const std::string& subdoc);
-  std::string&& _get(const std::string& key);
-  std::string&& _get(const std::string& key, const std::string& path);
+  std::string _get(const std::string& key);
+  std::string _get(const std::string& key, const std::string& path);
   int _remove(const std::string& key);
 
  private:

@@ -47,7 +47,7 @@ if(BUILD_TESTING)
 endif(BUILD_TESTING)
 
 # 是否需要构建文档
-option(BUILD_DOC "Build document" ON)
+option(BUILD_DOC "Build document" OFF)
 if(BUILD_DOC)
   find_package(Doxygen)
   if (DOXYGEN_FOUND)

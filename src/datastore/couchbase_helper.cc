@@ -6,15 +6,19 @@
 
 int hvs::CouchbaseDatastore::init() { return _connect(name); }
 
-int hvs::CouchbaseDatastore::set(DatastoreKey key, DatastoreValue& value) {
+int hvs::CouchbaseDatastore::set(const DatastoreKey& key, DatastoreValue& value) {
   return _set(key, value);
 }
 
-hvs::DatastoreValue&& hvs::CouchbaseDatastore::get(DatastoreKey key) {
-  return std::move(_get(key));
+hvs::DatastoreValue hvs::CouchbaseDatastore::get(const DatastoreKey& key) {
+  return _get(key);
 }
 
-int hvs::CouchbaseDatastore::remove(DatastoreKey key) { return _remove(key); }
+hvs::DatastoreValue hvs::CouchbaseDatastore::get(const DatastoreKey& key, const std::string& subpath) {
+  return _get(key, subpath);
+}
+
+int hvs::CouchbaseDatastore::remove(const DatastoreKey& key) { return _remove(key); }
 
 int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
   // format the connection string
@@ -65,22 +69,22 @@ int hvs::CouchbaseDatastore::_set(const std::string& key,
   return rs.status().errcode();
 }
 
-std::string&& hvs::CouchbaseDatastore::_get(const std::string& key) {
+std::string hvs::CouchbaseDatastore::_get(const std::string& key) {
   Couchbase::GetResponse rs = client->get(key);
   if (!rs.status().success()) {
     dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;
   }
-  return std::move(rs.value().to_string());
+  return rs.value().to_string();
 }
 
-std::string&& hvs::CouchbaseDatastore::_get(const std::string& key, const std::string& path) {
+std::string hvs::CouchbaseDatastore::_get(const std::string& key, const std::string& path) {
   Couchbase::SubdocResponse rs = client->get_sub(key, path);
   if (!rs.status().success()) {
     dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;
   }
-  return std::move(rs.value().to_string());
+  return rs.value().to_string();
 }
 
 int hvs::CouchbaseDatastore::_remove(const std::string& key) {

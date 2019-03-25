@@ -31,17 +31,17 @@ TEST_F(DatastoreTest, CouchbaseCURD) {
       "test", hvs::DatastoreType::couchbase);
   dbPtr->init();
   EXPECT_EQ(0, dbPtr->set(key, value));
-  EXPECT_EQ(value, *(dbPtr->get(key)));
+  EXPECT_EQ(value, dbPtr->get(key));
   EXPECT_EQ(0, dbPtr->remove(key));
-  EXPECT_EQ("", *(dbPtr->get(key)));
+  EXPECT_EQ("", dbPtr->get(key));
 }
 
-TEST_F(DatastoreTest, CouchbaseCURD) {
-  std::string key = "test_key";
-  std::string value = "test_value";
+TEST_F(DatastoreTest, CouchbaseSubCommand) {
+  std::string key = "21st_amendment_brewery_cafe";
+  std::string value = "37.7825";
   hvs::DatastorePtr dbPtr = hvs::DatastoreFactory::create_datastore(
       "beer-sample", hvs::DatastoreType::couchbase);
   dbPtr->init();
-  EXPECT_EQ(value, *(dbPtr->get(key, "code")));
+  EXPECT_EQ(value, dbPtr->get(key, "geo.lat"));
 }
 

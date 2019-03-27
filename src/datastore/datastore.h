@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include "hvsdef.h"
 
 namespace hvs {
 class Datastore;

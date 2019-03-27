@@ -2,11 +2,31 @@
 #include <memory>
 #include "common/debug.h"
 #include "libcouchbase/couchbase++.h"
+#include "libcouchbase/couchbase++/query.h"
+#include <cerrno>
 // #include "config.h"
+
+void hvs::N1qlResponse::deserialize_impl() {
+  std::string status_s;
+  std::map<std::string, unsigned> metrics;
+  get("requestID", id);
+  get("errors", errors);
+  get("status", status_s);
+  get("metrics", metrics);
+  resultCount = metrics["resultCount"];
+  resultSize = metrics["resultSize"];
+  errorCount = metrics["errorCount"];
+  if(status_s == "fatal") {
+    status = -EINVAL;
+  } else if(status_s == "success") {
+    status = 0;
+  }
+}
 
 int hvs::CouchbaseDatastore::init() { return _connect(name); }
 
-int hvs::CouchbaseDatastore::set(const DatastoreKey& key, DatastoreValue& value) {
+int hvs::CouchbaseDatastore::set(const DatastoreKey& key,
+                                 DatastoreValue& value) {
   return _set(key, value);
 }
 
@@ -14,11 +34,14 @@ hvs::DatastoreValue hvs::CouchbaseDatastore::get(const DatastoreKey& key) {
   return _get(key);
 }
 
-hvs::DatastoreValue hvs::CouchbaseDatastore::get(const DatastoreKey& key, const std::string& subpath) {
+hvs::DatastoreValue hvs::CouchbaseDatastore::get(const DatastoreKey& key,
+                                                 const std::string& subpath) {
   return _get(key, subpath);
 }
 
-int hvs::CouchbaseDatastore::remove(const DatastoreKey& key) { return _remove(key); }
+int hvs::CouchbaseDatastore::remove(const DatastoreKey& key) {
+  return _remove(key);
+}
 
 int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
   // format the connection string
@@ -78,7 +101,8 @@ std::string hvs::CouchbaseDatastore::_get(const std::string& key) {
   return rs.value().to_string();
 }
 
-std::string hvs::CouchbaseDatastore::_get(const std::string& key, const std::string& path) {
+std::string hvs::CouchbaseDatastore::_get(const std::string& key,
+                                          const std::string& path) {
   Couchbase::SubdocResponse rs = client->get_sub(key, path);
   if (!rs.status().success()) {
     dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
@@ -90,8 +114,15 @@ std::string hvs::CouchbaseDatastore::_get(const std::string& key, const std::str
 int hvs::CouchbaseDatastore::_remove(const std::string& key) {
   Couchbase::RemoveResponse rs = client->remove(key);
   if (!rs.status().success()) {
-    dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
+    dout(5) << "ERROR: Couchbase helper couldn't remove kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;
   }
   return rs.status().errcode();
+}
+
+std::string hvs::CouchbaseDatastore::_n1ql(const std::string& query) {
+  auto m = Couchbase::Query::execute(*client, query);
+  N1qlResponse res;
+  res.deserialize(m.body().to_string());
+  return res.id;
 }

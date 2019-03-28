@@ -7,3 +7,7 @@ ADD_TEST(NAME unittest_log COMMAND unittest_log)
 ADD_EXECUTABLE(unittest_json test_json.cc)
 TARGET_LINK_LIBRARIES(unittest_json gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON})
 ADD_TEST(NAME unittest_json COMMAND unittest_json)
+
+ADD_EXECUTABLE(unittest_account test_account.cc)
+TARGET_LINK_LIBRARIES(unittest_account gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON})
+ADD_TEST(NAME unittest_account COMMAND unittest_account)

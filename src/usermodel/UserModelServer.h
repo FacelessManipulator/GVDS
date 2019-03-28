@@ -14,7 +14,7 @@ date:2019.03.21
 #include <map>
 
 using namespace Pistache;
-using namespace std;
+
 
 class UserModelServer {
 public:
@@ -28,7 +28,12 @@ public:
     
     void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
 
-    string getUserinfo(string name);
+    string getUserinfo(std::string uuid);
+
+    void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
+
+    string UserRegister(Account person);
+
  //--------------------------------------------
 private:
     UserModelServer() = default;

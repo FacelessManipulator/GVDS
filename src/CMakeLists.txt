@@ -14,10 +14,13 @@ SET(CommonSRCS
         datastore/datastore.cc
         datastore/couchbase_helper.cc
         common/context.cc
+        usermodel/Account.cc
+        common/RestServer.cc
 )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase
         pthread
+        pistache
         )
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
 ADD_EXECUTABLE(hvsd main.cc)

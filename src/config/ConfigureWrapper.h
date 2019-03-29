@@ -17,8 +17,7 @@ using namespace libconfig;
 
 class ConfigureWrapper {
 public:
-
-    ConfigureWrapper(const char* configfile);
+    explicit ConfigureWrapper(const char* configfile);
     ~ConfigureWrapper();
     Setting& lookUpByPath(const char* path);
     Setting& getRoot();

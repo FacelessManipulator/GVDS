@@ -12,16 +12,13 @@
 using namespace std;
 using namespace libconfig;
 
-
-
-
 // 创建配置文件解析模块
 ConfigureWrapper::ConfigureWrapper(const char* configfile) {
     try {
-        baseCfg.setOptions(Config::OptionFsync
-                       | Config::OptionSemicolonSeparators
-                       | Config::OptionColonAssignmentForGroups
-                       | Config::OptionOpenBraceOnSeparateLine);
+//        baseCfg.setOptions(Config::OptionFsync
+//                       | Config::OptionSemicolonSeparators
+//                       | Config::OptionColonAssignmentForGroups
+//                       | Config::OptionOpenBraceOnSeparateLine);
         baseCfg.readFile(configfile);
     }catch (const FileIOException &fileIOException){
         cerr<< "文件 I/O 错误" << endl;
@@ -30,9 +27,7 @@ ConfigureWrapper::ConfigureWrapper(const char* configfile) {
     }
 }
 
-ConfigureWrapper::~ConfigureWrapper() {
-
-}
+ConfigureWrapper::~ConfigureWrapper() = default;
 
 Setting& ConfigureWrapper::getRoot() {
     return baseCfg.getRoot();

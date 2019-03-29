@@ -29,10 +29,10 @@ double SettingUtils::getDoubleValue(const Setting &setting, const char *name) {
 
 bool SettingUtils::format(const char* inpath, const char* outpath) {
     Config cfg;
-    cfg.setOptions(Config::OptionFsync
-                   | Config::OptionSemicolonSeparators
-                   | Config::OptionColonAssignmentForGroups
-                   | Config::OptionOpenBraceOnSeparateLine);
+//    cfg.setOptions(Config::OptionFsync
+//                   | Config::OptionSemicolonSeparators
+//                   | Config::OptionColonAssignmentForGroups
+//                   | Config::OptionOpenBraceOnSeparateLine);
     try
     {
         cfg.readFile(inpath);

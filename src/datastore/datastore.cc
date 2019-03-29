@@ -3,7 +3,7 @@
 #include "common/debug.h"
 
 using namespace hvs;
-DatastorePtr DatastoreFactory::create_datastore(std::string name,
+std::shared_ptr<Datastore> DatastoreFactory::create_datastore(std::string name,
                                                 DatastoreType type) {
   std::shared_ptr<Datastore> dsp = nullptr;
   switch (type) {

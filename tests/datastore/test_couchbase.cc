@@ -1,5 +1,6 @@
 #include "context.h"
 #include "datastore/couchbase_helper.h"
+#include "common/json.h"
 #include "gtest/gtest.h"
 
 using namespace std;
@@ -24,24 +25,33 @@ class CouchbaseTest : public ::testing::Test {
 TEST_F(CouchbaseTest, Init) { EXPECT_EQ("couchbase", dbPtr->get_typename()); }
 
 TEST_F(CouchbaseTest, CURD) {
-  dbPtr->init();
   std::string key = "test_key";
   std::string value = "test_value";
   EXPECT_EQ(0, dbPtr->set(key, value));
-  EXPECT_EQ(value, dbPtr->get(key));
+  auto [vp, err] = dbPtr->get(key);
+  EXPECT_EQ(value, *vp);
   EXPECT_EQ(0, dbPtr->remove(key));
-  EXPECT_EQ("", dbPtr->get(key));
+  tie(vp, err) = dbPtr->get(key);
+  EXPECT_EQ(13 ,err);
 }
 
-TEST_F(CouchbaseTest, Command) {
+TEST_F(CouchbaseTest, SubCommand) {
   std::string key = "21st_amendment_brewery_cafe";
+  std::string path = "geo.lat2";
   std::string value = "37.7825";
-  EXPECT_EQ(value, dbPtr->get(key, "geo.lat"));
+  dbPtr->set(key, path, value);
+  auto [vp, err] = dbPtr->get(key, path);
+  EXPECT_EQ(value, *vp);
 }
 
 TEST_F(CouchbaseTest, N1QL) {
-  // wrong syntax 
-  std::string query = "select ** from `beer-sample` where country = \"United States\" limit 5;";
-  std::cout << dbPtr->n1ql(query) << endl;
-  EXPECT_TRUE(1);
+  // correct syntax 
+  std::string query = "select * from `beer-sample` where country = \"United States\" limit 5;";
+  auto [vp, err] = dbPtr->n1ql(query);
+  EXPECT_EQ(vp->size(), 5);
+
+  // wrong syntax
+  query = "select ** from `beer-sample` where country = \"United States\" limit 5;";
+  tie(vp, err) = dbPtr->n1ql(query);
+  EXPECT_EQ(-EINVAL, err);
 }

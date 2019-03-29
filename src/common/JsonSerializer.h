@@ -31,6 +31,14 @@ class JsonSerializer {
     return document;
   }
 
+  void deserialize(const char* jsonString) {
+    rapidjson::Document document;
+    document.Parse(jsonString);
+    assert(document.IsObject());
+    setJsonValue(document.GetObject());
+    deserialize_impl();
+  }
+
   void deserialize(const std::string& jsonString) {
     rapidjson::Document document;
     document.Parse(jsonString.c_str());

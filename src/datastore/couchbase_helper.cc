@@ -1,9 +1,9 @@
 #include "datastore/couchbase_helper.h"
+#include <cerrno>
 #include <memory>
 #include "common/debug.h"
 #include "libcouchbase/couchbase++.h"
 #include "libcouchbase/couchbase++/query.h"
-#include <cerrno>
 // #include "config.h"
 
 void hvs::N1qlResponse::deserialize_impl() {
@@ -16,32 +16,14 @@ void hvs::N1qlResponse::deserialize_impl() {
   resultCount = metrics["resultCount"];
   resultSize = metrics["resultSize"];
   errorCount = metrics["errorCount"];
-  if(status_s == "fatal") {
+  if (status_s == "fatal") {
     status = -EINVAL;
-  } else if(status_s == "success") {
+  } else if (status_s == "success") {
     status = 0;
   }
 }
 
 int hvs::CouchbaseDatastore::init() { return _connect(name); }
-
-int hvs::CouchbaseDatastore::set(const DatastoreKey& key,
-                                 DatastoreValue& value) {
-  return _set(key, value);
-}
-
-hvs::DatastoreValue hvs::CouchbaseDatastore::get(const DatastoreKey& key) {
-  return _get(key);
-}
-
-hvs::DatastoreValue hvs::CouchbaseDatastore::get(const DatastoreKey& key,
-                                                 const std::string& subpath) {
-  return _get(key, subpath);
-}
-
-int hvs::CouchbaseDatastore::remove(const DatastoreKey& key) {
-  return _remove(key);
-}
 
 int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
   // format the connection string
@@ -92,23 +74,30 @@ int hvs::CouchbaseDatastore::_set(const std::string& key,
   return rs.status().errcode();
 }
 
-std::string hvs::CouchbaseDatastore::_get(const std::string& key) {
+std::tuple<std::shared_ptr<std::string>, int> hvs::CouchbaseDatastore::_get(
+    const std::string& key) {
   Couchbase::GetResponse rs = client->get(key);
-  if (!rs.status().success()) {
-    dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
-            << ", Reason: " << rs.status().description() << dendl;
-  }
-  return rs.value().to_string();
-}
-
-std::string hvs::CouchbaseDatastore::_get(const std::string& key,
-                                          const std::string& path) {
-  Couchbase::SubdocResponse rs = client->get_sub(key, path);
-  if (!rs.status().success()) {
+  std::shared_ptr<std::string> content;
+  if (rs.status().success()) {
+    content.reset(new std::string(rs.value().data()));
+  } else {
     dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;
   }
-  return rs.value().to_string();
+  return {content, rs.status().errcode()};
+}
+
+std::tuple<std::shared_ptr<std::string>, int> hvs::CouchbaseDatastore::_get(
+    const std::string& key, const std::string& path) {
+  Couchbase::SubdocResponse rs = client->get_sub(key, path);
+  std::shared_ptr<std::string> content;
+  if (rs.status().success()) {
+    content.reset(new std::string(rs.value().data()));
+  } else {
+    dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
+            << ", Reason: " << rs.status().description() << dendl;
+  }
+  return {content, rs.status().errcode()};
 }
 
 int hvs::CouchbaseDatastore::_remove(const std::string& key) {
@@ -120,9 +109,28 @@ int hvs::CouchbaseDatastore::_remove(const std::string& key) {
   return rs.status().errcode();
 }
 
-std::string hvs::CouchbaseDatastore::_n1ql(const std::string& query) {
-  auto m = Couchbase::Query::execute(*client, query);
+std::tuple<std::shared_ptr<std::vector<std::string>>, int>
+hvs::CouchbaseDatastore::_n1ql(const std::string& query) {
+  Couchbase::QueryCommand qcmd(query);
+  Couchbase::Status status;
   N1qlResponse res;
-  res.deserialize(m.body().to_string());
-  return res.id;
+  int errcode = 0;
+  Couchbase::Query q(*client, qcmd, status);
+  auto content = std::make_shared<std::vector<std::string>>();
+  client->wait();
+  if (status && q.meta().status()) {
+    for (auto row : q) {
+      content->push_back(row.json());
+    }
+  } else if (!status) {
+    errcode = status.errcode();
+    dout(5) << "ERROR: Couchbase helper couldn't execute N1QL: " << query
+            << ", Reason: " << status.description() << dendl;
+  } else {
+    res.deserialize(q.meta().body().data());
+    errcode = res.status;
+    dout(5) << "ERROR: Couchbase helper N1QL ERROR: " << query << ", Reason: "
+            << (res.errors.size() > 0 ? res.errors[0].msg : "Unknown") << dendl;
+  }
+  return {content, errcode};
 }

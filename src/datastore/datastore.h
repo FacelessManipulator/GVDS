@@ -3,14 +3,11 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <tuple>
 #include "hvsdef.h"
 
 namespace hvs {
 class Datastore;
-
-using DatastorePtr = std::shared_ptr<Datastore>;
-using DatastoreKey = std::string;
-using DatastoreValue = std::string;
 enum DatastoreType {
   null,
   couchbase,
@@ -28,20 +25,22 @@ class Datastore {
   std::string name;
 
  public:
-  Datastore(std::string name) : name(name) {}
+  Datastore(const std::string& name) : name(name) {}
   Datastore() : Datastore("default") {}
   virtual std::string get_typename() { return "NULL"; }
   virtual int init(){};
-  virtual int set(const DatastoreKey& key,
-                  DatastoreValue& value){};                 // not implement
-  virtual DatastoreValue get(const DatastoreKey& key){};
-  virtual DatastoreValue get(const DatastoreKey& key, const std::string& subpath){};
-  virtual int remove(const DatastoreKey& key){};
+  virtual int set(const std::string& key,
+                  std::string& value){};                 // not implement
+  virtual int set(const std::string& key, const std::string& subpath,
+                  std::string& value){};
+  virtual std::tuple<std::shared_ptr<std::string>, int> get(const std::string& key){};
+  virtual std::tuple<std::shared_ptr<std::string>, int> get(const std::string& key, const std::string& subpath){};
+  virtual int remove(const std::string& key){};
 };
 
 class DatastoreFactory {
  public:
-  static DatastorePtr create_datastore(
+  static std::shared_ptr<Datastore> create_datastore(
       std::string datastore_name, DatastoreType datastore_type = couchbase);
 };
 }  // namespace hvs

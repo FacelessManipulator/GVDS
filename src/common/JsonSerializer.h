@@ -5,6 +5,17 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <hvsdef.h>
+
+#define SUCCESS 0
+#define ERROR_INCORRECT_TYPE 111
+
+// Currently we simply return the error code
+// rather than handle the parse error
+#define HANDLE_PARSE_ERR(ERR)              \
+  do {                                     \
+    if (ERR) return -ERROR_INCORRECT_TYPE; \
+  } while (0);
 
 namespace hvs {
 class JsonSerializer {
@@ -20,7 +31,15 @@ class JsonSerializer {
     return document;
   }
 
-  void deserialize(std::string& jsonString) {
+  void deserialize(const char* jsonString) {
+    rapidjson::Document document;
+    document.Parse(jsonString);
+    assert(document.IsObject());
+    setJsonValue(document.GetObject());
+    deserialize_impl();
+  }
+
+  void deserialize(const std::string& jsonString) {
     rapidjson::Document document;
     document.Parse(jsonString.c_str());
     assert(document.IsObject());
@@ -42,6 +61,13 @@ class JsonSerializer {
   JsonSerializer(JsonSerializer& oths) {
     _writer = oths._writer;
     _buffer = oths._buffer;
+    // there is no need to support json value copying
+    // _jsonValue.CopyFrom(oths._jsonValue, ALLOCATOR);
+  }
+  JsonSerializer(JsonSerializer&& oths) {
+    _writer = oths._writer;
+    _buffer = oths._buffer;
+    _jsonValue = oths._jsonValue;
   }
   ~JsonSerializer() {
     delete _writer;
@@ -64,17 +90,17 @@ class JsonSerializer {
     return false;
   }
 
-  virtual void serialize_impl() = 0;
-  virtual void deserialize_impl() = 0;
-
- private:
-  template <class T>
-  void encode(T& value) {
-    // should be an well-formated json object
-    std::string raw_json = value.serialize();
-    _writer->RawValue(raw_json.c_str(), raw_json.length(),
-                      rapidjson::kObjectType);
+  void clear() {
+    _buffer->Clear();
+    _writer->Reset(*_buffer);
   }
+
+  virtual void serialize_impl(){};
+  virtual void deserialize_impl(){};
+
+ protected:
+  template <class T>
+  void encode(T& value);
   void encode(std::string& _str);
   template <class V>
   void encode(std::vector<V>& _vec);
@@ -82,55 +108,21 @@ class JsonSerializer {
   void encode(std::map<std::string, V>& _map);
 
   template <class T>
-  void decode(rapidjson::Value* value, T& dest) {
-    dest.deserialize(value);
-  }
-  void decode(rapidjson::Value* value, std::string& _str);
+  int decode(rapidjson::Value* value, T& dest);
+  int decode(rapidjson::Value* value, std::string& _str);
   template <class V>
-  void decode(rapidjson::Value* value, std::vector<V>& _vec);
+  int decode(rapidjson::Value* value, std::vector<V>& _vec);
   template <class V>
-  void decode(rapidjson::Value* value, std::map<std::string, V>& _map);
+  int decode(rapidjson::Value* value, std::map<std::string, V>& _map);
 
-  void setJsonValue(rapidjson::Value value) { this->_jsonValue = value; }
+  inline void setJsonValue(rapidjson::Value value) { this->_jsonValue = value; }
 
- private:
+ protected:
   rapidjson::StringBuffer* _buffer;
   rapidjson::Writer<rapidjson::StringBuffer>* _writer;
   rapidjson::Value _jsonValue;
 };
 
-template <>
-void JsonSerializer::encode<unsigned>(unsigned& value) {
-  _writer->Uint(value);
-}
-template <>
-void JsonSerializer::encode<int>(int& value) {
-  _writer->Int(value);
-}
-template <>
-void JsonSerializer::encode<int64_t>(int64_t& value) {
-  _writer->Int64(value);
-}
-template <>
-void JsonSerializer::encode<uint64_t>(uint64_t& value) {
-  _writer->Uint64(value);
-}
-template <>
-void JsonSerializer::encode<bool>(bool& value) {
-  _writer->Bool(value);
-}
-template <>
-void JsonSerializer::encode<double>(double& value) {
-  _writer->Double(value);
-}
-template <>
-void JsonSerializer::encode<float>(float& value) {
-  _writer->Double(value);
-}
-
-void JsonSerializer::encode(std::string& _str) {
-  _writer->String(_str.c_str(), _str.length());
-}
 template <class V>
 void JsonSerializer::encode(std::vector<V>& _vec) {
   _writer->StartArray();
@@ -151,55 +143,30 @@ void JsonSerializer::encode(std::map<std::string, T>& _map) {
 }
 
 template <>
-void JsonSerializer::decode<unsigned>(rapidjson::Value* value, unsigned& dest) {
-  assert(value->IsUint());
-  dest = value->GetUint();
-}
-
+void JsonSerializer::encode<unsigned>(unsigned& value);
 template <>
-void JsonSerializer::decode<int>(rapidjson::Value* value, int& dest) {
-  assert(value->IsInt());
-  dest = value->GetInt();
-}
-
+void JsonSerializer::encode<int>(int& value);
 template <>
-void JsonSerializer::decode<int64_t>(rapidjson::Value* value, int64_t& dest) {
-  assert(value->IsInt64());
-  dest = value->GetInt64();
-}
-
+void JsonSerializer::encode<int64_t>(int64_t& value);
 template <>
-void JsonSerializer::decode<uint64_t>(rapidjson::Value* value, uint64_t& dest) {
-  assert(value->IsUint64());
-  dest = value->GetUint64();
-}
-
+void JsonSerializer::encode<uint64_t>(uint64_t& value);
 template <>
-void JsonSerializer::decode<bool>(rapidjson::Value* value, bool& dest) {
-  assert(value->IsBool());
-  dest = value->GetBool();
-}
-
+void JsonSerializer::encode<bool>(bool& value);
 template <>
-void JsonSerializer::decode<double>(rapidjson::Value* value, double& dest) {
-  assert(value->IsDouble());
-  dest = value->GetDouble();
-}
-
+void JsonSerializer::encode<double>(double& value);
 template <>
-void JsonSerializer::decode<float>(rapidjson::Value* value, float& dest) {
-  assert(value->IsDouble());
-  dest = (float)(value->GetDouble());
-}
-
-void JsonSerializer::decode(rapidjson::Value* value, std::string& _str) {
-  assert(value->IsString());
-  _str.assign(value->GetString());
+void JsonSerializer::encode<float>(float& value);
+template <class T>
+void JsonSerializer::encode(T& value) {
+  // should be an well-formated json object
+  std::string raw_json = value.serialize();
+  _writer->RawValue(raw_json.c_str(), raw_json.length(),
+                    rapidjson::kObjectType);
 }
 
 template <class V>
-void JsonSerializer::decode(rapidjson::Value* value, std::vector<V>& _vec) {
-  assert(value->IsArray());
+int JsonSerializer::decode(rapidjson::Value* value, std::vector<V>& _vec) {
+  HANDLE_PARSE_ERR(!value->IsArray());
   auto _arr = value->GetArray();
   std::vector<V> tmp(_arr.Size());
   for (int i = 0; i < _arr.Size(); i++) {
@@ -209,9 +176,9 @@ void JsonSerializer::decode(rapidjson::Value* value, std::vector<V>& _vec) {
 }
 
 template <class V>
-void JsonSerializer::decode(rapidjson::Value* value,
-                            std::map<std::string, V>& _map) {
-  assert(value->IsObject());
+int JsonSerializer::decode(rapidjson::Value* value,
+                           std::map<std::string, V>& _map) {
+  HANDLE_PARSE_ERR(!value->IsObject());
   auto _obj = value->GetObject();
   std::map<std::string, V> tmp;
   for (auto itr = value->MemberBegin(); itr != value->MemberEnd(); ++itr) {
@@ -219,5 +186,24 @@ void JsonSerializer::decode(rapidjson::Value* value,
     decode(&(itr->value), tmp[itr->name.GetString()]);
   }
   _map.swap(tmp);
+}
+
+template <>
+int JsonSerializer::decode<unsigned>(rapidjson::Value* value, unsigned& dest);
+template <>
+int JsonSerializer::decode<int>(rapidjson::Value* value, int& dest);
+template <>
+int JsonSerializer::decode<int64_t>(rapidjson::Value* value, int64_t& dest);
+template <>
+int JsonSerializer::decode<uint64_t>(rapidjson::Value* value, uint64_t& dest);
+template <>
+int JsonSerializer::decode<bool>(rapidjson::Value* value, bool& dest);
+template <>
+int JsonSerializer::decode<double>(rapidjson::Value* value, double& dest);
+template <>
+int JsonSerializer::decode<float>(rapidjson::Value* value, float& dest);
+template <class T>
+int JsonSerializer::decode(rapidjson::Value* value, T& dest) {
+  dest.deserialize(value);
 }
 }  // namespace hvs

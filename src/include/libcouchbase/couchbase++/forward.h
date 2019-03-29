@@ -57,5 +57,9 @@ struct Endure {
     typedef lcb_CMDENDURE CType;
     typedef lcb_RESPENDURE RType;
 };
+struct Subdoc {
+    typedef lcb_CMDSUBDOC CType;
+    typedef lcb_RESPSUBDOC RType;
+};
 }
 }

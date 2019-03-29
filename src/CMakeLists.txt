@@ -17,8 +17,8 @@ SET(CommonSRCS
         usermodel/Account.cc
         usermodel/UserModelServer.cc
         common/RestServer.cc
-        
-)
+        common/JsonSerializer.cc
+        )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase
         pthread

@@ -1,4 +1,5 @@
 #include <libcouchbase/n1ql.h>
+#include "libcouchbase/couchbase++/row_common.h"
 namespace Couchbase {
 namespace Internal {
 extern "C" { static void n1qlcb(lcb_t,int,const lcb_RESPN1QL*); }

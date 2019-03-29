@@ -13,6 +13,9 @@ date:2019.03.21
 #include <iostream>
 #include <map>
 
+#include "usermodel/Account.h"
+class Account;
+
 using namespace Pistache;
 
 
@@ -28,11 +31,11 @@ public:
     
     void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
 
-    string getUserinfo(std::string uuid);
+    std::string getUserinfo(std::string uuid);
 
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
 
-    string UserRegister(Account person);
+    std::string UserRegister(Account person);
 
  //--------------------------------------------
 private:

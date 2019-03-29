@@ -15,11 +15,10 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 #include "datastore/datastore.h"
 #include "context.h"
 
-#include "usermodel/Account.h"
 #include "usermodel/UserModelServer.h"
 
 using namespace std;
-
+//using namespace hvs;
 //object 
 UserModelServer* UserModelServer::instance = nullptr;
 

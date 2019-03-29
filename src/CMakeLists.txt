@@ -15,7 +15,9 @@ SET(CommonSRCS
         datastore/couchbase_helper.cc
         common/context.cc
         usermodel/Account.cc
+        usermodel/UserModelServer.cc
         common/RestServer.cc
+        
 )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase

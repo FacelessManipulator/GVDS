@@ -6,6 +6,7 @@
 #include "context.h"
 #include <map>  
 
+
 class Account : public hvs::JsonSerializer {
  public:
 
@@ -18,34 +19,17 @@ class Account : public hvs::JsonSerializer {
     std::string Department;//单位名称
 
  public:
-  void serialize_impl() override {
-
-    put("HVSAccountName", accountName);
-    put("HVSPassword", Password);
-    put("HVSAccountID", accountID);
-    put("AccountEMAIL", accountEmail);
-    put("AccountPHONE", accountPhone);
-    put("AccountAddress", accountAddress);
-    put("Department", Department);
-
-  }
-  void deserialize_impl() override {
-
-    get("HVSAccountName", accountName);
-    get("HVSPassword", Password);
-    get("HVSAccountID", accountID);
-    get("AccountEMAIL", accountEmail);
-    get("AccountPHONE", accountPhone);
-    get("AccountAddress", accountAddress);
-    get("Department", Department);
-  }
+  void serialize_impl() override;
+  void deserialize_impl() override;
 
  public:
   Account() = default;
 };
 
 
-int lbqprint();
+
+
+//int lbqprint();
 
 /*
 class SCAccount : public hvs::JsonSerializer {
@@ -69,9 +53,6 @@ class SCAccount : public hvs::JsonSerializer {
  public:
   Account() = default;
 };
-
-
-
 
 */
 

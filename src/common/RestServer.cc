@@ -24,7 +24,7 @@ void Generic::handleReady(const Rest::Request&, Http::ResponseWriter response) {
 }
 
 
-void RestServer::init(size_t thr = 2) {
+void RestServer::init(size_t thr) {
         auto opts = Http::Endpoint::options()
             .threads(thr)
             .flags(Tcp::Options::InstallSignalHandler);
@@ -69,12 +69,12 @@ void RestServer::begin(){
 
 void RestServer::end(){
     if (is_started()) {
+        shutdown();     //RestServer类函数 [原始函数]
         join();
     }
 }
 
-
-void *RestServer::entry() {
+RestServer* init_rest(){
     Port port(9080);
 
     int thr = 5;
@@ -84,12 +84,25 @@ void *RestServer::entry() {
     cout << "Cores = " << hardware_concurrency() << endl;
     cout << "Using " << thr << " threads" << endl;
 
-    RestServer stats(addr);
+    RestServer stats(addr);    
 
-    stats.init(thr);
+    stats.init(thr);     //[原始函数]
+
+    stats.begin();       //调用Thread类的create函数, creat函数调用entry函数, 开启线程  [后加函数]   
+
+    return &stats;
+   
+}
+
+void stop_rest(RestServer* rest){
+    rest->end();
+}
+
+void *RestServer::entry() {
 
     signal(SIGINT, CtrlStop); 
-    stats.start();
 
-    stats.shutdown();
+    start();        //RestServer类函数, 启动rest服务 [原始函数]      //start 对应 shutdown, begin 对应 end
+
+    return NULL;
 }

@@ -6,6 +6,8 @@
 #include <memory>
 #include <string>
 #include "log/Log.h"
+#include "common/RestServer.h"
+class RestServer;
 
 namespace hvs {
 class HvsContext {
@@ -16,6 +18,7 @@ class HvsContext {
   }
   std::string module_name;
   Log* _log;
+  RestServer* _rest;
 
  private:
   static HvsContext* _context_p;

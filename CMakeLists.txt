@@ -6,6 +6,54 @@ set(VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 是否需要构建文档
+option(BUILD_DOC "Build document" OFF)
+# The tests are not built by default. To build them, set the 
+# build_tests option to ON. You can do it by running ccmake
+# or specifying the -Dbuild_tests=ON flag when running cmake.
+option(BUILD_TESTING "Build test" ON)
+
+option(BUILD_THIRD_PARTY "Build with third party rather than depends on system" ON)
+
+if(BUILD_THIRD_PARTY)
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE FILEPATH "archive output path")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE FILEPATH "library output path")
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE FILEPATH "executable output path")
+  SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  set(THIRD_PATRY_INCLUDE_DIRECTORIES
+      "${PROJECT_SOURCE_DIR}/third-party/googletest/googletest/include"
+      "${PROJECT_SOURCE_DIR}/third-party/pistache/include"
+      "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
+      "${PROJECT_SOURCE_DIR}/third-party/libcouchbase/include"
+  )
+
+  # download and update submodules
+  find_package(Git QUIET)
+  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+  # Update submodules as needed
+      option(GIT_SUBMODULE "Check submodules during build" ON)
+      if(GIT_SUBMODULE)
+          message(STATUS "Submodule update")
+          execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init
+                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                          RESULT_VARIABLE GIT_SUBMOD_RESULT)
+          if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+              message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+          endif()
+      endif()
+  endif()
+
+  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/pistache/CMakeLists.txt" AND
+                "${PROJECT_SOURCE_DIR}/third-party/googletest/CMakeLists.txt" AND
+                "${PROJECT_SOURCE_DIR}/third-party/rapidjson/CMakeLists.txt" AND
+                "${PROJECT_SOURCE_DIR}/third-party/libcouchbase/CMakeLists.txt")
+      message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+  endif()
+  add_subdirectory(third-party)
+  include_directories(${THIRD_PATRY_INCLUDE_DIRECTORIES})
+endif()
+
 # include directories
 INCLUDE_DIRECTORIES(
   ${PROJECT_SOURCE_DIR}/src/include
@@ -13,8 +61,6 @@ INCLUDE_DIRECTORIES(
 # we should add the top level directory to support the
 # scene that .h and .cc in a subdirectory
   ${PROJECT_SOURCE_DIR}/src
-  /usr/local/include
-  /usr/include
 )
 
 # lib directories
@@ -31,23 +77,16 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 ADD_SUBDIRECTORY(src)
 
-# The tests are not built by default. To build them, set the 
-# build_tests option to ON. You can do it by running ccmake
-# or specifying the -Dbuild_tests=ON flag when running cmake.
-option(BUILD_TESTING "Build test" ON)
 if(BUILD_TESTING)
   find_package(GTest REQUIRED)
   if (GTEST_FOUND)
     enable_testing()
     ADD_SUBDIRECTORY(tests)
-    enable_testing()
   else (GTEST_FOUND)
     message("please install googletest first")
   endif(GTEST_FOUND)
 endif(BUILD_TESTING)
 
-# 是否需要构建文档
-option(BUILD_DOC "Build document" OFF)
 if(BUILD_DOC)
   find_package(Doxygen)
   if (DOXYGEN_FOUND)

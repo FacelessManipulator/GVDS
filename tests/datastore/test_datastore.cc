@@ -28,6 +28,6 @@ TEST_F(DatastoreTest, CouchbaseCURD) {
   EXPECT_EQ(value, *vp);
   err = dbPtr->remove(key);
   EXPECT_EQ(0, err);
-  tie(vp, std::ignore) = dbPtr->get(key);
-  EXPECT_EQ("", *vp);
+  tie(vp, err) = dbPtr->get(key);
+  EXPECT_EQ(13, err);
 }

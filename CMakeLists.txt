@@ -26,6 +26,7 @@ if(BUILD_THIRD_PARTY)
       "${PROJECT_SOURCE_DIR}/third-party/pistache/include"
       "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
       "${PROJECT_SOURCE_DIR}/third-party/libcouchbase/include"
+      "${PROJECT_BINARY_DIR}/third-party/libcouchbase/generated"
   )
 
   # download and update submodules
@@ -78,13 +79,8 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 ADD_SUBDIRECTORY(src)
 
 if(BUILD_TESTING)
-  find_package(GTest REQUIRED)
-  if (GTEST_FOUND)
     enable_testing()
     ADD_SUBDIRECTORY(tests)
-  else (GTEST_FOUND)
-    message("please install googletest first")
-  endif(GTEST_FOUND)
 endif(BUILD_TESTING)
 
 if(BUILD_DOC)

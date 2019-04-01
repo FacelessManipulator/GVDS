@@ -9,12 +9,11 @@ SET(CommonSRCS
         usermodel/UserModelServer.cc
         common/RestServer.cc
         common/JsonSerializer.cc
-        )
 )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase
         pthread
-        pistache
+        pistache_shared
         )
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
 ADD_EXECUTABLE(hvsd main.cc)

@@ -84,18 +84,19 @@ RestServer* init_rest(){
     cout << "Cores = " << hardware_concurrency() << endl;
     cout << "Using " << thr << " threads" << endl;
 
-    RestServer stats(addr);    
+    RestServer* stats = new RestServer(addr);    
 
-    stats.init(thr);     //[原始函数]
+    stats->init(thr);     //[原始函数]
 
-    stats.begin();       //调用Thread类的create函数, creat函数调用entry函数, 开启线程  [后加函数]   
+    stats->begin();       //调用Thread类的create函数, creat函数调用entry函数, 开启线程  [后加函数]   
 
-    return &stats;
+    return stats;
    
 }
 
 void stop_rest(RestServer* rest){
     rest->end();
+    delete rest;
 }
 
 void *RestServer::entry() {

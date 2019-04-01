@@ -1,23 +1,22 @@
-#include "usermodel/Account.h"
 #include <iostream>
+#include "usermodel/Account.h"
 //#include <uuid/uuid.h>
 #include "common/JsonSerializer.h"
-#include "datastore/datastore.h"
 #include "common/RestServer.h"
 #include "context.h"
+#include "datastore/datastore.h"
 #include "gtest/gtest.h"
 
 class HVSRestTest : public ::testing::Test {
  protected:
-  void SetUp() override { hvs::init_context(); }
-  void TearDown() override { hvs::destroy_context(); }
+  void SetUp() override {}
+  void TearDown() override {}
+  static void SetUpTestCase() { hvs::init_context(); }
+  static void TearDownTestCase() { hvs::destroy_context(); }
 };
 
+TEST_F(HVSRestTest, atry) {
+  cout << "HVSRestTest Begin:" << endl;
 
-TEST_F(HVSRestTest, atry){
-    cout << "HVSRestTest Begin:"<< endl;
-    auto rest = init_rest();
-    stop_rest(rest);
-    
-    //EXPECT_TRUE(lbqprint()==0);
+  // EXPECT_TRUE(lbqprint()==0);
 }

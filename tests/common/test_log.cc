@@ -5,22 +5,30 @@
 #include "log/Log.h"
 
 using namespace hvs;
-TEST(LogTest, Simple) {
-  auto log = init_logger();
+
+class LogTest : public ::testing::Test {
+ protected:
+  void SetUp() override {}
+  void TearDown() override {}
+  static void SetUpTestCase() { hvs::init_context(); }
+  static void TearDownTestCase() { hvs::destroy_context(); }
+
+ public:
+};
+
+TEST_F(LogTest, Simple) {
+  auto log = hvs::HvsContext::get_context()->_log;
   for (int i = 0; i < 100; i++) {
     hvs::EntryPtr e = log->create_entry(1, "hello world");
     log->submit_entry(e);
   }
-  stop_log(log);
   // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
 }
 
-TEST(LogTest, Dout) {
-  init_context();
+TEST_F(LogTest, Dout) {
   for (int i = 0; i < 100; i++) {
     dout(1) << "hello Dout" << dendl;
   }
-  destroy_context();
   // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
 }
 
@@ -32,8 +40,7 @@ class LogTester : public Thread {
   }
 };
 
-TEST(LogTest, MultiThread) {
-  init_context();
+TEST_F(LogTest, MultiThread) {
   LogTester lts[10];
   char name[16];
   for (int i = 0; i < 10; i++) {
@@ -43,6 +50,5 @@ TEST(LogTest, MultiThread) {
   for (int i = 0; i < 10; i++) {
     lts[i].join();
   }
-  destroy_context();
   // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
 }

@@ -5,12 +5,13 @@
 class DatastoreTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    hvs::init_context();
     dbPtr = hvs::DatastoreFactory::create_datastore(
         "test", hvs::DatastoreType::couchbase);
     EXPECT_EQ(dbPtr->init(), 0);
   }
-  void TearDown() override { hvs::destroy_context(); }
+  void TearDown() override {}
+  static void SetUpTestCase() { hvs::init_context(); }
+  static void TearDownTestCase() { hvs::destroy_context(); }
 
  public:
   std::shared_ptr<hvs::Datastore> dbPtr;

@@ -9,7 +9,6 @@
 #include "ConfigureWrapper.h"
 #include <iostream>
 #include <libconfig.h++>
-using namespace std;
 using namespace libconfig;
 
 // 创建配置文件解析模块
@@ -21,9 +20,9 @@ ConfigureWrapper::ConfigureWrapper(const char* configfile) {
 //                       | Config::OptionOpenBraceOnSeparateLine);
         baseCfg.readFile(configfile);
     }catch (const FileIOException &fileIOException){
-        cerr<< "文件 I/O 错误" << endl;
+        std::cerr<< "文件 I/O 错误" << std::endl;
     }catch (const ParseException &parseException){
-        cerr << "文件解析错误： " << parseException.getFile() << ":" << parseException.getLine()<< " - " << parseException.getError() << endl;
+        std::cerr << "文件解析错误： " << parseException.getFile() << ":" << parseException.getLine()<< " - " << parseException.getError() << std::endl;
     }
 }
 
@@ -37,20 +36,17 @@ Setting& ConfigureWrapper::lookUpByPath(const char* path) {
     try {
         return  baseCfg.lookup(path);
     }catch (const SettingNotFoundException &settingNotFoundException) {
-        cerr << "未发现此配置项目." << endl;
+        std::cerr << "未发现此配置项目." << std::endl;
     }
 }
 
 bool ConfigureWrapper::writeFile(const char *outfile) {
-    try
-    {
+    try{
         baseCfg.writeFile(outfile);
-        cerr << "配置文件更新成功: " << outfile << endl;
+        std::cerr << "配置文件更新成功: " << outfile << std::endl;
         return true;
-    }
-    catch(const FileIOException &fileIOException)
-    {
-        cerr << "文件写入过程 I/O 错误" << outfile << endl;
+    }catch(const FileIOException &fileIOException){
+        std::cerr << "文件写入过程 I/O 错误" << outfile << std::endl;
         return false;
     }
 }

@@ -2,7 +2,7 @@
 //#include <boost/program_options.hpp>
 #include <libconfig.h++>
 #include "config/ConfigureWrapper.h"
-#include "config/SettingUtils.h"
+#include "config/ConfigureSettings.h"
 #include "gtest/gtest.h"
 #include <iomanip>
 
@@ -44,7 +44,7 @@ int simpleTest() {
     update();
     //格式化文件
     cout << "== 格式化演示 ==" << endl;
-    SettingUtils::format(CONFIGFILE, "/tmp/format.cfg");
+    ConfigureSettings::format(CONFIGFILE, "/tmp/format.cfg");
     return 0;
 }
 
@@ -52,19 +52,17 @@ void search(){
     ConfigureWrapper configureWrapper(CONFIGFILE);
     cout << "== 查找演示 ==" << endl;
     cout << "1. 通过路径查找" << endl;
-    cout << SettingUtils::getStringValue(configureWrapper.lookUpByPath("."), "name") << endl;
-    cout << SettingUtils::getIntValue(configureWrapper.lookUpByPath("inventory.books.[0]"), "title") << endl;
-    cout << SettingUtils::getIntValue(configureWrapper.lookUpByPath("hours.mon"), "open") << endl;
-    cout << SettingUtils::getIntValue(configureWrapper.lookUpByPath("hours.sun"), "open") << endl;
-//    cout << endl;
+    cout << ConfigureSettings::get_value<std::string>(configureWrapper.lookUpByPath("."), "name") << endl;
+    cout << ConfigureSettings::get_value<int>(configureWrapper.lookUpByPath("inventory.books.[0]"), "title") << endl;
+    cout << ConfigureSettings::get_value<int>(configureWrapper.lookUpByPath("hours.mon"), "open")<< endl;
+    cout << ConfigureSettings::get_value<int>(configureWrapper.lookUpByPath("hours.sun"), "open") << endl;
 
     cout << "2. 通过下标查找" << endl;
     Setting& root = configureWrapper.getRoot();
-    cout << SettingUtils::getStringValue(root, "name") << endl;
-    cout << SettingUtils::getIntValue(root["inventory"]["books"][1], "title") << endl;
-    cout << SettingUtils::getIntValue(root["hours"]["mon"], "close") << endl;
-    cout << SettingUtils::getIntValue(root["hours"]["sun"], "close") << endl;
-//    cout << endl;
+    cout << ConfigureSettings::get_value<std::string>(root, "name") << endl;
+    cout << ConfigureSettings::get_value<int>(root["inventory"]["books"][1], "title") << endl;
+    cout << ConfigureSettings::get_value<int>(root["hours"]["mon"], "close") << endl;
+    cout << ConfigureSettings::get_value<int>(root["hours"]["sun"], "close") << endl;
 
     cout << "3. 展示所有电影" << endl;
     const Setting &movies = root["inventory"]["movies"];
@@ -170,5 +168,6 @@ void update(){
     if(configureWrapper.writeFile(outfile)){
         cout << "文件成功更新到: " << outfile << " 文件中！" << endl;
     }
+
     cout << endl;
 }

@@ -4,8 +4,8 @@ SET(CommonSRCS
         common/Thread.cc
         log/Log.cc
         config/ConfigureWrapper.cc
-        config/SettingUtils.cc
-)
+        config/ConfigureSettings.h
+        )
 
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
 ADD_EXECUTABLE(hvsd main.cc)

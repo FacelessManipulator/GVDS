@@ -12,21 +12,18 @@
 //#include <iostream>
 #include <string>
 #include <libconfig.h++>
-using namespace std;
-using namespace libconfig;
 
 class ConfigureWrapper {
 public:
     explicit ConfigureWrapper(const char* configfile);
     ~ConfigureWrapper();
-    Setting& lookUpByPath(const char* path);
-    Setting& getRoot();
+    libconfig::Setting& lookUpByPath(const char* path);
+    libconfig::Setting& getRoot();
     bool writeFile(const char *outfile);
-protected:
 
 private:
-    Config baseCfg; // 配置文件整体
-};
 
+    libconfig::Config baseCfg; // 整体配置文件
+};
 
 #endif //CONFIGLIB_CONFIGUREWRAPPER_H

@@ -4,6 +4,7 @@
 
 #include <libcouchbase/couchbase.h>
 #include <libcouchbase/api3.h>
+#include <libcouchbase/subdoc.h>
 #include <libcouchbase/pktfwd.h>
 #include <libcouchbase/views.h>
 #include <string>
@@ -121,6 +122,7 @@ LCB_CXX_DECLSCHED(OpInfo::Remove, lcb_remove3)
 LCB_CXX_DECLSCHED(OpInfo::Stats, lcb_stats3)
 LCB_CXX_DECLSCHED(OpInfo::Unlock, lcb_unlock3)
 LCB_CXX_DECLSCHED(OpInfo::Counter, lcb_counter3)
+LCB_CXX_DECLSCHED(OpInfo::Subdoc, lcb_subdoc3)
 
 #define LCB_CXX_CMD_CTOR(name) \
     name() : Command() {} \
@@ -319,6 +321,83 @@ public:
         return v.v0.persist_to || v.v0.replicate_to;
     }
 };
+
+template <lcb_SUBDOCOP M>
+class SubdocCommand : public Command<OpInfo::Subdoc> {
+ public:
+  SubdocCommand(const char* key, const char* path, const char* value)
+      : Command() {
+    m_spec = {0};
+    this->key(key);
+    this->value(value);
+    this->path(path);
+    this->mode(M);
+    m_cmd.nspecs = 1;
+    m_cmd.specs = &m_spec;
+  }
+
+  SubdocCommand(const char* key, const char* path)
+      : Command() {
+    m_spec = {0};
+    this->key(key);
+    this->path(path);
+    this->mode(M);
+    m_cmd.nspecs = 1;
+    m_cmd.specs = &m_spec;
+  }
+
+  SubdocCommand(const std::string& key, const std::string& path, const std::string& value)
+      : Command() {
+    m_spec = {0};
+    this->key(key);
+    this->value(value);
+    this->path(path);
+    this->mode(M);
+    m_cmd.nspecs = 1;
+    m_cmd.specs = &m_spec;
+  }
+
+  SubdocCommand(const std::string& key, const std::string& path)
+      : Command() {
+    m_spec = {0};
+    this->key(key);
+    this->path(path);
+    this->mode(M);
+    m_cmd.nspecs = 1;
+    m_cmd.specs = &m_spec;
+  }
+
+  //! @brief Set the value to be stored.
+  //! @param b Buffer
+  //! @param n Buffer length
+  //! @note The buffer must remain valid until the operation has been
+  //!       scheduled.
+  void value(const void* b, size_t n) { LCB_SDSPEC_SET_VALUE(&m_spec, b, n); }
+  void value(const char* s) { value(s, strlen(s)); }
+  void value(const std::string& s) { value(s.c_str(), s.size()); }
+
+  void mode(lcb_SUBDOCOP op) { m_spec.sdcmd = op; }
+
+  void path(const void* b, size_t n) { LCB_SDSPEC_SET_PATH(&m_spec, b, n); }
+  void path(const char* s) { path(s, strlen(s)); }
+  void path(const std::string& s) { path(s.c_str(), s.size()); }
+
+ private:
+  lcb_SDSPEC m_spec;
+};
+
+typedef SubdocCommand<LCB_SDCMD_GET> SubGetCommand;
+typedef SubdocCommand<LCB_SDCMD_EXISTS> SubExistsCommand;
+typedef SubdocCommand<LCB_SDCMD_REPLACE> SubReplaceCommand;
+typedef SubdocCommand<LCB_SDCMD_DICT_ADD> SubInsertCommand;
+typedef SubdocCommand<LCB_SDCMD_DICT_UPSERT> SubUpsertCommand;
+typedef SubdocCommand<LCB_SDCMD_ARRAY_ADD_FIRST> SubArryAddFirstCommand;
+typedef SubdocCommand<LCB_SDCMD_ARRAY_ADD_LAST> SubArryAddLastCommand;
+typedef SubdocCommand<LCB_SDCMD_ARRAY_ADD_UNIQUE> SubArryAddUniqCommand;
+typedef SubdocCommand<LCB_SDCMD_ARRAY_INSERT> SubArryInsertCommand;
+typedef SubdocCommand<LCB_SDCMD_COUNTER> SubCounterCommand;
+typedef SubdocCommand<LCB_SDCMD_GET_COUNT> SubGetCounterCommand;
+typedef SubdocCommand<LCB_SDCMD_REMOVE> SubRemoveCommand;
 
 class Client;
 
@@ -568,6 +647,55 @@ private:
 };
 }
 
+
+class SubdocResponse : public Response<OpInfo::Subdoc> {
+public:
+    inline SubdocResponse();
+    SubdocResponse(const SubdocResponse& other) { assign_first(other); }
+    inline SubdocResponse& operator=(const SubdocResponse& other) {
+        clear();
+        assign_first(other);
+        return *this;
+    }
+
+    ~SubdocResponse() { clear(); }
+
+    //! @brief Release memory used by the response value
+    inline void clear();
+
+    //! Get the value for the item
+    //! @return a buffer holding the value of the buffer. This buffer is valid
+    //!         until the response is destroyed or the ::clear() function is
+    //!         explicitly called.
+    const char* valuebuf() const { return status().success() ? (const char *)m_entry.value : NULL; }
+
+    //! Gets the length of the value
+    size_t valuesize() const { return status().success() ? m_entry.nvalue : 0; }
+
+    // //! Copies the contents of the value into a std::string
+    // inline void value(std::string& s) const;
+
+    // //! Appends the contents of the value into a std::vector<char>
+    // inline void value(std::vector<char>&v) const;
+
+    Buffer value() const { return Buffer(valuebuf(), valuesize()); }
+
+    //! @private
+    inline void handle_response(Client&, int, const lcb_RESPBASE *) override;
+
+private:
+    friend class Client;
+    friend class ViewRow;
+    inline void assign_first(const SubdocResponse& other) {
+        u.resp = other.u.resp;
+        if (u.resp.bufh != NULL) {
+            lcb_backbuf_ref((lcb_BACKBUF)u.resp.bufh);
+        }
+    }
+    lcb_SDENTRY m_entry;
+};
+
+
 //! @brief A Context can be used to efficiently batch multiple operations.
 //! @details
 //! (aka "Bulk operations"). To use a batch context, first initialize it,
@@ -715,6 +843,45 @@ public:
     inline EndureResponse endure(const EndureCommand& cmd, const DurabilityOptions* options = NULL);
     inline EndureResponse endure(const EndureCommand& cmd, const DurabilityOptions& options) {
         return endure(cmd, &options);
+    }
+
+    template <lcb_SUBDOCOP T>
+    inline SubdocResponse subdoc(const SubdocCommand<T>&);
+    template <typename ...Params> SubdocResponse get_sub(Params... params) {
+        return subdoc(SubGetCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse exists_sub(Params... params) {
+        return subdoc(SubExistsCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse replace_sub(Params... params) {
+        return subdoc(SubReplaceCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse insert_sub(Params... params) {
+        return subdoc(SubInsertCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse upsert_sub(Params... params) {
+        return subdoc(SubUpsertCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse push_front(Params... params) {
+        return subdoc(SubArryAddFirstCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse push_back(Params... params) {
+        return subdoc(SubArryAddLastCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse arr_insert(Params... params) {
+        return subdoc(SubArryInsertCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse arr_insert_uniq(Params... params) {
+        return subdoc(SubArryAddUniqCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse counter_sub(Params... params) {
+        return subdoc(SubCounterCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse get_counter_sub(Params... params) {
+        return subdoc(SubGetCounterCommand(params...));
+    }
+    template <typename ...Params> SubdocResponse remove_sub(Params... params) {
+        return subdoc(SubRemoveCommand(params...));
     }
 
     template <typename T>

@@ -33,19 +33,14 @@ Get_OS_Type()
 INSTALL_CentOS_Fedora(){
     echo "检测到当前系统类型为: $OSType "
     # Yaoxu - 2019年03月04日17:28:09
-    checklibconfig=`rpm -qa | grep 'libconfig' | wc -l`
-    if [[ ${checklibconfig} -ge  1 ]];then
-        echo "检查完毕, 已经安装 libconfig !"
-    else
-        sudo yum install libconfig
-    fi
+    sudo yum install -y libconfig libconfig-devel 
+}
 
-    checklibconfigdevel=`rpm -qa | grep 'libconfig-devel' | wc -l`
-    if [[ ${checklibconfigdevel} -ge  1 ]];then
-        echo "检查完毕, 已经安装 libconfig-devel !"
-    else
-        sudo yum install libconfig-devel
-    fi
+INSTALL_Ubuntu(){
+    echo "检测到当前系统类型为: $OSType "
+    # Yaoxu - 2019年03月04日17:28:09
+    sudo apt install -y libconfig-dev libgtest-dev libcouchbase-dev \
+        doxygen 
 }
 
 Get_OS_Type
@@ -53,10 +48,8 @@ Get_OS_Type
 #判断系统发行版，安装依赖。
 if [[ ${OSType} =  "Fedora" ]] || [[ ${OSType} =  "CentOS" ]];then
     INSTALL_CentOS_Fedora
+elif [[ ${OSType} =  "Ubuntu" ]]; then
+    INSTALL_Ubuntu
 else
-    echo "当前脚本支持 CentOS 和 Fedora 64bit 系统, 当前系统为 $OSType"
+    echo "当前脚本支持 CentOS, Ubuntu 和 Fedora 64bit 系统, 当前系统为 $OSType"
 fi
-
-
-cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/tmp/hvs
-cmake --build build -j

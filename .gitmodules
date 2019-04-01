@@ -1,3 +1,13 @@
-[submodule "googletest"]
-	path = googletest
-	url = https://github.com/abseil/googletest.git
+
+[submodule "third-party/pistache"]
+	path = third-party/pistache
+	url = ../pistache.git
+[submodule "third-party/libcouchbase"]
+	path = third-party/libcouchbase
+	url = https://github.com/couchbase/libcouchbase.git
+[submodule "third-party/rapidjson"]
+	path = third-party/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
+[submodule "third-party/googletest"]
+	path = third-party/googletest
+	url = https://github.com/google/googletest.git

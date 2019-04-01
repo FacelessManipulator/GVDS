@@ -1,5 +1,23 @@
-#ifndef HVS_THREAD_H
-#define HVS_THREAD_H
+#pragma once
+
+/***********************************************************
+ * @file  Thread.h
+ * @brief 线程类文件，提供了线程运行函数以及抽象继承接口
+ * @author 周汉杰
+ * @version 0.0.1
+ * @date 2018/3/1
+ * @email miller_maxwell@buaa.edu.cn
+ * @license GNU General Public License (GPL)
+ *
+ * 修改历史：
+ * ----------------------------------------------
+ * 日期     | 版本号  |   作者   |      描述
+ * ----------------------------------------------
+ * 2018/3/1 | 0.0.1  | 周汉杰   | 实现基础功能
+ * ----------------------------------------------
+ *
+ *
+ ***********************************************************/
 
 #include <system_error>
 #include <thread>
@@ -8,6 +26,13 @@
 #include <sys/types.h>
 #include <string>
 
+/// 线程类，提供线程工具函数
+/**
+ * @author: 周汉杰
+ * @date: 2018/3/1
+ *
+ * 线程类基于linux线程库libpthread进行开发，引用后编译时需要 -lpthread。
+ */
 class Thread {
  private:
   pthread_t thread_id;
@@ -42,4 +67,3 @@ class Thread {
   int detach();
   int set_affinity(int cpuid);
 };
-#endif

@@ -1,5 +1,4 @@
-#ifndef HVS_DEBUG_H_
-#define HVS_DEBUG_H_
+#pragma once
 
 /* Global version of the stuff in common/dout.h
  */
@@ -21,5 +20,3 @@
   while (0)
 
 #define dendl dendl_impl
-
-#endif

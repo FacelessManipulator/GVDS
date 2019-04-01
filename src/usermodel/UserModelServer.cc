@@ -48,14 +48,15 @@ string UserModelServer::getUserinfo(string uuid){
 */
     string key = uuid;
 
-    hvs::DatastorePtr dbPtr = hvs::DatastoreFactory::create_datastore(
+    auto dbPtr = hvs::DatastoreFactory::create_datastore(
       "AccountInfo", hvs::DatastoreType::couchbase);
     dbPtr->init();
 
     //需要判断key是否存在，不存在或者其他情况，则查询失败
-    string value = *(dbPtr->get(key));
+    auto [pvalue, error] = dbPtr->get(key);
 
-    return value;
+
+    return *pvalue;
 }
 
 
@@ -87,7 +88,7 @@ string UserModelServer::UserRegister(Account person){
     std::string person_key = person.accountID;
     std::string person_value = person.serialize();  //json
 
-    hvs::DatastorePtr dbPtr = hvs::DatastoreFactory::create_datastore(
+    auto dbPtr = hvs::DatastoreFactory::create_datastore(
       "AccountInfo", hvs::DatastoreType::couchbase);
 
     dbPtr->init();

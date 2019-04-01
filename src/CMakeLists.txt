@@ -1,12 +1,3 @@
-
-find_file(RAPIDJSON_INCLUDE
-        NAMES rapidjson.h
-        PATH_SUFFIXES rapidjson
-)
-
-if (NOT RAPIDJSON_INCLUDE)
-        message(FATAL_ERROR "can't find rapidjson")
-endif(NOT RAPIDJSON_INCLUDE)
 # ADD_SUBDIRECTORY(hello)
 SET(CommonSRCS
         common/Thread.cc
@@ -19,6 +10,7 @@ SET(CommonSRCS
         common/RestServer.cc
         common/JsonSerializer.cc
         )
+)
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase
         pthread
@@ -26,4 +18,14 @@ SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         )
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
 ADD_EXECUTABLE(hvsd main.cc)
+install(TARGETS hvscommon
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(TARGETS hvsd
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 #TARGET_LINK_LIBRARIES(hvsd hello)

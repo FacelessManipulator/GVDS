@@ -30,12 +30,14 @@ public:
     //define your function here
     
     void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-
     std::string getUserinfo(std::string uuid);
 
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string UserRegister(Account &person);
+    
+    void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string UserLogin(std::string account, std::string pass);
 
-    std::string UserRegister(Account person);
 
  //--------------------------------------------
 private:

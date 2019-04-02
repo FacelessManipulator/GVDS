@@ -51,7 +51,10 @@ void RestServer::setupRoutes() {
     Routes::Get(router, "/auth", Routes::bind(&RestServer::doAuth, this));
 
     //add your router here
-    Routes::Get(router, "/users/:name", Routes::bind(&UserModelServer::getUserinfoRest, UserModelServer::getInstance()));
+    Routes::Get(router, "/users/search/:name", Routes::bind(&UserModelServer::getUserinfoRest, UserModelServer::getInstance()));
+    Routes::Post(router, "/users/registration", Routes::bind(&UserModelServer::UserRegisterRest, UserModelServer::getInstance()));
+    Routes::Post(router, "/users/login", Routes::bind(&UserModelServer::UserLoginRest, UserModelServer::getInstance()));
+
 }
 
 

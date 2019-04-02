@@ -17,6 +17,14 @@ class HVSRestTest : public ::testing::Test {
 
 TEST_F(HVSRestTest, atry) {
   cout << "HVSRestTest Begin:" << endl;
+/*
+  auto p = init_rest();
+  sleep(1000);
+  stop_rest(p);
+*/
+
+  sleep(1000);
+ 
 
   // EXPECT_TRUE(lbqprint()==0);
 }

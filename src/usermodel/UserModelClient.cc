@@ -45,7 +45,8 @@ int main(int argc, char *argv[]) {
     auto start = std::chrono::system_clock::now();
 
     for (int i = 0; i < count; ++i) {
-        auto resp = client.get(page).cookie(Http::Cookie("FOO", "bar")).send();
+        //auto resp = client.get(page).cookie(Http::Cookie("FOO", "bar")).send();
+        auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body("a").send();
         resp.then([&](Http::Response response) {
                 ++completedRequests;
             std::cout << "Response code = " << response.code() << std::endl;

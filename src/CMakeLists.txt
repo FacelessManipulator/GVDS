@@ -2,8 +2,7 @@
 SET(CommonSRCS
         common/Thread.cc
         log/Log.cc
-        config/ConfigureWrapper.cc
-        config/ConfigureSettings.h
+        config/ConfigureSettings.cc
         datastore/datastore.cc
         datastore/couchbase_helper.cc
         common/context.cc

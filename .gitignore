@@ -1,0 +1,9 @@
+# 添 gitgnore 文件 用来防止提交生成的文件
+
+# Yaoxu 2019年03月04日
+.idea/
+cmake-build-debug/
+
+# Yaoxu 2019年04月01日
+a.out
+build/

@@ -2,6 +2,13 @@
 
 // Basic store information:
 name = "Books, Movies & More";
+attr =
+{
+  age = 18;
+  man = true;
+  height = 172.5;
+  cats = ("hello", "kitty");
+};
 
 // Store inventory:
 inventory =

@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include "log/Log.h"
+#include "config/ConfigureSettings.h"
 
 namespace hvs {
 class HvsContext {
@@ -16,6 +17,7 @@ class HvsContext {
   }
   std::string module_name;
   Log* _log;
+  ConfigureSettings* _config;
 
  private:
   static HvsContext* _context_p;

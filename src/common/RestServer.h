@@ -35,7 +35,7 @@ void handleReady(const Rest::Request&, Http::ResponseWriter response);
 
 
 
-
+namespace hvs{
 
 class RestServer : public Thread {
 
@@ -71,5 +71,6 @@ extern void stop_rest(RestServer* rest);     //[后加函数]
 
 
 //int main(int argc, char *argv[]) 
+}// namespace hvs
 
 #endif

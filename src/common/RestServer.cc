@@ -23,6 +23,7 @@ void Generic::handleReady(const Rest::Request&, Http::ResponseWriter response) {
     response.send(Http::Code::Ok, "1");
 }
 
+namespace hvs{
 
 void RestServer::init(size_t thr) {
         auto opts = Http::Endpoint::options()
@@ -109,4 +110,6 @@ void *RestServer::entry() {
     start();        //RestServer类函数, 启动rest服务 [原始函数]      //start 对应 shutdown, begin 对应 end
 
     return NULL;
+}
+
 }

@@ -13,12 +13,15 @@ date:2019.03.21
 #include <iostream>
 #include <map>
 
+
+#include "datastore/couchbase_helper.h"
 #include "usermodel/Account.h"
 class Account;
 
 using namespace Pistache;
 
 
+namespace hvs{
 class UserModelServer {
 public:
     static UserModelServer* getInstance(){
@@ -36,7 +39,7 @@ public:
     std::string UserRegister(Account &person);
     
     void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string UserLogin(std::string account, std::string pass);
+    bool UserLogin(std::string account, std::string pass);
 
 
  //--------------------------------------------
@@ -49,6 +52,10 @@ private:
     static UserModelServer* instance;  //single object
 };
 
+std::string md5(std::string strPlain);
+
+
+}// namespace hvs
 
 
 #endif

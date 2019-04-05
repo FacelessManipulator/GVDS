@@ -32,8 +32,7 @@ public:
  //--------------------------------------------
     //define your function here
     
-    void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string getUserinfo(std::string uuid);
+
 
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);
@@ -41,6 +40,11 @@ public:
     void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
     bool UserLogin(std::string account, std::string pass);
 
+    void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string getUserinfo(std::string uuid , bool &is_get_success);
+
+    void modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string modifyUserinfo(Account &person);
 
  //--------------------------------------------
 private:

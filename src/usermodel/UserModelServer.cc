@@ -34,6 +34,8 @@ UserModelServer* UserModelServer::instance = nullptr;
 
 //账户注册
 void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
+    cout << "====== start UserModelServer function: UserRegisterRest ======"<< endl;
+
     auto info = request.body();
     cout << info << endl;
 /*
@@ -52,16 +54,22 @@ void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::Respo
 
     cout<<"result:"<<result<<endl;
     response.send(Http::Code::Ok, result); //point
-    cout<<"finish restserver"<<endl;
+    cout << "====== end UserModelServer function: UserRegisterRest ======"<< endl;
 }
 
 
 string UserModelServer::UserRegister(Account &person){
-    cout << "UserModelServer function: UserRegister"<< endl;
+    cout << "enter UserRegister ======"<< endl;
 
     std::string person_key = person.accountID;
-    //检查是否存在key，不存在，则进行下面代码开始注册，存在则返回注册失败，以及相应问题  [补充：若数据库有此key，则返回注册失败的代码]
-    //write your code here 
+    //检查是否存在key，不存在，则进行下面代码开始注册，存在则返回注册失败
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_map_id"));
+    f1_dbPtr->init();
+    auto [pvalue, error_0] = f1_dbPtr->get(person.accountName);
+    if(error_0 == 0){  
+        return "Account name already exists!";
+    }
 
 
     //不存在此key，开始注册
@@ -69,13 +77,10 @@ string UserModelServer::UserRegister(Account &person){
     AccountPair acc_pair(person.accountName, person.accountID);
     string pari_key = person.accountName;
     string pair_value = acc_pair.serialize();
-    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_map_id"));
     
-    f1_dbPtr->init();
     int f1_flag = f1_dbPtr->set(pari_key, pair_value);
     if (f1_flag != 0){
-        string result_0 = "f1 Registration fail";
+        string result_0 = "Registration fail: DB[account_map_id] write fail;";
         return result_0;
     }
 
@@ -88,14 +93,11 @@ string UserModelServer::UserRegister(Account &person){
    
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore("account_info"));
-
-    
     f0_dbPtr->init();
-    //std::cout<<"connet finish"<<endl;
     
     int flag = f0_dbPtr->set(person_key, person_value);
     if (flag != 0){
-        string result_0 = "Registration fail";
+        string result_0 = "Registration fail: DB[account_info] write fail;";
         return result_0;
     }
     else{
@@ -110,6 +112,7 @@ string UserModelServer::UserRegister(Account &person){
 
 //账户登录
 void UserModelServer::UserLoginRest(const Rest::Request& request, Http::ResponseWriter response){
+    cout << "====== start UserModelServer function: UserLoginRest ======"<< endl;
     //=====
     printCookies(request);
     //=====
@@ -126,8 +129,18 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
         //md5
         string origin_str = acc_pass.accountName + acc_pass.Password; //再加上url以及时间等等信息
         string mtoken = md5(origin_str);
-        response.cookies().add(Http::Cookie("token", mtoken));
-        response.send(Http::Code::Ok, "login success!"); //point
+        std::shared_ptr<hvs::CouchbaseDatastore> f2_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+            hvs::CouchbaseDatastore("token_info"));
+        f2_dbPtr->init();
+        string value ="1";
+        int login_flag = f2_dbPtr->set(mtoken, value);
+        if (login_flag != 0){
+            response.send(Http::Code::Ok, "login fail!,token set fail");
+        }
+        else{
+            response.cookies().add(Http::Cookie("token", mtoken));
+            response.send(Http::Code::Ok, "login success!"); //point
+        }
     }
     else{
         response.send(Http::Code::Ok, "login fail!");
@@ -138,15 +151,11 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
     //cout << "*pmtoken: " << *pmtoken <<endl;
    
 
-    
-    
-    cout<<"finish restserver"<<endl;
-
-    
+    cout<<"====== end UserModelServer function: UserLoginRest ======"<<endl;    
 }
 
 bool UserModelServer::UserLogin(std::string account, std::string pass){
-    cout << "UserModelServer function: UserLogin"<< endl;
+    cout << "enter UserLogin"<< endl;
     //AccountPair中实现新类，只存账户名，和id，这两个信息
     //查询账户名对应的id，作为数据库查询的key
 
@@ -155,8 +164,12 @@ bool UserModelServer::UserLogin(std::string account, std::string pass){
 
     f1_dbPtr->init();
 
-    //获取account对应的id    [补充：若数据库没有此key，则返回登录失败的代码]
+    //获取account对应的id    [若数据库没有此key，则返回登录失败的代码]
     auto [pvalue, error_0] = f1_dbPtr->get(account);
+    if(error_0){
+        cout << "DB[account_map_id]: No such account" <<endl;
+        return false;
+    }
     AccountPair login_acc_pair;
     login_acc_pair.deserialize(*pvalue);
 
@@ -167,10 +180,15 @@ bool UserModelServer::UserLogin(std::string account, std::string pass){
         hvs::CouchbaseDatastore("account_info"));
     
     f0_dbPtr->init();
-    //[补充：若数据库没有此key，则返回登录失败的代码]
+    //[若数据库没有此key，则返回登录失败的代码]
     //auto [pPass, error_1] = f0_dbPtr->get(key, path);   *pPass输出带引号
 //tmp
     auto [pvalue_2, error_2] = f0_dbPtr->get(key);
+    if(error_2){
+        cout << "DB[account_info]: No such account" <<endl;
+        return false;
+    }
+
     Account tmp;
     tmp.deserialize(*pvalue_2);
 
@@ -190,21 +208,34 @@ bool UserModelServer::UserLogin(std::string account, std::string pass){
 }
 
 
-
-
-
 //账户信息查询
 void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
+    cout << "====== start UserModelServer function: getUserinfoRest ======"<< endl;
+
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+        return;
+    }
+    
+    
     auto uuid = request.param(":name").as<std::string>();
     
+    bool is_get_success = true;
     // include your functin
-    string data = getUserinfo(uuid);
-
-    response.send(Http::Code::Ok, data); //point
+    string data = getUserinfo(uuid, is_get_success);
+    if(is_get_success){
+        response.send(Http::Code::Ok, data);
+    }
+    else{
+        response.send(Http::Code::Not_Found, data); //point
+    }
+    
+    cout << "====== end UserModelServer function: getUserinfoRest ======"<< endl;
 }
 
-string UserModelServer::getUserinfo(string uuid){
-    cout << "UserModelServer function: getUserinfo"<< endl;
+string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
+    cout << "enter getUserinfo"<< endl;
 /*
     map<string, string> usermap;
 
@@ -226,13 +257,66 @@ string UserModelServer::getUserinfo(string uuid){
         hvs::CouchbaseDatastore("account_info"));
     f0_dbPtr->init();
 
-    //需要判断key是否存在，不存在或者其他情况，则查询失败 [补充：若数据库没有此key，则返回登录失败的代码]
+    //判断key是否存在
     auto [pvalue, error] = f0_dbPtr->get(key);
+    if (error){
+        is_get_success = false;
+        return "Search fail, try again.";
+    }
 
     cout<<"pvalue:"<< *pvalue <<endl;
     return *pvalue;
 
 }
+
+
+
+void UserModelServer::modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
+    cout << "====== start UserModelServer function: modifyUserinfoRest ======"<< endl;
+
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+        return;
+    }
+
+    auto info = request.body();
+    cout << info << endl;
+
+    Account person;
+    person.deserialize(info);  
+
+    string result = modifyUserinfo(person);
+
+    cout<<"result:"<<result<<endl;
+    response.send(Http::Code::Ok, result); //point
+
+    cout << "====== end UserModelServer function: modifyUserinfoRest ======"<< endl;
+}
+
+string UserModelServer::modifyUserinfo(Account &person){
+
+    //更新account_info表
+    string person_key = person.accountID;
+    string person_value = person.serialize();  //json
+
+    cout << person_key << endl;
+    cout << person_value << endl;
+   
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info")); 
+    f0_dbPtr->init();
+    
+    int flag = f0_dbPtr->set(person_key, person_value);
+    if (flag != 0){
+        return "Modify fail: DB[account_info] update fail";
+    }
+    else{
+        return "Modify success";
+    }    
+
+}
+
 
 
 

@@ -27,6 +27,7 @@ using namespace Pistache;
 
 void printCookies(const Http::Request& req);
 void CtrlStop(int signo);
+bool auth_token(const Rest::Request& request);
 
 namespace Generic {
 void handleReady(const Rest::Request&, Http::ResponseWriter response);

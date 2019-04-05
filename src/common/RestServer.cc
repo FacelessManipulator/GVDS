@@ -17,6 +17,30 @@ void CtrlStop(int signo){
     exit(0);
 }
 
+bool auth_token(const Rest::Request& request){
+    std::cout << "function: auth_token"<< std::endl;
+    printCookies(request);
+    
+    std::string name;
+    std::string mtoken;
+    auto cookies = request.cookies();
+    for (const auto& c: cookies) {
+        //std::cout << c.name << " = " << c.value << std::endl;
+        name = c.name;
+        mtoken = c.value;
+    }
+    std::shared_ptr<hvs::CouchbaseDatastore> f2_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("token_info"));
+    f2_dbPtr->init();
+
+   
+    auto [vp, err] = f2_dbPtr->get(mtoken);
+    if(err){ //!=0
+        return false;//验证失败
+    }
+    return true; //验证成功
+}
+
 
 
 void Generic::handleReady(const Rest::Request&, Http::ResponseWriter response) {

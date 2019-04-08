@@ -76,8 +76,13 @@ TEST_F(HVSAccountTest, atry) {
     }, Async::IgnoreException);
     responses.push_back(std::move(resp));
 
+    auto sync_login = Async::whenAll(responses.begin(), responses.end());
+    Async::Barrier<std::vector<Http::Response>> barrier_login(sync_login);
 
-    sleep(8);
+    std::cout << "start barrier_login.wait_for"<<std::endl;
+    barrier_login.wait_for(std::chrono::seconds(5));
+    std::cout << "end barrier_login.wait_for"<<std::endl;
+
     //search
     auto resp_1 = client.get("http://localhost:9080/users/search/78910").cookie(Http::Cookie("token", mtoken)).send();
 

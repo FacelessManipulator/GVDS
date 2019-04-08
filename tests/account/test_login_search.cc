@@ -32,7 +32,7 @@ class HVSAccountTest : public ::testing::Test {
 };
 
 TEST_F(HVSAccountTest, atry) {
-    cout<< "******start client: login_search ******"<<endl;
+    cout<< "****** start client: login_search ******"<<endl;
 
     // 第二个参数传地址 第三个参数传请求数量 默认1
     int count = 2;
@@ -93,12 +93,6 @@ TEST_F(HVSAccountTest, atry) {
 
             //====================
         }
-        std::cout<< "Response cookie = ";
-        auto cookies = response.cookies();
-        for (const auto& c: cookies) {
-            std::cout << c.name << " : " << c.value << std::endl;
-            mtoken = c.value;
-        }
     }, Async::IgnoreException);
     responses.push_back(std::move(resp_1));
 
@@ -120,5 +114,5 @@ TEST_F(HVSAccountTest, atry) {
 
     client.shutdown();
 
-    cout<< "******end client: login_search ******"<<endl;
+    cout<< "****** end client: login_search ******"<<endl;
 }

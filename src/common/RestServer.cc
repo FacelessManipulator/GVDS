@@ -1,6 +1,7 @@
 #include <signal.h>
 
 #include "common/RestServer.h"
+#include "aggregation/AggregationServer.h"
 
 
 void printCookies(const Http::Request& req) {
@@ -79,6 +80,10 @@ void RestServer::setupRoutes() {
     Routes::Get(router, "/users/search/:name", Routes::bind(&UserModelServer::getUserinfoRest, UserModelServer::getInstance()));
     Routes::Post(router, "/users/registration", Routes::bind(&UserModelServer::UserRegisterRest, UserModelServer::getInstance()));
     Routes::Post(router, "/users/login", Routes::bind(&UserModelServer::UserLoginRest, UserModelServer::getInstance()));
+
+    //resource aggregation
+    Routes::Post(router, "/resource/register", Routes::bind(&AggregationServer::StorageResRegisterRest, AggregationServer::getInstance()));
+    Routes::Post(router, "/resource/logout", Routes::bind(&AggregationServer::StorageResLogoutRest, AggregationServer::getInstance()));
 
 }
 

@@ -10,6 +10,8 @@ SET(CommonSRCS
         usermodel/UserModelServer.cc
         common/RestServer.cc
         common/JsonSerializer.cc
+        aggregation/AggregationServer.cc
+        aggregation/StorageResBicInfo.cc
 )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase

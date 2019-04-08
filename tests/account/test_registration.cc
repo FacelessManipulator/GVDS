@@ -53,29 +53,15 @@ TEST_F(HVSAccountTest, atry) {
     //计时
     auto start = std::chrono::steady_clock::now();
 
-    std::string mes = "{"\
-    "\"HVSAccountName\":\"lbq\","\
-    "\"HVSPassword\":\"123456\","\
-    "\"HVSAccountID\":\"78910\","\
-    "\"AccountEMAIL\":\"XXXXXX@163.com\","\
-    "\"AccountPHONE\":\"15012349876\","\
-    "\"AccountAddress\":\"xueyuanlu\","\
-    "\"Department\":\"Beihang\","\
-    "\"SC\":{"\
-        "\"sc_flag\":\"has\","\
-        "\"location_acc\":{"\
-            "\"beijing\":\"local_lbq\","\
-            "\"shanghai\":\"local_lbq1\""\
-        "},"\
-        "\"scaccount_password\":{"\
-            "\"local_lbq\":\"654321\","\
-            "\"local_lbq1\":\"654321\""\
-        "}"\
-    "}"\
-"}" ;
+    Account person("lbq-2", "123456", "111213", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang", "has");
+    person.sc.location_scacc["beijing"] = "local_lbq";
+    person.sc.scacc_password["local_lbq"] = "654321";
+    person.sc.location_scacc["shanghai"] = "local_lbq1";
+    person.sc.scacc_password["local_lbq1"] = "654321";
 
-    //auto resp = client.get(page).cookie(Http::Cookie("FOO", "bar")).send();
-    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(mes).send();
+    std::string value = person.serialize();
+
+    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(value).send();
     resp.then([&](Http::Response response) {
             ++completedRequests;
         std::cout << "Response code = " << response.code() << std::endl;

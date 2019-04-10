@@ -71,5 +71,5 @@ TEST_F(ConfigTest, AddOption) {
     csp->add("attr2.string", std::string("hello"));
     // list type
     csp->add("attr2.list", std::vector{1,2,3});
-    csp->writeFile("/tmp/hvs.conf");
+    csp->writeFile("/tmp/hvs/tests/data/example.cfg");
 }

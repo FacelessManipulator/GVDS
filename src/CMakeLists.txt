@@ -6,12 +6,15 @@ SET(CommonSRCS
         datastore/datastore.cc
         datastore/couchbase_helper.cc
         common/context.cc
-        common/JsonSerializer.cc)
+        common/JsonSerializer.cc
+        msg/rpc.cc
+)
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         config++
         couchbase
         pthread
-        )
+        rpc
+)
 
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
 ADD_EXECUTABLE(hvsd main.cc)

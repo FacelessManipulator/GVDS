@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <cstdio>
+#include <map>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -28,19 +29,26 @@ class Datastore {
   Datastore(const std::string& name) : name(name) {}
   Datastore() : Datastore("default") {}
   virtual std::string get_typename() { return "NULL"; }
-  virtual int init(){};
+  virtual int init() { return 0; };
   virtual int set(const std::string& key,
-                  std::string& value){};                 // not implement
+                  std::string& value){};  // not implement
   virtual int set(const std::string& key, const std::string& subpath,
                   std::string& value){};
-  virtual std::tuple<std::shared_ptr<std::string>, int> get(const std::string& key){};
-  virtual std::tuple<std::shared_ptr<std::string>, int> get(const std::string& key, const std::string& subpath){};
+  virtual std::tuple<std::shared_ptr<std::string>, int> get(
+      const std::string& key){};
+  virtual std::tuple<std::shared_ptr<std::string>, int> get(
+      const std::string& key, const std::string& subpath){};
   virtual int remove(const std::string& key){};
 };
 
 class DatastoreFactory {
  public:
   static std::shared_ptr<Datastore> create_datastore(
-      std::string datastore_name, DatastoreType datastore_type = couchbase);
+      std::string datastore_name, DatastoreType datastore_type = couchbase,
+      bool reuse = false);
+
+ private:
+  static std::map<std::pair<long int, std::string>, std::shared_ptr<Datastore>>
+      _reuse_map;
 };
 }  // namespace hvs

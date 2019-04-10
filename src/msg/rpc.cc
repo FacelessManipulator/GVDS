@@ -1,5 +1,5 @@
 #include "msg/rpc.h"
-#include "msg/stat.h"
+#include "msg/bind.h"
 using namespace hvs;
 using namespace std;
 
@@ -19,9 +19,7 @@ RpcServer* hvs::init_rpcserver() {
     // success, pass
   }
   RpcServer* rpc_server = new RpcServer(*ip, *port);
-  rpc_server->bind("1", [] { return 1; });
-  rpc_server->bind("sleep", sleep);
-  rpc_server->bind("stat", get_stat);
+  hvs_rpc_bind(rpc_server);
   rpc_server->run(*workers);
   return rpc_server;
 }

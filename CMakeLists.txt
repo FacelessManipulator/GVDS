@@ -28,6 +28,7 @@ if(BUILD_THIRD_PARTY)
       "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
       "${PROJECT_SOURCE_DIR}/third-party/libcouchbase/include"
       "${PROJECT_BINARY_DIR}/third-party/libcouchbase/generated"
+      "${PROJECT_SOURCE_DIR}/third-party/rpclib/include"
   )
 
   # download and update submodules
@@ -49,7 +50,9 @@ if(BUILD_THIRD_PARTY)
   if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/pistache/CMakeLists.txt" AND
                 "${PROJECT_SOURCE_DIR}/third-party/googletest/CMakeLists.txt" AND
                 "${PROJECT_SOURCE_DIR}/third-party/rapidjson/CMakeLists.txt" AND
-                "${PROJECT_SOURCE_DIR}/third-party/libcouchbase/CMakeLists.txt")
+		"${PROJECT_SOURCE_DIR}/third-party/libcouchbase/CMakeLists.txt" AND
+                "${PROJECT_SOURCE_DIR}/third-party/rpclib/CMakeLists.txt"
+  )
       message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
   endif()
   add_subdirectory(third-party)

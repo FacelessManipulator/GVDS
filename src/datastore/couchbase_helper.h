@@ -10,8 +10,9 @@ namespace hvs {
 struct N1qlResponse;
 class CouchbaseDatastore : public hvs::Datastore {
  public:
-  CouchbaseDatastore(const std::string& bucket_name) : Datastore(bucket_name) {}
-  CouchbaseDatastore() = default;
+  CouchbaseDatastore(const std::string& bucket_name)
+      : Datastore(bucket_name), initilized(false) {}
+  CouchbaseDatastore() : initilized(false){};
 
  public:
   std::string get_typename() override { return "couchbase"; }
@@ -53,6 +54,7 @@ class CouchbaseDatastore : public hvs::Datastore {
 
  private:
   std::shared_ptr<Couchbase::Client> client;
+  bool initilized;
 };
 
 struct N1qlResponse : public hvs::JsonSerializer {

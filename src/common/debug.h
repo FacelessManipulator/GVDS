@@ -2,7 +2,10 @@
 
 /* Global version of the stuff in common/dout.h
  */
-#include "include/context.h"
+// #include "context.h"
+#ifndef HVS_CONTEXT
+#error "include context.h before include debug.h"
+#endif
 #include "log/Entry.h"
 #include "log/Log.h"
 

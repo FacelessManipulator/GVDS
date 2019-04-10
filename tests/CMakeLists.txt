@@ -12,5 +12,6 @@ MESSAGE("已经生成配置文件！")
 
 ADD_SUBDIRECTORY(datastore)
 ADD_SUBDIRECTORY(common)
+ADD_SUBDIRECTORY(msg)
 
 

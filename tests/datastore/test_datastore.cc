@@ -31,3 +31,29 @@ TEST_F(DatastoreTest, CouchbaseCURD) {
   tie(vp, err) = dbPtr->get(key);
   EXPECT_EQ(13, err);
 }
+
+class SharedClientTest : public Thread {
+ public:
+  void* entry() override {
+    auto dbp_last = hvs::DatastoreFactory::create_datastore(
+        "test", hvs::DatastoreType::couchbase, true);
+    for (int i = 0; i < 10; i++) {
+      auto dbp_cur = hvs::DatastoreFactory::create_datastore(
+        "test", hvs::DatastoreType::couchbase, true);
+      EXPECT_EQ(dbp_last, dbp_cur);
+    }
+  }
+};
+
+TEST_F(DatastoreTest, SharedClient) {
+  SharedClientTest sct[10];
+  char name[32];
+  for (int i = 0; i < 10; i++) {
+    snprintf(name, 32, "SharedClientTest-%d", i);
+    sct[i].create(name);
+  }
+  for (int i = 0; i < 10; i++) {
+    sct[i].join();
+  }
+  EXPECT_EQ("couchbase", dbPtr->get_typename());
+}

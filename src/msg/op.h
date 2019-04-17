@@ -4,6 +4,7 @@
 #include <boost/function.hpp>
 #include <chrono>
 #include <atomic>
+#include <list>
 
 // generic op class
 namespace hvs {
@@ -20,9 +21,7 @@ struct OP {
   uint64_t id;  // not global unique
 
   // callback invoked
-  boost::function0<void> complete_callback;
-
-  OP() {complete_callback = [](){};}
+  std::list<boost::function0<void>> complete_callbacks;
 
   // timepoint to track system perfomance
   using clock = std::chrono::steady_clock;

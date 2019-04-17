@@ -25,6 +25,7 @@ class IOProxy : public Thread, public Node {
   void start();
   void stop();
   bool queue_op(std::shared_ptr<OP> op, bool block = true);
+  bool queue_and_wait(std::shared_ptr<OP> op);
   bool add_idle_worker(IOProxyWorker* woker);
   ~IOProxy() override {stop();};
 

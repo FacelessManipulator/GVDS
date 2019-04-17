@@ -18,3 +18,4 @@
 [submodule "third-party/boost"]
 	path = third-party/boost
 	url = ../boost
+	ignore = dirty

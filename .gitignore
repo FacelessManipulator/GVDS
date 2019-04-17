@@ -7,3 +7,7 @@ cmake-build-debug/
 # Yaoxu 2019年04月01日
 a.out
 build/
+
+# Hanjie 2019年04月13日
+.vscode/
+Testing/

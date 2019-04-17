@@ -29,6 +29,7 @@ if(BUILD_THIRD_PARTY)
       "${PROJECT_SOURCE_DIR}/third-party/libcouchbase/include"
       "${PROJECT_BINARY_DIR}/third-party/libcouchbase/generated"
       "${PROJECT_SOURCE_DIR}/third-party/rpclib/include"
+      "${PROJECT_SOURCE_DIR}/third-party/boost"
   )
 
   # download and update submodules

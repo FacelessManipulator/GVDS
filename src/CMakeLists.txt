@@ -14,6 +14,7 @@ SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         couchbase
         pthread
         rpc
+        boost_system
 )
 
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
@@ -28,4 +29,6 @@ install(TARGETS hvsd
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+add_subdirectory(io_proxy)
 #TARGET_LINK_LIBRARIES(hvsd hello)

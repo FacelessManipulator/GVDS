@@ -5,7 +5,7 @@
 
 #include <errno.h>
 #include <string.h>
-#include <syslog.h>
+// #include <syslog.h>
 #include <iostream>
 #include <context.h>
 #include <assert.h>
@@ -240,10 +240,12 @@ void Log::_flush(std::queue<EntryPtr> *t) {
       assert(line_used < line_size);
 
       if (do_syslog) {
-        syslog(LOG_USER, "%s", line);
+        // syslog(LOG_USER, "%s", line);
+        // avoid syslog
       }
 
       if (do_stderr) {
+        *(line+line_used) = 0;
         std::cerr << m_log_stderr_prefix << line << std::endl;
       }
 

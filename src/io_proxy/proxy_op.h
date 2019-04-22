@@ -4,7 +4,10 @@
 #include "msg/op.h"
 
 namespace hvs {
+void prepare_op(std::shared_ptr<OP> op);
 void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback);
+void do_op(std::shared_ptr<OP> op, boost::function0<void> callback);
 
 int ioproxy_do_metadata_op(IOProxyMetadataOP* op);
+int ioproxy_do_data_op(IOProxyDataOP* op);
 }

@@ -11,6 +11,7 @@ void prepare_op(std::shared_ptr<OP> op) {
   switch (op->type) {
     case IO_PROXY_METADATA: {
       static_cast<IOProxyMetadataOP*>(op.get())->buf = (struct stat *)malloc(sizeof(struct stat));
+      memset(static_cast<IOProxyMetadataOP*>(op.get())->buf, 0, sizeof(struct stat));
       break;
     }
     case IO_PROXY_DATA: {
@@ -49,15 +50,19 @@ void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
 
 int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
   //  dout(5) << "async do op: " << op->id << dendl;
-  op->error_code = stat(op->path, op->buf);
+  sync_io func_sync_io;
+//  op->error_code = stat(op->path, op->buf);
+  func_sync_io.sstat(op->path, op);
   return op->error_code;
 }
 
 int ioproxy_do_data_op(IOProxyDataOP* op) {
   //  dout(5) << "async do op: " << op->id << dendl;
   // op->stat_buf = get_stat(op->path);
+  sync_io func_sync_io;
   switch (op->operation) {
     case IOProxyDataOP::read: {
+      /*
       auto fd = open(op->path, O_RDONLY);
       if (fd == -1) {
         op->error_code = errno;
@@ -70,9 +75,12 @@ int ioproxy_do_data_op(IOProxyDataOP* op) {
         op->size = n;
       }
       close(fd);
+       */
+      func_sync_io.sread(op->path, op->obuf,op->size, op->offset, op); // sync_io
       break;
     }
     case IOProxyDataOP::write: {
+      /*
       auto fd = open(op->path, O_RDWR);
       if (fd == -1) {
         op->error_code = errno;
@@ -85,9 +93,10 @@ int ioproxy_do_data_op(IOProxyDataOP* op) {
         op->size = n;
       }
       close(fd);
+       */
+      func_sync_io.swrite(op->path, op->ibuf, op->size, op->offset, op);
       break;
     }
-
     default:
       break;
   }

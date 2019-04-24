@@ -6,6 +6,7 @@
 #include <atomic>
 #include <list>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 // generic op class
 namespace hvs {
@@ -62,6 +63,7 @@ struct IOProxyDataOP : public OP {
   char* obuf; // mutable buffer for read
   const char* ibuf; // imutable buffer for write
   size_t size;
+  off_t  offset;
   ~IOProxyDataOP() {
     // we don't manage write buf
     if(obuf)

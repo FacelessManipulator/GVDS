@@ -7,6 +7,8 @@
 #include "msg/rpc.h"
 #include "msg/stat.h"
 
+#define  TFILEP "/tmp/hvs/tests/data/syncio.txt"
+
 using namespace std;
 using namespace hvs;
 
@@ -39,7 +41,7 @@ TEST_F(IOPROXYTEST, MetadataOP) {
     auto op = make_shared<IOProxyMetadataOP>();
     op->id = 0;
     op->operation = IOProxyMetadataOP::stat;
-    op->path = "/tmp/a";
+    op->path = TFILEP;
     op->type = IO_PROXY_METADATA;
     op_observe = op;
     auto start_t = std::chrono::steady_clock::now();
@@ -64,7 +66,7 @@ TEST_F(IOPROXYTEST, MULTI) {
     auto op = make_shared<IOProxyMetadataOP>();
     op->id = i;
     op->operation = IOProxyMetadataOP::stat;
-    op->path = "/tmp/a";
+    op->path = TFILEP;
     op->type = IO_PROXY_METADATA;
     op->complete_callbacks.emplace_back([&]() { ++cnt; });
     ioproxy->queue_op(op);
@@ -90,7 +92,7 @@ TEST_F(IOPROXYTEST, SEQ) {
     auto op = make_shared<IOProxyMetadataOP>();
     op->id = i;
     op->operation = IOProxyMetadataOP::stat;
-    op->path = "/tmp/a";
+    op->path = TFILEP;
     op->type = IO_PROXY_METADATA;
     op->complete_callbacks.emplace_back([&]() { ++cnt; });
     ioproxy->queue_and_wait(op);
@@ -114,7 +116,7 @@ TEST_F(IOPROXYTEST, WRITE) {
     auto op = make_shared<IOProxyDataOP>();
     op->id = i;
     op->operation = IOProxyDataOP::write;
-    op->path = "/tmp/a";
+    op->path = TFILEP;
     op->type = IO_PROXY_DATA;
     op->ibuf = data.c_str();
     op->size = data.size();
@@ -144,7 +146,7 @@ TEST_F(IOPROXYTEST, READ) {
     auto op = make_shared<IOProxyDataOP>();
     op->id = i;
     op->operation = IOProxyDataOP::read;
-    op->path = "/tmp/a";
+    op->path = TFILEP;
     op->type = IO_PROXY_DATA;
     op->should_prepare = true;
     op->size = data.size();

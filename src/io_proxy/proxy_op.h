@@ -2,6 +2,7 @@
 #include <memory>
 #include <boost/function.hpp>
 #include "msg/op.h"
+#include "sync_io.h"
 
 namespace hvs {
 void prepare_op(std::shared_ptr<OP> op);

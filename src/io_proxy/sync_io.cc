@@ -22,18 +22,22 @@ int sync_io::sclose(int fd) {
     return close(fd);
 }
 
-ssize_t sync_io::sread(int fd, void *buf, size_t count, long long offset) {
+ssize_t sync_io::sread(int fd, void *buf, size_t count, off_t offset) {
+    /*
     if(lseek(fd, offset, SEEK_SET)==-1){
         perror("sync_io read lseek");
     }
+
     ssize_t ret = read(fd, buf, count);
+     */
+    ssize_t ret = pread(fd, buf, count, offset); // 该操作是原子操作
     if (ret == -1){
         perror("sync_io read");
     }
     return ret ;
 }
 
-ssize_t sync_io::sread(const char *path, void *buf, size_t count, long long offset) {
+ssize_t sync_io::sread(const char *path, void *buf, size_t count, off_t offset) {
     int fd = open(path, O_RDONLY|O_SYNC);
     if(fd == -1){
         perror("sync_io sread open");
@@ -41,18 +45,21 @@ ssize_t sync_io::sread(const char *path, void *buf, size_t count, long long offs
     return sread(fd, buf, count, offset);
 }
 
-ssize_t sync_io::swrite(int fd, const void *buf, size_t count, long long offset) {
+ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset) {
+    /*
     if(lseek(fd, offset, SEEK_SET)==-1){
         perror("sync_io write lseek");
     }
     ssize_t ret = write(fd, buf, count);
+     */
+    ssize_t ret = pwrite(fd, buf, count, offset); // 该操作是原子操作
     if(ret == -1){
         perror("sync_io write");
     }
     return ret;
 }
 
-ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, long long offset) {
+ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t offset) {
     int fd = open(path, O_WRONLY|O_SYNC|O_CREAT, 0655);
     if (fd == -1){
         perror("sync_io swrite open");

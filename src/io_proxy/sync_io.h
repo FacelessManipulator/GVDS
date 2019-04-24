@@ -40,10 +40,10 @@ public:
     int sfstat(int fd, struct stat *statbuf); // 获取文件元数据，通过fd
 
     int sopen(const char* pathname, int flags, mode_t mode); // 打开文件
-    ssize_t  sread(int fd, void*buf, size_t count, long long offset); // 读数据 fd, offset
-    ssize_t  sread(const char* path, void*buf, size_t count, long long offset); // 读数据 path, offset
-    ssize_t swrite(int fd, const void*buf, size_t count, long long offset); // 写数据
-    ssize_t swrite(const char* path, const void*buf, size_t count, long long offset); // 写数据
+    ssize_t  sread(int fd, void*buf, size_t count, off_t offset); // 读数据 fd, offset
+    ssize_t  sread(const char* path, void*buf, size_t count, off_t offset); // 读数据 path, offset
+    ssize_t swrite(int fd, const void*buf, size_t count, off_t offset); // 写数据
+    ssize_t swrite(const char* path, const void*buf, size_t count, off_t offset); // 写数据
     int sclose(int fd); // 关闭文件
     void truncate(){}; // 更改文件大小
 

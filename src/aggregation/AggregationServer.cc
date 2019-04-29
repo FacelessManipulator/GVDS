@@ -5,7 +5,9 @@
 #include "StorageResBicInfo.h"
 
 using namespace hvs;
+using namespace Pistache;
 
+AggregationServer* AggregationServer::instance = nullptr;
 AggregationServer::AggregationServer()
 {
 
@@ -34,7 +36,7 @@ void AggregationServer::StorageResRegisterRest(const Rest::Request& request, Htt
         response.send(Http::Code::Not_Found,"db get error");
     }
 
-    if(*pvalue==""){
+    if(!pvalue.get()){
         dout(5) << "DB[resource]: the storage source already exit" << dendl;
         response.send(Http::Code::Not_Found,"DB[resource]: the storage source already exit");
     }
@@ -46,6 +48,7 @@ void AggregationServer::StorageResRegisterRest(const Rest::Request& request, Htt
   if(rst!=0){
         dout(5) << "db set error" << dendl;
         response.send(Http::Code::Not_Found,"db set error");
+        return ;
   }
   response.send(Http::Code::Ok,"StorageResRegister successful");
 

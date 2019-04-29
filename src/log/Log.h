@@ -137,7 +137,7 @@ class Log : private Thread {
 
   void set_max_new(int n);  ///< 设置日志队列的最大长度
   void set_log_file(std::string fn);  ///< 设置日志文件的路径，最好是绝对路径
-  void reopen_log_file();  ///< 打开或重新打开日志文件的输出流
+  bool reopen_log_file();  ///< 打开或重新打开日志文件的输出流
   void set_log_stderr_prefix(const std::string &p);  ///< 设置stderr输出流的前缀
 
   void flush();  ///< _flush()的包装函数，会将当前队列的条目全部提交给_flush

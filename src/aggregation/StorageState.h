@@ -30,7 +30,7 @@
 namespace hvs {
 enum StorageResState// 存储资源状态
 {
-    Initializing,// 初始化中
+    Initializing = 0,// 初始化中
     Normal,// 正常使用
     OverLoad,// 负载过载
     Logouting,// 注销退出中

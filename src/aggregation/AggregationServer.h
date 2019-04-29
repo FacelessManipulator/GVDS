@@ -43,8 +43,8 @@ public:
     };
 
 
-    void StorageResRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
-    void StorageResLogoutRest(const Rest::Request& request, Http::ResponseWriter response);
+    void StorageResRegisterRest(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+    void StorageResLogoutRest(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 
  //--------------------------------------------
 private:

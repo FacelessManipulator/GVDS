@@ -5,6 +5,11 @@ PROJECT(third-party CXX C)
 set(VERSION 0.1.0)
 
 option(HVS_CPPCHECK "use cpp check to check the syntax. Need /usr/bin/cppcheck program" OFF)
+option(HVS_BOOST_BUILTIN "use builtin boost rather than depends on system library" ON)
+
+# boost build compoments
+SET(HVS_BOOST_COMP thread,system)
+
 # set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
 
 # global variable override
@@ -57,7 +62,26 @@ else()
     set(CMAKE_CXX_CPPCHECK "" CACHE FILEPATH "the path of cppcheck program.")
 endif()
 
+if(HVS_BOOST_BUILTIN)
+    if(EXISTS ${CMAKE_BINARY_DIR}/lib/boost_built_flag)
+        message(STATUS "Boost already built, skip.")
+    else()
+        message(STATUS "Prebild boost.")
+        execute_process(COMMAND ${PROJECT_SOURCE_DIR}/boost/bootstrap.sh --with-libraries=${HVS_BOOST_COMP}
+                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/boost
+                        RESULT_VARIABLE HVS_BOOST_BUILD_RESULT)
+        execute_process(COMMAND ${PROJECT_SOURCE_DIR}/boost/b2 --stagedir=${CMAKE_BINARY_DIR} link=shared
+                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/boost
+                        RESULT_VARIABLE HVS_BOOST_BUILD_RESULT)
+        if(NOT HVS_BOOST_BUILD_RESULT EQUAL "0")
+            message(FATAL_ERROR "boost build failed with ${HVS_BOOST_BUILD_RESULT}")
+        else()
+            file(TOUCH ${CMAKE_BINARY_DIR}/lib/boost_built_flag)
+        endif()
+    endif()
+endif()
 ADD_SUBDIRECTORY(googletest)
 ADD_SUBDIRECTORY(pistache)
 ADD_SUBDIRECTORY(rapidjson)
 ADD_SUBDIRECTORY(libcouchbase)
+ADD_SUBDIRECTORY(rpclib)

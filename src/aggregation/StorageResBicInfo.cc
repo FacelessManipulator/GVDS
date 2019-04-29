@@ -27,7 +27,8 @@ void StorageResBicInfo::serialize_impl()
     put("host_center_name", host_center_name);
     put("total_capacity", total_capacity);
     put("mgs_address", mgs_address);
-    put("state", state);
+    int _state = static_cast<int>(state);
+    put("state", _state);
 }
 
 void StorageResBicInfo::deserialize_impl()
@@ -38,7 +39,9 @@ void StorageResBicInfo::deserialize_impl()
     get("host_center_name", host_center_name);
     get("total_capacity", total_capacity);
     get("mgs_address", mgs_address);
-    get("state", state);
+    int _state;
+    get("state", _state);
+    state = static_cast<StorageResState>(_state);
 }
 
 StorageResBicInfo::~StorageResBicInfo()

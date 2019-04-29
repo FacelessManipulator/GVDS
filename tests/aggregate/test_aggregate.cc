@@ -81,7 +81,6 @@ TEST_F(HVSAggregateTest, registration) {
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
     client.shutdown();
-
     cout<< "******endl client: storage resource registration ******"<<endl;
   
 }

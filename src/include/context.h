@@ -47,3 +47,4 @@ extern void destroy_context();
 #include "log/Log.h"
 #include "msg/node.h"
 #include "msg/rpc.h"
+#include "common/RestServer.h"

@@ -20,6 +20,8 @@ std::shared_ptr<Datastore> DatastoreFactory::create_datastore(
     // ownership or reference.
     if (iter->second.get()) {
       // found an valid client with same bucket and thread id.
+      dout(10) << "DatastoreFactory: reuse datastore instance "
+               <<  name << ": " << tid << dendl;
       return iter->second;
     } else {
       _reuse_map.erase(iter);

@@ -52,6 +52,7 @@ private:
     virtual ~AggregationServer();
 
     static AggregationServer* instance;  //single object
+    std::string bucket_name;
 
 };
 }// namespace hvs

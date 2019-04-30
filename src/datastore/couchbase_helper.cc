@@ -25,8 +25,10 @@ void hvs::N1qlResponse::deserialize_impl() {
 
 int hvs::CouchbaseDatastore::init() {
   if (!initilized) {
-    initilized = true;
-    return _connect(name);
+    int err = _connect(name);
+    if (!err)
+      initilized = true;
+    return err;
   }
   else {
     return 0;

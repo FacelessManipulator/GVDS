@@ -1,5 +1,8 @@
 // An example configuration file that stores information about a store.
-
+rest =
+{
+  port = 0;
+};
 // Basic store information:
 name = "Books, Movies & More";
 attr =

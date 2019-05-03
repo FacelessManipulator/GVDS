@@ -7,15 +7,15 @@
 #include "common/debug.h"
 
 // avoid config with sys/syslog.h
-#undef LOG_INFO
-#undef LOG_DEBUG
+// #undef LOG_INFO
+// #undef LOG_DEBUG
 #include "rpc/client.h"
 #include "rpc/server.h"
 #include "rpc/rpc_error.h"
-#undef LOG_INFO
-#undef LOG_DEBUG
-#define LOG_INFO 6
-#define LOG_DEBUG 7
+// #undef LOG_INFO
+// #undef LOG_DEBUG
+// #define LOG_INFO 6
+// #define LOG_DEBUG 7
 
 namespace hvs {
 class RpcServer {

@@ -32,7 +32,8 @@ Processing::Processing(my_context ctx) : my_base(ctx) {
                   worker.my_handle(), callback_event);
   worker.cur_op->op_submit = std::chrono::steady_clock::now();
   ///> call **async** op processing function
-  async_do_op(worker.cur_op, callback);
+  prepare_op(worker.cur_op);
+  do_op(worker.cur_op, callback);
 }
 
 
@@ -47,7 +48,9 @@ sc::result Processing::react(const OpComplete& op) {
   outermost_context_type& worker = outermost_context();
   worker.cur_op->op_complete = std::chrono::steady_clock::now();
   // invoked when worker turn to waiting state
-  worker.cur_op->complete_callback();
+  // call complete callbacks
+  for(auto cb : worker.cur_op->complete_callbacks)
+    cb();
   return transit<Waiting>();
 }
 

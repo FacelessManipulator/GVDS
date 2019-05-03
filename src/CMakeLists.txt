@@ -33,4 +33,5 @@ install(TARGETS hvsd
 )
 
 add_subdirectory(io_proxy)
+add_subdirectory(fuse)
 #TARGET_LINK_LIBRARIES(hvsd hello)

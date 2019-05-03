@@ -2,6 +2,7 @@
 SET(CommonSRCS
         common/Thread.cc
         log/Log.cc
+        cmdline/CmdLineProxy.cc
         config/ConfigureSettings.cc
         datastore/datastore.cc
         datastore/couchbase_helper.cc
@@ -15,6 +16,7 @@ SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         pthread
         rpc
         boost_system
+        boost_program_options
 )
 
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})

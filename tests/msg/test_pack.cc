@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "msg/pack.h"
-#include "msg/stat.h"
+#include "msg/stat_demo.h"
 #include <iostream>
 
 using namespace hvs;

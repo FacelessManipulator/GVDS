@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 #include "io_proxy/io_proxy.h"
 #include "msg/rpc.h"
-#include "msg/stat.h"
+#include "msg/stat_demo.h"
 
 #define  TFILEP "/tmp/hvs/tests/data/syncio.txt"
 

@@ -15,11 +15,13 @@ void init_context() {
     // failed to start log component
     exit(-1);
   }
-  _context->_rpc = init_rpcserver();
-  if (!_context->_rpc) {
-    // failed to start rpc component
-    exit(-1);
-  }
+  _context->_rpc = nullptr;
+  _context->_ioproxy = nullptr;
+//  _context->_rpc = init_rpcserver();
+//  if (!_context->_rpc) {
+//    // failed to start rpc component
+//    exit(-1);
+//  }
 }
 void destroy_context() {
   HvsContext* _context = HvsContext::get_context();
@@ -35,6 +37,9 @@ void destroy_context() {
   if (_context->_config != nullptr) {
     delete _context->_config;
     _context->_config = nullptr;
+  }
+  if (_context->_ioproxy != nullptr) {
+    _context->_ioproxy = nullptr;
   }
 }
 }  // namespace hvs

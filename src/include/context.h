@@ -16,6 +16,7 @@ class Log;
 class ConfigureSettings;
 class IOProxy;
 struct Node;
+class IOProxy;
 class HvsContext {
  public:
   static HvsContext* get_context() {
@@ -23,7 +24,7 @@ class HvsContext {
     return _context_p;
   }
   HvsContext()
-      : _log(nullptr), _config(nullptr), _rpc(nullptr), node(nullptr) {}
+      : _log(nullptr), _config(nullptr), _rpc(nullptr), node(nullptr), _ioproxy(nullptr) {}
 
  public:
   std::string module_name;
@@ -31,6 +32,7 @@ class HvsContext {
   ConfigureSettings* _config;
   RpcServer* _rpc;
   Node* node;
+  IOProxy* _ioproxy;
 
  private:
   static HvsContext* _context_p;

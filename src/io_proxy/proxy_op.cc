@@ -1,6 +1,6 @@
 #include "io_proxy/proxy_op.h"
 #include "context.h"
-#include "msg/stat.h"
+#include "msg/stat_demo.h"
 
 using namespace hvs;
 

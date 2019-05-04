@@ -12,6 +12,7 @@ sync_io::~sync_io() = default;
 
 int sync_io::sopen(const char *pathname, int flags, mode_t mode, OP* op) {
     int fd = open(pathname, flags, mode);
+    op->error_code = 0;
     if (fd == -1){
         perror("sync_io open");
         op->error_code = errno;
@@ -21,6 +22,7 @@ int sync_io::sopen(const char *pathname, int flags, mode_t mode, OP* op) {
 
 int sync_io::sclose(int fd, struct OP* op) {
     int ret = close(fd);
+    op->error_code = 0;
     if (ret == -1){
         perror("sync_io close");
         op->error_code = errno;
@@ -37,6 +39,7 @@ ssize_t sync_io::sread(int fd, void *buf, size_t count, off_t offset, OP* op) {
     ssize_t ret = read(fd, buf, count);
      */
     ssize_t ret = pread(fd, buf, count, offset); // 该操作是原子操作
+    op->error_code = 0;
     if (ret == -1){
         perror("sync_io read");
         op->error_code = errno;
@@ -46,6 +49,7 @@ ssize_t sync_io::sread(int fd, void *buf, size_t count, off_t offset, OP* op) {
 
 ssize_t sync_io::sread(const char *path, void *buf, size_t count, off_t offset, OP* op) {
     int fd = open(path, O_RDONLY|O_SYNC);
+    op->error_code = 0;
     if(fd == -1){
         perror("sync_io sread open");
         op->error_code = errno;
@@ -63,6 +67,7 @@ ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, str
     ssize_t ret = write(fd, buf, count);
      */
     ssize_t ret = pwrite(fd, buf, count, offset); // 该操作是原子操作
+    op->error_code = 0;
     if(ret == -1){
         perror("sync_io write");
         op->error_code = errno;
@@ -72,6 +77,7 @@ ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, str
 
 ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t offset, struct OP* op) {
     int fd = open(path, O_WRONLY|O_SYNC|O_CREAT, 0655);
+    op->error_code = 0;
     if (fd == -1){
         perror("sync_io swrite open");
         op->error_code = errno;
@@ -83,6 +89,7 @@ ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t o
 
 int sync_io::sstat(const char *pathname, IOProxyMetadataOP* op) {
     int ret = stat(pathname, op->buf);
+    op->error_code = 0;
     if (ret == -1){
         perror("sync_io stat");
         op->error_code = errno;
@@ -92,6 +99,7 @@ int sync_io::sstat(const char *pathname, IOProxyMetadataOP* op) {
 
 int sync_io::sfstat(int fd, IOProxyMetadataOP* op) {
     int ret = fstat(fd, op->buf);
+    op->error_code = 0;
     if(ret == -1){
         perror("sync_io fstat");
         op->error_code = errno;

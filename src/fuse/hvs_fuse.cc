@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <stdlib.h>
-#include "fsutils.h"
+#include "fsutils.hpp"
 using namespace hvs;
 
 /*

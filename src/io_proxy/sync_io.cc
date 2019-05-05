@@ -15,7 +15,7 @@ int sync_io::sopen(const char *pathname, int flags, mode_t mode, OP* op) {
     op->error_code = 0;
     if (fd == -1){
         perror("sync_io open");
-        op->error_code = errno;
+        op->error_code = -errno;
     }
     return fd;
 }
@@ -25,7 +25,7 @@ int sync_io::sclose(int fd, struct OP* op) {
     op->error_code = 0;
     if (ret == -1){
         perror("sync_io close");
-        op->error_code = errno;
+        op->error_code = -errno;
     }
     return ret;
 }
@@ -39,10 +39,10 @@ ssize_t sync_io::sread(int fd, void *buf, size_t count, off_t offset, OP* op) {
     ssize_t ret = read(fd, buf, count);
      */
     ssize_t ret = pread(fd, buf, count, offset); // 该操作是原子操作
-    op->error_code = 0;
+    op->error_code = static_cast<int>(ret);
     if (ret == -1){
-        perror("sync_io read");
-        op->error_code = errno;
+        perror("sync_io sread");
+        op->error_code = -errno;
     }
     return ret ;
 }
@@ -52,7 +52,7 @@ ssize_t sync_io::sread(const char *path, void *buf, size_t count, off_t offset, 
     op->error_code = 0;
     if(fd == -1){
         perror("sync_io sread open");
-        op->error_code = errno;
+        op->error_code = -errno;
     }
     ssize_t ret = sread(fd, buf, count, offset, op);
     close(fd);
@@ -67,10 +67,10 @@ ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, str
     ssize_t ret = write(fd, buf, count);
      */
     ssize_t ret = pwrite(fd, buf, count, offset); // 该操作是原子操作
-    op->error_code = 0;
+    op->error_code = static_cast<int>(ret);
     if(ret == -1){
         perror("sync_io write");
-        op->error_code = errno;
+        op->error_code = -errno;
     }
     return ret;
 }
@@ -80,7 +80,7 @@ ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t o
     op->error_code = 0;
     if (fd == -1){
         perror("sync_io swrite open");
-        op->error_code = errno;
+        op->error_code = -errno;
     }
     ssize_t ret = swrite(fd, buf, count, offset, op);
     close(fd);
@@ -92,7 +92,7 @@ int sync_io::sstat(const char *pathname, IOProxyMetadataOP* op) {
     op->error_code = 0;
     if (ret == -1){
         perror("sync_io stat");
-        op->error_code = errno;
+        op->error_code = -errno;
     }
     return ret;
 }
@@ -102,8 +102,31 @@ int sync_io::sfstat(int fd, IOProxyMetadataOP* op) {
     op->error_code = 0;
     if(ret == -1){
         perror("sync_io fstat");
-        op->error_code = errno;
+        op->error_code = -errno;
     }
     return ret;
+}
+
+int sync_io::sreaddir(const char *path, IOProxyMetadataOP *op) {
+    int ret = 0;
+    op->error_code = 0;
+    std::cout << "dirent!" << std::endl;
+    DIR *dp = opendir(path);
+    struct dirent *de;
+    if (dp == nullptr){
+        op->error_code = -errno;
+        return op->error_code;
+    }
+    de = readdir(dp);
+    if (de == nullptr) {
+        op->error_code = -errno;
+        return op->error_code;
+    }
+    do {
+        op->dirvector.emplace_back(*de); // 传送到 dirvector 之中
+        errno = 0;
+    } while ((de = readdir(dp)) != nullptr);
+    op->error_code = -errno;
+    return -op->error_code;
 }
 

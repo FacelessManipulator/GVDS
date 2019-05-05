@@ -6,8 +6,10 @@
 #include "io_proxy/io_proxy.h"
 #include "msg/rpc.h"
 #include "msg/stat_demo.h"
+#include <dirent.h>
 
 #define  TFILEP "/tmp/hvs/tests/data/syncio.txt"
+#define  TDIRP "/tmp/hvs/tests/data/"
 
 using namespace std;
 using namespace hvs;
@@ -35,7 +37,7 @@ class IOPROXYTEST : public ::testing::Test {
   IOProxy* ioproxy;
 };
 
-TEST_F(IOPROXYTEST, MetadataOP) {
+TEST_F(IOPROXYTEST, MetadataOP_stat) {
   std::weak_ptr<IOProxyMetadataOP> op_observe;
   {
     auto op = make_shared<IOProxyMetadataOP>();
@@ -52,6 +54,31 @@ TEST_F(IOPROXYTEST, MetadataOP) {
                                                                       start_t)
                     .count()
              << "ms. file inode: " << op->buf->st_ino << dendl;
+  }
+  // the buffer in op should be expired
+  usleep(100); // give some time waiting the reset of state machine
+  EXPECT_EQ(op_observe.expired(), true);
+}
+
+TEST_F(IOPROXYTEST, MetadataOP_readdir) {
+  std::weak_ptr<IOProxyMetadataOP> op_observe;
+  {
+    auto op = make_shared<IOProxyMetadataOP>();
+    op->id = 0;
+    op->operation = IOProxyMetadataOP::readdir;
+    op->path = TDIRP;
+    op->type = IO_PROXY_METADATA;
+    op_observe = op;
+    auto start_t = std::chrono::steady_clock::now();
+    ioproxy->queue_and_wait(op);
+    auto end_t = std::chrono::steady_clock::now();
+    dout(-1) << "finish metadata op in "
+             << std::chrono::duration_cast<std::chrono::milliseconds>(end_t -
+                                                                      start_t)
+                     .count()<< dendl;
+    for (struct dirent p : op->dirvector){
+      std::cout << p.d_name << std::endl;
+    }
   }
   // the buffer in op should be expired
   usleep(100); // give some time waiting the reset of state machine
@@ -139,7 +166,7 @@ TEST_F(IOPROXYTEST, WRITE) {
 TEST_F(IOPROXYTEST, READ) {
   atomic_long cnt = 0;
   long timeout = 3000000;  // timeout 3s
-  long times = 10000;
+  long times = 1;
   std::string data("hello!");
   auto start_t = std::chrono::steady_clock::now();
   for (int i = 0; i < times; i++) {
@@ -151,7 +178,8 @@ TEST_F(IOPROXYTEST, READ) {
     op->should_prepare = true;
     op->size = data.size();
     op->complete_callbacks.emplace_back([&]() { ++cnt; });
-    ioproxy->queue_op(op);
+    ioproxy->queue_and_wait(op);
+    std::cout << "当前内容！：" << op->obuf << std::endl;
     // EXPECT_STREQ(data.c_str(), op->obuf);
   }
   while (cnt < times && timeout >= 0) {

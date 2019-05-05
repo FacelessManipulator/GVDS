@@ -7,6 +7,8 @@
 #include <list>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
+#include <vector>
 
 // generic op class
 namespace hvs {
@@ -20,7 +22,7 @@ enum OPType {
 
 struct OP {
   OPType type;
-  uint64_t id;  // not global unique
+  uint64_t id; // not global unique
   int error_code;
   bool should_prepare;
 
@@ -39,11 +41,14 @@ struct IOProxyMetadataOP : public OP {
   enum Operation {
     stat,
     open,
+    readdir,
     // TODO: finish the other metadata operations
   };
   Operation operation;
   const char* path;
   struct stat* buf; // return value pointer
+  // readdir data
+  std::vector<struct dirent> dirvector;
   IOProxyMetadataOP() :buf(nullptr) { should_prepare = true; }
   ~IOProxyMetadataOP() {
     if(buf)

@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <dirent.h>
 #include "msg/op.h"
 namespace  hvs{
     class sync_io {
@@ -28,8 +29,8 @@ namespace  hvs{
 
         void mkdir(){}; // 创建目录
         void rmdir(){}; // 删除目录
-        void opendir(){}; // 打开目录
-        void readdir(){}; // 读目录
+        void sopendir(){}; // 打开目录
+        int sreaddir(const char* path, IOProxyMetadataOP* op); // 读目录
         void releasedir(){}; // 释放目录
         void fsyncdir(){}; // 同步目录
 

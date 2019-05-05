@@ -51,8 +51,21 @@ void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
 int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
   //  dout(5) << "async do op: " << op->id << dendl;
   sync_io func_sync_io;
-//  op->error_code = stat(op->path, op->buf);
-  func_sync_io.sstat(op->path, op);
+  switch (op->operation){
+    case IOProxyMetadataOP::stat: {
+      func_sync_io.sstat(op->path, op);
+      break;
+    }
+    case IOProxyMetadataOP::open:{
+      break;
+    }
+    case IOProxyMetadataOP::readdir: {
+      func_sync_io.sreaddir(op->path, op);
+      break;
+    }
+    default:
+      break;
+  }
   return op->error_code;
 }
 

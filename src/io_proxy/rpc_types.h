@@ -7,6 +7,7 @@
 #define HVSONE_RPC_TYPES_H
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 namespace hvs{
     struct ioproxy_rpc_statbuffer {
         int error_code;
@@ -46,10 +47,44 @@ namespace hvs{
             st_ctim_tv_sec = static_cast<int>(st->st_ctim.tv_sec);
         }
         ioproxy_rpc_statbuffer():error_code(-1) {}
-        ioproxy_rpc_statbuffer(int i): error_code(i){/*当反回值error_code为大于0值的时候，表示产生了错误*/}
+        ioproxy_rpc_statbuffer(int i): error_code(i){/*当反回值error_code为小于0值的时候，表示产生了错误*/}
         MSGPACK_DEFINE_ARRAY(error_code, st_dev, st_ino, st_mode, st_nlink, st_uid, st_gid, st_rdev,
                              st_size, st_blksize, st_blocks, st_atim_tv_nsec, st_atim_tv_sec, st_mtim_tv_nsec, st_mtim_tv_sec,
                              st_ctim_tv_nsec, st_ctim_tv_sec)
+    };
+
+    struct ioproxy_rpc_readbuffer {
+        int error_code;
+        std::string buf;
+        int size;
+        ioproxy_rpc_readbuffer(const char* buffer, int _size){
+            error_code = 0;
+            buf = buffer;
+            size = _size;
+        }
+        ioproxy_rpc_readbuffer():error_code(-1) {}
+        ioproxy_rpc_readbuffer(int i): error_code(i){/*当反回值error_code为小于0值的时候，表示产生了错误*/}
+        MSGPACK_DEFINE_ARRAY(error_code, buf, size);
+    };
+
+    struct ioproxy_rpc_dirent {
+        int error_code;
+        int d_ino;
+        int d_off;
+        unsigned short d_reclen;
+        unsigned char dtype;
+        std::string d_name;
+        ioproxy_rpc_dirent(struct dirent *ent){
+            error_code = 0;
+            d_ino = static_cast<int>(ent->d_ino);
+            d_off = static_cast<int>(ent->d_off);
+            d_reclen = ent -> d_reclen;
+            dtype = ent -> d_type;
+            d_name = ent -> d_name;
+        }
+        ioproxy_rpc_dirent():error_code(-1) {}
+        ioproxy_rpc_dirent(int i): error_code(i){/*当反回值error_code为小于0值的时候，表示产生了错误*/}
+        MSGPACK_DEFINE_ARRAY(error_code, d_ino, d_off, d_reclen, dtype, d_name);
     };
 }
 

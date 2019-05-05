@@ -17,6 +17,7 @@ void init_context() {
   }
   _context->_rpc = nullptr;
   _context->_ioproxy = nullptr;
+  _context->ioproxy_rootdir = "/tmp/hvs/tests/data";
 //  _context->_rpc = init_rpcserver();
 //  if (!_context->_rpc) {
 //    // failed to start rpc component

@@ -12,7 +12,8 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <stdlib.h>
-#include "fsutils.hpp"
+#include "fsutils_rpc.hpp"
+
 using namespace hvs;
 
 /*
@@ -26,8 +27,7 @@ int main(/*int argc, char* argv[]*/) {
 //                    const_cast<char *>("/home/yaowen/fuse/mountpoint"), const_cast<char *>("--help")};
     // normal
     int argc = 3;
-    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("--rootdir=/home/yaowen/fuse/rootdir"),
-                    const_cast<char *>("/home/yaowen/fuse/mountpoint")};
+    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("-f"), const_cast<char *>("/home/yaowen/fuse/mountpoint")};
     //--version
 //    int argc = 4;
 //    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("--rootdir=/home/yaowen/fuse/rootdir"),
@@ -40,10 +40,9 @@ int main(/*int argc, char* argv[]*/) {
     //data
     struct hvsfs_state *hvs_data;
     int fuse_stat = 0;
-
+    hvs_init();
     //options
     const struct fuse_opt option_spec[] = {
-            OPTION("--rootdir=%s", rootdir),
             OPTION("-h", show_help),
             OPTION("--help", show_help),
             OPTION("-v", show_version),
@@ -56,14 +55,14 @@ int main(/*int argc, char* argv[]*/) {
         return 1;
     }
 
-    if ((argc < 3) || opt.show_help){
+    if ((argc < 2) || opt.show_help){
         //help info
         hvsfs_usage();
         fuse_opt_add_arg(&args, "--help");
         args.argv[0][0] = '\0';
     }
 
-    if ((argc < 3) || opt.show_version){
+    if ((argc < 2) || opt.show_version){
         //version info
         fuse_opt_add_arg(&args, "--help");
         version_info();
@@ -79,7 +78,6 @@ int main(/*int argc, char* argv[]*/) {
 
     //private data
     hvs_data =  new(hvs::hvsfs_state);
-    hvs_data->rootdir = realpath(opt.rootdir, nullptr);
     hvs_data->logfile = log_open();
 
     //fuse_main function

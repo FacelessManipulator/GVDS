@@ -3,6 +3,7 @@
 // 北航系统结构所-存储组
 //
 
+#include <context.h>
 #include "sync_io.h"
 using namespace hvs;
 
@@ -88,6 +89,7 @@ ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t o
 }
 
 int sync_io::sstat(const char *pathname, IOProxyMetadataOP* op) {
+//    std::cout << pathname << std::endl;
     int ret = stat(pathname, op->buf);
     op->error_code = 0;
     if (ret == -1){
@@ -110,7 +112,7 @@ int sync_io::sfstat(int fd, IOProxyMetadataOP* op) {
 int sync_io::sreaddir(const char *path, IOProxyMetadataOP *op) {
     int ret = 0;
     op->error_code = 0;
-    std::cout << "dirent!" << std::endl;
+//    std::cout << "dirent!" << std::endl;
     DIR *dp = opendir(path);
     struct dirent *de;
     if (dp == nullptr){
@@ -129,4 +131,10 @@ int sync_io::sreaddir(const char *path, IOProxyMetadataOP *op) {
     op->error_code = -errno;
     return -op->error_code;
 }
+
+//void sync_io::hvsfs_fullpath(char *fpath, const char *path) {
+//    // 此函数用来拼接路径。
+//    strcpy(fpath, hvs::HvsContext::get_context()->ioproxy_rootdir.c_str());
+//    strncat(fpath, path, PATH_MAX);
+//}
 

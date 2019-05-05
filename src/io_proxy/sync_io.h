@@ -66,6 +66,8 @@ namespace  hvs{
         void listxattr(){}; // 列出 xattr
         void setxattr(){}; // 设置 xattr
         void removexattr(){}; // 移除 xattr
+//    private:
+//        void hvsfs_fullpath(char fpath[PATH_MAX], const char *path);
     };
 }
 

@@ -16,8 +16,8 @@
 #include <dirent.h>
 using namespace std;
 using namespace hvs;
-#define  TFILEP "/tmp/hvs/tests/data/syncio.txt"
-#define  TDIRP "/tmp/hvs/tests/data/"
+#define  TFILEP "/syncio.txt"
+#define  TDIRP "/."
 
 TEST(IOProxyRPC, yx_ioproxy_simple) {
     hvs::init_context();

@@ -36,6 +36,8 @@ void init(){
     // 绑定 rpc 函数
     hvs_ioproxy_rpc_bind(hvs::HvsContext::get_context()->_rpc);
     ioproxy = static_cast<hvs::IOProxy*>(hvs::HvsContext::get_context()->node);
+    // 设置IO代理根文件夹
+    hvs::HvsContext::get_context()->ioproxy_rootdir = "/tmp/hvs/tests/data";
 }
 
 void destroy(){

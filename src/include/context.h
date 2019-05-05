@@ -33,6 +33,7 @@ class HvsContext {
   RpcServer* _rpc;
   Node* node;
   IOProxy* _ioproxy;
+  std::string ioproxy_rootdir;
 
  private:
   static HvsContext* _context_p;

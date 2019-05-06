@@ -3,5 +3,5 @@ cmake_policy(SET CMP0057 NEW) # if IN_LIST
 ADD_SUBDIRECTORY(datastore)
 ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(account)
-
+ADD_SUBDIRECTORY(zone)
 

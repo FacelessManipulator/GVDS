@@ -80,6 +80,12 @@ void RestServer::setupRoutes() {
     Routes::Post(router, "/users/registration", Routes::bind(&UserModelServer::UserRegisterRest, UserModelServer::getInstance()));
     Routes::Post(router, "/users/login", Routes::bind(&UserModelServer::UserLoginRest, UserModelServer::getInstance()));
 
+    Routes::Post(router, "/zone/rename", Routes::bind(&ZoneServer::ZoneRenameRest, ZoneServer::getInstance()));
+    Routes::Post(router, "/zone/locate", Routes::bind(&ZoneServer::GetZoneLocateInfoRest, ZoneServer::getInstance()));
+    Routes::Post(router, "/zone/info", Routes::bind(&ZoneServer::GetZoneInfoRest, ZoneServer::getInstance()));
+    Routes::Post(router, "/zone/share", Routes::bind(&ZoneServer::ZoneShareRest, ZoneServer::getInstance()));
+    Routes::Post(router, "/zone/sharecancel", Routes::bind(&ZoneServer::ZoneShareCancelRest, ZoneServer::getInstance()));
+    Routes::Post(router, "/zone/cancel", Routes::bind(&ZoneServer::ZoneCancelRest, ZoneServer::getInstance()));
 }
 
 

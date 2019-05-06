@@ -19,6 +19,7 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 #include <pistache/endpoint.h>
 
 #include "usermodel/UserModelServer.h"
+#include "zone/ZoneServer.h"
 #include "common/Thread.h"
 
 using namespace std;

@@ -31,13 +31,14 @@ class Datastore {
   virtual std::string get_typename() { return "NULL"; }
   virtual int init() { return 0; };
   virtual int set(const std::string& key,
-                  std::string& value){};  // not implement
+                  const std::string& value){};  // not implement
   virtual int set(const std::string& key, const std::string& subpath,
-                  std::string& value){};
+                  const std::string& value){};
   virtual std::tuple<std::shared_ptr<std::string>, int> get(
       const std::string& key){};
   virtual std::tuple<std::shared_ptr<std::string>, int> get(
       const std::string& key, const std::string& subpath){};
+  virtual bool exist(const std::string& key, const std::string& path){};
   virtual int remove(const std::string& key){};
 };
 

@@ -1,11 +1,11 @@
 #pragma once
 
+#include <hvsdef.h>
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <map>
 #include <string>
 #include <vector>
-#include <hvsdef.h>
 
 #define SUCCESS 0
 #define ERROR_INCORRECT_TYPE 111
@@ -59,19 +59,20 @@ class JsonSerializer {
     _writer = new rapidjson::Writer<rapidjson::StringBuffer>(*_buffer);
   }
   JsonSerializer(JsonSerializer& oths) {
-    _writer = oths._writer;
-    _buffer = oths._buffer;
     // there is no need to support json value copying
     // _jsonValue.CopyFrom(oths._jsonValue, ALLOCATOR);
   }
-  JsonSerializer(JsonSerializer&& oths) {
-    _writer = oths._writer;
-    _buffer = oths._buffer;
-    _jsonValue = oths._jsonValue;
-  }
+  JsonSerializer(JsonSerializer&& oths) {}
   ~JsonSerializer() {
     delete _writer;
     delete _buffer;
+  }
+
+  void clear() {
+    delete _writer;
+    delete _buffer;
+    _buffer = new rapidjson::StringBuffer();
+    _writer = new rapidjson::Writer<rapidjson::StringBuffer>(*_buffer);
   }
 
  protected:
@@ -88,11 +89,6 @@ class JsonSerializer {
       return true;
     }
     return false;
-  }
-
-  void clear() {
-    _buffer->Clear();
-    _writer->Reset(*_buffer);
   }
 
   virtual void serialize_impl(){};

@@ -11,7 +11,6 @@ void init_context() {
     exit(-1);
   }
   _context->_log = init_logger();
-  _context->_rest = init_rest();
   if (!_context->_log) {
     // failed to start log component
     exit(-1);
@@ -31,7 +30,6 @@ void destroy_context() {
   }
   if (_context->_log != nullptr) {
     stop_log(_context->_log);
-    stop_rest(_context->_rest);
     _context->_log = nullptr;
   }
   if (_context->_config != nullptr) {

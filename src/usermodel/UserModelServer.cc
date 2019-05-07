@@ -31,6 +31,26 @@ using namespace std;
 namespace hvs{
 UserModelServer* UserModelServer::instance = nullptr;
 
+bool UserModelServer::auth_token(const Rest::Request& request) {
+  std::string name;
+  std::string mtoken;
+  auto cookies = request.cookies();
+  for (const auto& c : cookies) {
+    // std::cout << c.name << " = " << c.value << std::endl;
+    name = c.name;
+    mtoken = c.value;
+  }
+  std::shared_ptr<hvs::CouchbaseDatastore> f2_dbPtr =
+      std::make_shared<hvs::CouchbaseDatastore>(
+          hvs::CouchbaseDatastore("token_info"));
+  f2_dbPtr->init();
+
+  auto [vp, err] = f2_dbPtr->get(mtoken);
+  if (err) {       //!=0
+    return false;  //验证失败
+  }
+  return true;  //验证成功
+}
 
 //账户注册
 void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
@@ -114,7 +134,7 @@ string UserModelServer::UserRegister(Account &person){
 void UserModelServer::UserLoginRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: UserLoginRest ======"<< endl;
     //=====
-    printCookies(request);
+    // printCookies(request);
     //=====
     auto info = request.body(); 
     cout << info << endl;   //账户名，密码

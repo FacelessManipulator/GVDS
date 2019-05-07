@@ -17,23 +17,30 @@ g++ UserModelClient.cc -lpistache  -std=c++11 -o userclient
 #include <pistache/http.h>
 #include <pistache/net.h>
 #include <atomic>
+#include "manager/manager.h"
 
 using namespace Pistache;
 using namespace Pistache::Http;
 using namespace hvs;
+using namespace std;
 
 class HVSAggregateTest : public ::testing::Test {
  protected:
-  void SetUp() override {}
+  void SetUp() override {
+    manager = static_cast<Manager*>(HvsContext::get_context()->node);
+    port = manager->rest_port();
+    ASSERT_NE(manager, nullptr);
+    }
   void TearDown() override {}
   static void SetUpTestCase() {
     hvs::init_context();
-    port = HvsContext::get_context()->_rest->getPort();
+    hvs::init_manager();
   }
   static void TearDownTestCase() { hvs::destroy_context(); }
 
  public:
   static int port;
+  Manager* manager;
 };
 
 int HVSAggregateTest::port = 0;
@@ -44,7 +51,7 @@ TEST_F(HVSAggregateTest, registration) {
   // 第二个参数传地址 第三个参数传请求数量 默认1
   char page_url[128];
   snprintf(page_url, 128, "http://localhost:%d/resource/register", port);
-  std::string page(page_url); // /resource/logout
+  std::string page(page_url);  // /resource/logout
   int count = 1;
 
   Http::Client client;
@@ -107,7 +114,7 @@ TEST_F(HVSAggregateTest, logout) {
   // 第二个参数传地址 第三个参数传请求数量 默认1
   char page_url[128];
   snprintf(page_url, 128, "http://localhost:%d/resource/logout", port);
-  std::string page(page_url); // /resource/logout
+  std::string page(page_url);  // /resource/logout
   int count = 1;
 
   Http::Client client;

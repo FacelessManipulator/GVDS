@@ -23,15 +23,8 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 using namespace std;
 using namespace Pistache;
 
-void printCookies(const Http::Request& req);
-void CtrlStop(int signo);
-bool auth_token(const Rest::Request& request);
-
-namespace Generic {
-void handleReady(const Rest::Request&, Http::ResponseWriter response);
-}
-
 namespace hvs {
+class Manager;
 
 class RestServer : public Thread {
   void* entry() override;
@@ -48,16 +41,10 @@ class RestServer : public Thread {
   }
 
  private:
-  void setupRoutes();  //[原始函数]
-
-  // void doRecordMetric(const Rest::Request& request, Http::ResponseWriter
-  // response) void doGetMetric(const Rest::Request& request,
-  // Http::ResponseWriter response)
-
-  void doAuth(const Rest::Request& request, Http::ResponseWriter response);
 
   std::shared_ptr<Http::Endpoint> httpEndpoint;
   Rest::Router router;
+  friend class Manager;
 };
 extern RestServer* init_rest();           //[后加函数]
 extern void stop_rest(RestServer* rest);  //[后加函数]

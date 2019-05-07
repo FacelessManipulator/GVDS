@@ -244,6 +244,7 @@ void Log::_flush(std::queue<EntryPtr> *t) {
       }
 
       if (do_stderr) {
+        line[line_used] = 0;
         std::cerr << m_log_stderr_prefix << line << std::endl;
       }
 

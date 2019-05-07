@@ -13,7 +13,6 @@
 namespace hvs {
 class RpcServer;
 class Log;
-class RestServer;
 class ConfigureSettings;
 class IOProxy;
 struct Node;
@@ -29,7 +28,6 @@ class HvsContext {
  public:
   std::string module_name;
   Log* _log;
-  RestServer* _rest;
   ConfigureSettings* _config;
   RpcServer* _rpc;
   Node* node;
@@ -47,4 +45,3 @@ extern void destroy_context();
 #include "log/Log.h"
 #include "msg/node.h"
 #include "msg/rpc.h"
-#include "common/RestServer.h"

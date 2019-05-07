@@ -6,6 +6,7 @@
 
 using namespace hvs;
 using namespace Pistache;
+using namespace std;
 
 AggregationServer* AggregationServer::instance = nullptr;
 AggregationServer::AggregationServer() {

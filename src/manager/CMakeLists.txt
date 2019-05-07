@@ -1,0 +1,5 @@
+GET_PROPERTY(HVSCOMMOM_DEPENDS_ON GLOBAL PROPERTY "HVSCOMMOM_DEPENDS_ON")
+
+ADD_LIBRARY(managerO OBJECT ioproxy_mgr.cc manager.cc)
+
+# TARGET_LINK_LIBRARIES(io_proxy  hvscommon ${HVSCOMMOM_DEPENDS_ON} boost_thread boost_system)

@@ -18,7 +18,8 @@ void RestServer::start() {
 void RestServer::shutdown() {
   if (is_started()) {
     httpEndpoint->shutdown();
-    join();
+    // TODO: SHOULD BE FIXED!!!
+//    join();
   }
 }
 

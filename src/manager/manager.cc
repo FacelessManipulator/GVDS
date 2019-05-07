@@ -35,6 +35,7 @@ void Manager::start() {
   }
   m_stop = false;
   restserver->start();
+  create("Manager");
 }
 
 void Manager::stop() {

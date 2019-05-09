@@ -5,7 +5,7 @@
 //#include <uuid/uuid.h>
 
 #include <algorithm>
-//#include "space/Space.h"
+#include "space/Space.h"
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
 #include "context.h"

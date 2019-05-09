@@ -10,7 +10,7 @@
 
 
 #include "datastore/couchbase_helper.h"
-//#include "zone/Zone.h"
+#include "zone/Zone.h"
 #include "space/SpaceServer.h"
 #include "zone/Zone.h"
 //class Account;//没懂

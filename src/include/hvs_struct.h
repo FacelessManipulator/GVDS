@@ -6,6 +6,11 @@
 #include "common/json.h"
 
 namespace hvs {
+
+struct NodeStatistics {
+  
+};
+
 struct IOProxyNode : public hvs::JsonSerializer {
   enum Status {
     Running = 0,

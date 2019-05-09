@@ -96,7 +96,7 @@ void ZoneRegisterReq::serialize_impl()   {
     put("spa_name", spaceName);
     put("size", spaceSize);
     put("path", spacePathInfo);
-    put("managenode", globalManageNodeInfo);
+    //put("managenode", globalManageNodeInfo);
 }
 
 void ZoneRegisterReq::deserialize_impl()   {
@@ -106,7 +106,7 @@ void ZoneRegisterReq::deserialize_impl()   {
     get("spa_name", spaceName);
     get("size", spaceSize);
     get("path", spacePathInfo);
-    get("managenode", globalManageNodeInfo);
+    //get("managenode", globalManageNodeInfo);
 }
 
 void ZoneCancelReq::serialize_impl()   {

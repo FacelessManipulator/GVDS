@@ -5,6 +5,10 @@
 #include <pistache/router.h>
 #include <pistache/endpoint.h>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+
 #include <iostream>
 #include <map>
 
@@ -52,7 +56,7 @@ public:
     //区域注册模块：区域注册接口
     void ZoneRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     int ZoneRegister(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
-                     std::string spaceName, int64_t spaceSize, std::string spacePathInfo, std::string globalManageNodeInfo);
+                     std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
 
     //区域注销模块：区域注销接口
     void ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response);

@@ -133,7 +133,7 @@ class ZoneRegisterReq : public hvs::JsonSerializer {
     std::string spaceName;
     int64_t spaceSize;
     std::string spacePathInfo;
-    std::string globalManageNodeInfo;
+    //std::string globalManageNodeInfo;
 
  public:
   void serialize_impl() override;

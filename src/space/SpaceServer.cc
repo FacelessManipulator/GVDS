@@ -55,6 +55,33 @@ void SpaceServer::GetSpaceInfo(std::string &result_s, std::vector<std::string> s
     result_s = tmp_si.serialize();
 }
 
+std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo)
+{
+    Space tmps;
+    std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+          hvs::CouchbaseDatastore("space_info"));
+    spacePtr->init();
+    SpaceMetaData tmpm;
+    tmpm.deserialize(spacePathInfo);
+    //1、判断是否可以创建空间，将host和storage的name转换成ID
+    //2、获取账户映射信息，创建空间目录
+    //3、权限增加模块
+    //4、空间分配容量记录
+    //5、写入数据库
+    tmps.spaceName = spaceName;
+    tmps.spaceSize = spaceSize;
+    tmps.hostCenterID = tmpm.hostCenterName;
+    tmps.storageSrcID = tmpm.storageSrcName;//需要转换成ID；
+    tmps.spacePath = tmpm.spacePath;
+    boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+    const std::string tmp_uuid = oost::uuids::to_string(a_uuid);
+    tmps.spaceID = tmp_uuid;
+    std::string tmps_key = spaceID;
+    std::string tmps_value = tmps.serialize();
+    spacePtr->set(tmps_key, tmps_value);
+    return spaceID;
+}
+
 int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)
 {
     Space tmps;

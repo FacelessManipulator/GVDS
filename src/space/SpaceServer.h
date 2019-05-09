@@ -5,6 +5,10 @@
 #include <pistache/router.h>
 #include <pistache/endpoint.h>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+
 #include <iostream>
 #include <map>
 
@@ -33,8 +37,12 @@ public:
     //空间信息检索模块：空间信息检索接口
     void GetSpaceInfo(std::string &result_s, std::vector<std::string> spaceID);
 
+    //空间创建模块：空间创建接口
+    std::string SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);
+    
     //空间删除模块：空间删除接口；
     int SpaceDelete(std::vector<std::string> spaceID);
+
 
 /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);

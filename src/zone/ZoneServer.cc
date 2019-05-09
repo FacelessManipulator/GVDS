@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <stdio.h>
-#include <uuid/uuid.h>
 #include "common/JsonSerializer.h"
 #include "context.h"
 #include "datastore/datastore.h"
@@ -340,7 +339,7 @@ int ZoneServer::ZoneShareCancel(std::string zoneID, std::string ownerID, std::ve
   else return -1;
 }
 
-/*
+
 void ZoneServer::ZoneRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
   std::cout << "====== start ZoneServer function: ZoneRegisterRest ======"<< std::endl;
   auto info = request.body();
@@ -351,20 +350,20 @@ void ZoneServer::ZoneRegisterRest(const Rest::Request& request, Http::ResponseWr
   std::vector<std::string> memberID = req.memberID;
   std::string spaceName = req.spaceName;
   int64_t spaceSize = req.spaceSize;
-  std::string spacePathInfo = req.spacePathInfo;
-  std::string globalManageNodeInfo =req.globalManageNodeInfo;
+  std::string spacePathInfo = req.spacePathInfo;//spacemetadata类，在客户端序列化为string。
+  //std::string globalManageNodeInfo =req.globalManageNodeInfo;客户端判断
 
-  int result_i = ZoneRegister(zoneName, ownerID, memberID, spaceName, spaceSize, spacePathInfo,
-                              globalManageNodeInfo);
+  int result_i = ZoneRegister(zoneName, ownerID, memberID, spaceName, spaceSize, spacePathInfo);
+  std::string result;
   if (result_i == 0)
-  std::string result = "success";
+  result = "success";
   else result = "fail";
 
   response.send(Http::Code::Ok, result); //point
   std::cout << "====== end ZoneServer function: ZoneRegisterRest ======"<< std::endl;
 }
 int ZoneServer::ZoneRegister(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
-    std::string spaceName, int64_t spaceSize, std::string spacePathInfo, std::string globalManageNodeInfo)
+    std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
 {
   Zone tmp;
   std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -372,38 +371,40 @@ int ZoneServer::ZoneRegister(std::string zoneName, std::string ownerID, std::vec
   zonePtr->init();
   SpaceMetaData tmp_smd;
   tmp_smd.deserialize(spacePathInfo);
-  if(tmp_smd.hostCenterID.empty())
+  
+  // if(tmp_smd.hostCenterID.empty())
+  // {
+  // }
+  // else
+  // {
+  // }在客户端判断
+
+  //1、调用spacecreate接口（涉及到跨域创建空间的情况，则返还客户端，并再次发送）
+  //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位
+  //2、调用权限模块
+  SpaceServer* tmp_server = hvs::SpaceServer::getInstance();
+  std::string res_sc = tmp_server->SpaceCreate(spaceName, ownerID, memberID, spaceSize, spacePathInfo);
+  if (res_sc == "false")
   {
-    //1、调用spacecreate接口，考虑用rest方式（涉及到跨域创建空间的情况）
-    //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位
-    //或者在某一超算用空间算法选定，转发
+    return -1;
   }
   else
   {
-    //调用空间模块
+    std::string spaceID = res_sc;
+    boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+    const std::string tmp_uuid = oost::uuids::to_string(a_uuid);
+    tmp.zoneID = tmp_uuid;
+    tmp.zoneName = zoneName;
+    tmp.ownerID = ownerID;
+    tmp.memberID = memberID;
+    tmp.spaceID.emplace_back(spaceID);
+
+    std::string tmp_key(tmp.zoneID);
+    std::string tmp_value = tmp.serialize();
+    zonePtr->set(tmp_key, tmp_value);
+    return 0;
   }
-  //2、调用权限模块
-  uuid_t spaceID_uu;
-  uuid_generate(spaceID_uu);
-  char* uus;
-  uuid_unprase(spaceID_uu, uus);
-  std::string spaceID(uus);//加入空间创建函数中
-
-  uuid_t zoneID_uu;
-  uuid_generate(zoneID_uu);
-  char* uu;
-  uuid_unprase(zoneID_uu, uu);
-  tmp.zoneID = uu;
-  tmp.zoneName = zoneName;
-  tmp.ownerID = ownerID;
-  tmp.memberID = memberID;
-  tmp.spaceID.emplace_back(spaceID);
-
-  std::string tmp_key(tmp.zoneID);
-  std::string tmp_value = tmp.serialize();
-  zonePtr->set(tmp_key, tmp_value);
-  return 0;
-}*/
+}
 
 
 void ZoneServer::ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response){

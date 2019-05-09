@@ -1,5 +1,4 @@
 #include <iostream>
-#include <uuid/uuid.h>
 #include "zone/Zone.h"
 #include "zone/ZoneServer.h"
 #include "common/JsonSerializer.h"
@@ -158,7 +157,7 @@ TEST_F(HVSZoneTest, GetInfo) {
     cout<< "******start client: getzoneinfo ******"<<endl;
 
     // 第二个参数传地址 第三个参数传请求数量 默认1
-    std::string page = "http://localhost:9080/zone/getzoneinfo";//gai
+    std::string page = "http://localhost:9080/zone/info";//gai
     int count = 1;
 
     Http::Client client;
@@ -337,8 +336,77 @@ TEST_F(HVSZoneTest, ShareCancel) {
     cout<< "******endl client: zonesharecancel ******"<<endl;
 }*/
 
+TEST_F(HVSZoneTest, ZoneRegister) {
+    cout<< "******start client: zoneregister ******"<<endl;
+
+    // 第二个参数传地址 第三个参数传请求数量 默认1
+    std::string page = "http://localhost:9080/zone/register";//gai
+    int count = 1;
+
+    Http::Client client;
+
+    auto opts = Http::Client::options()
+        .threads(1)
+        .maxConnectionsPerHost(8);
+    client.init(opts);
+
+    std::vector<Async::Promise<Http::Response>> responses;
+
+    std::atomic<size_t> completedRequests(0);
+    std::atomic<size_t> failedRequests(0);
+
+    //计时
+    auto start = std::chrono::steady_clock::now();
+
+    ZoneRegisterReq req;
+    req.zoneName = "syzone";
+    req.ownerID = "123";
+    req.memberID.emplace_back("124");
+    req.memberID.emplace_back("125");
+    req.spaceName = "beijingspace";
+    req.spaceSize = 100;
+    SpaceMetaData tmpm;
+    tmpm.hostCenterName = "beijing"
+    req.spacePathInfo = tmpm.serialize();
+
+    std::string value = req.serialize();
+
+    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(value).send();
+    resp.then([&](Http::Response response) {
+            ++completedRequests;
+        std::cout << "Response code = " << response.code() << std::endl;
+        //response body
+        auto body = response.body();
+        if (!body.empty()){
+            std::cout << "Response body = " << body << std::endl;
+            //====================
+            //your code write here
+
+            //====================
+        }
+    }, Async::IgnoreException);
+    responses.push_back(std::move(resp));
+
+    auto sync = Async::whenAll(responses.begin(), responses.end());
+    Async::Barrier<std::vector<Http::Response>> barrier(sync);
+    barrier.wait_for(std::chrono::seconds(5));
+
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Summary of execution" << std::endl
+              << "Total number of requests sent     : " << count << std::endl
+              << "Total number of responses received: " << completedRequests.load() << std::endl
+              << "Total number of requests failed   : " << failedRequests.load() << std::endl
+              << "Total time of execution           : "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+
+    client.shutdown();
+
+    cout<< "******endl client: zonecancel ******"<<endl;
+}
+
+/*
 TEST_F(HVSZoneTest, ZoneCancel) {
-    cout<< "******start client: zoneancel ******"<<endl;
+    cout<< "******start client: zonecancel ******"<<endl;
 
     // 第二个参数传地址 第三个参数传请求数量 默认1
     std::string page = "http://localhost:9080/zone/cancel";//gai
@@ -397,7 +465,10 @@ TEST_F(HVSZoneTest, ZoneCancel) {
     client.shutdown();
 
     cout<< "******endl client: zonecancel ******"<<endl;
-}
+}*/
+
+
+
 // TEST_F(HVSZoneTest, 123)
 // {
 //     Space tmps;

@@ -46,6 +46,8 @@ public:
     void modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string modifyUserinfo(Account &person);
 
+    bool auth_token(const Rest::Request& request);
+
  //--------------------------------------------
 private:
     UserModelServer() = default;

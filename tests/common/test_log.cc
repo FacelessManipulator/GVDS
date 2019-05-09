@@ -1,24 +1,27 @@
 #include "common/Thread.h"
-#include "common/debug.h"
+#include "context.h"
 #include "gtest/gtest.h"
-#include "include/context.h"
 #include "log/Log.h"
 
 using namespace hvs;
 
 class LogTest : public ::testing::Test {
- protected:
-  void SetUp() override {}
-  void TearDown() override {}
-  static void SetUpTestCase() { hvs::init_context(); }
-  static void TearDownTestCase() { hvs::destroy_context(); }
+protected:
+    void SetUp() override {
+        init_context();
+        log = HvsContext::get_context()->_log;
+    }
+    void TearDown() override {
+        destroy_context();
+        log = nullptr;
+    }
 
- public:
+public:
+    Log* log;
 };
 
 TEST_F(LogTest, Simple) {
-  auto log = hvs::HvsContext::get_context()->_log;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     hvs::EntryPtr e = log->create_entry(1, "hello world");
     log->submit_entry(e);
   }
@@ -26,7 +29,7 @@ TEST_F(LogTest, Simple) {
 }
 
 TEST_F(LogTest, Dout) {
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     dout(1) << "hello Dout" << dendl;
   }
   // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");

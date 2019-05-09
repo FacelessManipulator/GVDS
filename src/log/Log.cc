@@ -7,7 +7,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <iostream>
-
+#include <context.h>
 #include <assert.h>
 
 #include "log/Entry.h"
@@ -42,11 +42,22 @@ int Log::append_time(const Log::log_lock::time_point &t, char *out,
 
 hvs::Log *init_logger() {
   // TODO: use config module to get log path
-  std::string log_path = "/tmp/hvs.test.log";
+  auto _config = HvsContext::get_context()->_config;
+  auto log_path = _config->get<std::string>("log.path");
+  auto log_level = _config->get<int>("log.level");
+  if (!log_path) {
+    std::cerr << "Log error: invalid log path." << std::endl;
+  } else if(!log_level) {
+    std::cerr << "Log error: invalid log level." << std::endl;
+  } else {
+    // success, pass
+  }
   hvs::Log *log = new hvs::Log;
-  log->set_log_file(log_path);
-  log->set_log_level(20);
-  log->reopen_log_file();
+  log->set_log_file(*log_path);
+  log->set_log_level(*log_level);
+  if (!log->reopen_log_file()) {
+    return nullptr;
+  }
   log->start();
   return log;
 }
@@ -104,19 +115,21 @@ void Log::set_log_stderr_prefix(const std::string &p) {
   m_log_stderr_prefix = p;
 }
 
-void Log::reopen_log_file() {
+bool Log::reopen_log_file() {
   pthread_mutex_lock(&m_flush_mutex);
   m_flush_mutex_holder = pthread_self();
   if (m_fstream.is_open()) m_fstream.close();
   if (m_log_file.length()) {
     m_fstream.open(m_log_file, std::ios_base::app | std::ios_base::out);
-    if (m_fstream.bad()) {
+    if (!m_fstream.is_open() || m_fstream.bad()) {
       std::cerr << "failed to open log file " << m_log_file << ": "
                 << strerror(errno) << std::endl;
+      return false;
     }
   }
   m_flush_mutex_holder = 0;
   pthread_mutex_unlock(&m_flush_mutex);
+  return true;
 }
 
 void Log::set_syslog_level(int log) {
@@ -227,10 +240,11 @@ void Log::_flush(std::queue<EntryPtr> *t) {
       assert(line_used < line_size);
 
       if (do_syslog) {
-        syslog(LOG_USER | LOG_INFO, "%s", line);
+        syslog(LOG_USER, "%s", line);
       }
 
       if (do_stderr) {
+        line[line_used] = 0;
         std::cerr << m_log_stderr_prefix << line << std::endl;
       }
 

@@ -10,17 +10,18 @@ namespace hvs {
 struct N1qlResponse;
 class CouchbaseDatastore : public hvs::Datastore {
  public:
-  CouchbaseDatastore(const std::string& bucket_name) : Datastore(bucket_name) {}
-  CouchbaseDatastore() = default;
+  CouchbaseDatastore(const std::string& bucket_name)
+      : Datastore(bucket_name), initilized(false) {}
+  CouchbaseDatastore() : initilized(false){};
 
  public:
   std::string get_typename() override { return "couchbase"; }
-  int set(const std::string& key, std::string& value) override {
-    return _set(key, value);
+  int set(const std::string& key, const std::string& value) override {
+    return upsert(key, value);
   };
   int set(const std::string& key, const std::string& subpath,
-          std::string& value) override {
-    return _set(key, subpath, value);
+          const std::string& value) override {
+    return upsert_sub(key, subpath, value);
   };
   std::tuple<std::shared_ptr<std::string>, int> get(
       const std::string& key) override {
@@ -30,6 +31,7 @@ class CouchbaseDatastore : public hvs::Datastore {
       const std::string& key, const std::string& subpath) override {
     return _get(key, subpath);
   };
+  bool exist(const std::string& key, const std::string& path) override { return _exist(key, path); }
   int remove(const std::string& key) override { return _remove(key); };
   int init() override;
 
@@ -39,11 +41,13 @@ class CouchbaseDatastore : public hvs::Datastore {
     return _n1ql(query);
   }
 
- private:
+ public:
   int _connect(const std::string& bucket);
-  int _set(const std::string& key, const std::string& doc);
-  int _set(const std::string& key, const std::string& path,
+  int insert(const std::string& key, const std::string& doc);
+  int upsert(const std::string& key, const std::string& doc);
+  int upsert_sub(const std::string& key, const std::string& path,
            const std::string& subdoc);
+  bool _exist(const std::string& key, const std::string& path);
   std::tuple<std::shared_ptr<std::string>, int> _get(const std::string& key);
   std::tuple<std::shared_ptr<std::string>, int> _get(const std::string& key,
                                                      const std::string& path);
@@ -53,6 +57,7 @@ class CouchbaseDatastore : public hvs::Datastore {
 
  private:
   std::shared_ptr<Couchbase::Client> client;
+  bool initilized;
 };
 
 struct N1qlResponse : public hvs::JsonSerializer {

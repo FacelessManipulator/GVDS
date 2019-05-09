@@ -23,7 +23,7 @@ TEST_F(HVSRestTest, atry) {
   stop_rest(p);
 */
 
-  sleep(1000);
+//  sleep(1000);
  
 
   // EXPECT_TRUE(lbqprint()==0);

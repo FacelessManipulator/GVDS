@@ -10,7 +10,7 @@ class CouchbaseTest : public ::testing::Test {
   void SetUp() override {
     dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore("beer-sample"));
-    EXPECT_EQ(dbPtr->init(), 0);
+    ASSERT_EQ(dbPtr->init(), 0);
   }
   void TearDown() override { dbPtr.reset(); }
   static void SetUpTestCase() { hvs::init_context(); }

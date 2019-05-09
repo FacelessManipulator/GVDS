@@ -2,6 +2,7 @@
 SET(CommonSRCS
         common/Thread.cc
         log/Log.cc
+        config/ConfigureSettings.cc
         datastore/datastore.cc
         datastore/couchbase_helper.cc
         common/context.cc
@@ -14,12 +15,19 @@ SET(CommonSRCS
         space/SpaceServer.cc
         zone/Zone.cc
         zone/ZoneServer.cc
+        aggregation/AggregationServer.cc
+        aggregation/StorageResBicInfo.cc
+        msg/rpc.cc
 )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
+        config++
         couchbase
         pthread
         pistache_shared
-        )
+        rpc
+        boost_system
+)
+
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
 ADD_EXECUTABLE(hvsd main.cc)
 install(TARGETS hvscommon
@@ -32,4 +40,7 @@ install(TARGETS hvsd
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+add_subdirectory(io_proxy)
+add_subdirectory(manager)
 #TARGET_LINK_LIBRARIES(hvsd hello)

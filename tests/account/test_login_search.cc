@@ -22,6 +22,7 @@ g++ UserModelClient.cc -lpistache  -std=c++11 -o userclient
 
 using namespace Pistache;
 using namespace Pistache::Http;
+using namespace std;
 
 class HVSAccountTest : public ::testing::Test {
  protected:

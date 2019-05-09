@@ -8,7 +8,23 @@
 
 
 namespace hvs{
+using namespace Pistache::Rest;
+using namespace Pistache::Http;
 SpaceServer* SpaceServer::instance = nullptr;
+
+void SpaceServer::start() {}
+
+void SpaceServer::stop() {}
+
+void SpaceServer::router(Router& router) {
+  Routes::Post(router, "/zone/rename", Routes::bind(&ZoneServer::ZoneRenameRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/locate", Routes::bind(&ZoneServer::GetZoneLocateInfoRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/info", Routes::bind(&ZoneServer::GetZoneInfoRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/share", Routes::bind(&ZoneServer::ZoneShareRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/sharecancel", Routes::bind(&ZoneServer::ZoneShareCancelRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/register", Routes::bind(&ZoneServer::ZoneRegisterRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/cancel", Routes::bind(&ZoneServer::ZoneCancelRest, ZoneServer::getInstance()));
+}
 
 void SpaceServer::GetSpacePosition(std::vector<std::string> &result, std::vector<std::string> spaceID)
 {

@@ -46,7 +46,23 @@ bool isSubset(std::vector<std::string> v1, std::vector<std::string> v2)
 
 
 namespace hvs{
+using namespace Pistache::Rest;
+using namespace Pistache::Http;
 ZoneServer* ZoneServer::instance = nullptr;
+
+void ZoneServer::start() {}
+
+void ZoneServer::stop() {}
+
+void ZoneServer::router(Router& router) {
+  Routes::Post(router, "/zone/rename", Routes::bind(&ZoneServer::ZoneRenameRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/locate", Routes::bind(&ZoneServer::GetZoneLocateInfoRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/info", Routes::bind(&ZoneServer::GetZoneInfoRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/share", Routes::bind(&ZoneServer::ZoneShareRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/sharecancel", Routes::bind(&ZoneServer::ZoneShareCancelRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/register", Routes::bind(&ZoneServer::ZoneRegisterRest, ZoneServer::getInstance()));
+  Routes::Post(router, "/zone/cancel", Routes::bind(&ZoneServer::ZoneCancelRest, ZoneServer::getInstance()));
+}
 
 //区域重命名
 void ZoneServer::ZoneRenameRest(const Rest::Request& request, Http::ResponseWriter response){

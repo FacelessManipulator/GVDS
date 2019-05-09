@@ -1,10 +1,6 @@
 #ifndef ZONESERVER_H
 #define ZONESERVER_H
 
-#include <pistache/http.h>
-#include <pistache/router.h>
-#include <pistache/endpoint.h>
-
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -17,13 +13,19 @@
 #include "zone/Zone.h"
 #include "space/SpaceServer.h"
 #include "zone/Zone.h"
+#include "manager/manager.h"
 //class Account;//没懂
 
-using namespace Pistache;
+
 
 
 namespace hvs{
-class ZoneServer {
+class ZoneServer : public ManagerModule {
+private:
+  virtual void start() override;
+  virtual void stop() override;
+  virtual void router(Pistache::Rest::Router&) override;
+  
 public:
     static ZoneServer* getInstance(){
         if (instance == nullptr)

@@ -19,5 +19,4 @@ ADD_SUBDIRECTORY(msg)
 ADD_SUBDIRECTORY(ioproxy)
 ADD_SUBDIRECTORY(manager)
 
->>>>>>> origin/wip-manager
 

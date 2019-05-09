@@ -1,10 +1,6 @@
 #ifndef SPACESERVER_H
 #define SPACESERVER_H
 
-#include <pistache/http.h>
-#include <pistache/router.h>
-#include <pistache/endpoint.h>
-
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -21,7 +17,12 @@ using namespace Pistache;
 
 
 namespace hvs{
-class SpaceServer {
+class SpaceServer : public ManagerModule{
+private:
+  virtual void start() override;
+  virtual void stop() override;
+  virtual void router(Pistache::Rest::Router&) override;
+  
 public:
     static SpaceServer* getInstance(){
         if (instance == nullptr)

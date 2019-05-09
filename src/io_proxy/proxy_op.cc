@@ -49,7 +49,6 @@ void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
 }
 
 int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
-  //  dout(5) << "async do op: " << op->id << dendl;
   sync_io func_sync_io;
   switch (op->operation){
     case IOProxyMetadataOP::stat: {
@@ -63,6 +62,25 @@ int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
       func_sync_io.sreaddir(op->path, op);
       break;
     }
+    case IOProxyMetadataOP::rename: {
+      op->error_code = func_sync_io.srename(op->path, op->newpath);
+      break;
+    }
+    case IOProxyMetadataOP::access: {
+      op->error_code = func_sync_io.saccess(op->path, op->mode);
+    }
+    case IOProxyMetadataOP::utimes: {
+      op->error_code = func_sync_io.sutimes(op->path, op->sec0n, op->sec0s, op->sec1n, op->sec1s);
+      break;
+    }
+    case IOProxyMetadataOP::chmod: {
+      op->error_code = func_sync_io.schmod(op->path, static_cast<mode_t>(op->mode));
+      break;
+    }
+    case IOProxyMetadataOP::chown: {
+      op->error_code = func_sync_io.schown(op->path, op->uid, op->gid);
+      break;
+    }
     default:
       break;
   }
@@ -70,44 +88,45 @@ int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
 }
 
 int ioproxy_do_data_op(IOProxyDataOP* op) {
-  //  dout(5) << "async do op: " << op->id << dendl;
-  // op->stat_buf = get_stat(op->path);
   sync_io func_sync_io;
   switch (op->operation) {
     case IOProxyDataOP::read: {
-      /*
-      auto fd = open(op->path, O_RDONLY);
-      if (fd == -1) {
-        op->error_code = errno;
-        break;
-      }
-      int n = read(fd, op->obuf, op->size);
-      if (n == -1) {
-        op->error_code = n;
-      } else {
-        op->size = n;
-      }
-      close(fd);
-       */
-      func_sync_io.sread(op->path, op->obuf,op->size, op->offset, op); // sync_io
+      func_sync_io.sread(op->path, op->obuf,op->size, op->offset, op);
       break;
     }
     case IOProxyDataOP::write: {
-      /*
-      auto fd = open(op->path, O_RDWR);
-      if (fd == -1) {
-        op->error_code = errno;
-        break;
-      }
-      int n = write(fd, op->ibuf, op->size);
-      if (n == -1) {
-        op->error_code = n;
-      } else {
-        op->size = n;
-      }
-      close(fd);
-       */
       func_sync_io.swrite(op->path, op->ibuf, op->size, op->offset, op);
+      break;
+    }
+    case IOProxyDataOP::truncate: {
+      op -> error_code = func_sync_io.struncate(op->path, op->offset); // 第二批代码，error_code 由同步IO返回值修改
+      break;
+    }
+    case IOProxyDataOP::mkdir: {
+      op -> error_code = func_sync_io.smkdir(op->path, op->mode);
+      break;
+    }
+    case IOProxyDataOP::rmdir: {
+      op -> error_code = func_sync_io.srmdir(op->path);
+      break;
+    }
+    case IOProxyDataOP::create: {
+      op -> error_code = func_sync_io.screate(op->path, op->mode);
+      break;
+    }
+    case IOProxyDataOP::unlink: {
+      op -> error_code = func_sync_io.sunlink(op->path);
+      break;
+    }
+    case IOProxyDataOP::link: {
+      op -> error_code = func_sync_io.slink(op->path, op->newpath);
+      break;
+    }
+    case IOProxyDataOP::symlink: {
+      op -> error_code = func_sync_io.ssymlink(op->path, op->newpath);
+      break;
+    }case IOProxyDataOP::readlink: {
+      op-> error_code = func_sync_io.sreadlink(op->path, op);
       break;
     }
     default:

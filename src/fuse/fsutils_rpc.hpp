@@ -29,13 +29,16 @@ namespace hvs{
         int show_version;
     };
 
-    void hvs_init(){
-        hvs::init_context();
-    }
-
+    #define IOPROXYIP "192.168.5.222"
     #define HVSDATA ((struct hvsfs_state*) fuse_get_context()->private_data)
     #define OPTION(t, p)                           \
     { t, offsetof(struct options, p), 1 }
+
+    void hvs_init(){
+        hvs::init_context();
+        std::cout << "Remote IOProxy IP: " << IOPROXYIP << std::endl <<"RPC Port:"
+        <<*(hvs::HvsContext::get_context()->_config->get<int>("rpc.port"))<< std::endl;
+    }
 
     void version_info(){
         std::cout << "Fuse library version " << fuse_pkgversion() << std::endl;
@@ -89,10 +92,9 @@ namespace hvs{
                       struct fuse_file_info *fi)
     {
         log_msg("getattr!");
-        int retstat = 0;
         memset(stbuf, 0, sizeof(struct stat));
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-        auto ip = new std::string("192.168.5.224");
+        auto ip = new std::string(IOPROXYIP);
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_stat", path);
@@ -118,18 +120,15 @@ namespace hvs{
                       off_t offset, struct fuse_file_info *fi,
                       enum fuse_readdir_flags flags)
     {
-        int retstat = 0;
-        if (strcmp(path, "/") != 0)
-            return -ENOENT;
         log_msg("readdir!");
+        int retstat = 0;
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-//        auto ip = config->get<std::string>("ip");
-        auto ip = new std::string("192.168.5.224");
+        auto ip = new std::string(IOPROXYIP);
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_readdir", path);
         for (const ioproxy_rpc_dirent &ent : res->as<std::vector<ioproxy_rpc_dirent>>()) {
-            std::cout << ent.d_name << std::endl;
+            //std::cout << ent.d_name << std::endl;
             if (filler(buf, ent.d_name.c_str(), nullptr, 0, static_cast<fuse_fill_dir_flags>(0)) != 0) {
                 return -ENOMEM;
             }
@@ -142,10 +141,7 @@ namespace hvs{
     int hvsfs_open(const char *path, struct fuse_file_info *fi)
     {
         int retstat = 0;
-        int fd = 0;
-
         log_msg("open!");
-
         return retstat;
     }
 
@@ -154,8 +150,7 @@ namespace hvs{
     {
         int retstat = 0;
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-//        auto ip = config->get<std::string>("ip");
-        auto ip = new std::string("192.168.5.224");
+        auto ip = new std::string(IOPROXYIP);
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_read", path, size, offset);
@@ -171,8 +166,7 @@ namespace hvs{
     {
         int retstat = 0;
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-//        auto ip = config->get<std::string>("ip");
-        auto ip = new std::string("192.168.5.224");
+        auto ip = new std::string(IOPROXYIP);
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_write", path, buf, size, offset);
@@ -180,10 +174,15 @@ namespace hvs{
         return retstat;
     }
 
-    int hvsfs_access(const char *path, int mask)
+    int hvsfs_access(const char *path, int mode)
     {
         int retstat = 0;
-
+        ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_access", path, mode);
+        retstat = res->as<int>();
         return retstat;
     }
 
@@ -197,39 +196,202 @@ namespace hvs{
     void hvsfs_destroy(void *private_data)
     {
         log_msg("Destroy!");
-//        log_msg(((struct hvsfs_state*)private_data)->logfile);
+    }
+
+    int hvsfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_truncate", path, offset);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_readlink(const char *path, char *link, size_t size){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_readdir", path, size);
+        auto retstr = res->as<std::string>();
+        memcpy(link, retstr.c_str(), retstr.size());
+        retstat = static_cast<int>(retstr.size());
+        return retstat;
+    }
+
+    int hvsfs_mknod (const char *path, mode_t mode, dev_t dev){
+        int retstat = 0;
+
+        return retstat;
+    }
+    int hvsfs_mkdir (const char *path, mode_t mode){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_mkdir", path, mode);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_unlink (const char *path){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_unlink", path);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_rmdir (const char *path){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_rmdir", path);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_symlink (const char *path, const char *newpath){
+        int retstat = 0;
+        std::cout << "TODO: 软连接操作有问题，待修复！" << std::endl;
+//        std::string root("/");
+//        std::string paths(path);
+//        std::string fullpath = root+paths;
+//        auto ip = new std::string(IOPROXYIP);
+//        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+//        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+//        auto res = client.call("ioproxy_symlink", fullpath.c_str(), newpath);
+//        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_rename (const char *path, const char *newpath, unsigned int flags){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_rename", path, newpath);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_link (const char *path, const char *newpath){
+        int retstat = 0;
+        std::cout << "TODO: 硬连接操作有问题，待修复！" << std::endl;
+//        auto ip = new std::string(IOPROXYIP);
+//        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+//        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+//        auto res = client.call("ioproxy_link", path, newpath);
+//        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_chmod", path, mode);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_chown", path, uid, gid);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_statfs (const char *, struct statvfs *){
+        int retstat = 0;
+
+        return retstat;
+    }
+
+    int hvsfs_flush (const char *, struct fuse_file_info *){
+        int retstat = 0;
+
+        return retstat;
+    }
+
+    int hvsfs_release (const char *, struct fuse_file_info *){
+        int retstat = 0;
+
+        return retstat;
+    }
+
+    int hvsfs_fsync (const char *, int, struct fuse_file_info *){
+        int retstat = 0;
+
+        return retstat;
+    }
+
+    int hvsfs_releasedir (const char *, struct fuse_file_info *){
+        int retstat = 0;
+
+        return retstat;
+    }
+
+    int hvsfs_create (const char *path, mode_t mode, struct fuse_file_info *){
+        int retstat = 0;
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_create", path, mode);
+        retstat = res->as<int>();
+        return retstat;
+    }
+
+    int hvsfs_utimens (const char *path, const struct timespec tv[2],
+                    struct fuse_file_info *fi){
+        int retstat = 0;
+        int sec0n = static_cast<int>(tv[0].tv_nsec);
+        int sec0s = static_cast<int>(tv[0].tv_sec);
+        int sec1n = static_cast<int>(tv[1].tv_nsec);
+        int sec1s = static_cast<int>(tv[1].tv_sec);
+        auto ip = new std::string(IOPROXYIP);
+        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_utimes", path, sec0n, sec0s, sec1n, sec1s);
+        retstat = res->as<int>();
+        return retstat;
     }
 
     struct fuse_operations hvsfs_oper = {
-            .getattr = hvsfs_getattr,
-            .open = hvsfs_open,
-            .read = hvsfs_read,
-            .write = hvsfs_write,
-            .opendir = hvsfs_opendir,
-            .readdir = hvsfs_readdir,
-            .init = hvsfs_init,
-            .destroy = hvsfs_destroy,
-            .access = hvsfs_access,
-
-//            .releasedir = hvsfs_releasedir,
-//            .readlink   = hvsfs_readlink,
-//            .mknod      = hvsfs_mknod,
-//            .mkdir      = hvsfs_mkdir,
-//            .symlink    = hvsfs_symlink,
-//            .unlink     = hvsfs_unlink,
-//            .rmdir      = hvsfs_rmdir,
-//            .rename     = hvsfs_rename,
-//            .link       = hvsfs_link,
-//            .chmod      = hvsfs_chmod,
-//            .chown      = hvsfs_chown,
-//            .truncate   = hvsfs_truncate,
-//            .utimens    = hvsfs_utimens,
-
-//            .flush      = hvsfs_flush,
-//            .fsync      = hvsfs_fsync,
-//            .release    = hvsfs_release,
-
-//            .statfs     = hvsfs_statfs,
-//            .create     = hvsfs_create,
+            .getattr    = hvsfs_getattr,
+            .readlink   = hvsfs_readlink,
+            .mknod      = hvsfs_mknod, // TODO: create函数重复，暂时不做
+            .mkdir      = hvsfs_mkdir,
+            .unlink     = hvsfs_unlink,
+            .rmdir      = hvsfs_rmdir,
+            .symlink    = hvsfs_symlink, // TODO: 软连接操作暂时有问题，待修复；
+            .rename     = hvsfs_rename,
+            .link       = hvsfs_link,   // TODO: 硬连接操作暂时有问题，待修复；
+            .chmod      = hvsfs_chmod, // TODO: 虚拟数据空间相关，涉及到权限，之后需要统一修改；
+            .chown      = hvsfs_chown, // TODO: 虚拟数据空间相关，涉及到权限，之后需要统一修改；
+            .truncate   = hvsfs_truncate,
+            .open       = hvsfs_open,
+            .read       = hvsfs_read,
+            .write      = hvsfs_write,
+            .statfs     = hvsfs_statfs, // TODO: vfs 相关，暂时不做
+            .flush      = hvsfs_flush, // TODO: cache 相关，暂时不做
+            .release    = hvsfs_release, // TODO: 未保存文件fd, 暂时不做
+            .fsync      = hvsfs_fsync, // TODO: caced 相关暂时不做
+            .opendir    = hvsfs_opendir,
+            .readdir    = hvsfs_readdir,
+            .releasedir = hvsfs_releasedir, // TODO: 未保存DIR, 暂时不做
+            .init       = hvsfs_init,
+            .destroy    = hvsfs_destroy,
+            .access     = hvsfs_access,
+            .create     = hvsfs_create,
+            .utimens    = hvsfs_utimens,
     };
 }

@@ -8,6 +8,8 @@
 #include "msg/rpc.h"
 #include "rpc_types.h"
 #include "io_proxy.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <vector>
 #include <limits.h>
 
@@ -90,7 +92,7 @@ namespace hvs {
         std::vector<ioproxy_rpc_dirent> retvec;
         std::cout << "readdir: " << pathname << std::endl;
         auto op = std::make_shared<IOProxyMetadataOP>();
-        op->id = 0;
+        op->id = 3;
         op->operation = IOProxyMetadataOP::readdir;
         op->path = fullpath.c_str();
         op->type = IO_PROXY_METADATA;
@@ -105,6 +107,180 @@ namespace hvs {
         }
     }
 
+    inline int ioproxy_truncate(const std::string path, int offset){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "truncate: " << path << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 4;
+        op->operation = IOProxyDataOP::truncate;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->offset = offset;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_rename(const std::string path, const std::string newpath){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::string newfullpath = hvsfs_fullpath(newpath.c_str());
+        std::cout << "rename: " << path << " -> " << newpath << std::endl;
+        auto op = std::make_shared<IOProxyMetadataOP>();
+        op->id = 5;
+        op->operation = IOProxyMetadataOP::rename;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_METADATA;
+        op->newpath = newfullpath.c_str();
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_mkdir(const std::string path, mode_t mode){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "mkdir: " << path << " - " << mode << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 6;
+        op->operation = IOProxyDataOP::mkdir;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->mode = mode;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_rmdir(const std::string path){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "rmdir: " << path << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 7;
+        op->operation = IOProxyDataOP::rmdir;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_create(const std::string path, mode_t mode){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "create: " << path << " - " << mode << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 8;
+        op->operation = IOProxyDataOP::create;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->mode = mode;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_unlink(const std::string path){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "unlink: " << path << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 9;
+        op->operation = IOProxyDataOP::unlink;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_link(const std::string path, const std::string newpath){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::string newfullpath = hvsfs_fullpath(newpath.c_str());
+        std::cout << "link: " << path << " <=> " << newpath << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 10;
+        op->operation = IOProxyDataOP::link;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->newpath = newfullpath.c_str();
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_access(const std::string path, int mode){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "access: " << path << " - " << mode << std::endl;
+        auto op = std::make_shared<IOProxyMetadataOP>();
+        op->id = 11;
+        op->operation = IOProxyMetadataOP::access;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_METADATA;
+        op->mode = mode;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_utimes(const std::string path, int sec0n, int sec0s, int sec1n, int sec1s){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "utimes: " << path << std::endl;
+        auto op = std::make_shared<IOProxyMetadataOP>();
+        op->id = 12;
+        op->operation = IOProxyMetadataOP::utimes;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_METADATA;
+        op->sec1s = sec1s;
+        op->sec1n = sec1n;
+        op->sec0s = sec0s;
+        op->sec0n = sec0n;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_symlink(const std::string path, const std::string newpath){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::string newfullpath = hvsfs_fullpath(newpath.c_str());
+        std::cout << "symlink: " << fullpath << " - " << path << " <=> " << newpath << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 13;
+        op->operation = IOProxyDataOP::symlink;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->newpath = newfullpath.c_str();
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline std::string ioproxy_readlink(const std::string path, size_t size){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "readlink: " << fullpath << " - " << path << std::endl;
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 14;
+        op->operation = IOProxyDataOP::readlink;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->size = size;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->linkbuf;
+    }
+
+    inline int ioproxy_chmod(const std::string path, mode_t mode){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "chmod: " << fullpath << " - " << path << " " << mode << std::endl;
+        auto op = std::make_shared<IOProxyMetadataOP>();
+        op->id = 14;
+        op->operation = IOProxyMetadataOP::chmod;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_METADATA;
+        op->mode = mode;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int ioproxy_chown(const std::string path, uid_t uid, gid_t gid){
+        std::string fullpath = hvsfs_fullpath(path.c_str());
+        std::cout << "chown: " << fullpath << " - " << path << std::endl;
+        auto op = std::make_shared<IOProxyMetadataOP>();
+        op->id = 15;
+        op->operation = IOProxyMetadataOP::chown;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_METADATA;
+        op->uid = uid;
+        op->gid = gid;
+        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        return op->error_code;
+    }
+
     inline void hvs_ioproxy_rpc_bind(RpcServer* rpc_server) {
         rpc_server->bind("ioproxy_stat", ioproxy_stat);
         rpc_server->bind("ioproxy_read", ioproxy_read);
@@ -113,5 +289,18 @@ namespace hvs {
         rpc_server->bind("ioproxy_close", ioproxy_close);
         rpc_server->bind("ioproxy_opendir", ioproxy_opendir);
         rpc_server->bind("ioproxy_readdir", ioproxy_readdir);
+        rpc_server->bind("ioproxy_truncate", ioproxy_truncate);
+        rpc_server->bind("ioproxy_rename", ioproxy_rename);
+        rpc_server->bind("ioproxy_mkdir", ioproxy_mkdir);
+        rpc_server->bind("ioproxy_rmdir", ioproxy_rmdir);
+        rpc_server->bind("ioproxy_create", ioproxy_create);
+        rpc_server->bind("ioproxy_unlink", ioproxy_unlink);
+        rpc_server->bind("ioproxy_link", ioproxy_link);
+        rpc_server->bind("ioproxy_access", ioproxy_access);
+        rpc_server->bind("ioproxy_utimes", ioproxy_utimes);
+        rpc_server->bind("ioproxy_symlink", ioproxy_symlink);
+        rpc_server->bind("ioproxy_readlink", ioproxy_readlink);
+        rpc_server->bind("ioproxy_chmod", ioproxy_chmod);
+        rpc_server->bind("ioproxy_chown", ioproxy_chown);
     }
 }

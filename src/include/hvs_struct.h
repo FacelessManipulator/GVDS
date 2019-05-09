@@ -8,7 +8,7 @@
 namespace hvs {
 
 struct NodeStatistics {
-  
+  unsigned long uptime;
 };
 
 struct IOProxyNode : public hvs::JsonSerializer {

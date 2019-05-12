@@ -80,17 +80,22 @@ TEST_F(ManagerResAggregationTest, ioproxy_list) {
     client.init(opts);
 
     // list ioproxy
-    std::promise<bool> prom;
+    std::promise<std::string> prom;
     auto response = client.get(url).send();
     dout(-1) << "Client Info: get request " << url << dendl;
     auto fu = prom.get_future();
     response.then(
             [&](Http::Response res) {
                 dout(-1) << "Manager Info: " << res.body() << dendl;
-                prom.set_value(true);
+                prom.set_value(res.body());
             },
             Async::IgnoreException);
-    EXPECT_TRUE(fu.get());
+    auto lists_str = fu.get();
+    vector<string> lists;
+    json_decode(lists_str, lists);
+    for(auto res : lists) {
+      dout(-1) << res << dendl;
+    }
     client.shutdown();
 }
 

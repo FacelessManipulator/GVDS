@@ -7,10 +7,6 @@
 
 namespace hvs {
 
-struct NodeStatistics {
-  unsigned long uptime;
-};
-
 enum StorageResState // 存储资源状态
 {
     Initializing = 0,// 初始化中

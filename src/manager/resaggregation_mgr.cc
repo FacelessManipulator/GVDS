@@ -1,4 +1,6 @@
 #include "manager/resaggregation_mgr.h"
+#include "datastore/datastore.h"
+#include "datastore/couchbase_helper.h"
 
 using namespace hvs;
 using namespace std;

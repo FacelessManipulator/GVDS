@@ -1,6 +1,6 @@
 #include "manager/ioproxy_mgr.h"
-#include "datastore/datastore.h"
 #include "datastore/couchbase_helper.h"
+#include "datastore/datastore.h"
 
 using namespace hvs;
 using namespace std;
@@ -11,9 +11,18 @@ void IOProxy_MGR::start() {
   auto _config = HvsContext::get_context()->_config;
   auto _bn = _config->get<std::string>("couchbase.bucket");
   bucket = _bn.value_or("test");  // use test bucket or predefined
+  m_stop = false;
+  create("ioproxy-mgr-module");
 }
 
-void IOProxy_MGR::stop() {}
+void IOProxy_MGR::stop() { m_stop = true; }
+
+void* IOProxy_MGR::entry() {
+  while (!m_stop) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    dout(5) << "ioproxy mgr check heart beat." << dendl;
+  }
+}
 
 void IOProxy_MGR::router(Router& router) {
   Routes::Get(router, "/ioproxy", Routes::bind(&IOProxy_MGR::list, this));
@@ -34,7 +43,7 @@ bool IOProxy_MGR::add(const Rest::Request& req, Http::ResponseWriter res) {
   }
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
   auto err = cbd->insert(iop->key(), iop->json_value());
-  usleep(100000); // may take 100ms to be effective
+  usleep(100000);  // may take 100ms to be effective
   res.send(Code::Accepted, iop->key());
   return true;
 }

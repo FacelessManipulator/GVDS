@@ -27,7 +27,7 @@ int main(/*int argc, char* argv[]*/) {
 //                    const_cast<char *>("/home/yaowen/fuse/mountpoint"), const_cast<char *>("--help")};
     // normal
     int argc = 3;
-    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("-f"), const_cast<char *>("/home/yaowen/fuse/mountpoint")};
+    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("-f"), const_cast<char *>("/mnt/hvs")};
     //--version
 //    int argc = 4;
 //    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("--rootdir=/home/yaowen/fuse/rootdir"),

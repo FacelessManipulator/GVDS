@@ -59,7 +59,8 @@ namespace hvs{
         int size;
         ioproxy_rpc_readbuffer(const char* buffer, int _size){
             error_code = 0;
-            buf = buffer;
+            std::string tmp(buffer, _size);
+            buf.swap(tmp);
             size = _size;
         }
         ioproxy_rpc_readbuffer():error_code(-1) {}

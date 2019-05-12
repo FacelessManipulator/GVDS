@@ -29,7 +29,7 @@ namespace hvs{
         int show_version;
     };
 
-    #define IOPROXYIP "192.168.5.222"
+    #define IOPROXYIP "192.168.5.124"
     #define HVSDATA ((struct hvsfs_state*) fuse_get_context()->private_data)
     #define OPTION(t, p)                           \
     { t, offsetof(struct options, p), 1 }
@@ -169,7 +169,7 @@ namespace hvs{
         auto ip = new std::string(IOPROXYIP);
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
-        auto res = client.call("ioproxy_write", path, buf, size, offset);
+        auto res = client.call("ioproxy_write", path, std::string(buf,size), size, offset);
         retstat = res->as<int>();
         return retstat;
     }
@@ -385,13 +385,26 @@ namespace hvs{
             .flush      = hvsfs_flush, // TODO: cache 相关，暂时不做
             .release    = hvsfs_release, // TODO: 未保存文件fd, 暂时不做
             .fsync      = hvsfs_fsync, // TODO: caced 相关暂时不做
+            .setxattr   = NULL,
+            .getxattr   = NULL,
+            .listxattr  = NULL,
+            .removexattr= NULL,
             .opendir    = hvsfs_opendir,
             .readdir    = hvsfs_readdir,
             .releasedir = hvsfs_releasedir, // TODO: 未保存DIR, 暂时不做
+            .fsyncdir   = NULL,
             .init       = hvsfs_init,
             .destroy    = hvsfs_destroy,
             .access     = hvsfs_access,
             .create     = hvsfs_create,
+            .lock       = NULL,
             .utimens    = hvsfs_utimens,
+            .bmap       = NULL,
+            .ioctl      = NULL,
+            .poll       = NULL,
+            .write_buf  = NULL,
+            .read_buf   = NULL,
+            .flock      = NULL,
+            .fallocate  = NULL,
     };
 }

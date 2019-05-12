@@ -1,5 +1,6 @@
 #include "manager/manager.h"
 #include "manager/ioproxy_mgr.h"
+#include "manager/resaggregation_mgr.h"
 
 using namespace hvs;
 using namespace std;
@@ -90,6 +91,8 @@ hvs::Manager* init_manager() {
   mgr->addr.from_string(*ip);
   // registe modlues in manager node
   mgr->registe_module(std::make_shared<IOProxy_MGR>("ioproxy manager"));
+  mgr->registe_module(std::make_shared<ResAggregation_MGR>("resaggregation manager"));
+
   hvs::HvsContext::get_context()->node = mgr;
   mgr->start();
   return mgr;

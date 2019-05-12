@@ -1,11 +1,11 @@
 // 虚拟数据空间配置，按照如下配置信息书写，可以覆盖原配置；默认配置信息在ConfigureSetting类之中。
 
-
-
-
-
-// 配置信息格式样例
 // An example configuration file that stores information about a store.
+rest =
+{
+  port = 0;
+};
+
 // Basic store information:
 name = "Books, Movies & More";
 attr =

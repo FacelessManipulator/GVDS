@@ -19,3 +19,7 @@
 	path = third-party/boost
 	url = ../boost
 	ignore = dirty
+[submodule "third-party/libconfig"]
+	path = third-party/libconfig
+	url = git@github.com:hyperrealm/libconfig.git
+

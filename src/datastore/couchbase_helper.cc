@@ -25,10 +25,10 @@ void hvs::N1qlResponse::deserialize_impl() {
 
 int hvs::CouchbaseDatastore::init() {
   if (!initilized) {
-    initilized = true;
-    return _connect(name);
-  }
-  else {
+    int err = _connect(name);
+    if (!err) initilized = true;
+    return err;
+  } else {
     return 0;
   }
 }
@@ -75,7 +75,18 @@ int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
   return rc.errcode();
 }
 
-int hvs::CouchbaseDatastore::_set(const std::string& key,
+int hvs::CouchbaseDatastore::insert(const std::string& key,
+                                  const std::string& doc) {
+  Couchbase::StoreResponse rs = client->insert(key, doc);
+  if (!rs.status().success()) {
+    dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
+            << "-" << doc.c_str() << ", Reason: " << rs.status().description()
+            << dendl;
+  }
+  return rs.status().errcode();
+}
+
+int hvs::CouchbaseDatastore::upsert(const std::string& key,
                                   const std::string& doc) {
   Couchbase::StoreResponse rs = client->upsert(key, doc);
   if (!rs.status().success()) {
@@ -86,7 +97,7 @@ int hvs::CouchbaseDatastore::_set(const std::string& key,
   return rs.status().errcode();
 }
 
-int hvs::CouchbaseDatastore::_set(const std::string& key,
+int hvs::CouchbaseDatastore::upsert_sub(const std::string& key,
                                   const std::string& path,
                                   const std::string& subdoc) {
   Couchbase::SubdocResponse rs = client->upsert_sub(key, path, subdoc);
@@ -94,6 +105,16 @@ int hvs::CouchbaseDatastore::_set(const std::string& key,
     dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;
   }
+  return rs.status().errcode();
+}
+
+bool hvs::CouchbaseDatastore::_exist(const std::string& key, const std::string& path) {
+  Couchbase::SubdocResponse rs = client->exists_sub(key, path);
+  if (!rs.status().success()) {
+    dout(5) << "ERROR: Couchbase helper exsits failed " << key.c_str()
+            << ", Reason: " << rs.status().description() << dendl;
+  }
+  dout(-1) << rs.value().data() << dendl;
   return rs.status().errcode();
 }
 

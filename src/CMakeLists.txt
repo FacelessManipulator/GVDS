@@ -7,13 +7,20 @@ SET(CommonSRCS
         datastore/datastore.cc
         datastore/couchbase_helper.cc
         common/context.cc
+        usermodel/Account.cc
+        usermodel/MD5.cc
+        usermodel/UserModelServer.cc
+        common/RestServer.cc
         common/JsonSerializer.cc
+        aggregation/AggregationServer.cc
+        aggregation/StorageResBicInfo.cc
         msg/rpc.cc
 )
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         config++
         couchbase
         pthread
+        pistache_shared
         rpc
         boost_system
         boost_program_options
@@ -33,5 +40,8 @@ install(TARGETS hvsd
 )
 
 add_subdirectory(io_proxy)
+
 add_subdirectory(fuse)
+add_subdirectory(manager)
+
 #TARGET_LINK_LIBRARIES(hvsd hello)

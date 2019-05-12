@@ -15,7 +15,10 @@ MESSAGE("生成测试文件：syncio.txt")
 
 ADD_SUBDIRECTORY(datastore)
 ADD_SUBDIRECTORY(common)
+ADD_SUBDIRECTORY(account)
+ADD_SUBDIRECTORY(aggregate)
 ADD_SUBDIRECTORY(msg)
 ADD_SUBDIRECTORY(ioproxy)
+ADD_SUBDIRECTORY(manager)
 
 

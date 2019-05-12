@@ -138,6 +138,9 @@ hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   _config->add("couchbase.address", string("192.168.10.235"));
   _config->add("couchbase.user", string("dev"));
   _config->add("couchbase.password", string("buaaica"));
+  _config->add("rest.port", 9090);
+  _config->add("rest.thread_num", 5);
+  _config->add("couchbase.bucket", string("test"));
 
   return _config;
 }

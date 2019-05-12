@@ -68,6 +68,7 @@ int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
     }
     case IOProxyMetadataOP::access: {
       op->error_code = func_sync_io.saccess(op->path, op->mode);
+      break;
     }
     case IOProxyMetadataOP::utimes: {
       op->error_code = func_sync_io.sutimes(op->path, op->sec0n, op->sec0s, op->sec1n, op->sec1s);

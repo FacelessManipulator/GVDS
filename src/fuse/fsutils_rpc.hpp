@@ -183,12 +183,12 @@ namespace hvs{
     int hvsfs_access(const char *path, int mode)
     {
         int retstat = 0;
-//        ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-//        auto ip = new std::string(ioproxy_ip.c_str());
-//        auto port = config->get<int>("rpc.port");
-//        RpcClient client(*ip, static_cast<const unsigned int>(*port));
-//        auto res = client.call("ioproxy_access", path, mode);
-//        retstat = res->as<int>();
+        ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+        auto ip = new std::string(ioproxy_ip.c_str());
+        auto port = config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_access", path, mode);
+        retstat = res->as<int>();
         return retstat;
     }
 

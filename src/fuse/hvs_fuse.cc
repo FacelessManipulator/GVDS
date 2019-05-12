@@ -27,7 +27,8 @@ int main(/*int argc, char* argv[]*/) {
 //                    const_cast<char *>("/home/yaowen/fuse/mountpoint"), const_cast<char *>("--help")};
     // normal
     int argc = 3;
-    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("-f"), const_cast<char *>("/mnt/hvs")};
+    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("-f"), const_cast<char *>("/home/yaowen/fuse/mountpoint")};//,
+                    //const_cast<char *>("--ip"), const_cast<char *>("192.168.10.15")};
     //--version
 //    int argc = 4;
 //    char* argv[] = {const_cast<char *>("hvsfs"), const_cast<char *>("--rootdir=/home/yaowen/fuse/rootdir"),
@@ -40,13 +41,13 @@ int main(/*int argc, char* argv[]*/) {
     //data
     struct hvsfs_state *hvs_data;
     int fuse_stat = 0;
-    hvs_init();
     //options
     const struct fuse_opt option_spec[] = {
             OPTION("-h", show_help),
             OPTION("--help", show_help),
             OPTION("-v", show_version),
             OPTION("--version", show_version),
+            OPTION("--ip", hasip),
             FUSE_OPT_END
     };
     struct options opt{};
@@ -54,6 +55,12 @@ int main(/*int argc, char* argv[]*/) {
     if(fuse_opt_parse(&args, &opt, option_spec, hvsfs_opt_proc) == -1){
         return 1;
     }
+
+    if (!opt.hasip){
+        ioproxy_ip = "127.0.0.1";
+    }
+
+    hvs_init();
 
     if ((argc < 2) || opt.show_help){
         //help info

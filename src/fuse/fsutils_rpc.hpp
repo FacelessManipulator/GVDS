@@ -24,19 +24,21 @@ namespace hvs{
         FILE *logfile;
     };
 
+    std::string ioproxy_ip;
+
     struct options {
         int show_help;
         int show_version;
+        int hasip;
     };
 
-    #define IOPROXYIP "192.168.5.124"
     #define HVSDATA ((struct hvsfs_state*) fuse_get_context()->private_data)
     #define OPTION(t, p)                           \
     { t, offsetof(struct options, p), 1 }
 
     void hvs_init(){
         hvs::init_context();
-        std::cout << "Remote IOProxy IP: " << IOPROXYIP << std::endl <<"RPC Port:"
+        std::cout << "Remote IOProxy IP: " << ioproxy_ip.c_str() << std::endl <<"RPC Port:"
         <<*(hvs::HvsContext::get_context()->_config->get<int>("rpc.port"))<< std::endl;
     }
 
@@ -49,7 +51,7 @@ namespace hvs{
     }
 
     void hvsfs_usage(){
-        std::cout << "usage: hvsfs [mount options] mountpoint" << std::endl;
+        std::cout << "usage: hvsfs [mount options] <mountpoint> [--ip <ip-address>]" << std::endl;
     }
 
     int hvsfs_opt_proc (void *data, const char *arg, int key,struct fuse_args *outargs){
@@ -57,9 +59,13 @@ namespace hvs{
             std::cout<< "hvsfs: unknown option: " << arg << std::endl;
             exit(EXIT_FAILURE);
         }
+        std::string arg_str(arg);
+        if (arg_str.find('.')!=std::string::npos){
+            ioproxy_ip = arg;
+            return 0;
+        }
         return 1;
     }
-
 
     FILE *log_open(){
         FILE *log_file;
@@ -94,7 +100,7 @@ namespace hvs{
         log_msg("getattr!");
         memset(stbuf, 0, sizeof(struct stat));
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_stat", path);
@@ -123,7 +129,7 @@ namespace hvs{
         log_msg("readdir!");
         int retstat = 0;
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_readdir", path);
@@ -150,7 +156,7 @@ namespace hvs{
     {
         int retstat = 0;
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_read", path, size, offset);
@@ -166,7 +172,7 @@ namespace hvs{
     {
         int retstat = 0;
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         ioproxy_rpc_buffer _buffer(buf,size);
@@ -179,7 +185,7 @@ namespace hvs{
     {
         int retstat = 0;
         ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_access", path, mode);
@@ -201,7 +207,7 @@ namespace hvs{
 
     int hvsfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_truncate", path, offset);
@@ -211,7 +217,7 @@ namespace hvs{
 
     int hvsfs_readlink(const char *path, char *link, size_t size){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_readdir", path, size);
@@ -228,7 +234,7 @@ namespace hvs{
     }
     int hvsfs_mkdir (const char *path, mode_t mode){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_mkdir", path, mode);
@@ -238,7 +244,7 @@ namespace hvs{
 
     int hvsfs_unlink (const char *path){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_unlink", path);
@@ -248,7 +254,7 @@ namespace hvs{
 
     int hvsfs_rmdir (const char *path){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_rmdir", path);
@@ -262,7 +268,7 @@ namespace hvs{
 //        std::string root("/");
 //        std::string paths(path);
 //        std::string fullpath = root+paths;
-//        auto ip = new std::string(IOPROXYIP);
+//        auto ip = new std::string(ioproxy_ip.c_str());
 //        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
 //        RpcClient client(*ip, static_cast<const unsigned int>(*port));
 //        auto res = client.call("ioproxy_symlink", fullpath.c_str(), newpath);
@@ -272,7 +278,7 @@ namespace hvs{
 
     int hvsfs_rename (const char *path, const char *newpath, unsigned int flags){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_rename", path, newpath);
@@ -283,7 +289,7 @@ namespace hvs{
     int hvsfs_link (const char *path, const char *newpath){
         int retstat = 0;
         std::cout << "TODO: 硬连接操作有问题，待修复！" << std::endl;
-//        auto ip = new std::string(IOPROXYIP);
+//        auto ip = new std::string(ioproxy_ip.c_str());
 //        auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
 //        RpcClient client(*ip, static_cast<const unsigned int>(*port));
 //        auto res = client.call("ioproxy_link", path, newpath);
@@ -293,7 +299,7 @@ namespace hvs{
 
     int hvsfs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_chmod", path, mode);
@@ -303,7 +309,7 @@ namespace hvs{
 
     int hvsfs_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_chown", path, uid, gid);
@@ -343,7 +349,7 @@ namespace hvs{
 
     int hvsfs_create (const char *path, mode_t mode, struct fuse_file_info *){
         int retstat = 0;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_create", path, mode);
@@ -358,7 +364,7 @@ namespace hvs{
         long int sec0s = tv[0].tv_sec;
         long int sec1n = tv[1].tv_nsec;
         long int sec1s = tv[1].tv_sec;
-        auto ip = new std::string(IOPROXYIP);
+        auto ip = new std::string(ioproxy_ip.c_str());
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_utimes", path, sec0n, sec0s, sec1n, sec1s);

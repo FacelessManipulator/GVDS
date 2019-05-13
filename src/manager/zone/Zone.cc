@@ -136,3 +136,15 @@ void MapAddReq::deserialize_impl()   {
     get("path", spacePathInfo);
     //get("managenode", globalManageNodeInfo);
 }
+
+void MapDeductReq::serialize_impl()   {
+    put("UUID", zoneID);
+    put("owner", ownerID);
+    put("spaces", spaceID);
+}
+
+void MapDeductReq::deserialize_impl()   {
+    get("UUID", zoneID);
+    get("owner", ownerID);
+    get("spaces", spaceID);
+}

@@ -173,4 +173,19 @@ class MapAddReq : public hvs::JsonSerializer {
   MapAddReq() = default;
 };
 
+class MapDeductReq : public hvs::JsonSerializer //区域共享请求
+{
+ public:
+    std::string zoneID;//区域ID,UUID
+    std::string ownerID;//区域主人ID，UUID
+    std::vector<std::string> spaceID;//区域成员ID，UUID
+
+ public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+
+ public:
+  MapDeductReq() = default;
+};
+
 #endif/*ZONE_H*/

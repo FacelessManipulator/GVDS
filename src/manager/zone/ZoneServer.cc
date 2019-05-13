@@ -62,6 +62,7 @@ void ZoneServer::router(Router& router) {
   Routes::Post(router, "/zone/register", Routes::bind(&ZoneServer::ZoneRegisterRest, this));
   Routes::Post(router, "/zone/cancel", Routes::bind(&ZoneServer::ZoneCancelRest, this));
   Routes::Post(router, "/zone/mapadd", Routes::bind(&ZoneServer::MapAddRest, this));
+  Routes::Post(router, "/zone/mapdeduct", Routes::bind(&ZoneServer::MapDeductRest, this));
 }
 
 //区域重命名
@@ -359,7 +360,7 @@ int ZoneServer::ZoneShareCancel(std::string zoneID, std::string ownerID, std::ve
   else return -1;
 }
 
-
+//区域注册
 void ZoneServer::ZoneRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
   std::cout << "====== start ZoneServer function: ZoneRegisterRest ======"<< std::endl;
   auto info = request.body();
@@ -427,7 +428,7 @@ int ZoneServer::ZoneRegister(std::string zoneName, std::string ownerID, std::vec
   }
 }
 
-
+//区域注销
 void ZoneServer::ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response){
   std::cout << "====== start ZoneServer function: ZoneCancelRest ======"<< std::endl;
   auto info = request.body();
@@ -473,6 +474,7 @@ int ZoneServer::ZoneCancel(std::string zoneID, std::string ownerID)
   else return -1;
 }
 
+//区域映射编辑
 void ZoneServer::MapAddRest(const Rest::Request& request, Http::ResponseWriter response){
   std::cout << "====== start ZoneServer function: MapAddRest ======"<< std::endl;
   auto info = request.body();
@@ -531,10 +533,66 @@ int ZoneServer::MapAdd(std::string zoneID, std::string ownerID, std::string spac
       return 0;
     }
   }
-
-
-
-
-
 }
+
+void ZoneServer::MapDeductRest(const Rest::Request& request, Http::ResponseWriter response){
+  std::cout << "====== start ZoneServer function: MapDeductRest ======"<< std::endl;
+  auto info = request.body();
+  MapDeductReq req;
+  req.deserialize(info);
+  std::string zoneID = req.zoneID;
+  std::string ownerID = req.ownerID;
+  std::vector<std::string> spaceID = req.spaceID;
+
+  int result_i = MapDeduct(zoneID, ownerID, spaceID);
+  std::string result;
+  if (result_i == 0)
+  result = "success";
+  else result = "fail";
+
+  response.send(Http::Code::Ok, result); //point
+  std::cout << "====== end ZoneServer function: MapDeductRest ======"<< std::endl;
+}
+int ZoneServer::MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID)
+{
+  Zone tmp;
+  std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("zone_info"));
+  zonePtr->init();
+  std::string tmp_key = zoneID;
+  auto [vp, err] = zonePtr->get(tmp_key);
+  std::string tmp_value = *vp;
+  tmp.deserialize(tmp_value);
+  if(tmp.ownerID == ownerID)
+  {
+    if(isSubset(tmp.spaceID, spaceID))
+    {
+      SpaceServer* tmp_server = static_cast<SpaceServer*>(mgr->get_module("space").get());
+      // SpaceServer* tmp_server = hvs::SpaceServer::getInstance();
+      tmp_server->SpaceDelete(spaceID);
+      for(std::vector<std::string>::iterator it = spaceID.begin(); it != spaceID.end(); it++)
+      {
+        std::string tmp_s = *it;
+        std::vector<std::string>::iterator m = tmp.spaceID.begin();
+        while(m != tmp.spaceID.end())
+        {
+          if(*m == tmp_s)
+          {
+            m = tmp.spaceID.erase(m);
+          }
+          else
+          {
+            ++m;
+          }
+        }
+      }
+      tmp_value = tmp.serialize();
+      zonePtr->set(tmp_key, tmp_value);
+      return 0;
+    }
+    else return -1;
+  }
+  else return -1;
+}
+
 }//namespace hvs

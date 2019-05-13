@@ -92,14 +92,18 @@ std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID,
     return tmps.spaceID;
 }
 
-int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)
+int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)//可能有问题，多个ID的读，除第一个外，会产生乱码
 {
-    Space tmps;
-    std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore("space_info"));
-    spacePtr->init();
+    // Space tmps;
+    // std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+    //       hvs::CouchbaseDatastore("space_info"));
+    // spacePtr->init();
     for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
             {
+                Space tmps;
+                std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+                    hvs::CouchbaseDatastore("space_info"));
+                spacePtr->init();
                 std::string tmps_key = *m;
                 auto[vs, err] = spacePtr->get(tmps_key);
                 std::string tmps_value = *vs;

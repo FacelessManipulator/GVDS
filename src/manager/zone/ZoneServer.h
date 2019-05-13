@@ -63,7 +63,8 @@ public:
     void MapAddRest(const Rest::Request& request, Http::ResponseWriter response);
     int MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
     //映射编辑模块：区域映射删除接口
-
+    void MapDeductRest(const Rest::Request& request, Http::ResponseWriter response);
+    int MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID);
 
 
 

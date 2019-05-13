@@ -446,7 +446,7 @@ TEST_F(HVSZoneTest, ZoneCancel) {
     client.shutdown();
 
     cout<< "******endl client: zonecancel ******"<<endl;
-}*/
+}
 
 
 TEST_F(HVSZoneTest, MapAdd) {
@@ -482,8 +482,58 @@ TEST_F(HVSZoneTest, MapAdd) {
   EXPECT_TRUE(fu.get());
   client.shutdown();
 }
+*/
+
+TEST_F(HVSZoneTest, MapDeduct) {
+  Http::Client client;
+  char url[256];
+  snprintf(url, 256, "http://localhost:%d/zone/mapdeduct", manager->rest_port());
+  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+  client.init(opts);
+
+  MapDeductReq req;
+  req.zoneID = "aeed1d09-779d-4b8b-9005-c4c73d8b5ba1";
+  req.ownerID = "124";
+  req.spaceID.emplace_back("3625ea4b-6759-44a7-b785-ae34d63b2566");
+  req.spaceID.emplace_back("ee9637e0-f13f-46d5-b15d-38dcf1043708");
+
+  std::string value = req.serialize();
+
+  auto response = client.post(url).body(value).send();
+        dout(-1) << "Client Info: post request " << url << dendl;
+
+  std::promise<bool> prom;
+  auto fu = prom.get_future();
+  response.then(
+      [&](Http::Response res) {
+        dout(-1) << "Manager Info: " << res.body() << dendl;
+        prom.set_value(true);
+      },
+      Async::IgnoreException);
+  EXPECT_TRUE(fu.get());
+  client.shutdown();
+}
 
 
+// TEST_F(HVSZoneTest, Info){
+//     Zone tmp;
+//     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
+//           hvs::CouchbaseDatastore("zone_info"));
+//     zonePtr->init();
+//     std::string tmp_key = "aeed1d09-779d-4b8b-9005-c4c73d8b5ba1";
+//     auto [vp, err] = zonePtr->get(tmp_key);
+//     std::string tmp_value = *vp;//待插入报错
+//     std::cout << tmp_value << std::endl;
 
+//     Space tmps;
+//     std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+//           hvs::CouchbaseDatastore("space_info"));
+//     spacePtr->init();
+//     tmp_key = "ee9637e0-f13f-46d5-b15d-38dcf1043708";
+//     auto [vps, errs] = spacePtr->get(tmp_key);
+//     tmp_value = *vps;//待插入报错
+//     std::cout << tmp_value << std::endl;
+
+// }
 
 

@@ -154,10 +154,10 @@ namespace hvs{
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
         auto res = client.call("ioproxy_read", path, size, offset);
-        ioproxy_rpc_readbuffer retbuf;
-        retbuf = res->as<ioproxy_rpc_readbuffer>();
-        memcpy(buf, retbuf.buf.c_str(), retbuf.buf.size());
-        retstat = retbuf.size;
+        ioproxy_rpc_buffer retbuf;
+        retbuf = res->as<ioproxy_rpc_buffer>();
+        memcpy(buf, retbuf.buf.ptr, retbuf.buf.size);
+        retstat = retbuf.buf.size;
         return retstat;
     }
 
@@ -169,7 +169,8 @@ namespace hvs{
         auto ip = new std::string(IOPROXYIP);
         auto port = config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));
-        auto res = client.call("ioproxy_write", path, std::string(buf,size), size, offset);
+        ioproxy_rpc_buffer _buffer(buf,size);
+        auto res = client.call("ioproxy_write", path, _buffer, size, offset);
         retstat = res->as<int>();
         return retstat;
     }
@@ -353,10 +354,10 @@ namespace hvs{
     int hvsfs_utimens (const char *path, const struct timespec tv[2],
                     struct fuse_file_info *fi){
         int retstat = 0;
-        int sec0n = static_cast<int>(tv[0].tv_nsec);
-        int sec0s = static_cast<int>(tv[0].tv_sec);
-        int sec1n = static_cast<int>(tv[1].tv_nsec);
-        int sec1s = static_cast<int>(tv[1].tv_sec);
+        long int sec0n = tv[0].tv_nsec;
+        long int sec0s = tv[0].tv_sec;
+        long int sec1n = tv[1].tv_nsec;
+        long int sec1s = tv[1].tv_sec;
         auto ip = new std::string(IOPROXYIP);
         auto port = hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
         RpcClient client(*ip, static_cast<const unsigned int>(*port));

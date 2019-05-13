@@ -63,8 +63,7 @@ TEST(IOProxyRPC, yx_ioproxy_read) {
     auto start = std::chrono::steady_clock::now();
     for(int i = 0; i < size; i++){
         auto res = client.call("ioproxy_read", pathname, 6, 0);
-        dout(-1) << res->as<ioproxy_rpc_readbuffer>().buf << dendl;
-        std::cout << "输出结果：" << res->as<ioproxy_rpc_readbuffer>().buf << std::endl;
+        dout(-1) << res->as<ioproxy_rpc_buffer>().buf.ptr << dendl;
     }
 
     auto end = std::chrono::steady_clock::now();

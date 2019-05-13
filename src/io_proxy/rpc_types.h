@@ -53,19 +53,17 @@ namespace hvs{
                              st_ctim_tv_nsec, st_ctim_tv_sec)
     };
 
-    struct ioproxy_rpc_readbuffer {
+    struct ioproxy_rpc_buffer {
         int error_code;
-        std::string buf;
-        int size;
-        ioproxy_rpc_readbuffer(const char* buffer, int _size){
+        clmdep_msgpack::type::raw_ref buf;
+        ioproxy_rpc_buffer(const char* buffer, int _size){
             error_code = 0;
-            std::string tmp(buffer, _size);
-            buf.swap(tmp);
-            size = _size;
+            buf.ptr = buffer;
+            buf.size = _size;
         }
-        ioproxy_rpc_readbuffer():error_code(-1) {}
-        ioproxy_rpc_readbuffer(int i): error_code(i){/*当反回值error_code为小于0值的时候，表示产生了错误*/}
-        MSGPACK_DEFINE_ARRAY(error_code, buf, size);
+        ioproxy_rpc_buffer():error_code(-1) {}
+        ioproxy_rpc_buffer(int i): error_code(i){/*当反回值error_code为小于0值的时候，表示产生了错误*/}
+        MSGPACK_DEFINE_ARRAY(error_code, buf);
     };
 
     struct ioproxy_rpc_dirent {

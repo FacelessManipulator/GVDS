@@ -38,7 +38,7 @@ namespace hvs {
         }
     }
 
-    inline ioproxy_rpc_readbuffer ioproxy_read(const std::string pathname, int size, int offset){
+    inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, int offset){
         std::string fullpath = hvsfs_fullpath(pathname.c_str());
         auto op = std::make_shared<IOProxyDataOP>();
         op->id = 1;
@@ -50,13 +50,13 @@ namespace hvs {
         op->offset = offset;
         hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
         if (op->error_code >= 0) {
-            return ioproxy_rpc_readbuffer(op->obuf, static_cast<int>(op->error_code)); //返回消息
+            return ioproxy_rpc_buffer(op->obuf, static_cast<int>(op->error_code)); //返回消息
         } else {
-            return ioproxy_rpc_readbuffer(op->error_code);
+            return ioproxy_rpc_buffer(op->error_code);
         }
     }
 
-    inline int ioproxy_write(const std::string pathname, const std::string buf,int size, int offset){
+    inline int ioproxy_write(const std::string pathname, ioproxy_rpc_buffer obuf,int size, int offset){
         std::string fullpath = hvsfs_fullpath(pathname.c_str());
         auto op = std::make_shared<IOProxyDataOP>();
         op->id = 2;
@@ -65,7 +65,7 @@ namespace hvs {
         op->type = IO_PROXY_DATA;
         op->size = static_cast<size_t>(size);
         op->offset = offset;
-        op->ibuf = buf.c_str();
+        op->ibuf = obuf.buf.ptr;
         hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
         return op->error_code;
     }
@@ -211,7 +211,7 @@ namespace hvs {
         return op->error_code;
     }
 
-    inline int ioproxy_utimes(const std::string path, int sec0n, int sec0s, int sec1n, int sec1s){
+    inline int ioproxy_utimes(const std::string path, long int sec0n, long int sec0s, long int sec1n, long int sec1s){
         std::string fullpath = hvsfs_fullpath(path.c_str());
         std::cout << "utimes: " << path << std::endl;
         auto op = std::make_shared<IOProxyMetadataOP>();

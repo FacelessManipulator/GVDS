@@ -61,7 +61,7 @@ namespace  hvs{
         void fallocate(){}; // 为一个打开的文件创建空间
         void flock(){}; // 执行BSD协议的LOCK操作
         void lock(){}; // 为一个文件上锁，执行POSIX协议的LOCK操作
-        int sutimes(const char * path, int sec0n, int sec0s, int sec1n, int sec1s);
+        int sutimes(const char * path, long int sec0n, long int sec0s, long int sec1n, long int sec1s);
 
         void getxattr(){}; // 读出 xattr
         void listxattr(){}; // 列出 xattr

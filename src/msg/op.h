@@ -54,8 +54,8 @@ struct IOProxyMetadataOP : public OP {
   const char* newpath;
   struct stat* buf; // return value pointer
   int mode; // access
-  int sec0n, sec0s; // utimes
-  int sec1n, sec1s; // utimes
+  long int sec0n, sec0s; // utimes
+  long int sec1n, sec1s; // utimes
   uid_t uid;
   gid_t gid;
   // readdir data

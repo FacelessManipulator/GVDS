@@ -199,10 +199,10 @@ int sync_io::saccess(const char *path, int mode) {
         perror("sync_io access");
         ret = -errno;
     }
-    return ret;
+    return 0;
 }
 
-int sync_io::sutimes(const char *path, int sec0n, int sec0s, int sec1n, int sec1s) {
+int sync_io::sutimes(const char *path, long int sec0n, long int sec0s, long int sec1n, long int sec1s) {
     int ret = 0;
     struct timespec time[2];
     time[0].tv_nsec = sec0n;

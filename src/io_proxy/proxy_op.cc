@@ -10,13 +10,15 @@ void prepare_op(std::shared_ptr<OP> op) {
   if (!op->should_prepare) return;
   switch (op->type) {
     case IO_PROXY_METADATA: {
-      static_cast<IOProxyMetadataOP*>(op.get())->buf = (struct stat *)malloc(sizeof(struct stat));
-      memset(static_cast<IOProxyMetadataOP*>(op.get())->buf, 0, sizeof(struct stat));
+      static_cast<IOProxyMetadataOP*>(op.get())->buf =
+          (struct stat*)malloc(sizeof(struct stat));
+      memset(static_cast<IOProxyMetadataOP*>(op.get())->buf, 0,
+             sizeof(struct stat));
       break;
     }
     case IO_PROXY_DATA: {
       IOProxyDataOP* dataop = static_cast<IOProxyDataOP*>(op.get());
-      dataop->obuf = (char *)malloc(dataop->size);
+      dataop->obuf = (char*)malloc(dataop->size);
       break;
     }
     default:
@@ -50,12 +52,12 @@ void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
 
 int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
   sync_io func_sync_io;
-  switch (op->operation){
+  switch (op->operation) {
     case IOProxyMetadataOP::stat: {
       func_sync_io.sstat(op->path, op);
       break;
     }
-    case IOProxyMetadataOP::open:{
+    case IOProxyMetadataOP::open: {
       break;
     }
     case IOProxyMetadataOP::readdir: {
@@ -68,13 +70,17 @@ int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
     }
     case IOProxyMetadataOP::access: {
       op->error_code = func_sync_io.saccess(op->path, op->mode);
+      break;
     }
     case IOProxyMetadataOP::utimes: {
-      op->error_code = func_sync_io.sutimes(op->path, op->sec0n, op->sec0s, op->sec1n, op->sec1s);
+      std::cout << "op.id: " << op->id << std::endl;
+      op->error_code = func_sync_io.sutimes(op->path, op->sec0n, op->sec0s,
+                                            op->sec1n, op->sec1s);
       break;
     }
     case IOProxyMetadataOP::chmod: {
-      op->error_code = func_sync_io.schmod(op->path, static_cast<mode_t>(op->mode));
+      op->error_code =
+          func_sync_io.schmod(op->path, static_cast<mode_t>(op->mode));
       break;
     }
     case IOProxyMetadataOP::chown: {
@@ -91,7 +97,7 @@ int ioproxy_do_data_op(IOProxyDataOP* op) {
   sync_io func_sync_io;
   switch (op->operation) {
     case IOProxyDataOP::read: {
-      func_sync_io.sread(op->path, op->obuf,op->size, op->offset, op);
+      func_sync_io.sread(op->path, op->obuf, op->size, op->offset, op);
       break;
     }
     case IOProxyDataOP::write: {
@@ -99,34 +105,36 @@ int ioproxy_do_data_op(IOProxyDataOP* op) {
       break;
     }
     case IOProxyDataOP::truncate: {
-      op -> error_code = func_sync_io.struncate(op->path, op->offset); // 第二批代码，error_code 由同步IO返回值修改
+      op->error_code = func_sync_io.struncate(
+          op->path, op->offset);  // 第二批代码，error_code 由同步IO返回值修改
       break;
     }
     case IOProxyDataOP::mkdir: {
-      op -> error_code = func_sync_io.smkdir(op->path, op->mode);
+      op->error_code = func_sync_io.smkdir(op->path, op->mode);
       break;
     }
     case IOProxyDataOP::rmdir: {
-      op -> error_code = func_sync_io.srmdir(op->path);
+      op->error_code = func_sync_io.srmdir(op->path);
       break;
     }
     case IOProxyDataOP::create: {
-      op -> error_code = func_sync_io.screate(op->path, op->mode);
+      op->error_code = func_sync_io.screate(op->path, op->mode);
       break;
     }
     case IOProxyDataOP::unlink: {
-      op -> error_code = func_sync_io.sunlink(op->path);
+      op->error_code = func_sync_io.sunlink(op->path);
       break;
     }
     case IOProxyDataOP::link: {
-      op -> error_code = func_sync_io.slink(op->path, op->newpath);
+      op->error_code = func_sync_io.slink(op->path, op->newpath);
       break;
     }
     case IOProxyDataOP::symlink: {
-      op -> error_code = func_sync_io.ssymlink(op->path, op->newpath);
+      op->error_code = func_sync_io.ssymlink(op->path, op->newpath);
       break;
-    }case IOProxyDataOP::readlink: {
-      op-> error_code = func_sync_io.sreadlink(op->path, op);
+    }
+    case IOProxyDataOP::readlink: {
+      op->error_code = func_sync_io.sreadlink(op->path, op);
       break;
     }
     default:

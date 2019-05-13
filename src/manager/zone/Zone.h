@@ -5,13 +5,12 @@
 //#include <uuid/uuid.h>
 
 #include <algorithm>
-#include "space/Space.h"
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
 #include "context.h"
 #include "common/json.h"
 #include "datastore/couchbase_helper.h"
-#include "space/Space.h"
+#include "manager/space/Space.h"
 
 
 
@@ -155,6 +154,23 @@ class ZoneCancelReq : public hvs::JsonSerializer //区域共享请求
 
  public:
   ZoneCancelReq() = default;
+};
+
+class MapAddReq : public hvs::JsonSerializer {
+ public:
+    std::string zoneID;//区域ID
+    std::string ownerID;//区域主人ID，UUID
+    std::string spaceName;
+    int64_t spaceSize;
+    std::string spacePathInfo;
+    //std::string globalManageNodeInfo;
+
+ public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+
+ public:
+  MapAddReq() = default;
 };
 
 #endif/*ZONE_H*/

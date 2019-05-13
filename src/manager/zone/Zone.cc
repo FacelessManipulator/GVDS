@@ -1,4 +1,4 @@
-#include "zone/Zone.h"
+#include "manager/zone/Zone.h"
 #include <iostream>
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
@@ -117,4 +117,22 @@ void ZoneCancelReq::serialize_impl()   {
 void ZoneCancelReq::deserialize_impl()   {
     get("UUID", zoneID);
     get("owner", ownerID);
+}
+
+void MapAddReq::serialize_impl()   {
+    put("UUID", zoneID);
+    put("owner", ownerID);
+    put("spa_name", spaceName);
+    put("size", spaceSize);
+    put("path", spacePathInfo);
+    //put("managenode", globalManageNodeInfo);
+}
+
+void MapAddReq::deserialize_impl()   {
+    get("UUID", zoneID);
+    get("owner", ownerID);
+    get("spa_name", spaceName);
+    get("size", spaceSize);
+    get("path", spacePathInfo);
+    //get("managenode", globalManageNodeInfo);
 }

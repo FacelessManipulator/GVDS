@@ -4,7 +4,7 @@
 #include "context.h"
 #include "datastore/datastore.h"
 
-#include "space/SpaceServer.h"
+#include "manager/space/SpaceServer.h"
 
 
 namespace hvs{
@@ -17,13 +17,7 @@ void SpaceServer::start() {}
 void SpaceServer::stop() {}
 
 void SpaceServer::router(Router& router) {
-  Routes::Post(router, "/zone/rename", Routes::bind(&ZoneServer::ZoneRenameRest, ZoneServer::getInstance()));
-  Routes::Post(router, "/zone/locate", Routes::bind(&ZoneServer::GetZoneLocateInfoRest, ZoneServer::getInstance()));
-  Routes::Post(router, "/zone/info", Routes::bind(&ZoneServer::GetZoneInfoRest, ZoneServer::getInstance()));
-  Routes::Post(router, "/zone/share", Routes::bind(&ZoneServer::ZoneShareRest, ZoneServer::getInstance()));
-  Routes::Post(router, "/zone/sharecancel", Routes::bind(&ZoneServer::ZoneShareCancelRest, ZoneServer::getInstance()));
-  Routes::Post(router, "/zone/register", Routes::bind(&ZoneServer::ZoneRegisterRest, ZoneServer::getInstance()));
-  Routes::Post(router, "/zone/cancel", Routes::bind(&ZoneServer::ZoneCancelRest, ZoneServer::getInstance()));
+//   Routes::Post(router, "/zone/rename", Routes::bind(&ZoneServer::ZoneRenameRest, this));
 }
 
 void SpaceServer::GetSpacePosition(std::vector<std::string> &result, std::vector<std::string> spaceID)
@@ -90,12 +84,12 @@ std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID,
     tmps.storageSrcID = tmpm.storageSrcName;//需要转换成ID；
     tmps.spacePath = tmpm.spacePath;
     boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
-    const std::string tmp_uuid = oost::uuids::to_string(a_uuid);
+    const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
     tmps.spaceID = tmp_uuid;
-    std::string tmps_key = spaceID;
+    std::string tmps_key = tmps.spaceID;
     std::string tmps_value = tmps.serialize();
     spacePtr->set(tmps_key, tmps_value);
-    return spaceID;
+    return tmps.spaceID;
 }
 
 int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)

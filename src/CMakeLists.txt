@@ -11,10 +11,6 @@ SET(CommonSRCS
         usermodel/UserModelServer.cc
         common/RestServer.cc
         common/JsonSerializer.cc
-        space/Space.cc
-        space/SpaceServer.cc
-        zone/Zone.cc
-        zone/ZoneServer.cc
         aggregation/AggregationServer.cc
         aggregation/StorageResBicInfo.cc
         msg/rpc.cc

@@ -10,11 +10,11 @@
 
 
 #include "datastore/couchbase_helper.h"
-#include "zone/Zone.h"
-#include "space/SpaceServer.h"
-#include "zone/Zone.h"
+#include "manager/zone/Zone.h"
+#include "manager/space/SpaceServer.h"
+#include "manager/zone/Zone.h"
 #include "manager/manager.h"
-//class Account;//没懂
+
 
 
 
@@ -27,11 +27,6 @@ private:
   virtual void router(Pistache::Rest::Router&) override;
   
 public:
-    static ZoneServer* getInstance(){
-        if (instance == nullptr)
-            instance = new ZoneServer();
-	    return instance;
-    };
  //--------------------------------------------
     //define your function here
     
@@ -64,15 +59,20 @@ public:
     void ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response);
     int ZoneCancel(std::string zoneID, std::string ownerID);
 
+    //映射编辑模块：区域映射增加接口
+    void MapAddRest(const Rest::Request& request, Http::ResponseWriter response);
+    int MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
+    //映射编辑模块：区域映射删除接口
+
 
 
 
  //--------------------------------------------
-private:
-    ZoneServer() = default;
-    ~ZoneServer();
+public:
+    ZoneServer() : ManagerModule("zone") {};
+    ~ZoneServer() {};
 
-    static ZoneServer* instance;  //single object
+    // static ZoneServer* instance;  //single object
 };
 
 //std::string md5(std::string strPlain);

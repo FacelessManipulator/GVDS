@@ -10,8 +10,9 @@
 
 
 #include "datastore/couchbase_helper.h"
-#include "space/Space.h" 
-//class Account;
+#include "manager/space/Space.h" 
+#include "manager/manager.h"
+
 
 using namespace Pistache;
 
@@ -22,13 +23,8 @@ private:
   virtual void start() override;
   virtual void stop() override;
   virtual void router(Pistache::Rest::Router&) override;
-  
+
 public:
-    static SpaceServer* getInstance(){
-        if (instance == nullptr)
-            instance = new SpaceServer();
-	    return instance;
-    };
  //--------------------------------------------
     //define your function here
     
@@ -59,9 +55,9 @@ public:
     std::string modifyUserinfo(Account &person);*/
 
  //--------------------------------------------
-private:
-    SpaceServer() = default;
-    ~SpaceServer();
+public:
+    SpaceServer() : ManagerModule("space") {};
+    ~SpaceServer() {};
 
     static SpaceServer* instance;  //single object
 };

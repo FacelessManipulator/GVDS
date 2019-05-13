@@ -1,5 +1,6 @@
 #include "io_proxy/io_proxy.h"
 #include "io_proxy/io_worker.h"
+#include "rpc_bindings.hpp"
 
 #include <mutex>
 #include <future>
@@ -28,7 +29,26 @@ bool IOProxy::queue_and_wait(std::shared_ptr<OP> op) {
   };
   op->complete_callbacks.push_back(cb);
   queue_op(op, true);
-  f.get();
+  f.wait();
+  // WARNING: DO NOT CHANGE THE COMPLETE_CALLBACKS DURING THIS PERIODS
+}
+
+bool IOProxy::queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops) {
+  promise<bool> worker_is_done;
+  atomic_long cnt = 0;
+  const long expect_done = ops.size();
+  auto f = worker_is_done.get_future();
+  boost::function0<void> cb = [&worker_is_done, &cnt, expect_done](){
+    ++cnt;
+    if(cnt.load() >= expect_done) {
+      worker_is_done.set_value(true);
+    }
+  };
+  for(auto op:ops) {
+    op->complete_callbacks.push_back(cb);
+    queue_op(op, true);
+  }
+  f.wait_for(std::chrono::milliseconds(100)*ops.size());
   // WARNING: DO NOT CHANGE THE COMPLETE_CALLBACKS DURING THIS PERIODS
 }
 
@@ -117,11 +137,22 @@ void IOProxy::start() {
     worker_threads.push_back(t);
   }
   pthread_mutex_unlock(&m_queue_mutex);
+
+  _rpc = init_rpcserver();
+  if (!_rpc) {
+    dout(-1) << "failed to start rpc component, exit!" << dendl;
+    exit(-1);
+  }
   create("io_proxy");
 }
 
 void IOProxy::stop() {
   if (is_started()) {
+    if (_rpc != nullptr) {
+      _rpc->stop();
+      delete _rpc;
+      _rpc = nullptr;
+    }
     pthread_mutex_lock(&m_queue_mutex);
     m_stop = true;
     pthread_cond_signal(&m_cond_dispatcher);
@@ -129,6 +160,10 @@ void IOProxy::stop() {
     pthread_mutex_unlock(&m_queue_mutex);
     join();
   }
+}
+
+void IOProxy::rpc_bind(RpcServer* server) {
+  hvs_ioproxy_rpc_bind(server);
 }
 
 hvs::IOProxy* init_ioproxy() {

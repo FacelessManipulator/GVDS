@@ -15,22 +15,10 @@ void init_context() {
     // failed to start log component
     exit(-1);
   }
-  _context->_rpc = nullptr;
-  _context->_ioproxy = nullptr;
   _context->ioproxy_rootdir = "/tmp/hvs/tests/data";
-//  _context->_rpc = init_rpcserver();
-//  if (!_context->_rpc) {
-//    // failed to start rpc component
-//    exit(-1);
-//  }
 }
 void destroy_context() {
   HvsContext* _context = HvsContext::get_context();
-  if (_context->_rpc != nullptr) {
-    _context->_rpc->stop();
-    delete _context->_rpc;
-    _context->_rpc = nullptr;
-  }
   if (_context->_log != nullptr) {
     stop_log(_context->_log);
     _context->_log = nullptr;
@@ -38,9 +26,6 @@ void destroy_context() {
   if (_context->_config != nullptr) {
     delete _context->_config;
     _context->_config = nullptr;
-  }
-  if (_context->_ioproxy != nullptr) {
-    _context->_ioproxy = nullptr;
   }
 }
 }  // namespace hvs

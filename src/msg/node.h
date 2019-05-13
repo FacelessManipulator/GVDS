@@ -5,6 +5,7 @@
 #include "common/Thread.h"
 
 namespace hvs {
+class RpcServer;
 enum HVSNodeType {
   IO_PROXY_NODE,
   MANAGER_NODE,
@@ -20,5 +21,6 @@ class Node {
     addr = boost::asio::ip::make_address(ip);
   }
   Node(HVSNodeType _type) : type(_type){};
+  virtual void rpc_bind(RpcServer* server) {}
 };
 }  // namespace hvs

@@ -183,7 +183,7 @@ TEST(IOProxyRPC, yx_ioproxy_readdir) {
 
 TEST(IOProxyRPC, yx_ioproxy_pack) {
     hvs::init_context();
-    hvs::HvsContext::get_context()->_ioproxy = hvs::init_ioproxy();
+    hvs::init_ioproxy();
     ioproxy_rpc_statbuffer sb1 = ioproxy_stat("/tmp/hvs/tests/data/example.cfg");
     auto buffer = pack(sb1);
     ioproxy_rpc_statbuffer sb2;

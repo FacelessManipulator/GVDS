@@ -30,12 +30,36 @@ namespace hvs {
         op->operation = hvs::IOProxyMetadataOP::stat;
         op->path = fullpath.c_str();
         op->type = hvs::IO_PROXY_METADATA;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         if (op->error_code == 0) {
             return ioproxy_rpc_statbuffer(op->buf); //返回消息
         } else {
             return ioproxy_rpc_statbuffer(op->error_code);
         }
+    }
+
+    inline std::vector<ioproxy_rpc_statbuffer> ioproxy_stat_multi(std::vector<std::string> pathnames) {
+        std::vector<std::string> real_path;
+        std::vector<std::shared_ptr<hvs::OP>> ops;
+        std::vector<ioproxy_rpc_statbuffer> results;
+        for(auto& path : pathnames) {
+            real_path.emplace_back(hvsfs_fullpath(path.c_str()));
+        auto op = std::make_shared<hvs::IOProxyMetadataOP>();
+            op->id = 0;
+            op->operation = hvs::IOProxyMetadataOP::stat;
+            op->path = path.c_str();
+            op->type = hvs::IO_PROXY_METADATA;
+            ops.push_back(op);
+        }
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(ops);
+        for(auto& op:ops) {
+            if (op->error_code == 0) {
+                results.emplace_back(static_cast<IOProxyMetadataOP*>(op.get())->buf); //返回消息
+            } else {
+                results.emplace_back(op->error_code);
+            }
+        }
+        return results;
     }
 
     inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, int offset){
@@ -48,7 +72,7 @@ namespace hvs {
         op->should_prepare = true;
         op->size = static_cast<size_t>(size);
         op->offset = offset;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         if (op->error_code >= 0) {
             return ioproxy_rpc_buffer(op->obuf, static_cast<int>(op->error_code)); //返回消息
         } else {
@@ -66,7 +90,7 @@ namespace hvs {
         op->size = static_cast<size_t>(size);
         op->offset = offset;
         op->ibuf = obuf.buf.ptr;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -96,7 +120,7 @@ namespace hvs {
         op->operation = IOProxyMetadataOP::readdir;
         op->path = fullpath.c_str();
         op->type = IO_PROXY_METADATA;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         if (op->error_code == 0) {
             for(dirent ent : op->dirvector){
                 retvec.emplace_back(ioproxy_rpc_dirent(&ent));
@@ -116,7 +140,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
         op->offset = offset;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -130,7 +154,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_METADATA;
         op->newpath = newfullpath.c_str();
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -143,7 +167,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
         op->mode = mode;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -155,7 +179,7 @@ namespace hvs {
         op->operation = IOProxyDataOP::rmdir;
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -168,7 +192,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
         op->mode = mode;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -180,7 +204,7 @@ namespace hvs {
         op->operation = IOProxyDataOP::unlink;
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -194,7 +218,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
         op->newpath = newfullpath.c_str();
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -207,7 +231,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_METADATA;
         op->mode = mode;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -223,7 +247,7 @@ namespace hvs {
         op->sec1n = sec1n;
         op->sec0s = sec0s;
         op->sec0n = sec0n;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -237,7 +261,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
         op->newpath = newfullpath.c_str();
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -250,7 +274,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_DATA;
         op->size = size;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->linkbuf;
     }
 
@@ -263,7 +287,7 @@ namespace hvs {
         op->path = fullpath.c_str();
         op->type = IO_PROXY_METADATA;
         op->mode = mode;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -277,7 +301,7 @@ namespace hvs {
         op->type = IO_PROXY_METADATA;
         op->uid = uid;
         op->gid = gid;
-        hvs::HvsContext::get_context()->_ioproxy->queue_and_wait(op);
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
@@ -302,5 +326,6 @@ namespace hvs {
         rpc_server->bind("ioproxy_readlink", ioproxy_readlink);
         rpc_server->bind("ioproxy_chmod", ioproxy_chmod);
         rpc_server->bind("ioproxy_chown", ioproxy_chown);
+        rpc_server->bind("ioproxy_stat_multi", ioproxy_stat);
     }
 }

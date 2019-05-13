@@ -122,6 +122,19 @@ namespace hvs{
         return retbuf.error_code;
     }
 
+    // stat multi
+    std::vector<hvs::ioproxy_rpc_buffer> hvsfs_getattrs(std::vector<std::string> paths)
+    {
+      
+        auto ip = new std::string(ioproxy_ip.c_str());
+        ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+        auto port = config->get<int>("rpc.port");
+        RpcClient client(*ip, static_cast<const unsigned int>(*port));
+        auto res = client.call("ioproxy_stat_multi", paths)->as<std::vector<hvs::ioproxy_rpc_buffer>>();
+        return res;
+    }
+
+
     int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                       off_t offset, struct fuse_file_info *fi,
                       enum fuse_readdir_flags flags)

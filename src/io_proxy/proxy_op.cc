@@ -54,6 +54,7 @@ int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
   sync_io func_sync_io;
   switch (op->operation) {
     case IOProxyMetadataOP::stat: {
+      dout(20) << "IOProxy: handle stat ["<<op->path<<"]" <<dendl;
       func_sync_io.sstat(op->path, op);
       break;
     }

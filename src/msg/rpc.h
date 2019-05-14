@@ -56,13 +56,14 @@ RpcServer* init_rpcserver();
 class RpcClient {
  public:
   RpcClient(const std::string address, const unsigned port);
-  RpcClient() = delete;
+  RpcClient() {};
   template <typename... Args>
   std::optional<RPCLIB_MSGPACK::object_handle> call(
       std::string const& func_name, Args... args);
+  void shutdown() {}
 
- private:
-  std::unique_ptr<rpc::client> _client;
+ public:
+  std::shared_ptr<rpc::client> _client;
   std::string _address;
   std::uint16_t _port;
   unsigned _retry;

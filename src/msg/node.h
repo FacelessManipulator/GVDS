@@ -2,7 +2,6 @@
 
 #include <boost/asio/ip/address.hpp>
 #include <string>
-#include "common/Thread.h"
 
 namespace hvs {
 class RpcServer;

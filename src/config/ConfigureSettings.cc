@@ -141,6 +141,12 @@ hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   _config->add("rest.port", 9090);
   _config->add("rest.thread_num", 5);
   _config->add("couchbase.bucket", string("test"));
+  // fuse config options
+  _config->add("fuse.mountpoint", string("/mnt/hvs"));
+  _config->add("fuse.foreground", true);
+  _config->add("fuse.debug", true);
+  _config->add("fuse.multithread", true);
+  _config->add("fuse.auto_unmount", true);
 
   return _config;
 }

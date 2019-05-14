@@ -55,6 +55,11 @@ public:
     int ZoneRegister(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
                      std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
 
+    //区域注册模块：管理员区域添加接口
+    void ZoneAddRest(const Rest::Request& request, Http::ResponseWriter response);
+    int ZoneAdd(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
+                     std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
+
     //区域注销模块：区域注销接口
     void ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response);
     int ZoneCancel(std::string zoneID, std::string ownerID);

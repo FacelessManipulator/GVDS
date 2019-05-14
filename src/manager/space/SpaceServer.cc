@@ -10,7 +10,7 @@
 namespace hvs{
 using namespace Pistache::Rest;
 using namespace Pistache::Http;
-SpaceServer* SpaceServer::instance = nullptr;
+//SpaceServer* SpaceServer::instance = nullptr;
 
 void SpaceServer::start() {}
 
@@ -74,14 +74,16 @@ std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID,
     SpaceMetaData tmpm;
     tmpm.deserialize(spacePathInfo);
     //1、判断是否可以创建空间，将host和storage的name转换成ID
-    //2、获取账户映射信息，创建空间目录
+    //2、获取账户映射信息，创建空间目录,返回spacePath
     //3、权限增加模块
     //4、空间分配容量记录
     //5、写入数据库
+    tmpm.hostCenterID = tmpm.hostCenterName;
+    tmpm.storageSrcID = tmpm.storageSrcName;//资源聚合模块查找
     tmps.spaceName = spaceName;
     tmps.spaceSize = spaceSize;
-    tmps.hostCenterID = tmpm.hostCenterName;
-    tmps.storageSrcID = tmpm.storageSrcName;//需要转换成ID；
+    tmps.hostCenterID = tmpm.hostCenterID;
+    tmps.storageSrcID = tmpm.storageSrcID;
     tmps.spacePath = tmpm.spacePath;
     boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
     const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
@@ -92,12 +94,47 @@ std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID,
     return tmps.spaceID;
 }
 
-int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)//可能有问题，多个ID的读，除第一个外，会产生乱码
+std::string SpaceServer::SpaceCheck(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo)
 {
-    // Space tmps;
-    // std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //       hvs::CouchbaseDatastore("space_info"));
-    // spacePtr->init();
+    Space tmps;
+    std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+          hvs::CouchbaseDatastore("space_info"));
+    spacePtr->init();
+    SpaceMetaData tmpm;
+    tmpm.deserialize(spacePathInfo);
+    tmpm.hostCenterID = tmpm.hostCenterName;
+    tmpm.storageSrcID = tmpm.storageSrcName;//资源聚合模块查找
+    //find
+    std::string query = "select * from `space_info` where SC_UUID = \"scuuid\" and Storage_UUID = \"stuuid\" and root_location = \"rootlocation\";";
+    int pos1 = query.find("scuuid");
+    query.erase(pos1, 6);
+    query.insert(pos1, tmpm.hostCenterID);
+    int pos2 = query.find("stuuid");
+    query.erase(pos2, 6);
+    query.insert(pos2, tmpm.storageSrcID);  
+    int pos3 = query.find("rootlocation");
+    query.erase(pos3, 12);
+    query.insert(pos3, tmpm.spacePath);
+    //std::cout << query <<std::endl;
+    auto [vp, err] = spacePtr->n1ql(query);
+    if (vp->size() != 1) return "false";
+    else
+    {
+        std::vector<std::string>::iterator it = vp->begin();
+        std::string n1ql_result = *it;
+        std::string tmp_value = n1ql_result.substr(14, n1ql_result.length() - 15);
+        tmps.deserialize(tmp_value);
+        tmps.status = true;
+        tmp_value = tmps.serialize();
+        std::string tmp_key = tmps.spaceID;
+        spacePtr->set(tmp_key,tmp_value);
+        return tmps.spaceID;
+    }
+}
+
+int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)
+{
+    //是否要在实际集群中ownerID？
     for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
             {
                 Space tmps;

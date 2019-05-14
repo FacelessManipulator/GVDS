@@ -361,10 +361,10 @@ TEST_F(HVSZoneTest, ZoneRegister) {
   req.ownerID = "124";
   req.memberID.emplace_back("123");
   req.memberID.emplace_back("125");
-  req.spaceName = "shanghaispace";
+  req.spaceName = "changshaspace";
   req.spaceSize = 100;
   SpaceMetaData tmpm;
-  tmpm.hostCenterName = "shanghai";
+  tmpm.hostCenterName = "changsha";
   tmpm.storageSrcName = "lustre1";
   req.spacePathInfo = tmpm.serialize();
 
@@ -482,7 +482,7 @@ TEST_F(HVSZoneTest, MapAdd) {
   EXPECT_TRUE(fu.get());
   client.shutdown();
 }
-*/
+
 
 TEST_F(HVSZoneTest, MapDeduct) {
   Http::Client client;
@@ -496,6 +496,43 @@ TEST_F(HVSZoneTest, MapDeduct) {
   req.ownerID = "124";
   req.spaceID.emplace_back("3625ea4b-6759-44a7-b785-ae34d63b2566");
   req.spaceID.emplace_back("ee9637e0-f13f-46d5-b15d-38dcf1043708");
+
+  std::string value = req.serialize();
+
+  auto response = client.post(url).body(value).send();
+        dout(-1) << "Client Info: post request " << url << dendl;
+
+  std::promise<bool> prom;
+  auto fu = prom.get_future();
+  response.then(
+      [&](Http::Response res) {
+        dout(-1) << "Manager Info: " << res.body() << dendl;
+        prom.set_value(true);
+      },
+      Async::IgnoreException);
+  EXPECT_TRUE(fu.get());
+  client.shutdown();
+}*/
+
+TEST_F(HVSZoneTest, ZoneAdd) {
+  Http::Client client;
+  char url[256];
+  snprintf(url, 256, "http://localhost:%d/zone/add", manager->rest_port());
+  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+  client.init(opts);
+
+  ZoneRegisterReq req;
+  req.zoneName = "wbzone";
+  req.ownerID = "125";
+  req.memberID.emplace_back("123");
+  req.memberID.emplace_back("121");
+  req.spaceName = "changshaspace";
+  req.spaceSize = 100;
+  SpaceMetaData tmpm;
+  tmpm.hostCenterName = "changsha";
+  tmpm.storageSrcName = "lustre1";
+  tmpm.spacePath = "../123/changshaspace";
+  req.spacePathInfo = tmpm.serialize();
 
   std::string value = req.serialize();
 

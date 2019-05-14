@@ -63,6 +63,7 @@ void ZoneServer::router(Router& router) {
   Routes::Post(router, "/zone/cancel", Routes::bind(&ZoneServer::ZoneCancelRest, this));
   Routes::Post(router, "/zone/mapadd", Routes::bind(&ZoneServer::MapAddRest, this));
   Routes::Post(router, "/zone/mapdeduct", Routes::bind(&ZoneServer::MapDeductRest, this));
+  Routes::Post(router, "/zone/add", Routes::bind(&ZoneServer::ZoneAddRest, this));
 }
 
 //区域重命名
@@ -427,6 +428,64 @@ int ZoneServer::ZoneRegister(std::string zoneName, std::string ownerID, std::vec
     return 0;
   }
 }
+
+//管理员区域添加
+void ZoneServer::ZoneAddRest(const Rest::Request& request, Http::ResponseWriter response){
+  std::cout << "====== start ZoneServer function: ZoneAddRest ======"<< std::endl;
+  auto info = request.body();
+  ZoneRegisterReq req;
+  req.deserialize(info);
+  std::string zoneName = req.zoneName;
+  std::string ownerID = req.ownerID;
+  std::vector<std::string> memberID = req.memberID;
+  std::string spaceName = req.spaceName;
+  int64_t spaceSize = req.spaceSize;
+  std::string spacePathInfo = req.spacePathInfo;//spacemetadata类，在客户端序列化为string。
+  //std::string globalManageNodeInfo =req.globalManageNodeInfo;客户端判断
+
+  int result_i = ZoneAdd(zoneName, ownerID, memberID, spaceName, spaceSize, spacePathInfo);
+  std::string result;
+  if (result_i == 0)
+  result = "success";
+  else result = "fail";
+
+  response.send(Http::Code::Ok, result); //point
+  std::cout << "====== end ZoneServer function: ZoneAddRest ======"<< std::endl;
+}
+int ZoneServer::ZoneAdd(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
+    std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
+{
+  Zone tmp;
+  std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("zone_info"));
+  zonePtr->init();
+  // SpaceMetaData tmp_smd;
+  // tmp_smd.deserialize(spacePathInfo);
+  SpaceServer* tmp_server = static_cast<SpaceServer*>(mgr->get_module("space").get());//调用方法
+  //SpaceServer* tmp_server = hvs::SpaceServer::getInstance();
+  std::string res_sc = tmp_server->SpaceCheck(spaceName, ownerID, memberID, spaceSize, spacePathInfo);
+  if (res_sc == "false")
+  {
+    return -1;
+  }
+  else
+  {
+    std::string spaceID = res_sc;
+    boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+    const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+    tmp.zoneID = tmp_uuid;
+    tmp.zoneName = zoneName;
+    tmp.ownerID = ownerID;
+    tmp.memberID = memberID;
+    tmp.spaceID.emplace_back(spaceID);
+
+    std::string tmp_key(tmp.zoneID);
+    std::string tmp_value = tmp.serialize();
+    zonePtr->set(tmp_key, tmp_value);
+    return 0;
+  }
+}
+
 
 //区域注销
 void ZoneServer::ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response){

@@ -31,9 +31,9 @@ bool IOProxy_MGR::add(const Rest::Request& req, Http::ResponseWriter res) {
     return false;
   }
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
-  auto err = cbd->insert(iop->key(), iop->json_value());
+  auto err = cbd->insert(iop->uuid, iop->json_value());
   usleep(100000); // may take 100ms to be effective
-  res.send(Code::Accepted, iop->key());
+  res.send(Code::Accepted, iop->uuid);
   return true;
 }
 

@@ -125,7 +125,9 @@ void IOProxy::start() {
   pthread_mutex_lock(&m_queue_mutex);
   m_stop = false;
   // TODO: read configs
-  int scher_num = 5;
+  auto _config = HvsContext::get_context()->_config;
+  auto scher_o = _config->get<int>("ioproxy.scher");
+  int scher_num = scher_o.value_or(8);
   for(int i = 0; i < scher_num; i++) {
     auto scher = make_shared<IOProxy_scheduler>(true);
     schedulers.push_back(scher);

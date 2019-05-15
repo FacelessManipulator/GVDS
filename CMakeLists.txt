@@ -6,6 +6,8 @@ set(VERSION 0.1.0)
 
 # include(CTest)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 是否需要构建文档

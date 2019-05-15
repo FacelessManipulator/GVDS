@@ -23,6 +23,7 @@ struct IOProxyNode : public hvs::JsonSerializer {
   std::string ip;
   std::string name;
   Status status;
+  char uuid[128];
   static const std::string& prefix() {
     static std::string _prefix("IOPN-");
     return _prefix;
@@ -30,6 +31,8 @@ struct IOProxyNode : public hvs::JsonSerializer {
   explicit IOProxyNode()
       : tag(boost::uuids::random_generator()()), status(Stopped) {
     name = boost::lexical_cast<std::string>(tag);
+    auto tmp = prefix() + boost::lexical_cast<std::string>(tag);
+    memcpy(uuid, tmp.c_str(), tmp.size());
   }
 
   explicit IOProxyNode(const char* uuid) {
@@ -51,8 +54,9 @@ struct IOProxyNode : public hvs::JsonSerializer {
   void key(const char* key) {
     std::stringstream ss(key);
     ss >> tag;
+    auto tmp = prefix() + boost::lexical_cast<std::string>(tag);
+    memcpy(uuid, tmp.c_str(), tmp.size());
   }
-  std::string key() { return prefix() + boost::lexical_cast<std::string>(tag); }
   std::string json_value() { return serialize(); }
 };
 

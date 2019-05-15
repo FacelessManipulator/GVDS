@@ -132,14 +132,14 @@ hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   _config->add("log.path", string("/var/log/hvs.log"));
   _config->add("log.level", 10);
   _config->add("rpc.port", 9092);
-  _config->add("rpc.workers", 5);
+  _config->add("rpc.workers", 100);
   _config->add("rpc.timeout", 3000);
   _config->add("rpc.retry", 3);
   _config->add("couchbase.address", string("192.168.10.235"));
   _config->add("couchbase.user", string("dev"));
   _config->add("couchbase.password", string("buaaica"));
   _config->add("rest.port", 9090);
-  _config->add("rest.thread_num", 5);
+  _config->add("rest.thread_num", 1);
   _config->add("couchbase.bucket", string("test"));
   // fuse config options
   _config->add("fuse.mountpoint", string("/mnt/hvs"));
@@ -147,6 +147,8 @@ hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   _config->add("fuse.debug", true);
   _config->add("fuse.multithread", true);
   _config->add("fuse.auto_unmount", true);
+
+  _config->add("ioproxy.scher", 6);
 
   return _config;
 }

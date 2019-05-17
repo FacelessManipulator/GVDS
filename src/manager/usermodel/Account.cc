@@ -1,4 +1,4 @@
-#include "usermodel/Account.h"
+#include "manager/usermodel/Account.h"
 #include <iostream>
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
@@ -21,7 +21,7 @@ void Account::serialize_impl() {
     put("AccountPHONE", accountPhone);
     put("AccountAddress", accountAddress);
     put("Department", Department);
-    put("SC", sc);
+    //put("SC", sc);
 
 }
 void Account::deserialize_impl() {
@@ -33,21 +33,27 @@ void Account::deserialize_impl() {
     get("AccountPHONE", accountPhone);
     get("AccountAddress", accountAddress);
     get("Department", Department);
-    get("SC", sc);
+    //get("SC", sc);
  }
 
 
 
 void SCAccount::serialize_impl() {
-    put("sc_flag", sc_flag);
-    put("location_acc", location_scacc);
-    put("scaccount_password", scacc_password);
+    put("HVSAccountID", accountID);
+    put("Beijing_account", Beijing_account);
+    put("Shanghai_account", Shanghai_account);
+    put("Guangzhou_account", Guangzhou_account);
+    put("Changsha_account", Changsha_account);
+    put("Jinan_account", Jinan_account);
 
 }
 void SCAccount::deserialize_impl() {
-    get("sc_flag", sc_flag);
-    get("location_acc", location_scacc);
-    get("scaccount_password", scacc_password);
+    get("HVSAccountID", accountID);
+    get("Beijing_account", Beijing_account);
+    get("Shanghai_account", Shanghai_account);
+    get("Guangzhou_account", Guangzhou_account);
+    get("Changsha_account", Changsha_account);
+    get("Jinan_account", Jinan_account);
  }
 
 
@@ -72,3 +78,14 @@ void AccountPass::deserialize_impl() {
     get("HVSPassword", Password);
  }
  
+
+
+void AccountSCPool::serialize_impl(){
+    put("unuse_account", unuse_account);
+    put("use_account", use_account);
+}
+
+void AccountSCPool::deserialize_impl(){
+    get("unuse_account", unuse_account);
+    get("use_account", use_account);
+}

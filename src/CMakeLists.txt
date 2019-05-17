@@ -6,9 +6,9 @@ SET(CommonSRCS
         datastore/datastore.cc
         datastore/couchbase_helper.cc
         common/context.cc
-        usermodel/Account.cc
-        usermodel/MD5.cc
-        usermodel/UserModelServer.cc
+        #usermodel/Account.cc
+        #usermodel/MD5.cc
+        #sermodel/UserModelServer.cc
         common/RestServer.cc
         common/JsonSerializer.cc
         aggregation/AggregationServer.cc

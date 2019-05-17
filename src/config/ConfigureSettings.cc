@@ -131,7 +131,7 @@ hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   _config->add("ip", string("0.0.0.0"));
   _config->add("log.path", string("/var/log/hvs.log"));
   _config->add("log.level", 10);
-  _config->add("rpc.port", 9091);
+  _config->add("rpc.port", 9092);
   _config->add("rpc.workers", 5);
   _config->add("rpc.timeout", 3000);
   _config->add("rpc.retry", 3);

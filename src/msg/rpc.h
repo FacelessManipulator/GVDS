@@ -82,7 +82,7 @@ std::optional<RPCLIB_MSGPACK::object_handle> RpcClient::call(
       dout(5) << "WARING: rpc client timeout, try " << retry_times << " time."
               << dendl;
     } catch (rpc::rpc_error error) {
-      dout(1) << "ERROR: rpc client call " << error.get_function_name()
+      dout(-1) << "ERROR: rpc client call " << error.get_function_name()
               << " error, reason: " << error.what() << dendl;
       return {};
     }

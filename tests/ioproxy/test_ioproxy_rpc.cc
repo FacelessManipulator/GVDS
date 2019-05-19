@@ -14,13 +14,37 @@
 #include "msg/pack.h"
 #include <vector>
 #include <dirent.h>
+#include "io_proxy/sync_io.h"
 using namespace std;
 using namespace hvs;
 #define  TFILEP "/syncio.txt"
 #define  TDIRP "/."
 
-TEST(IOProxyRPC, yx_ioproxy_simple) {
+class IOProxyRPC : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    ioproxy = static_cast<IOProxy*>(HvsContext::get_context()->node);
+    ASSERT_NE(ioproxy, nullptr);
+  }
+  void TearDown() override { ioproxy = nullptr; }
+
+ protected:
+  static void SetUpTestCase() {
     hvs::init_context();
+    hvs::init_ioproxy();
+  }
+  static void TearDownTestCase() {
+    hvs::destroy_ioproxy(
+        static_cast<IOProxy*>(HvsContext::get_context()->node));
+    hvs::destroy_context();
+  }
+
+ public:
+  IOProxy* ioproxy;
+};
+
+
+TEST_F(IOProxyRPC, yx_ioproxy_simple) {
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -30,9 +54,8 @@ TEST(IOProxyRPC, yx_ioproxy_simple) {
     ASSERT_EQ((*res).as<int>(), 1);
 }
 
-TEST(IOProxyRPC, yx_ioproxy_stat) {
+TEST_F(IOProxyRPC, yx_ioproxy_stat) {
     string pathname(TFILEP);
-    hvs::init_context();
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -51,9 +74,8 @@ TEST(IOProxyRPC, yx_ioproxy_stat) {
     std::cout << "Time to remote get " << size << " metadata: " << diff.count() << " s\n";
 }
 
-TEST(IOProxyRPC, yx_ioproxy_read) {
+TEST_F(IOProxyRPC, yx_ioproxy_read) {
     string pathname(TFILEP);
-    hvs::init_context();
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -71,9 +93,8 @@ TEST(IOProxyRPC, yx_ioproxy_read) {
     std::cout << "Time to remote op " << size << " read: " << diff.count() << " s\n";
 }
 
-TEST(IOProxyRPC, yx_ioproxy_write) {
+TEST_F(IOProxyRPC, yx_ioproxy_write) {
     string pathname(TFILEP);
-    hvs::init_context();
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -83,7 +104,8 @@ TEST(IOProxyRPC, yx_ioproxy_write) {
     auto start = std::chrono::steady_clock::now();
     for(int i = 0; i < size; i++){
         std::string data("superman");
-        auto res = client.call("ioproxy_write", pathname, data, data.size(), 0);
+    ioproxy_rpc_buffer _buffer(data.c_str(), data.size());
+        auto res = client.call("ioproxy_write", pathname, _buffer, data.size(), 0);
         dout(-1) << res->as<int>() << dendl;
         std::cout << "输出结果：" << res->as<int>() << std::endl;
     }
@@ -93,9 +115,8 @@ TEST(IOProxyRPC, yx_ioproxy_write) {
     std::cout << "Time to remote op " << size << " write: " << diff.count() << " s\n";
 }
 
-TEST(IOProxyRPC, yx_ioproxy_open){
+TEST_F(IOProxyRPC, yx_ioproxy_open){
     string pathname(TFILEP);
-    hvs::init_context();
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -114,9 +135,8 @@ TEST(IOProxyRPC, yx_ioproxy_open){
     std::cout << "Time to remote op " << size << " open: " << diff.count() << " s\n";
 }
 
-TEST(IOProxyRPC, yx_ioproxy_close) {
+TEST_F(IOProxyRPC, yx_ioproxy_close) {
     string pathname(TFILEP);
-    hvs::init_context();
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -135,9 +155,8 @@ TEST(IOProxyRPC, yx_ioproxy_close) {
     std::cout << "Time to remote op " << size << " close: " << diff.count() << " s\n";
 }
 
-TEST(IOProxyRPC, yx_ioproxy_opendir) {
+TEST_F(IOProxyRPC, yx_ioproxy_opendir) {
     string pathname(TFILEP);
-    hvs::init_context();
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -156,9 +175,8 @@ TEST(IOProxyRPC, yx_ioproxy_opendir) {
     std::cout << "Time to remote op " << size << " opendir: " << diff.count() << " s\n";
 }
 
-TEST(IOProxyRPC, yx_ioproxy_readdir) {
+TEST_F(IOProxyRPC, yx_ioproxy_readdir) {
     string pathname(TDIRP);
-    hvs::init_context();
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -181,12 +199,76 @@ TEST(IOProxyRPC, yx_ioproxy_readdir) {
 }
 
 
-TEST(IOProxyRPC, yx_ioproxy_pack) {
-    hvs::init_context();
-    hvs::init_ioproxy();
+TEST_F(IOProxyRPC, yx_ioproxy_pack) {
     ioproxy_rpc_statbuffer sb1 = ioproxy_stat("/tmp/hvs/tests/data/example.cfg");
     auto buffer = pack(sb1);
     ioproxy_rpc_statbuffer sb2;
     sb2 = unpack<ioproxy_rpc_statbuffer>(buffer);
     EXPECT_EQ(sb1.st_ino, sb2.st_ino);
+}
+
+TEST_F(IOProxyRPC, yx_ioproxy_write_bench) {
+    string pathname(TFILEP);
+    char* buf = new char[102400]; //100KB
+    ioproxy_rpc_buffer _buffer(buf, 102400);
+    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    auto ip = config->get<string>("ip");
+    auto port = config->get<int>("rpc.port");
+    RpcClient client(*ip, static_cast<const unsigned int>(*port));
+    unsigned size  = 100; // 100KB*100=10MB
+
+    auto start = std::chrono::steady_clock::now();
+    for(int i = 0; i < size; i++){
+        auto res = client.call("ioproxy_write", pathname, _buffer, 102400, 0);
+        // dout(-1) << res->as<int>() << dendl;
+        // std::cout << "输出结果：" << res->as<int>() << std::endl;
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = end-start;
+    std::cout << "speed: " << size*100 / diff.count() << " KB/s\n";
+}
+
+TEST_F(IOProxyRPC, yx_ioproxy_write_bench_sm) {
+    string pathname(TFILEP);
+    char* buf = new char[102400]; //100KB
+    memcpy(buf, "hello\n", 6);
+    ioproxy_rpc_buffer _buffer(buf, 102400);
+    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    auto ip = config->get<string>("ip");
+    auto port = config->get<int>("rpc.port");
+    RpcClient client(*ip, static_cast<const unsigned int>(*port));
+    unsigned size  = 10000; // 100KB*1000=100MB
+
+        sync_io func_sync_io;
+        string path("/tmp/hvs/tests/data/syncio.txt");
+    auto start = std::chrono::steady_clock::now();
+    for(int i = 0; i < size; i++){
+    int fd = open(path.c_str(), O_WRONLY|O_CREAT, 0655);
+        // auto res = client.call("ioproxy_write", pathname, _buffer, 102400, 0);
+        // ioproxy_write(pathname, _buffer, 102400, 0);
+
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 2;
+        op->operation = IOProxyDataOP::write;
+        op->path = pathname.c_str();
+        op->type = IO_PROXY_DATA;
+        op->size = static_cast<size_t>(size);
+        op->offset = 0;
+        op->ibuf = _buffer.buf.ptr;
+        // func_sync_io.swrite(, op->ibuf, op->size, op->offset, op.get());
+    op->error_code = 0;
+    if (fd == -1){
+        perror("sync_io swrite open");
+        op->error_code = -errno;
+    }
+    ssize_t ret = pwrite(fd, buf, 102400, 102400*i); // 该操作是原子操作
+        // dout(-1) << res->as<int>() << dendl;
+        // std::cout << "输出结果：" << res->as<int>() << std::endl;
+    close(fd);
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = end-start;
+    std::cout << "speed: " << size*100 / diff.count() << " KB/s\n";
 }

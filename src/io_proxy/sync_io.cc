@@ -64,7 +64,7 @@ ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, str
 }
 
 ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t offset, struct OP* op) {
-    int fd = open(path, O_WRONLY|O_SYNC|O_CREAT, 0655);
+    int fd = open(path, O_WRONLY|O_CREAT, 0655);
     op->error_code = 0;
     if (fd == -1){
         perror("sync_io swrite open");

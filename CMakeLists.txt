@@ -33,6 +33,7 @@ if(BUILD_THIRD_PARTY)
       "${PROJECT_SOURCE_DIR}/third-party/rpclib/include"
       "${PROJECT_SOURCE_DIR}/third-party/boost"
       "${PROJECT_SOURCE_DIR}/third-party/libconfig/lib"
+      "${PROJECT_SOURCE_DIR}/third-party/udt/src"
   )
 
   # download and update submodules

@@ -149,6 +149,8 @@ hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   _config->add("fuse.auto_unmount", true);
 
   _config->add("ioproxy.scher", 6);
+  _config->add("ioproxy.data_port", 9095);
+  _config->add("ioproxy.data_buffer", 10240000);
 
   return _config;
 }

@@ -83,14 +83,14 @@ struct IOProxyDataOP : public OP {
     // TODO: finish the other metadata operations
   };
   Operation operation;
-  const char* path;
+  std::string path;
   char* obuf; // mutable buffer for read
   const char* ibuf; // imutable buffer for write
   size_t size;
   off_t  offset;
   mode_t mode;
   std::string linkbuf; // readlink
-  const char* newpath;
+  std::string newpath;
   ~IOProxyDataOP() {
     // we don't manage write buf
     if(obuf)

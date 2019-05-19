@@ -23,3 +23,6 @@
 	path = third-party/libconfig
 	url = git@github.com:hyperrealm/libconfig.git
 
+[submodule "third-party/udt"]
+	path = third-party/udt
+	url = https://git.dorkbox.com/dorkbox/UDT.git

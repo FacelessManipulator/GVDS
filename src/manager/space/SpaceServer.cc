@@ -136,21 +136,22 @@ int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)
 {
     //是否要在实际集群中ownerID？
     for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
-            {
-                Space tmps;
-                std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-                    hvs::CouchbaseDatastore("space_info"));
-                spacePtr->init();
-                std::string tmps_key = *m;
-                auto[vs, err] = spacePtr->get(tmps_key);
-                std::string tmps_value = *vs;
-                std::cout << tmps_value << std::endl;
-                tmps.deserialize(tmps_value);
-                std::cout << tmps.spaceID << std::endl;
-                tmps.status = false;
-                tmps_value = tmps.serialize();
-                spacePtr->set(tmps_key, tmps_value);
-            }
+    {
+        Space tmps;
+        std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+            hvs::CouchbaseDatastore("space_info"));
+        spacePtr->init();
+        std::string tmps_key = *m;
+        auto[vs, err] = spacePtr->get(tmps_key);
+        std::string tmps_value = *vs;
+        std::cout << tmps_value << std::endl;
+        tmps.deserialize(tmps_value);
+        std::cout << tmps.spaceID << std::endl;
+        tmps.status = false;
+        tmps_value = tmps.serialize();
+        spacePtr->set(tmps_key, tmps_value);
+        //修改空间分配容量
+    }
     return 0;
 }
 

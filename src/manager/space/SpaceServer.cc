@@ -17,7 +17,7 @@ void SpaceServer::start() {}
 void SpaceServer::stop() {}
 
 void SpaceServer::router(Router& router) {
-//   Routes::Post(router, "/zone/rename", Routes::bind(&ZoneServer::ZoneRenameRest, this));
+   Routes::Post(router, "/space/rename", Routes::bind(&SpaceServer::SpaceRenameRest, this));
 }
 
 void SpaceServer::GetSpacePosition(std::vector<std::string> &result, std::vector<std::string> spaceID)
@@ -155,5 +155,51 @@ int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)
     return 0;
 }
 
+
+void SpaceServer::SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response){
+    std::cout << "====== start SpaceServer function: SpaceRenameRest ======"<< std::endl;
+    auto info = request.body();
+
+    SpaceRenameReq req;
+    req.deserialize(info);
+    std::string spaceID = req.spaceID;
+    std::string newSpaceName = req.newSpaceName;
+
+    int result_i = SpaceRename(spaceID, newSpaceName);
+    std::string result;
+    if (result_i == 0)
+    result = "success";
+    else result = "fail";
+
+    response.send(Http::Code::Ok, result); //point
+    std::cout << "====== end SpaceServer function: SpaceRenameRest ======"<< std::endl;
+}
+
+int SpaceServer::SpaceRename(std::string spaceID, std::string newSpaceName)
+{
+    //在lustre中改目录名是否需要ownerID?
+    Space tmps;
+    std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("space_info"));
+    spacePtr->init();
+    std::string tmp_key = spaceID;
+    auto [vp, err] = spacePtr->get(tmp_key);
+    std::string tmp_value = *vp;//待插入报错
+    //std::cout << tmp_value << std::endl;
+    tmps.deserialize(tmp_value);
+    if (tmps.status == false) return -1;
+    else
+    {
+        std::string oldSpaceName = tmps.spaceName;
+        //TODO：在lustre中修改目录名
+        tmps.spaceName = newSpaceName;
+        int pos = tmps.spacePath.find(oldSpaceName);
+        tmps.spacePath.replace(pos, oldSpaceName.length(), newSpaceName);
+
+        tmp_value = tmps.serialize();
+        spacePtr->set(tmp_key, tmp_value);
+        return 0;
+    }
+}
 
 }//namespace hvs

@@ -55,3 +55,12 @@ void SpaceMetaData::deserialize_impl() {
     get("spacepath", spacePath);
 }
 
+void SpaceRenameReq::serialize_impl()   {
+    put("UUID", spaceID);
+    put("newname", newSpaceName);
+}
+
+void SpaceRenameReq::deserialize_impl()   {
+    get("UUID", spaceID);
+    get("newname", newSpaceName);
+}

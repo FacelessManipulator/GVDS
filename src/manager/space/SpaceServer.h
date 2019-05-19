@@ -46,6 +46,10 @@ public:
     //空间位置选择模块：空间位置选择接口
     std::string GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo);
 
+    //空间重命名模块：空间重命名接口
+    void SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response);
+    int SpaceRename(std::string spaceID, std::string newSpaceName);
+
     
 
 

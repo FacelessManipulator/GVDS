@@ -61,5 +61,18 @@ class SpaceMetaData : public hvs::JsonSerializer//空间元数据信息
   SpaceMetaData() = default;
 };
 
+class SpaceRenameReq : public hvs::JsonSerializer//区域重命名请求
+{
+ public:
+   std::string spaceID;//区域ID    
+   std::string newSpaceName;//区域名
 
+
+ public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+
+ public:
+  SpaceRenameReq() = default;
+};
 #endif/*SPACE_H*/

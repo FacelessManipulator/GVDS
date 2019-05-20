@@ -6,16 +6,20 @@
 
 using namespace hvs;
 using namespace std;
-UDTSession::UDTSession(UDTServer *srv, UDTSOCKET socket)
+ServerSession::ServerSession(UDTServer *srv, UDTSOCKET socket)
     : parent(srv), unpacker(), socket_(socket), m_stop(false) {
   unpacker.reserve_buffer(102400);
+  writer = make_shared<UDTWriter>(socket_);
+  writer->start();
 }
 
-void UDTSession::start() {}
-
-void UDTSession::close() {
+void ServerSession::close() {
   m_stop = true;
-  // close udt socket
+  if(writer) {
+    writer->close();
+    writer.reset();
+  }
+  // should we close udt socket here ???
   //   write_strand_.post([this]() {
   //     socket_.close();
   //     parent_->close_session(shared_from_base<server_session>());
@@ -25,7 +29,7 @@ void UDTSession::close() {
 // currently without asio, we use epoll.
 // do_read would be called when epoll returned. session should copy buffers
 // from UDT and return as quick as possible
-void UDTSession::do_read() {
+void ServerSession::do_read() {
   constexpr std::size_t max_read_bytes = 102400;
   constexpr std::size_t default_buffer_size = max_read_bytes;
 
@@ -36,6 +40,7 @@ void UDTSession::do_read() {
     dout(10) << "WARNING: recv error:" << UDT::getlasterror().getErrorMessage()
              << dendl;
     // maybe close session?
+    m_stop = true;
     return;
   } else {
     unpacker.buffer_consumed(rs);
@@ -45,35 +50,38 @@ void UDTSession::do_read() {
   // assemble the data op call
   clmdep_msgpack::unpacked result;
   while (unpacker.next(result) && !m_stop) {
-    clmdep_msgpack::object_handle
     auto msg = result.get();
+
+    // use this zone handle to keep memory live time
+    // remember to pass it
+    auto z = std::shared_ptr<RPCLIB_MSGPACK::zone>(result.zone().release());
     // handle the message
-    //   auto resp = handle(msg);
     try {
       auto buf = msg.as<ioproxy_rpc_buffer>();
       auto op = std::make_shared<IOProxyDataOP>();
-      op->path.assign("/tmp/hvs/data/");
+      // TODO: use dynamic prefix path
+      op->path.assign("/tmp/hvs/tests/data");
       op->path.append(buf.path);
       op->operation = IOProxyDataOP::write;
       op->type = IO_PROXY_DATA;
       op->size = static_cast<size_t>(buf.buf.size);
       op->offset = buf.offset;
       op->ibuf = buf.buf.ptr;
-      op->complete_callbacks.push_back([this, op]() {
-        ioproxy_rpc_buffer ib(op->error_code);
-        ib.msgpack_pack();
-        write();
+      op->id = buf.id;
+      op->complete_callbacks.push_back([this, op, z]() {
+        RPCLIB_MSGPACK::sbuffer data;
+        ioproxy_rpc_buffer rb(op->error_code);
+        rb.id = op->id;
+        clmdep_msgpack::pack(data, rb);
+        // move sem, zero copy
+        // send the resp back
+        writer->write(std::move(data));
       });
       static_cast<IOProxy *>(hvs::HvsContext::get_context()->node)
           ->queue_op(op);
     } catch (exception &e) {
       // msg corrupt
       // pass
-    }
-
-    // send the resp back
-    if (!resp.is_empty()) {
-      write(resp.get_data());
     }
     // after work, such as close session
   }
@@ -83,43 +91,4 @@ void UDTSession::do_read() {
     UDT::epoll_remove_usock(parent->epoll_fd, socket_);
     UDT::close(socket_);
   }
-}
-
-void UDTSession::do_write() {
-  if (m_stop) {
-    return;
-  }
-  auto &item = write_queue_.front();
-  // the data in item remains valid until the handler is called
-  // since it will still be in the queue physically until then.
-  RPCLIB_ASIO::async_write(
-      socket_, clmdep_msgpack::buffer(item.data(), item.size()),
-      write_strand_.wrap(
-          [this, self](std::error_code ec, std::size_t transferred) {
-            (void)transferred;
-            if (!ec) {
-              write_queue_.pop_front();
-              if (write_queue_.size() > 0) {
-                if (!exit_) {
-                  do_write();
-                }
-              }
-            } else {
-              LOG_ERROR("Error while writing to socket: {}", ec);
-            }
-
-            if (exit_) {
-              LOG_INFO("Closing socket");
-              try {
-                socket_.shutdown(RPCLIB_ASIO::ip::tcp::socket::shutdown_both);
-              } catch (std::system_error &e) {
-                (void)e;
-                LOG_WARN(
-                    "std::system_error during socket shutdown. "
-                    "Code: {}. Message: {}",
-                    e.code(), e.what());
-              }
-              socket_.close();
-            }
-          }));
 }

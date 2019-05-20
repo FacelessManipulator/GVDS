@@ -98,44 +98,44 @@ int ioproxy_do_data_op(IOProxyDataOP* op) {
   sync_io func_sync_io;
   switch (op->operation) {
     case IOProxyDataOP::read: {
-      func_sync_io.sread(op->path, op->obuf, op->size, op->offset, op);
+      func_sync_io.sread(op->path.c_str(), op->obuf, op->size, op->offset, op);
       break;
     }
     case IOProxyDataOP::write: {
-      func_sync_io.swrite(op->path, op->ibuf, op->size, op->offset, op);
+      func_sync_io.swrite(op->path.c_str(), op->ibuf, op->size, op->offset, op);
       break;
     }
     case IOProxyDataOP::truncate: {
       op->error_code = func_sync_io.struncate(
-          op->path, op->offset);  // 第二批代码，error_code 由同步IO返回值修改
+          op->path.c_str(), op->offset);  // 第二批代码，error_code 由同步IO返回值修改
       break;
     }
     case IOProxyDataOP::mkdir: {
-      op->error_code = func_sync_io.smkdir(op->path, op->mode);
+      op->error_code = func_sync_io.smkdir(op->path.c_str(), op->mode);
       break;
     }
     case IOProxyDataOP::rmdir: {
-      op->error_code = func_sync_io.srmdir(op->path);
+      op->error_code = func_sync_io.srmdir(op->path.c_str());
       break;
     }
     case IOProxyDataOP::create: {
-      op->error_code = func_sync_io.screate(op->path, op->mode);
+      op->error_code = func_sync_io.screate(op->path.c_str(), op->mode);
       break;
     }
     case IOProxyDataOP::unlink: {
-      op->error_code = func_sync_io.sunlink(op->path);
+      op->error_code = func_sync_io.sunlink(op->path.c_str());
       break;
     }
     case IOProxyDataOP::link: {
-      op->error_code = func_sync_io.slink(op->path, op->newpath);
+      op->error_code = func_sync_io.slink(op->path.c_str(), op->newpath.c_str());
       break;
     }
     case IOProxyDataOP::symlink: {
-      op->error_code = func_sync_io.ssymlink(op->path, op->newpath);
+      op->error_code = func_sync_io.ssymlink(op->path.c_str(), op->newpath.c_str());
       break;
     }
     case IOProxyDataOP::readlink: {
-      op->error_code = func_sync_io.sreadlink(op->path, op);
+      op->error_code = func_sync_io.sreadlink(op->path.c_str(), op);
       break;
     }
     default:

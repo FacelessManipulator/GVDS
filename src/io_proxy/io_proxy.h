@@ -12,6 +12,7 @@
 #include "io_proxy/io_worker.h"
 #include "msg/op.h"
 #include "msg/node.h"
+#include "msg/udt_server.h"
 
 namespace hvs {
 class IOProxyRpcImpl;
@@ -59,6 +60,7 @@ class IOProxy : public Thread, public Node {
 
   public:
   RpcServer* _rpc;
+  UDTServer* _udt;
   virtual void rpc_bind(RpcServer* server) override;
 };
 extern hvs::IOProxy* init_ioproxy();

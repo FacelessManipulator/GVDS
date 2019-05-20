@@ -12,7 +12,7 @@ bool UDTServer::start() {
   port = _pt.value_or(9095);
   buff_size = _bs.value_or(10240000);  // default 10MB
   max_conn =
-      _mc.value_or(1000);  // default max 1000 pending connection per server
+      _mc.value_or(50);  // default max 1000 pending connection per server
 
   addrinfo hints;
   addrinfo* res;
@@ -80,7 +80,7 @@ void* UDTServer::entry() {
     std::set<UDTSOCKET> writefds;
     // check per 1s
     int state =
-        UDT::epoll_wait(epoll_fd, &readfds, &writefds, 1000, NULL, NULL);
+        UDT::epoll_wait(epoll_fd, &readfds, &writefds, -1, NULL, NULL);
     if (state > 0) {
       // read
       handleReadFds(readfds, serv_fd);
@@ -143,14 +143,16 @@ void UDTServer::handleReadFds(const std::set<UDTSOCKET>& readfds,
                   << add_usock_ret << dendl;
         } else {
           // create sessions
-          client_sessions.emplace(new_sock, this, new_sock);
+          // check if exists before
+          auto session = make_shared<ServerSession>(this, new_sock);
+          sessions[new_sock] = session;
         }
       }
     } else {
       // handle read request
       do {
-        auto it = client_sessions.find(cur_sock);
-        it->second.do_read();
+        auto it = sessions.find(cur_sock);
+        it->second->do_read();
       } while (false);
     }
   }
@@ -181,3 +183,11 @@ void* UDTServer::recvdata(const UDTSOCKET recver) {
   //   UDT::close(recver);
   return 0;
 }
+
+namespace hvs {
+UDTServer* init_udtserver() {
+  UDTServer* udt_server = new UDTServer();
+  udt_server->start();
+  return udt_server;
+}
+}  // namespace hvs

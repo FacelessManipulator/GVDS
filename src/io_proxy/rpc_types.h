@@ -58,21 +58,23 @@ struct ioproxy_rpc_statbuffer {
 
 struct ioproxy_rpc_buffer {
   int error_code;
+  bool is_read;
+  unsigned long id;
   clmdep_msgpack::type::raw_ref buf;
   unsigned long offset;
   std::string path;
   ioproxy_rpc_buffer(const char* _path, const char* buffer, unsigned long off,
                      int _size)
-      : offset(off), path(_path) {
+      : offset(off), path(_path), is_read(false) {
     error_code = 0;
     buf.ptr = buffer;
     buf.size = _size;
   }
-  ioproxy_rpc_buffer() : error_code(-1) {}
+  ioproxy_rpc_buffer() : error_code(-1), is_read(true) {}
   ioproxy_rpc_buffer(int i)
-      : error_code(i) { /*当反回值error_code为小于0值的时候，表示产生了错误*/
+      : error_code(i), is_read(true) { /*当反回值error_code为小于0值的时候，表示产生了错误*/
   }
-  MSGPACK_DEFINE_ARRAY(error_code, path, buf, offset);
+  MSGPACK_DEFINE_ARRAY(error_code, path, buf, offset, is_read, id);
 };
 
 struct ioproxy_rpc_dirent {

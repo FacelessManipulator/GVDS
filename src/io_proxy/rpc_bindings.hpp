@@ -74,7 +74,9 @@ namespace hvs {
         op->offset = offset;
         static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         if (op->error_code >= 0) {
-            return ioproxy_rpc_buffer(op->obuf, static_cast<int>(op->error_code)); //返回消息
+            ioproxy_rpc_buffer res(pathname.c_str(), op->obuf, offset, size);
+            res.error_code = static_cast<int>(op->error_code);
+            return res; //返回消息
         } else {
             return ioproxy_rpc_buffer(op->error_code);
         }

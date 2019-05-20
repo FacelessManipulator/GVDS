@@ -104,7 +104,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_write) {
     auto start = std::chrono::steady_clock::now();
     for(int i = 0; i < size; i++){
         std::string data("superman");
-    ioproxy_rpc_buffer _buffer(data.c_str(), data.size());
+    ioproxy_rpc_buffer _buffer(pathname.c_str(), data.c_str(), 0, data.size());
         auto res = client.call("ioproxy_write", pathname, _buffer, data.size(), 0);
         dout(-1) << res->as<int>() << dendl;
         std::cout << "输出结果：" << res->as<int>() << std::endl;
@@ -210,7 +210,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_pack) {
 TEST_F(IOProxyRPC, yx_ioproxy_write_bench) {
     string pathname(TFILEP);
     char* buf = new char[102400]; //100KB
-    ioproxy_rpc_buffer _buffer(buf, 102400);
+    ioproxy_rpc_buffer _buffer(pathname.c_str(), buf, 0, 102400);
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
@@ -233,7 +233,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_write_bench_sm) {
     string pathname(TFILEP);
     char* buf = new char[102400]; //100KB
     memcpy(buf, "hello\n", 6);
-    ioproxy_rpc_buffer _buffer(buf, 102400);
+    ioproxy_rpc_buffer _buffer(pathname.c_str(), buf, 0, 102400);
     ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");

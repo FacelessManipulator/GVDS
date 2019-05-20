@@ -35,11 +35,13 @@ class UDTServer : public Thread {
   unsigned long max_conn;
   UDTSOCKET epoll_fd;
   UDTSOCKET serv_fd;
-  std::unordered_map<UDTSOCKET, UDTSession> client_sessions;
+  std::unordered_map<UDTSOCKET, std::shared_ptr<ServerSession>> sessions;
   const int read_event = UDT_EPOLL_IN | UDT_EPOLL_ERR;
   bool m_stop;
 
-  friend class UDTSession;
+  friend class ServerSession;
 };
+
+UDTServer* init_udtserver();
 
 }  // namespace hvs

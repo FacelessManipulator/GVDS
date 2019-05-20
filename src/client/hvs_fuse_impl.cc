@@ -192,7 +192,7 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
     return -ENOENT;
   }
 
-  ioproxy_rpc_buffer _buffer(buf, size);
+  ioproxy_rpc_buffer _buffer(path, buf, offset, size);
   auto res = HVS_FUSE_DATA->client->rpc->call(
       iop, "ioproxy_write", (rpath + lpath).c_str(), _buffer, size, offset);
   if (!res.get()) {

@@ -15,7 +15,11 @@ SET(CommonSRCS
         aggregation/AggregationServer.cc
         aggregation/StorageResBicInfo.cc
         msg/rpc.cc
+        msg/udt_client.cc
+        msg/udt_writer.cc
+        msg/client_session.cc
 )
+
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         config++
         couchbase
@@ -23,7 +27,9 @@ SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         pistache_shared
         rpc
         boost_system
+        boost_thread
         boost_program_options
+        udt
 )
 
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})

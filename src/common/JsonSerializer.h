@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#define SUCCESS 0
 #define ERROR_INCORRECT_TYPE 111
 
 // Currently we simply return the error code

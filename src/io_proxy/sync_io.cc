@@ -67,12 +67,14 @@ ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t o
     int fd = open(path, O_WRONLY|O_CREAT, 0655);
     op->error_code = 0;
     if (fd == -1){
-        perror("sync_io swrite open");
+        dout(-1) << "sync_io swrite open "<< path << dendl;
         op->error_code = -errno;
+        return -errno;
+    } else {
+        ssize_t ret = swrite(fd, buf, count, offset, op);
+        close(fd);
+        return ret; // 调用上面针对 fd 的写接口
     }
-    ssize_t ret = swrite(fd, buf, count, offset, op);
-    close(fd);
-    return ret; // 调用上面针对 fd 的写接口
 }
 
 int sync_io::sstat(const char *pathname, IOProxyMetadataOP* op) {

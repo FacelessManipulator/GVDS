@@ -145,6 +145,11 @@ void IOProxy::start() {
     dout(-1) << "failed to start rpc component, exit!" << dendl;
     exit(-1);
   }
+  _udt = init_udtserver();
+  if (!_udt) {
+    dout(-1) << "failed to start udt component, exit!" << dendl;
+    exit(-1);
+  }
   create("io_proxy");
 }
 

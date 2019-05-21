@@ -7,6 +7,7 @@ ADD_LIBRARY(managerO OBJECT
         space/SpaceServer.cc
         zone/Zone.cc
         zone/ZoneServer.cc
+        resaggregation_mgr.cc
 )
 
 ADD_EXECUTABLE(hvs_manager main.cc)

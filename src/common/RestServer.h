@@ -18,7 +18,6 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 #include <pistache/router.h>
 
 #include "common/Thread.h"
-#include "usermodel/UserModelServer.h"
 
 using namespace std;
 using namespace Pistache;

@@ -79,8 +79,10 @@ void* UDTServer::entry() {
     std::set<UDTSOCKET> readfds;
     std::set<UDTSOCKET> writefds;
     // check per 1s
+    dout(-1) << "udt server epoll waiting" << dendl;
     int state =
         UDT::epoll_wait(epoll_fd, &readfds, &writefds, -1, NULL, NULL);
+    dout(-1) << "udt server epoll wait return" << dendl;
     if (state > 0) {
       // read
       handleReadFds(readfds, serv_fd);
@@ -114,6 +116,7 @@ void* UDTServer::entry() {
 
 void UDTServer::handleReadFds(const std::set<UDTSOCKET>& readfds,
                               const UDTSOCKET& listen_sock_) {
+  dout(-1) << "epoll event on server" << dendl;
   for (const UDTSOCKET cur_sock : readfds) {
     // new connection
     if (cur_sock == listen_sock_) {

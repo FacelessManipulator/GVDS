@@ -19,7 +19,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("log.path", string("/var/log/hvs.log"));
   _config->add("log.level", 10);
   _config->add("rpc.port", 9092);
-  _config->add("rpc.workers", 100);
+  _config->add("rpc.workers", 1);
   _config->add("rpc.timeout", 3000);
   _config->add("rpc.retry", 3);
   _config->add("couchbase.address", string("192.168.10.235"));

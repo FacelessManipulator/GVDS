@@ -406,7 +406,7 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
 }
 
 
-
+//彻底注销虚拟数据空间用户
 void UserModelServer::cancellationUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: cancellationUserAccountRest ======"<< endl;
 

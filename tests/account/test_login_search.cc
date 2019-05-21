@@ -66,13 +66,12 @@ TEST_F(HVSAccountTest, login_search) {
   client.init(opts);
 
   
-  std::string mes = "{\"HVSAccountName\":\"lbq\",\"HVSPassword\":\"123456\"}";
+  std::string mes = "{\"HVSAccountName\":\"lbq-7\",\"HVSPassword\":\"123456\"}";
   std::string mtoken;
 
 
   auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(mes).send();
         dout(-1) << "Client Info: post request " << url << dendl;
-
 
   std::promise<bool> prom;
   auto fu = prom.get_future();
@@ -99,6 +98,30 @@ TEST_F(HVSAccountTest, login_search) {
       Async::IgnoreException);
   EXPECT_TRUE(fu.get());
 
+  sleep(5);
+  //search  
+  snprintf(url, 256, "http://localhost:%d/users/search/127", manager->rest_port());
+  auto response_1 = client.get(url).cookie(Http::Cookie("token", mtoken)).send();
+        dout(-1) << "Client Info: get request " << url << dendl;
+
+  std::promise<bool> prom_1;
+  auto fu_1 = prom_1.get_future();
+  response_1.then(
+      [&](Http::Response res) {
+        //dout(-1) << "Manager Info: " << res.body() << dendl;
+        std::cout << "Response code = " << res.code() << std::endl;
+        auto body = res.body();
+        if (!body.empty()){
+            std::cout << "Response body = " << body << std::endl;
+            //====================
+            //your code write here
+
+            //====================
+        }
+        prom_1.set_value(true);
+      },
+      Async::IgnoreException);
+  EXPECT_TRUE(fu_1.get());
 
   client.shutdown();
 }

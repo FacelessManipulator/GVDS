@@ -90,13 +90,16 @@ void* UDTServer::entry() {
       // timeout
       // std::cout << "." << std::flush;
     } else {
-      // error happend
-      std::cout << "UDT epoll_wait: " << UDT::getlasterror().getErrorCode()
-                << ' ' << UDT::getlasterror().getErrorMessage() << std::endl;
       if ((CUDTException::EINVPARAM == UDT::getlasterror().getErrorCode()) ||
           (CUDTException::ECONNLOST == UDT::getlasterror().getErrorCode())) {
-        m_stop = 0;
+        m_stop = true;
         // UDT::epoll_remove_usock(eid, cur_sock);
+          // error happend
+          std::cout << "UDT epoll_wait: " << UDT::getlasterror().getErrorCode()
+                    << ' ' << UDT::getlasterror().getErrorMessage() << std::endl;
+      } else {
+          // maybe timeout
+          // std::cout << "." << std::flush;
       }
     }
   }

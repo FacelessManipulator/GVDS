@@ -8,7 +8,7 @@ using namespace hvs;
 using namespace std;
 ServerSession::ServerSession(UDTServer *srv, UDTSOCKET socket)
     : parent(srv), unpacker(), socket_(socket), m_stop(false) {
-  unpacker.reserve_buffer(1024000);
+  unpacker.reserve_buffer(10240000);
   writer = make_shared<UDTWriter>(socket_);
   writer->start();
 }

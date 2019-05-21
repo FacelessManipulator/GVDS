@@ -73,7 +73,6 @@ TEST_F(IOProxyUDT, write_bench_sm) {
         dout(-1) << "op-" << id << " write on client" << dendl;
         session->wait_op(id);
     }
-//    session->wait_op(id);
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> diff = end-start;
     std::cout << "speed: " << size*buf_size/1000 / diff.count() << " KB/s\n";

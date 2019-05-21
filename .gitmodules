@@ -23,3 +23,6 @@
 	path = third-party/libconfig
 	url = git@github.com:hyperrealm/libconfig.git
 
+[submodule "third-party/udt4"]
+	path = third-party/udt4
+	url = ../udt.git

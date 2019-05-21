@@ -555,6 +555,7 @@ void ZoneServer::MapAddRest(const Rest::Request& request, Http::ResponseWriter r
   response.send(Http::Code::Ok, result); //point
   std::cout << "====== end ZoneServer function: MapAddRest ======"<< std::endl;
 }
+
 int ZoneServer::MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
 {
   Zone tmp;

@@ -5,6 +5,7 @@
 #include "datastore/datastore.h"
 
 #include "manager/space/SpaceServer.h"
+#include "SpaceServer.h"
 
 
 namespace hvs{
@@ -18,6 +19,7 @@ void SpaceServer::stop() {}
 
 void SpaceServer::router(Router& router) {
    Routes::Post(router, "/space/rename", Routes::bind(&SpaceServer::SpaceRenameRest, this));
+   Routes::Post(router, "/space/sizechange", Routes::bind(&SpaceServer::SpaceSizeChangeRest, this));
 }
 
 void SpaceServer::GetSpacePosition(std::vector<std::string> &result, std::vector<std::string> spaceID)
@@ -80,7 +82,7 @@ std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID,
     //5、写入数据库
     tmpm.hostCenterID = tmpm.hostCenterName;
     tmpm.storageSrcID = tmpm.storageSrcName;//资源聚合模块查找
-    tmps.spaceName = spaceName;
+    tmps.spaceName = spaceName; //
     tmps.spaceSize = spaceSize;
     tmps.hostCenterID = tmpm.hostCenterID;
     tmps.storageSrcID = tmpm.storageSrcID;
@@ -201,5 +203,47 @@ int SpaceServer::SpaceRename(std::string spaceID, std::string newSpaceName)
         return 0;
     }
 }
+
+    //YaoXu: 空间扩容缩容
+    void SpaceServer::SpaceSizeChangeRest(const Rest::Request &request, Http::ResponseWriter response) {
+        auto info = request.body();
+
+        SpaceSizeChangeReq req;
+        req.deserialize(info);
+        std::string spaceID = req.spaceID;
+        int64_t newSpaceSize = req.newSpaceSize;
+
+        int result_i = SpaceSizeChange(spaceID, newSpaceSize);
+
+        std::string result;
+
+        if (result_i == 0){
+            result = "success";
+        }
+        else {
+            result = "fail";
+        }
+        response.send(Http::Code::Ok, result); //result;
+    }
+
+    int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {
+        // 1. 进行查找聚合表，进行记录空间容量的变化；
+        bool isAdd = true; //如果没有超过阈值，则增加空间容量
+        if (isAdd){
+            return SpaceSizeAdd(spaceID, newSpaceSize);
+        }else{
+            return SpaceSizeDeduct(spaceID, newSpaceSize);
+        }
+    }
+
+    int SpaceServer::SpaceSizeAdd(std::string spaceID, int64_t newSpaceSize) {
+        std::cout << "SpaceSizeAdd: " << spaceID << " " << newSpaceSize << std::endl;
+        return 0;
+    }
+
+    int SpaceServer::SpaceSizeDeduct(std::string spaceID, int64_t newSpaceSize) {
+        std::cout << "SpaceSizeDeduct: " << spaceID << " " << newSpaceSize << std::endl;
+        return 0;
+    }
 
 }//namespace hvs

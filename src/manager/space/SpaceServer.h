@@ -44,14 +44,17 @@ public:
     int SpaceDelete(std::vector<std::string> spaceID);
 
     //空间位置选择模块：空间位置选择接口
-    std::string GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo);
+    //std::string GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo);
 
     //空间重命名模块：空间重命名接口
     void SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceRename(std::string spaceID, std::string newSpaceName);
 
-    
-
+    //空间缩放模块：空间缩放接口
+    void SpaceSizeChangeRest(const Rest::Request& request, Http::ResponseWriter response);
+    int SpaceSizeChange(std::string spaceID, int64_t newSpaceSize);
+    int SpaceSizeAdd(std::string spaceID, int64_t newSpaceSize);
+    int SpaceSizeDeduct(std::string spaceID, int64_t newSpaceSize);
 
 /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);

@@ -7,6 +7,7 @@ void ClientGraph::start() {
   auto ion = make_shared<IOProxyNode>();
   ion->ip = "127.0.0.1";
   ion->rpc_port = 9092;
+  ion->data_port = 9095;
   set_mapping("space", ion, "/");
 }
 

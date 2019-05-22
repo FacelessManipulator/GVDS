@@ -41,24 +41,24 @@ int ClientSession::write(ioproxy_rpc_buffer &buffer) {
   clmdep_msgpack::pack(data, buffer);
   // move sem, zero copy
   // send the resp back
-  promise<void> ready_promise;
+  promise<int> ready_promise;
 
-  shared_future<void> ready_future(ready_promise.get_future());
+  shared_future<int> ready_future(ready_promise.get_future());
   futures[buffer.id] = ready_future;
   ready_promises[buffer.id] = move(ready_promise);
   writer->write(std::move(data));
   return buffer.id;
 }
 
-bool ClientSession::wait_op(int id) {
+int ClientSession::wait_op(int id) {
   auto it = futures.find(id);
   if (it == futures.end()) return true;
-  shared_future<void> ft = it->second;
+  shared_future<int> ft = it->second;
   // unlock
-  ft.wait();
+  auto res = ft.get();
   // lock
   futures.erase(id);
-  return true;
+  return res;
 }
 
 // currently without asio, we use epoll.
@@ -71,7 +71,7 @@ void ClientSession::do_read() {
   while (!m_stop) {
     unsigned long rs = 0;
     //   UDT::getsockopt(socket_, 0, UDT_RCVDATA, &rcv_size, &var_size);
-      dout(-1) << "udt waiting on client" << dendl;
+       dout(-1) << "packer cap: "<< unpacker.parsed_size() << dendl;
     if (UDT::ERROR ==
         (rs = UDT::recv(socket_, unpacker.buffer(), default_buffer_size, 0))) {
       dout(10) << "WARNING: recv error:"
@@ -80,7 +80,7 @@ void ClientSession::do_read() {
       m_stop = true;
       return;
     } else {
-        dout(-1) << "udt recved on client" << dendl;
+        // dout(-1) << "udt recved on client" << dendl;
       unpacker.buffer_consumed(rs);
     }
 
@@ -102,9 +102,9 @@ void ClientSession::do_read() {
           // error duplicated msg?
           continue;
         } else {
-          promise<void> pm = std::move(it->second);
+          promise<int> pm = std::move(it->second);
           ready_promises.erase(it);
-          pm.set_value();
+          pm.set_value(buf.error_code);
 
         }
       } catch (exception &e) {
@@ -113,6 +113,9 @@ void ClientSession::do_read() {
       }
       // after work, such as close session
     }
+      if (unpacker.buffer_capacity() < max_read_bytes) {
+        unpacker.reserve_buffer(max_read_bytes);
+      }
   }
   if (m_stop) {
     // i will code next week

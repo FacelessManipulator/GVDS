@@ -69,8 +69,8 @@ void ServerSession::do_read() {
       op->ibuf = buf.buf.ptr;
       op->id = buf.id;
       op->complete_callbacks.push_back([this, op, z]() {
-        dout(-1) << " wait: " << chrono::duration_cast<std::chrono::microseconds>(op->op_submit - op->op_queued).count()
-        << " processing: "<<chrono::duration_cast<std::chrono::microseconds>(op->op_complete - op->op_submit).count() << dendl;
+//        dout(-1) << " wait: " << chrono::duration_cast<std::chrono::microseconds>(op->op_submit - op->op_queued).count()
+//        << " processing: "<<chrono::duration_cast<std::chrono::microseconds>(op->op_complete - op->op_submit).count() << dendl;
         RPCLIB_MSGPACK::sbuffer data;
         ioproxy_rpc_buffer rb(op->error_code);
         rb.id = op->id;
@@ -78,12 +78,13 @@ void ServerSession::do_read() {
         // move sem, zero copy
         // send the resp back
         writer->write(std::move(data));
-        auto now = chrono::steady_clock::now();
-          dout(-1) << " sending: " << chrono::duration_cast<std::chrono::microseconds>(now - op->op_complete).count()  << dendl;
+//        auto now = chrono::steady_clock::now();
+//        dout(-1) << " sending: " << chrono::duration_cast<std::chrono::microseconds>(now - op->op_complete).count()  << dendl;
+//        dout(-1) << " write return: " << rb.error_code << dendl;
       });
       static_cast<IOProxy *>(hvs::HvsContext::get_context()->node)
           ->queue_op(op);
-        dout(-1) << "op-" << op->id << " queued on server" << dendl;
+        // dout(-1) << "op-" << op->id << " queued on server" << dendl;
     } catch (exception &e) {
       // msg corrupt
       // pass

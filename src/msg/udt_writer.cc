@@ -65,7 +65,6 @@ void UDTWriter::_write_unsafe(std::queue<clmdep_msgpack::sbuffer> *q) {
     // zero copy with move semantic
     clmdep_msgpack::sbuffer data(std::move(q->front()));
     q->pop();
-    dout(-1) << "udt writer begin" << dendl;
     {
       // send circle in case of the lack of udt buffer
       unsigned long sent = 0, total = data.size();
@@ -84,6 +83,5 @@ void UDTWriter::_write_unsafe(std::queue<clmdep_msgpack::sbuffer> *q) {
         break;
       }
     }
-      dout(-1) << "udt writer end" << dendl;
   }
 }

@@ -2,11 +2,12 @@
 
 #include <cerrno>
 #include <shared_mutex>
+#include <unordered_map>
 #include "client.h"
 #include "common/Thread.h"
 #include "hvs_struct.h"
 #include "msg/node.h"
-#include <unordered_map>
+#include "msg/udt_client.h"
 
 namespace hvs {
 class ClientRpc : public ClientModule {
@@ -15,9 +16,12 @@ class ClientRpc : public ClientModule {
   virtual void stop() override;
 
  private:
+  UDTClient udt_client;
   std::shared_mutex rpc_mutex;
   std::unordered_map<std::string, std::shared_ptr<RpcClient>> rpc_clients;
-  std::shared_ptr<RpcClient> connect(std::shared_ptr<IOProxyNode> node);
+  std::unordered_map<std::string, std::shared_ptr<ClientSession>> udt_clients;
+  std::shared_ptr<RpcClient> rpc_channel(std::shared_ptr<IOProxyNode> node);
+  std::shared_ptr<ClientSession> udt_channel(std::shared_ptr<IOProxyNode> node);
 
  public:
   ClientRpc(const char* name, Client* cli) : ClientModule(name, cli) {
@@ -29,6 +33,8 @@ class ClientRpc : public ClientModule {
       std::shared_ptr<IOProxyNode> node, std::string const& func_name,
       Args... args);
 
+  int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
+
   friend class Client;
 };
 
@@ -37,7 +43,7 @@ std::shared_ptr<RPCLIB_MSGPACK::object_handle> ClientRpc::call(
     std::shared_ptr<IOProxyNode> node, std::string const& func_name,
     Args... args) {
   // TODO: We assume RpcClient can concurently call
-  auto rpcc = connect(node);
+  auto rpcc = rpc_channel(node);
   auto res = rpcc->call(func_name, args...);
   if (!res) {
     return nullptr;

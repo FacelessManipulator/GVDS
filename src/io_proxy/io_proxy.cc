@@ -110,9 +110,10 @@ void IOProxy::_dispatch() {
 }
 
 void IOProxy::_dispatch_unsafe(std::queue<std::shared_ptr<OP>>* t) {
-  std::shared_ptr<OP> op;
+  // declare release object
+  //  std::shared_ptr<OP> op;
   while(!t->empty()) {
-    op = t->front();
+    auto op = t->front();
     t->pop();
     assert(op.get()); // op ptr should not be empty
     auto worker = _get_idle_worker(); // may wait on spin lock

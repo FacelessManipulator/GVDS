@@ -192,17 +192,22 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
     return -ENOENT;
   }
 
-  ioproxy_rpc_buffer _buffer(path, buf, offset, size);
-  auto res = HVS_FUSE_DATA->client->rpc->call(
-      iop, "ioproxy_write", (rpath + lpath).c_str(), _buffer, size, offset);
-  if (!res.get()) {
-    // timeout exception raised
-    return -ENOENT;
-  }
+  ioproxy_rpc_buffer _buffer((rpath + lpath).c_str(), buf, offset, size);
 
-  auto retbuf = res->as<int>();
+  // UDT version
+  auto res = HVS_FUSE_DATA->client->rpc->write_data(iop, _buffer);
+  return res;
+
+  // tcp version
+  // auto res = HVS_FUSE_DATA->client->rpc->call(
+  //     iop, "ioproxy_write", (rpath + lpath).c_str(), _buffer, size, offset);
+  // if (!res.get()) {
+  //   // timeout exception raised
+  //   return -ENOENT;
+  // }
+  // auto retbuf = res->as<int>();
+  // return retbuf;
   // write may failed on remote server
-  return retbuf;
 }
 
 int hvsfs_access(const char *path, int mode) {

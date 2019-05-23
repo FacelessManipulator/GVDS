@@ -15,7 +15,12 @@ void IOProxy_MGR::start() {
   create("ioproxy-mgr-module");
 }
 
-void IOProxy_MGR::stop() { m_stop = true; }
+void IOProxy_MGR::stop() {
+    if(m_stop)
+        return;
+    m_stop = true;
+    join();
+}
 
 void* IOProxy_MGR::entry() {
   while (!m_stop) {

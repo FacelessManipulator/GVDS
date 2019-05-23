@@ -438,12 +438,12 @@ void ZoneServer::ZoneAddRest(const Rest::Request& request, Http::ResponseWriter 
   std::string zoneName = req.zoneName;
   std::string ownerID = req.ownerID;
   std::vector<std::string> memberID = req.memberID;
-  std::string spaceName = req.spaceName;
-  int64_t spaceSize = req.spaceSize;
+  // std::string spaceName = req.spaceName;
+  // int64_t spaceSize = req.spaceSize;
   std::string spacePathInfo = req.spacePathInfo;//spacemetadata类，在客户端序列化为string。
   //std::string globalManageNodeInfo =req.globalManageNodeInfo;客户端判断
 
-  int result_i = ZoneAdd(zoneName, ownerID, memberID, spaceName, spaceSize, spacePathInfo);
+  int result_i = ZoneAdd(zoneName, ownerID, memberID, spacePathInfo);
   std::string result;
   if (result_i == 0)
   result = "success";
@@ -453,7 +453,7 @@ void ZoneServer::ZoneAddRest(const Rest::Request& request, Http::ResponseWriter 
   std::cout << "====== end ZoneServer function: ZoneAddRest ======"<< std::endl;
 }
 int ZoneServer::ZoneAdd(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
-    std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
+    std::string spacePathInfo)
 {
   Zone tmp;
   std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -463,7 +463,7 @@ int ZoneServer::ZoneAdd(std::string zoneName, std::string ownerID, std::vector<s
   // tmp_smd.deserialize(spacePathInfo);
   SpaceServer* tmp_server = static_cast<SpaceServer*>(mgr->get_module("space").get());//调用方法
   //SpaceServer* tmp_server = hvs::SpaceServer::getInstance();
-  std::string res_sc = tmp_server->SpaceCheck(spaceName, ownerID, memberID, spaceSize, spacePathInfo);
+  std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, spacePathInfo);
   if (res_sc == "false")
   {
     return -1;

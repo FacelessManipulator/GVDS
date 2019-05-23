@@ -38,7 +38,7 @@ public:
     std::string SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);
 
     //空间创建模块：添加区域空间校验接口
-    std::string SpaceCheck(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);
+    std::string SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo);
     
     //空间删除模块：空间删除接口；
     int SpaceDelete(std::vector<std::string> spaceID);

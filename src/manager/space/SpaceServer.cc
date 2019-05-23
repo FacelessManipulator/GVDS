@@ -96,7 +96,7 @@ std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID,
     return tmps.spaceID;
 }
 
-std::string SpaceServer::SpaceCheck(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo)
+std::string SpaceServer::SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo)
 {
     Space tmps;
     std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(

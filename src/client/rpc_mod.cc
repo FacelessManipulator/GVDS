@@ -57,6 +57,16 @@ int ClientRpc::write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer&
   if(!udtc.get())
     return -ETIMEDOUT;
   int id = udtc->write(buf);
-  int res = udtc->wait_op(id);
+  auto res = udtc->wait_op(id);
+  return res->error_code;
+}
+
+unique_ptr<ioproxy_rpc_buffer> ClientRpc::read_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf) {
+  // TODO: We assume RpcClient can concurently call
+  auto udtc = udt_channel(node);
+  if(!udtc.get())
+    return nullptr;
+  int id = udtc->write(buf);
+  auto res = udtc->wait_op(id);
   return res;
 }

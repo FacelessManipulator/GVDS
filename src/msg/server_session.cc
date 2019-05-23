@@ -68,6 +68,7 @@ void ServerSession::do_read() {
       if (buf.is_read) {
         op->operation = IOProxyDataOP::read;
         op->size = static_cast<size_t>(buf.read_size);
+        op->should_prepare = true;
       } else {
         op->operation = IOProxyDataOP::write;
         op->size = static_cast<size_t>(buf.buf.size);
@@ -79,6 +80,7 @@ void ServerSession::do_read() {
           // ignore response pathname
           ioproxy_rpc_buffer rb("", op_raw->obuf, op_raw->offset, op_raw->size);
           rb.error_code = static_cast<int>(op_raw->error_code);
+          rb.id = op_raw->id;
           clmdep_msgpack::pack(data, rb);
         } else {
           ioproxy_rpc_buffer rb(op_raw->error_code);

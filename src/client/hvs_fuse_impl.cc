@@ -167,20 +167,35 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(
-      iop, "ioproxy_read", (rpath + lpath).c_str(), size, offset);
-  if (!res.get()) {
-    // timeout exception raised
-    return -ENOENT;
-  }
+  ioproxy_rpc_buffer _buffer((rpath + lpath).c_str(), offset, size);
 
-  auto retbuf = res->as<ioproxy_rpc_buffer>();
-  if (retbuf.error_code < 0) {
-    // stat failed on remote server
-    return retbuf.error_code;
+  if (HVS_FUSE_DATA->fuse_client->use_udt) {
+    // UDT version
+    auto res = HVS_FUSE_DATA->client->rpc->read_data(iop, _buffer);
+    if (!res) {
+      return -ETIMEDOUT;
+    }
+    if (res->error_code < 0) {
+      // stat failed on remote server
+      return res->error_code;
+    }
+    memcpy(buf, res->buf.ptr, res->buf.size);
+    return res->buf.size;
+  } else {
+    auto res = HVS_FUSE_DATA->client->rpc->call(
+        iop, "ioproxy_read", (rpath + lpath).c_str(), size, offset);
+    if (!res.get()) {
+      // timeout exception raised
+      return -ENOENT;
+    }
+    auto retbuf = res->as<ioproxy_rpc_buffer>();
+    if (retbuf.error_code < 0) {
+      // stat failed on remote server
+      return retbuf.error_code;
+    }
+    memcpy(buf, retbuf.buf.ptr, retbuf.buf.size);
+    return retbuf.buf.size;
   }
-  memcpy(buf, retbuf.buf.ptr, retbuf.buf.size);
-  return retbuf.buf.size;
 }
 
 int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
@@ -201,9 +216,9 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
     return res;
   } else {
     // tcp version
-    auto res = HVS_FUSE_DATA->client->rpc->call(
-        iop, "ioproxy_write", (rpath + lpath).c_str(), move(_buffer), size,
-        offset);
+    auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_write",
+                                                (rpath + lpath).c_str(),
+                                                move(_buffer), size, offset);
     if (!res.get()) {
       // timeout exception raised
       return -ENOENT;

@@ -13,14 +13,12 @@ ClientSession::ClientSession(UDTClient *srv, UDTSOCKET socket)
 }
 
 void ClientSession::start() {
-    m_stop = false;
-    writer->start();
-    create("client session");
+  m_stop = false;
+  writer->start();
+  create("client session");
 }
 
-void *ClientSession::entry() {
-    do_read();
-}
+void *ClientSession::entry() { do_read(); }
 
 void ClientSession::close() {
   m_stop = true;
@@ -41,21 +39,22 @@ int ClientSession::write(ioproxy_rpc_buffer &buffer) {
   clmdep_msgpack::pack(data, buffer);
   // move sem, zero copy
   // send the resp back
-  promise<int> ready_promise;
+  promise<std::unique_ptr<ioproxy_rpc_buffer>> ready_promise;
 
-  shared_future<int> ready_future(ready_promise.get_future());
-  futures[buffer.id] = ready_future;
+  future<std::unique_ptr<ioproxy_rpc_buffer>> ready_future(
+      ready_promise.get_future());
+  futures[buffer.id] = move(ready_future);
   ready_promises[buffer.id] = move(ready_promise);
   writer->write(std::move(data));
   return buffer.id;
 }
 
-int ClientSession::wait_op(int id) {
+std::unique_ptr<ioproxy_rpc_buffer> ClientSession::wait_op(int id) {
   auto it = futures.find(id);
-  if (it == futures.end()) return true;
-  shared_future<int> ft = it->second;
+  if (it == futures.end()) return nullptr;
+  future<std::unique_ptr<ioproxy_rpc_buffer>> ft = move(it->second);
   // unlock
-  auto res = ft.get();
+  unique_ptr<ioproxy_rpc_buffer> res = ft.get();
   // lock
   futures.erase(id);
   return res;
@@ -71,7 +70,7 @@ void ClientSession::do_read() {
   while (!m_stop) {
     unsigned long rs = 0;
     //   UDT::getsockopt(socket_, 0, UDT_RCVDATA, &rcv_size, &var_size);
-      //  dout(-1) << "packer cap: "<< unpacker.parsed_size() << dendl;
+    //  dout(-1) << "packer cap: "<< unpacker.parsed_size() << dendl;
     if (UDT::ERROR ==
         (rs = UDT::recv(socket_, unpacker.buffer(), default_buffer_size, 0))) {
       dout(10) << "WARNING: recv error:"
@@ -80,7 +79,7 @@ void ClientSession::do_read() {
       m_stop = true;
       return;
     } else {
-        // dout(-1) << "udt recved on client" << dendl;
+      // dout(-1) << "udt recved on client" << dendl;
       unpacker.buffer_consumed(rs);
     }
 
@@ -98,14 +97,13 @@ void ClientSession::do_read() {
       try {
         auto buf = msg.as<ioproxy_rpc_buffer>();
         auto it = ready_promises.find(buf.id);
-        if(it == ready_promises.end()) {
+        if (it == ready_promises.end()) {
           // error duplicated msg?
           continue;
         } else {
-          promise<int> pm = std::move(it->second);
+          promise<unique_ptr<ioproxy_rpc_buffer>> pm = move(it->second);
           ready_promises.erase(it);
-          pm.set_value(buf.error_code);
-
+          pm.set_value(make_unique<ioproxy_rpc_buffer>(move(buf)));
         }
       } catch (exception &e) {
         // msg corrupt
@@ -113,9 +111,9 @@ void ClientSession::do_read() {
       }
       // after work, such as close session
     }
-      if (unpacker.buffer_capacity() < max_read_bytes) {
-        unpacker.reserve_buffer(max_read_bytes);
-      }
+    if (unpacker.buffer_capacity() < max_read_bytes) {
+      unpacker.reserve_buffer(max_read_bytes);
+    }
   }
   if (m_stop) {
     // i will code next week

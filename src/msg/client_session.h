@@ -24,14 +24,15 @@ class ClientSession : public Thread {
   void do_read();
   // return the id to be waited
   int write(ioproxy_rpc_buffer& buffer);
-  int wait_op(int id);
+  
+  std::unique_ptr<ioproxy_rpc_buffer> wait_op(int id);
 
  protected:
   std::shared_ptr<UDTWriter> writer;
 
  private:
-  std::unordered_map<int, std::shared_future<int>> futures;
-  std::unordered_map<int, std::promise<int>> ready_promises;
+  std::unordered_map<int, std::future<std::unique_ptr<ioproxy_rpc_buffer>>> futures;
+  std::unordered_map<int, std::promise<std::unique_ptr<ioproxy_rpc_buffer>>> ready_promises;
   UDTClient *parent;
   clmdep_msgpack::unpacker unpacker;
   UDTSOCKET socket_;

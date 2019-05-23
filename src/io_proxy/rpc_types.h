@@ -6,9 +6,9 @@
 #ifndef HVSONE_RPC_TYPES_H
 #define HVSONE_RPC_TYPES_H
 #include <dirent.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <stdlib.h>
 namespace hvs {
 struct ioproxy_rpc_statbuffer {
   int error_code;
@@ -66,6 +66,7 @@ struct ioproxy_rpc_buffer {
   unsigned long read_size;
   std::string path;
   bool finalize_buf;
+  // for write request purpose
   ioproxy_rpc_buffer(const char* _path, const char* buffer, unsigned long off,
                      int _size)
       : offset(off), path(_path), is_read(false), finalize_buf(false) {
@@ -73,12 +74,17 @@ struct ioproxy_rpc_buffer {
     buf.ptr = buffer;
     buf.size = _size;
   }
-  ioproxy_rpc_buffer() : error_code(-1), is_read(true), finalize_buf(false)  {}
+  // for read request purpose
+  ioproxy_rpc_buffer(const char* _path, unsigned long off, int _size)
+      : offset(off), path(_path), is_read(true), finalize_buf(false) {
+    error_code = 0;
+    read_size = _size;
+  }
+
+  ioproxy_rpc_buffer() : error_code(-1), is_read(true), finalize_buf(false) {}
   ioproxy_rpc_buffer(int i)
-      : error_code(i),
-        is_read(true),
-        finalize_buf(false)  {
-      /*当反回值error_code为小于0值的时候，表示产生了错误*/
+      : error_code(i), is_read(true), finalize_buf(false) {
+    /*当反回值error_code为小于0值的时候，表示产生了错误*/
   }
   ioproxy_rpc_buffer(const ioproxy_rpc_buffer& oths) {
     // we treat left value copy as move semantic to support rpc
@@ -101,11 +107,11 @@ struct ioproxy_rpc_buffer {
     oths_nonconst->buf.size = 0;
   }
   ~ioproxy_rpc_buffer() {
-      if(finalize_buf && buf.ptr) {
-         free((void*)buf.ptr);
-          buf.ptr = nullptr;
-          buf.size = 0;
-      }
+    if (finalize_buf && buf.ptr) {
+      free((void*)buf.ptr);
+      buf.ptr = nullptr;
+      buf.size = 0;
+    }
   }
   MSGPACK_DEFINE_ARRAY(error_code, path, buf, offset, is_read, id, read_size);
 };

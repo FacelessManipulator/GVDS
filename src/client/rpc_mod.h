@@ -34,6 +34,8 @@ class ClientRpc : public ClientModule {
       Args... args);
 
   int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
+  std::unique_ptr<ioproxy_rpc_buffer> 
+    read_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
 
   friend class Client;
 };

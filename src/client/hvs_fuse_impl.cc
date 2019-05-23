@@ -76,8 +76,8 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   if (!iop) {
     return -ENOENT;
   }
-  dout(-1) << "INFO: fuse_client.getattr [" << (rpath + lpath).c_str() << "]"
-           << dendl;
+  // dout(-1) << "INFO: fuse_client.getattr [" << (rpath + lpath).c_str() << "]"
+  //          << dendl;
 
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat",
                                               (rpath + lpath).c_str());
@@ -193,20 +193,25 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
   }
 
   ioproxy_rpc_buffer _buffer((rpath + lpath).c_str(), buf, offset, size);
+  _buffer.is_read = false;
 
-  // UDT version
-  auto res = HVS_FUSE_DATA->client->rpc->write_data(iop, _buffer);
-  return res;
+  if (HVS_FUSE_DATA->fuse_client->use_udt) {
+    // UDT version
+    auto res = HVS_FUSE_DATA->client->rpc->write_data(iop, _buffer);
+    return res;
+  } else {
+    // tcp version
+    auto res = HVS_FUSE_DATA->client->rpc->call(
+        iop, "ioproxy_write", (rpath + lpath).c_str(), move(_buffer), size,
+        offset);
+    if (!res.get()) {
+      // timeout exception raised
+      return -ENOENT;
+    }
+    auto retbuf = res->as<int>();
+    return retbuf;
+  }
 
-  // tcp version
-  // auto res = HVS_FUSE_DATA->client->rpc->call(
-  //     iop, "ioproxy_write", (rpath + lpath).c_str(), _buffer, size, offset);
-  // if (!res.get()) {
-  //   // timeout exception raised
-  //   return -ENOENT;
-  // }
-  // auto retbuf = res->as<int>();
-  // return retbuf;
   // write may failed on remote server
 }
 

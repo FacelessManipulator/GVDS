@@ -97,5 +97,10 @@ struct IOProxyDataOP : public OP {
       free(obuf);
     obuf = nullptr;
   }
+  char* release_obuf() {
+    char* data = obuf;
+    obuf = nullptr;
+    return data;
+  }
 };
 }  // namespace hvs

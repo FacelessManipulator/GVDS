@@ -23,14 +23,16 @@ int Log::append_time(const Log::log_lock::time_point &t, char *out,
   auto sec =
       std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch())
           .count();
-  auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(
+  // auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(
+  auto millisec = std::chrono::duration_cast<std::chrono::microseconds>(
                       t.time_since_epoch() % std::chrono::seconds(1))
                       .count();
   std::tm calendar = {0};
   localtime_r(&sec, &calendar);
 
   int r;
-  r = std::snprintf(out, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%03ld",
+  // r = std::snprintf(out, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%03ld",
+  r = std::snprintf(out, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%06ld",
                     calendar.tm_year + 1900, calendar.tm_mon + 1,
                     calendar.tm_mday, calendar.tm_hour, calendar.tm_min,
                     calendar.tm_sec, static_cast<long>(millisec));

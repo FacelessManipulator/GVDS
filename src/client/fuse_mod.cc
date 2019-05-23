@@ -12,6 +12,7 @@ void ClientFuse::start() {
   auto debug = _config->get<bool>("fuse.debug");
   auto multithread = _config->get<bool>("fuse.multithread");
   auto auto_unmount = _config->get<bool>("fuse.auto_unmount");
+  use_udt = _config->get<bool>("fuse.use_udt").value_or(true);
   memcpy(mountpoint, mp.value_or("/mnt/hvs").c_str(), mp.value_or("/mnt/hvs").size());
   char *options[] = {
       const_cast<char *>("hvs_client"), const_cast<char *>("-f"),

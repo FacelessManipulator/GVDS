@@ -15,7 +15,7 @@ ServerSession::ServerSession(UDTServer *srv, UDTSOCKET socket)
 
 void ServerSession::close() {
   m_stop = true;
-  if(writer) {
+  if (writer) {
     writer->close();
     writer.reset();
   }
@@ -62,29 +62,41 @@ void ServerSession::do_read() {
       // TODO: use dynamic prefix path
       op->path.assign("/tmp/hvs/tests/data");
       op->path.append(buf.path);
-      op->operation = IOProxyDataOP::write;
       op->type = IO_PROXY_DATA;
-      op->size = static_cast<size_t>(buf.buf.size);
       op->offset = buf.offset;
-      op->ibuf = buf.buf.ptr;
       op->id = buf.id;
-      op->complete_callbacks.push_back([this, op, z]() {
-//        dout(-1) << " wait: " << chrono::duration_cast<std::chrono::microseconds>(op->op_submit - op->op_queued).count()
-//        << " processing: "<<chrono::duration_cast<std::chrono::microseconds>(op->op_complete - op->op_submit).count() << dendl;
+      if (buf.is_read) {
+        op->operation = IOProxyDataOP::read;
+        op->size = static_cast<size_t>(buf.read_size);
+      } else {
+        op->operation = IOProxyDataOP::write;
+        op->size = static_cast<size_t>(buf.buf.size);
+        op->ibuf = buf.buf.ptr;
+      }
+      op->complete_callbacks.push_back([this, op_raw = op.get(), z]() {
         RPCLIB_MSGPACK::sbuffer data;
-        ioproxy_rpc_buffer rb(op->error_code);
-        rb.id = op->id;
-        clmdep_msgpack::pack(data, rb);
+        if (op_raw->operation == IOProxyDataOP::read) {
+          // ignore response pathname
+          ioproxy_rpc_buffer rb("", op_raw->obuf, op_raw->offset, op_raw->size);
+          rb.error_code = static_cast<int>(op_raw->error_code);
+          clmdep_msgpack::pack(data, rb);
+        } else {
+          ioproxy_rpc_buffer rb(op_raw->error_code);
+          rb.id = op_raw->id;
+          clmdep_msgpack::pack(data, rb);
+        }
         // move sem, zero copy
         // send the resp back
         writer->write(std::move(data));
-//        auto now = chrono::steady_clock::now();
-//        dout(-1) << " sending: " << chrono::duration_cast<std::chrono::microseconds>(now - op->op_complete).count()  << dendl;
-//        dout(-1) << " write return: " << rb.error_code << dendl;
+        //        auto now = chrono::steady_clock::now();
+        //        dout(-1) << " sending: " <<
+        //        chrono::duration_cast<std::chrono::microseconds>(now -
+        //        op->op_complete).count()  << dendl; dout(-1) << " write
+        //        return: " << rb.error_code << dendl;
       });
       static_cast<IOProxy *>(hvs::HvsContext::get_context()->node)
           ->queue_op(op);
-        // dout(-1) << "op-" << op->id << " queued on server" << dendl;
+      // dout(-1) << "op-" << op->id << " queued on server" << dendl;
     } catch (exception &e) {
       // msg corrupt
       // pass
@@ -97,8 +109,8 @@ void ServerSession::do_read() {
     UDT::epoll_remove_usock(parent->epoll_fd, socket_);
     UDT::close(socket_);
   } else {
-      if (unpacker.buffer_capacity() < max_read_bytes) {
-          unpacker.reserve_buffer(max_read_bytes);
-      }
+    if (unpacker.buffer_capacity() < max_read_bytes) {
+      unpacker.reserve_buffer(max_read_bytes);
+    }
   }
 }

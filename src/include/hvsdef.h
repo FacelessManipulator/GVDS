@@ -3,6 +3,7 @@
 #include <iostream>
 #include "common/JsonSerializer.h"
 
+// LATEX editor: overleaf
 // cmake auto adds -DNDEBUG to flags if compiled in release mode
 #ifndef NDEBUG
 #   define ASSERT(condition, message) \

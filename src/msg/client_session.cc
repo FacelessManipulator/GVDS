@@ -71,7 +71,7 @@ void ClientSession::do_read() {
   while (!m_stop) {
     unsigned long rs = 0;
     //   UDT::getsockopt(socket_, 0, UDT_RCVDATA, &rcv_size, &var_size);
-       dout(-1) << "packer cap: "<< unpacker.parsed_size() << dendl;
+      //  dout(-1) << "packer cap: "<< unpacker.parsed_size() << dendl;
     if (UDT::ERROR ==
         (rs = UDT::recv(socket_, unpacker.buffer(), default_buffer_size, 0))) {
       dout(10) << "WARNING: recv error:"

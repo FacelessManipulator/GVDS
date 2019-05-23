@@ -25,9 +25,13 @@ class ClientFuse : public ClientModule {
   ClientFuseData fs_priv;
 
  public:
+  bool use_udt;
+
+ public:
   ClientFuse(const char* name, Client* cli) : ClientModule(name, cli) {
     isThread = true;
     fuse_argc = 0;
+    use_udt = false;
   }
   friend class Client;
 };

@@ -30,6 +30,8 @@ std::shared_ptr<ClientSession> UDTClient::create_session(
 
   UDTSOCKET session_fd =
       UDT::socket(hints.ai_family, hints.ai_socktype, hints.ai_protocol);
+  UDT::setsockopt(session_fd, 0, UDT_RCVBUF, &buff_size, sizeof(int));
+  UDT::setsockopt(session_fd, 0, UDP_RCVBUF, &buff_size, sizeof(int));
   string port_s = to_string(port);
   if (0 != getaddrinfo(ip.c_str(), port_s.c_str(), &hints, &peer)) {
     dout(5) << "ERROR: [udt-client] incorrect server address. " << ip << ":"

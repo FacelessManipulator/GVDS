@@ -48,7 +48,7 @@ TEST_F(HVSZoneTest, Rename) {
     ZoneRenameReq req;
     req.zoneID = "b71a3ad5-513e-4078-9f9b-d9eeb0691b1e";
     req.ownerID = "123";
-    req.newZoneName = "syzonerenametest3";
+    req.newZoneName = "superman";
 
     std::string value = req.serialize();
 
@@ -249,39 +249,39 @@ TEST_F(HVSZoneTest, Rename) {
 // }
 
 
-// TEST_F(HVSZoneTest, MapAdd) {
-//   Http::Client client;
-//   char url[256];
-//   snprintf(url, 256, "http://localhost:%d/zone/mapadd", manager->rest_port());
-//   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-//   client.init(opts);
+ TEST_F(HVSZoneTest, MapAdd) {
+   Http::Client client;
+   char url[256];
+   snprintf(url, 256, "http://localhost:%d/zone/mapadd", manager->rest_port());
+   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+   client.init(opts);
 
-//   MapAddReq req;
-//   req.zoneID = "aeed1d09-779d-4b8b-9005-c4c73d8b5ba1";
-//   req.ownerID = "124";
-//   req.spaceName = "beijingspace";
-//   req.spaceSize = 58;
-//   SpaceMetaData tmpm;
-//   tmpm.hostCenterName = "beijing";
-//   tmpm.storageSrcName = "lustre1";
-//   req.spacePathInfo = tmpm.serialize();
+   MapAddReq req;
+   req.zoneID = "b71a3ad5-513e-4078-9f9b-d9eeb0691b1e";
+   req.ownerID = "123";
+   req.spaceName = "XXXXXX-SUPER";
+   req.spaceSize = 58;
+   SpaceMetaData tmpm;
+   tmpm.hostCenterName = "beijing";
+   tmpm.storageSrcName = "STOR-1024";
+   req.spacePathInfo = tmpm.serialize();
 
-//   std::string value = req.serialize();
+   std::string value = req.serialize();
 
-//   auto response = client.post(url).body(value).send();
-//         dout(-1) << "Client Info: post request " << url << dendl;
+   auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
 
-//   std::promise<bool> prom;
-//   auto fu = prom.get_future();
-//   response.then(
-//       [&](Http::Response res) {
-//         dout(-1) << "Manager Info: " << res.body() << dendl;
-//         prom.set_value(true);
-//       },
-//       Async::IgnoreException);
-//   EXPECT_TRUE(fu.get());
-//   client.shutdown();
-// }
+   std::promise<bool> prom;
+   auto fu = prom.get_future();
+   response.then(
+       [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+       },
+       Async::IgnoreException);
+   EXPECT_TRUE(fu.get());
+   client.shutdown();
+ }
 
 
 // TEST_F(HVSZoneTest, MapDeduct) {

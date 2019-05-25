@@ -89,8 +89,8 @@ TEST_F(HVSSpaceTest, changesize) {
     client.init(opts);
 
     SpaceSizeChangeReq req;
-    req.spaceID = "dca31346-91c3-48d1-865a-eef36b314c80";
-    req.newSpaceSize = 100;
+    req.spaceID = "18530785-7f85-4ebd-ab58-75469c03c718";
+    req.newSpaceSize = 84;
 
     std::string value = req.serialize();
 

@@ -586,10 +586,7 @@ int ZoneServer::MapAdd(std::string zoneID, std::string ownerID, std::string spac
       // tmp.ownerID = ownerID;
       // tmp.memberID = memberID;
       tmp.spaceID.emplace_back(spaceID);
-
-      std::string tmp_key(tmp.zoneID);
-      std::string tmp_value = tmp.serialize();
-      zonePtr->set(tmp_key, tmp_value);
+      zonePtr->set(tmp_key, tmp.serialize());
       return 0;
     }
   }

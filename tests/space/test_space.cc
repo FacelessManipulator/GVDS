@@ -84,7 +84,7 @@ TEST_F(HVSSpaceTest, Rename) {
 TEST_F(HVSSpaceTest, changesize) {
     Http::Client client;
     char url[256];
-    snprintf(url, 256, "http://localhost:%d/space/sizechange", manager->rest_port());
+    snprintf(url, 256, "http://localhost:%d/space/changesize", manager->rest_port());
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 

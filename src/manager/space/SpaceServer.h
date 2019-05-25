@@ -12,6 +12,7 @@
 #include "datastore/couchbase_helper.h"
 #include "manager/space/Space.h" 
 #include "manager/manager.h"
+#include "include/aggregation_struct.h"
 
 
 using namespace Pistache;
@@ -53,8 +54,8 @@ public:
     //空间缩放模块：空间缩放接口
     void SpaceSizeChangeRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceSizeChange(std::string spaceID, int64_t newSpaceSize);
-    int SpaceSizeAdd(std::string spaceID, int64_t newSpaceSize);
-    int SpaceSizeDeduct(std::string spaceID, int64_t newSpaceSize);
+    int SpaceSizeAdd(std::string StorageID, int64_t newSpaceSize);
+    int SpaceSizeDeduct(std::string StorageID, int64_t newSpaceSize);
 
 /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);

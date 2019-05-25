@@ -19,8 +19,12 @@ void SpaceServer::stop() {}
 
 void SpaceServer::router(Router& router) {
    Routes::Post(router, "/space/rename", Routes::bind(&SpaceServer::SpaceRenameRest, this));
-   Routes::Post(router, "/space/sizechange", Routes::bind(&SpaceServer::SpaceSizeChangeRest, this));
+   Routes::Post(router, "/space/changesize", Routes::bind(&SpaceServer::SpaceSizeChangeRest, this));
 }
+
+    std::string jsonfilter(const std::string &serialize_json){
+        return serialize_json.substr(0,serialize_json.find_last_of("}")+1);
+    }
 
 void SpaceServer::GetSpacePosition(std::vector<std::string> &result, std::vector<std::string> spaceID)
 {
@@ -227,22 +231,67 @@ int SpaceServer::SpaceRename(std::string spaceID, std::string newSpaceName)
     }
 
     int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {
-        // 1. 进行查找聚合表，进行记录空间容量的变化；
-        bool isAdd = true; //如果没有超过阈值，则增加空间容量
-        if (isAdd){
-            return SpaceSizeAdd(spaceID, newSpaceSize);
+        if (newSpaceSize < 0) {
+            return -1;
+        }
+        //查找空间表中，当前空间
+        Space spacejson;
+        std::shared_ptr<hvs::CouchbaseDatastore> spaceptr =std::make_shared<hvs::CouchbaseDatastore>(hvs::CouchbaseDatastore("space_info"));
+        spaceptr->init();
+        auto [vp, err] = spaceptr->get(spaceID); // 通过spaceID获取到描述空间的json数据；
+        std::string space_value = *vp;
+        spacejson.deserialize(jsonfilter(space_value));
+        if(newSpaceSize > spacejson.spaceSize){
+            int ret = SpaceSizeAdd(spacejson.storageSrcID, newSpaceSize-spacejson.spaceSize);
+            if(ret == 0){
+                spacejson.spaceSize = newSpaceSize;
+                spaceptr->set(spaceID, spacejson.serialize());
+            }
+            return ret;
+        }else if (newSpaceSize < spacejson.spaceSize){
+            int ret = SpaceSizeDeduct(spacejson.storageSrcID, spacejson.spaceSize-newSpaceSize);
+            if(ret == 0){
+                spacejson.spaceSize = newSpaceSize;
+                spaceptr->set(spaceID, spacejson.serialize());
+            }
+            return ret;
         }else{
-            return SpaceSizeDeduct(spaceID, newSpaceSize);
+            //std::cout << *(HvsContext::get_context()->_config->get<std::string>("storage"))<< std::endl;
+            return 0;
         }
     }
 
-    int SpaceServer::SpaceSizeAdd(std::string spaceID, int64_t newSpaceSize) {
-        std::cout << "SpaceSizeAdd: " << spaceID << " " << newSpaceSize << std::endl;
+    int SpaceServer::SpaceSizeAdd(std::string StorageID, int64_t add_size) {
+        StorageResource storage;
+        std::shared_ptr<hvs::CouchbaseDatastore> storptr =std::make_shared<hvs::CouchbaseDatastore>(hvs::CouchbaseDatastore("test"));
+        storptr->init();
+        auto [vp, err] = storptr->get(StorageID);
+        std::string stor_value = *vp;
+        storage.deserialize(jsonfilter(stor_value));
+        if (storage.assign_capacity+add_size > storage.total_capacity){
+            return -1;
+        } else{
+            //设置当前新的容量；
+            storage.assign_capacity = storage.assign_capacity+add_size;
+            storptr->set(StorageID, storage.serialize()); // 容量改变，并重新存储到数据库中；
+        }
         return 0;
     }
 
-    int SpaceServer::SpaceSizeDeduct(std::string spaceID, int64_t newSpaceSize) {
-        std::cout << "SpaceSizeDeduct: " << spaceID << " " << newSpaceSize << std::endl;
+    int SpaceServer::SpaceSizeDeduct(std::string StorageID, int64_t deduct_size) {
+        StorageResource storage;
+        std::shared_ptr<hvs::CouchbaseDatastore> storptr =std::make_shared<hvs::CouchbaseDatastore>(hvs::CouchbaseDatastore("test"));
+        storptr->init();
+        auto [vp, err] = storptr->get(StorageID);
+        std::string stor_value = *vp;
+        storage.deserialize(jsonfilter(stor_value));
+        if (storage.assign_capacity-deduct_size < 0){
+            return -1;
+        } else{
+            //设置当前新的容量；
+            storage.assign_capacity = storage.assign_capacity-deduct_size;
+            storptr->set(StorageID, storage.serialize()); // 容量改变，并重新存储到数据库中；
+        }
         return 0;
     }
 

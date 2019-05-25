@@ -141,6 +141,7 @@ hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   _config->add("rest.port", 9090);
   _config->add("rest.thread_num", 5);
   _config->add("couchbase.bucket", string("test"));
+  _config->add("storage", string("/tmp/hvs/tests/data/"));
 
   return _config;
 }

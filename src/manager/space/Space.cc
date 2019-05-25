@@ -15,6 +15,7 @@ void Space::serialize_impl() {
     put("root_location", spacePath);
     put("Status", status);
 }
+
 void Space::deserialize_impl() {
     get("UUID", spaceID);
     get("name", spaceName);

@@ -96,7 +96,19 @@ public:
     AccountSCPool() = default;
 };
 
-
+//getLocalAccountinfo用到,本地账户名，和密码// 不用和数据库交互
+class LocalAccountPair : public hvs::JsonSerializer{
+public:
+    std::string localaccount;
+    std::string localpassword;
+public:
+    void serialize_impl() override;
+    void deserialize_impl() override;
+public:
+    LocalAccountPair() = default;
+    LocalAccountPair(string account, string pass)
+    : localaccount(account), localpassword(pass){}
+}
 
 //int lbqprint();
 

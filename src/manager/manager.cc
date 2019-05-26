@@ -92,6 +92,7 @@ hvs::Manager* init_manager() {
   // registe modlues in manager node
   mgr->registe_module(std::make_shared<IOProxy_MGR>("ioproxy manager"));
   mgr->registe_module(std::make_shared<UserModelServer>());
+  mgr->registe_module(std::make_shared<AuthModelServer>());
   hvs::HvsContext::get_context()->node = mgr;
   mgr->start();
   return mgr;

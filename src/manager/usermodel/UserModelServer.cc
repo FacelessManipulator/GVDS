@@ -447,7 +447,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     Account hvsperson;
     hvsperson.deserialize(*pvalue);
 
-    //判断区域是否注销完毕
+    //判断区域是否注销完毕sy
     bool is_district_cancel = true;
     if(!is_district_cancel){
         is_cancel_success = false;
@@ -941,6 +941,49 @@ bool auth_token(const Rest::Request& request){
         return false;//验证失败
     }
     return true; //验证成功
+}
+
+
+//账户映射接口，返回指定超算本地账户的账户名，密码
+string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterName){
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("sc_account_info"));
+    f1_dbPtr->init();
+
+    //TODO:这块要try一下 否则不存在此ownerid，查寻不到此用户
+    auto [pvalue, error] = f1_dbPtr->get(ownerID);
+    if(error){
+        cout << "fail" << endl;
+        return "fail";
+    }
+
+    SCAccount person;
+    person.deserialize(*pvalue);
+
+   
+    if(hostCenterName.compare("Beijing") == 0){
+        if(person.Beijing_account.empty()){
+            //TODO:调用接口，建立到北京的账户映射；
+            //并返回结果，如果建立失败
+            return "fail";
+        }
+        else{
+            map<string, string>::iterator iter;
+            iter = person.Beijing_account.begin();
+            LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
+            return localpair.serialize();
+        }
+    }
+    else if(hostCenterName.compare("Shanghai") == 0){
+        //类似北京
+    }
+    else if(hostCenterName.compare("Guangzhou") == 0){
+    }
+    else if(hostCenterName.compare("Changsha") == 0){
+    }
+    else if(hostCenterName.compare("Jinan") == 0){
+    }
+
 }
 
 }// namespace hvs

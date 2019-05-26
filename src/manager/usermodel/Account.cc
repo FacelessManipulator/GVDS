@@ -89,3 +89,14 @@ void AccountSCPool::deserialize_impl(){
     get("unuse_account", unuse_account);
     get("use_account", use_account);
 }
+
+
+void LocalAccountPair::serialize_impl(){
+    put("localaccount", localaccount);
+    put("localpassword", localpassword);
+}
+
+void LocalAccountPair::deserialize_impl(){
+    get("localaccount", localaccount);
+    get("localpassword", localpassword);
+}

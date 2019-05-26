@@ -3,8 +3,8 @@ Author:Liubingqi
 date:2019.03.21
 */
 
-#ifndef USERMODELSERVER_H
-#define USERMODELSERVER_H
+#ifndef AUTHODELSERVER_H
+#define AUTHODELSERVER_H
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -15,16 +15,18 @@ date:2019.03.21
 
 
 #include "datastore/couchbase_helper.h"
-#include "manager/usermodel/Account.h"
+#include "manager/authmodel/Auth.h"
 #include "manager/manager.h"
 
 class Account;
 class SCAccount;
+class Auth;
 //using namespace Pistache;
 
 
+
 namespace hvs{
-class UserModelServer : public ManagerModule {
+class AuthModelServer : public ManagerModule {
 
 private:
   virtual void start() override;
@@ -34,7 +36,11 @@ private:
 public:
  //--------------------------------------------
     //define your function here
+    int ZonePermissionAdd(std::string zoneID, std::string ownerID);
+
+    int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID);
     
+    /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);
     
@@ -52,25 +58,14 @@ public:
 
     void cancellationUserAccountRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string cancellationUserAccount(std::string uuid, bool is_cancel_success);
+    */
  //--------------------------------------------
-
-    //获取映射的本地账户接口
-    string getLocalAccountinfo(string ownerID, string hostCenterName);
 public:
-    UserModelServer() : ManagerModule("user") {};
-    ~UserModelServer() {};
+    AuthModelServer() : ManagerModule("auth") {};
+    ~AuthModelServer() {};
 };
 
-std::string md5(std::string strPlain);
-void printCookies(const Http::Request& req);
-bool auth_token(const Rest::Request& request);
 
-bool addSCaccount();
-bool SubBuildAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
-bool BuildAccountMapping(std::string accountID);
-
-bool RemoveAccountMapping(std::string accountID);
-bool SubRemoveAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
 }// namespace hvs
 

@@ -38,7 +38,7 @@ public:
     //空间创建模块：空间创建接口
     std::string SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);
 
-    //空间创建模块：添加区域空间校验接口
+    //空间创建模块：添加区域空间校验接口 注：spacePathInfo 为空间元数据信息
     std::string SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo);
     
     //空间删除模块：空间删除接口
@@ -57,19 +57,6 @@ public:
     int SpaceSizeAdd(std::string StorageID, int64_t newSpaceSize);
     int SpaceSizeDeduct(std::string StorageID, int64_t newSpaceSize);
 
-/*
-    void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string UserRegister(Account &person);
-    
-    void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool UserLogin(std::string account, std::string pass);
-
-    void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string getUserinfo(std::string uuid , bool &is_get_success);
-
-    void modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string modifyUserinfo(Account &person);*/
-
  //--------------------------------------------
 public:
     SpaceServer() : ManagerModule("space") {
@@ -77,7 +64,7 @@ public:
         spacebucket = "space_info";
         localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
     };
-    ~SpaceServer() {};
+    ~SpaceServer() = default;
 
     static SpaceServer* instance;  //single object
 private:

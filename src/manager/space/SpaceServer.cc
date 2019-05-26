@@ -24,29 +24,37 @@ namespace hvs{
        Routes::Post(router, "/space/changesize", Routes::bind(&SpaceServer::SpaceSizeChangeRest, this));
     }
 
-        std::string jsonfilter(const std::string &serialize_json){
-            return serialize_json.substr(0,serialize_json.find_last_of("}")+1);
-        }
+    std::string jsonfilter(const std::string &serialize_json){
+        return serialize_json.substr(0,serialize_json.find_last_of("}")+1);
+    }
 
     void SpaceServer::GetSpacePosition(std::vector<std::string> &result, std::vector<std::string> spaceID)
     {
         Space tmps;
-        std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-              hvs::CouchbaseDatastore("space_info"));
-        spacePtr->init();
+        std::shared_ptr<hvs::Datastore> spacePtr =hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase);
         for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
         {
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
             std::string tmps_value = *vs;
-            tmps.deserialize(tmps_value);
+            tmps.deserialize(jsonfilter(tmps_value));
             SpaceMetaData tmpm;
             tmpm.spaceID = tmps.spaceID;
             tmpm.spaceName = tmps.spaceName;
             tmpm.hostCenterID = tmps.hostCenterID;
             tmpm.storageSrcID = tmps.storageSrcID;
-            //TODO:资源聚合模块查询名字
             tmpm.spacePath = tmps.spacePath;
+
+            //TODO:资源聚合模块查询名字
+            // 已补充资源聚合模块查询接口
+            StorageResource storage;
+            std::shared_ptr<hvs::Datastore> storPtr =hvs::DatastoreFactory::create_datastore(storagebucket, hvs::DatastoreType::couchbase);
+            auto [vp, serr] = storPtr->get(tmps.storageSrcID);
+            std::string stor_value = *vp;
+            storage.deserialize(jsonfilter(stor_value));
+            tmpm.hostCenterName = storage.host_center_name;
+            tmpm.storageSrcName = storage.storage_src_name;
+
             std::string result_spa_m = tmpm.serialize();
             result.emplace_back(result_spa_m);
         }
@@ -57,9 +65,7 @@ namespace hvs{
         Space tmps;
         SpaceInfo tmp_si;
         tmp_si.spaceID = spaceID;
-        std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-              hvs::CouchbaseDatastore("space_info"));
-        spacePtr->init();
+        std::shared_ptr<hvs::Datastore> spacePtr = hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase);
         for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
         {
             std::string tmps_key = *m;
@@ -125,14 +131,14 @@ namespace hvs{
     {
         Space tmps;
         std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-              hvs::CouchbaseDatastore("space_info"));
+              hvs::CouchbaseDatastore(spacebucket));
         spacePtr->init();
         SpaceMetaData tmpm;
         tmpm.deserialize(spacePathInfo);
         tmpm.hostCenterID = tmpm.hostCenterName;
-        tmpm.storageSrcID = tmpm.storageSrcName;//资源聚合模块查找
+        tmpm.storageSrcID = tmpm.storageSrcName; //资源聚合模块查找
         //find
-        std::string query = "select * from `space_info` where SC_UUID = \"scuuid\" and Storage_UUID = \"stuuid\" and root_location = \"rootlocation\";";
+        std::string query = R"(select * from `space_info` where SC_UUID = "scuuid" and Storage_UUID = "stuuid" and root_location = "rootlocation";)";
         int pos1 = query.find("scuuid");
         query.erase(pos1, 6);
         query.insert(pos1, tmpm.hostCenterID);
@@ -142,7 +148,6 @@ namespace hvs{
         int pos3 = query.find("rootlocation");
         query.erase(pos3, 12);
         query.insert(pos3, tmpm.spacePath);
-        //std::cout << query <<std::endl;
         auto [vp, err] = spacePtr->n1ql(query);
         if (vp->size() != 1) return "false";
         else
@@ -150,11 +155,10 @@ namespace hvs{
             std::vector<std::string>::iterator it = vp->begin();
             std::string n1ql_result = *it;
             std::string tmp_value = n1ql_result.substr(14, n1ql_result.length() - 15);
+            std::cerr << "SpaceCheck: " << tmp_value << std::endl;
             tmps.deserialize(tmp_value);
             tmps.status = true;
-            tmp_value = tmps.serialize();
-            std::string tmp_key = tmps.spaceID;
-            spacePtr->set(tmp_key,tmp_value);
+            spacePtr->set(tmps.spaceID, tmps.serialize());
             return tmps.spaceID;
         }
     }

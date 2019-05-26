@@ -54,31 +54,31 @@ class HVSSpaceTest : public ::testing::Test {
 // }
 
 TEST_F(HVSSpaceTest, Rename) {
-  Http::Client client;
-  char url[256];
-  snprintf(url, 256, "http://localhost:%d/space/rename", manager->rest_port());
-  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-  client.init(opts);
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://localhost:%d/space/rename", manager->rest_port());
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
 
-  SpaceRenameReq req;
-  req.spaceID = "dca31346-91c3-48d1-865a-eef36b314c80";
-  req.newSpaceName = "superxu";
+    SpaceRenameReq req;
+    req.spaceID = "965e3ce8-d8a6-492e-accc-02469c24a42c";
+    req.newSpaceName = "10000";
 
-  std::string value = req.serialize();
+    std::string value = req.serialize();
 
-  auto response = client.post(url).body(value).send();
+    auto response = client.post(url).body(value).send();
         dout(-1) << "Client Info: post request " << url << dendl;
 
-  std::promise<bool> prom;
-  auto fu = prom.get_future();
-  response.then(
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
       [&](Http::Response res) {
         dout(-1) << "Manager Info: " << res.body() << dendl;
         prom.set_value(true);
       },
       Async::IgnoreException);
-  EXPECT_TRUE(fu.get());
-  client.shutdown();
+    EXPECT_TRUE(fu.get());
+    client.shutdown();
 }
 
 TEST_F(HVSSpaceTest, changesize) {
@@ -90,7 +90,7 @@ TEST_F(HVSSpaceTest, changesize) {
 
     SpaceSizeChangeReq req;
     req.spaceID = "18530785-7f85-4ebd-ab58-75469c03c718";
-    req.newSpaceSize = 84;
+    req.newSpaceSize = 50;
 
     std::string value = req.serialize();
 

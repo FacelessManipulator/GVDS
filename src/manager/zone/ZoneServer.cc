@@ -559,9 +559,7 @@ void ZoneServer::MapAddRest(const Rest::Request& request, Http::ResponseWriter r
 int ZoneServer::MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
 {
   Zone tmp;
-  std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("zone_info"));
-  zonePtr->init();
+  std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
   std::string tmp_key = zoneID;
   auto [vp, err] = zonePtr->get(tmp_key);
   std::string tmp_value = *vp;
@@ -607,33 +605,30 @@ void ZoneServer::MapDeductRest(const Rest::Request& request, Http::ResponseWrite
   result = "success";
   else result = "fail";
 
-  response.send(Http::Code::Ok, result); //point
+  response.send(Http::Code::Ok, result);
   std::cout << "====== end ZoneServer function: MapDeductRest ======"<< std::endl;
 }
+
 int ZoneServer::MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID)
 {
   Zone tmp;
-  std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("zone_info"));
-  zonePtr->init();
-  std::string tmp_key = zoneID;
-  auto [vp, err] = zonePtr->get(tmp_key);
+  std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+  auto [vp, err] = zonePtr->get(zoneID);
   std::string tmp_value = *vp;
   tmp.deserialize(tmp_value);
   if(tmp.ownerID == ownerID)
   {
     if(isSubset(tmp.spaceID, spaceID))
     {
-      SpaceServer* tmp_server = static_cast<SpaceServer*>(mgr->get_module("space").get());
-      // SpaceServer* tmp_server = hvs::SpaceServer::getInstance();
-      tmp_server->SpaceDelete(spaceID);
+      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
+      tmp_server->SpaceDelete(spaceID); // 调用空间模块，删除空间条目
       for(std::vector<std::string>::iterator it = spaceID.begin(); it != spaceID.end(); it++)
       {
-        std::string tmp_s = *it;
+        std::string will_removed_spaceID = *it;
         std::vector<std::string>::iterator m = tmp.spaceID.begin();
         while(m != tmp.spaceID.end())
         {
-          if(*m == tmp_s)
+          if(*m == will_removed_spaceID)
           {
             m = tmp.spaceID.erase(m);
           }
@@ -643,8 +638,7 @@ int ZoneServer::MapDeduct(std::string zoneID, std::string ownerID, std::vector<s
           }
         }
       }
-      tmp_value = tmp.serialize();
-      zonePtr->set(tmp_key, tmp_value);
+      zonePtr->set(zoneID, tmp.serialize());
       return 0;
     }
     else return -1;

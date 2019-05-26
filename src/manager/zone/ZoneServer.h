@@ -72,14 +72,16 @@ public:
     void MapDeductRest(const Rest::Request& request, Http::ResponseWriter response);
     int MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID);
 
-
-
  //--------------------------------------------
 public:
-    ZoneServer() : ManagerModule("zone") {};
+    ZoneServer() : ManagerModule("zone") {
+        zonebucket = "zone_info";
+    };
     ~ZoneServer() {};
 
     // static ZoneServer* instance;  //single object
+private:
+    std::string  zonebucket;
 };
 
 //std::string md5(std::string strPlain);

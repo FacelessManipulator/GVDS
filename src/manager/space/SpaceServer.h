@@ -41,11 +41,11 @@ public:
     //空间创建模块：添加区域空间校验接口
     std::string SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo);
     
-    //空间删除模块：空间删除接口；
+    //空间删除模块：空间删除接口
     int SpaceDelete(std::vector<std::string> spaceID);
 
-    //空间位置选择模块：空间位置选择接口
-    //std::string GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo);
+    //TODO：空间位置选择模块：空间位置选择接口
+    std::string GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo);
 
     //空间重命名模块：空间重命名接口
     void SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response);
@@ -72,14 +72,21 @@ public:
 
  //--------------------------------------------
 public:
-    SpaceServer() : ManagerModule("space") {};
+    SpaceServer() : ManagerModule("space") {
+        storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
+        spacebucket = "space_info";
+        localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    };
     ~SpaceServer() {};
 
     static SpaceServer* instance;  //single object
+private:
+    std::string storagebucket;
+    std::string spacebucket;
+    std::string localstoragepath; // 本机存储集群路径
 };
 
 //std::string md5(std::string strPlain);
-
 
 }// namespace hvs
 

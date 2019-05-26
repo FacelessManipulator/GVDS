@@ -44,8 +44,8 @@ public:
     //空间删除模块：空间删除接口
     int SpaceDelete(std::vector<std::string> spaceID);
 
-    //TODO：空间位置选择模块：空间位置选择接口
-    std::string GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo);
+    //TODO：空间位置选择模块：空间位置选择接口, 初步实现
+    std::tuple<std::string, std::string> GetSpaceCreatePath(int64_t spaceSize, std::string hostCenterName, std::string storageSrcName);
 
     //空间重命名模块：空间重命名接口
     void SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response);

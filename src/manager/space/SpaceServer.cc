@@ -87,11 +87,15 @@ namespace hvs{
         tmpm.deserialize(spacePathInfo);
         //1、判断是否可以创建空间，将host和storage的name转换成ID
         // TODO: 空间位置选择接口
-        GetSpaceCreatePath(spaceSize, spacePathInfo);
-        tmpm.hostCenterID = tmpm.hostCenterName;
-        tmpm.storageSrcID = tmpm.storageSrcName;//资源聚合模块查找
+        auto [storid, hostid] = GetSpaceCreatePath(spaceSize, tmpm.hostCenterName, tmpm.storageSrcName);
+        if(storid.empty() && hostid.empty()){
+            std::cerr << "SpaceCreate：空间位置选择失败！" << std::endl;
+            return "false";
+        }
+        tmpm.storageSrcID = storid;// 资源聚合模块查找 TODO: 用户可能指定存储位置
+        tmpm.hostCenterID = hostid; // 通过制定的ID返回
         //2、获取账户映射信息，创建空间目录,返回spacePath
-        // TODO： 把空间组和用户使用 chown 修改； owner
+        // TODO： 把空间组和用户使用 chown 修改； owner; ownerID, hostCenterID bool (&string &string, owner, hostcenterid) || string (owner, hostcenterid);
         //创建新建空间对应的空间文件夹，默认权限为0777,默认权限和用户有关
         boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
         const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
@@ -122,9 +126,40 @@ namespace hvs{
         return new_space.spaceID;
     }
 
-    std::string SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo) {
-        std::cerr << "SpaceCreatePath: " << spacePathInfo << std::endl;
-        return std::__cxx11::string();
+    std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string hostCenterName, std::string storageSrcName) {
+        std::shared_ptr<hvs::CouchbaseDatastore> storagePtr = std::make_shared<hvs::CouchbaseDatastore>(
+                hvs::CouchbaseDatastore(storagebucket));
+        storagePtr->init();
+        std::string query = "";
+        //根据存储集群名称查找 存储集群ID
+        if(storageSrcName.empty()){
+            query = "select * from `"+storagebucket+ R"(` where host_center_name = "hcname";)";
+            int pos1 = query.find("hcname");
+            query.erase(pos1, 6);
+            query.insert(pos1, hostCenterName);
+        }else{
+            query = "select * from `"+storagebucket+ R"(` where host_center_name = "hcname" and storage_src_name = "ssname";)";
+            int pos1 = query.find("hcname");
+            query.erase(pos1, 6);
+            query.insert(pos1, hostCenterName);
+            int pos2 = query.find("ssname");
+            query.erase(pos2, 6);
+            query.insert(pos2, storageSrcName);
+        }
+        // TODO: 默认使用第一个作为查找到的结果
+        auto [vp, err] = storagePtr->n1ql(query);
+        if(vp->size() == 0){
+            std::cerr << "GetSpaceCreatePath: 未查找到制定的存储ID，根据空间名和数据中心的名字！" << std::endl;
+            return {"", ""};
+        }
+        std::vector<std::string>::iterator it = vp->begin();
+        std::string n1ql_result = *it;
+        std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
+        StorageResource storage;
+        storage.deserialize(jsonfilter(tmp_value));
+        // std::cerr << "SpaceCreatePath: " << tmp_value << std::endl;
+        // TODO: STOR- 这个标识后期需要修改，UUID格式要进行统一；
+        return {"STOR-"+storage.storage_src_id, storage.host_center_id};
     }
 
     std::string SpaceServer::SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo)
@@ -135,8 +170,13 @@ namespace hvs{
         spacePtr->init();
         SpaceMetaData tmpm;
         tmpm.deserialize(spacePathInfo);
-        tmpm.hostCenterID = tmpm.hostCenterName;
-        tmpm.storageSrcID = tmpm.storageSrcName; //资源聚合模块查找
+        auto [storid, hostid] = GetSpaceCreatePath(0, tmpm.hostCenterName, tmpm.storageSrcName);
+        if(storid.empty() && hostid.empty()){
+            std::cerr << "SpaceCheck：空间位置选择失败！" << std::endl;
+            return "false";
+        }
+        tmpm.hostCenterID = hostid; // 记录数据中心ID
+        tmpm.storageSrcID = storid; // 记录存储集群ID
         //find
         std::string query = R"(select * from `space_info` where SC_UUID = "scuuid" and Storage_UUID = "stuuid" and root_location = "rootlocation";)";
         int pos1 = query.find("scuuid");

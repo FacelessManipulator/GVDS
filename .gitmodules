@@ -21,7 +21,7 @@
 	ignore = dirty
 [submodule "third-party/libconfig"]
 	path = third-party/libconfig
-	url = git@github.com:hyperrealm/libconfig.git
+	url = https://github.com/hyperrealm/libconfig.git
 
 [submodule "third-party/udt4"]
 	path = third-party/udt4

@@ -12,8 +12,6 @@ SET(CommonSRCS
         usermodel/UserModelServer.cc
         common/RestServer.cc
         common/JsonSerializer.cc
-        aggregation/AggregationServer.cc
-        aggregation/StorageResBicInfo.cc
         msg/rpc.cc
         msg/udt_client.cc
         msg/udt_writer.cc

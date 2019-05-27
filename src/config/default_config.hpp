@@ -47,5 +47,8 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("client.data_port_begin", 9096);
   _config->add("client.data_port_end", 9150);
   _config->add("client.data_buffer", 10240000);
+
+  // storage 本地挂载的文件系统（lustre等）
+  _config->add("storage", string("/tmp/hvs/tests/data/"));
 }
 }  // namespace hvs

@@ -1,5 +1,7 @@
 #include "manager/manager.h"
 #include "manager/ioproxy_mgr.h"
+#include "manager/resaggregation_mgr.h"
+#include "zone/ZoneServer.h"
 
 using namespace hvs;
 using namespace std;
@@ -29,9 +31,9 @@ void Manager::start() {
   route(restserver->router);
   // init modules
   for (auto mod : modules) {
-    mod->start();
+    mod.second->start();
     // set router in modules
-    mod->router(restserver->router);
+    mod.second->router(restserver->router);
   }
   m_stop = false;
   restserver->start();
@@ -43,7 +45,7 @@ void Manager::stop() {
   if (restserver) stop_rest(restserver.release());
   // stop modules
   for (auto mod : modules) {
-    mod->stop();
+    mod.second->stop();
   }
   m_stop = true;
 }
@@ -63,7 +65,7 @@ void Manager::route(Router& router) {
 void Manager::serialize_impl() {
   std::vector<std::string> mod_name;
   for (auto mod : modules) {
-    mod_name.push_back(mod->module_name);
+    mod_name.push_back(mod.second->module_name);
   }
   std::string ip = addr.to_string();
   int port = restserver->getPort();
@@ -76,6 +78,21 @@ void Manager::serialize_impl() {
 void Manager::manager_info(const Rest::Request& req, Http::ResponseWriter res) {
   res.send(Pistache::Http::Code::Ok, serialize());
 }
+
+
+  void Manager::registe_module(std::shared_ptr<ManagerModule> mod) {
+    modules[mod->module_name] = mod;
+    mod->mgr = this;
+  }
+
+  std::shared_ptr<ManagerModule> Manager::get_module(const std::string & mod_name) {
+    auto it = modules.find(mod_name);
+    if(it != modules.end()) {
+      return modules[mod_name];
+    } else {
+      return nullptr;
+    }
+  }
 
 namespace hvs {
 hvs::Manager* init_manager() {
@@ -90,6 +107,10 @@ hvs::Manager* init_manager() {
   mgr->addr.from_string(*ip);
   // registe modlues in manager node
   mgr->registe_module(std::make_shared<IOProxy_MGR>("ioproxy manager"));
+  mgr->registe_module(std::make_shared<ResAggregation_MGR>("resaggregation manager"));
+
+  mgr->registe_module(std::make_shared<ZoneServer>());
+  mgr->registe_module(std::make_shared<SpaceServer>());
   hvs::HvsContext::get_context()->node = mgr;
   mgr->start();
   return mgr;

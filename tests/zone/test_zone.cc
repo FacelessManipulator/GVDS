@@ -38,7 +38,7 @@ class HVSZoneTest : public ::testing::Test {
   Manager* manager;
 };
 
-//TEST_F(HVSZoneTest, Rename) {
+TEST_F(HVSZoneTest, Rename) {
 //    Http::Client client;
 //    char url[256];
 //    snprintf(url, 256, "http://localhost:%d/zone/rename", manager->rest_port());
@@ -46,9 +46,9 @@ class HVSZoneTest : public ::testing::Test {
 //    client.init(opts);
 //
 //    ZoneRenameReq req;
-//    req.zoneID = "b71a3ad5-513e-4078-9f9b-d9eeb0691b1e";
-//    req.ownerID = "123";
-//    req.newZoneName = "superman";
+//    req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+//    req.ownerID = "128";
+//    req.newZoneName = "superzone";
 //
 //    std::string value = req.serialize();
 //
@@ -65,26 +65,25 @@ class HVSZoneTest : public ::testing::Test {
 //        Async::IgnoreException);
 //    EXPECT_TRUE(fu.get());
 //    client.shutdown();
-//}
+}
 
-// TEST_F(HVSZoneTest, Locate) {
+ TEST_F(HVSZoneTest, Locate) {
 //     Http::Client client;
 //     char url[256];
 //     snprintf(url, 256, "http://localhost:%d/zone/locate", manager->rest_port());
 //     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
 //     client.init(opts);
-
+//
 //     GetZoneLocateInfoReq req;
-//     req.clientID = "121";
-//     req.zoneID = "7bf24cee-6499-47f1-b9d8-90137255c2a2";
-//     req.spaceID.emplace_back("9700a9cd-d6b5-4aec-9e47-32c22e36352a");
-//     //req.spaceID.emplace_back("1213411-2");
-
+//     req.clientID = "123";
+//     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+//     req.spaceID.emplace_back("62621dea-bd6b-4c12-b1ce-5b466eea69af");
+//
 //     std::string value = req.serialize();
-
+//
 //     auto response = client.post(url).body(value).send();
 //         dout(-1) << "Client Info: post request " << url << dendl;
-
+//
 //     std::promise<bool> prom;
 //     auto fu = prom.get_future();
 //     response.then(
@@ -95,22 +94,20 @@ class HVSZoneTest : public ::testing::Test {
 //         Async::IgnoreException);
 //     EXPECT_TRUE(fu.get());
 //     client.shutdown();
-// }
+ }
 
-// TEST_F(HVSZoneTest, GetInfo) {
+ TEST_F(HVSZoneTest, GetInfo) {
 //     Http::Client client;
 //     char url[256];
 //     snprintf(url, 256, "http://localhost:%d/zone/info", manager->rest_port());
 //     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
 //     client.init(opts);
-
-
-
+//
 //     std::string value = "124";
-
+//
 //     auto response = client.post(url).body(value).send();
 //         dout(-1) << "Client Info: post request " << url << dendl;
-
+//
 //     std::promise<bool> prom;
 //     auto fu = prom.get_future();
 //     response.then(
@@ -121,27 +118,26 @@ class HVSZoneTest : public ::testing::Test {
 //         Async::IgnoreException);
 //     EXPECT_TRUE(fu.get());
 //     client.shutdown();
-// }
+ }
 
-
-// TEST_F(HVSZoneTest, Share) {
+ TEST_F(HVSZoneTest, Share) {
 //     Http::Client client;
 //     char url[256];
 //     snprintf(url, 256, "http://localhost:%d/zone/share", manager->rest_port());
 //     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
 //     client.init(opts);
-
+//
 //     ZoneShareReq req;
-//     req.zoneID = "7bf24cee-6499-47f1-b9d8-90137255c2a2";
-//     req.ownerID = "125";
-//     req.memberID.emplace_back("14");
-//     req.memberID.emplace_back("16");
-
+//     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+//     req.ownerID = "128";
+//     req.memberID.emplace_back("124");
+//     req.memberID.emplace_back("128");
+//
 //     std::string value = req.serialize();
-
+//
 //     auto response = client.post(url).body(value).send();
 //         dout(-1) << "Client Info: post request " << url << dendl;
-
+//
 //     std::promise<bool> prom;
 //     auto fu = prom.get_future();
 //     response.then(
@@ -152,37 +148,37 @@ class HVSZoneTest : public ::testing::Test {
 //         Async::IgnoreException);
 //     EXPECT_TRUE(fu.get());
 //     client.shutdown();
-// }
+ }
 
-// TEST_F(HVSZoneTest, ShareCancel) {
-//     Http::Client client;
-//     char url[256];
-//     snprintf(url, 256, "http://localhost:%d/zone/sharecancel", manager->rest_port());
-//     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-//     client.init(opts);
+ TEST_F(HVSZoneTest, ShareCancel) {
+     Http::Client client;
+     char url[256];
+     snprintf(url, 256, "http://localhost:%d/zone/sharecancel", manager->rest_port());
+     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+     client.init(opts);
 
-//     ZoneShareReq req;
-//     req.zoneID = "7bf24cee-6499-47f1-b9d8-90137255c2a2";
-//     req.ownerID = "125";
-//     req.memberID.emplace_back("14");
+     ZoneShareReq req;
+     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+     req.ownerID = "128";
+     req.memberID.emplace_back("123");
 //     req.memberID.emplace_back("16");
 
-//     std::string value = req.serialize();
+     std::string value = req.serialize();
 
-//     auto response = client.post(url).body(value).send();
-//         dout(-1) << "Client Info: post request " << url << dendl;
+     auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
 
-//     std::promise<bool> prom;
-//     auto fu = prom.get_future();
-//     response.then(
-//         [&](Http::Response res) {
-//         dout(-1) << "Manager Info: " << res.body() << dendl;
-//         prom.set_value(true);
-//         },
-//         Async::IgnoreException);
-//     EXPECT_TRUE(fu.get());
-//     client.shutdown();
-// }
+     std::promise<bool> prom;
+     auto fu = prom.get_future();
+     response.then(
+         [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+         },
+         Async::IgnoreException);
+     EXPECT_TRUE(fu.get());
+     client.shutdown();
+ }
 
  TEST_F(HVSZoneTest, ZoneRegister) {
 //     Http::Client client;
@@ -192,15 +188,15 @@ class HVSZoneTest : public ::testing::Test {
 //     client.init(opts);
 //
 //     ZoneRegisterReq req;
-//     req.zoneName = "lbqzone";
-//     req.ownerID = "124";
+//     req.zoneName = "yxzone";
+//     req.ownerID = "128";
 //     req.memberID.emplace_back("123");
 //     req.memberID.emplace_back("125");
 //     req.spaceName = "changshaspace";
 //     req.spaceSize = 100;
 //     SpaceMetaData tmpm;
-//     tmpm.hostCenterName = "changsha";
-//     tmpm.storageSrcName = "lustre1";
+//     tmpm.hostCenterName = "zhongkeyuan1";
+//     tmpm.storageSrcName = "center_1";
 //     req.spacePathInfo = tmpm.serialize();
 //
 //     std::string value = req.serialize();
@@ -250,37 +246,37 @@ class HVSZoneTest : public ::testing::Test {
 
 
  TEST_F(HVSZoneTest, MapAdd) {
-   Http::Client client;
-   char url[256];
-   snprintf(url, 256, "http://localhost:%d/zone/mapadd", manager->rest_port());
-   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-   client.init(opts);
-
-   MapAddReq req;
-   req.zoneID = "b71a3ad5-513e-4078-9f9b-d9eeb0691b1e";
-   req.ownerID = "123";
-   req.spaceName = "XXXXXXXXXXXXXXXXXXXX";
-   req.spaceSize = 100;
-   SpaceMetaData tmpm;
-   tmpm.hostCenterName = "zhongkeyuan2";
-   tmpm.storageSrcName = "center_2";
-   req.spacePathInfo = tmpm.serialize();
-
-   std::string value = req.serialize();
-
-   auto response = client.post(url).body(value).send();
-         dout(-1) << "Client Info: post request " << url << dendl;
-
-   std::promise<bool> prom;
-   auto fu = prom.get_future();
-   response.then(
-       [&](Http::Response res) {
-         dout(-1) << "Manager Info: " << res.body() << dendl;
-         prom.set_value(true);
-       },
-       Async::IgnoreException);
-   EXPECT_TRUE(fu.get());
-   client.shutdown();
+//   Http::Client client;
+//   char url[256];
+//   snprintf(url, 256, "http://localhost:%d/zone/mapadd", manager->rest_port());
+//   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+//   client.init(opts);
+//
+//   MapAddReq req;
+//   req.zoneID = "b71a3ad5-513e-4078-9f9b-d9eeb0691b1e";
+//   req.ownerID = "123";
+//   req.spaceName = "XXXXXXXXXXXXXXXXXXXX";
+//   req.spaceSize = 100;
+//   SpaceMetaData tmpm;
+//   tmpm.hostCenterName = "zhongkeyuan2";
+//   tmpm.storageSrcName = "center_2";
+//   req.spacePathInfo = tmpm.serialize();
+//
+//   std::string value = req.serialize();
+//
+//   auto response = client.post(url).body(value).send();
+//         dout(-1) << "Client Info: post request " << url << dendl;
+//
+//   std::promise<bool> prom;
+//   auto fu = prom.get_future();
+//   response.then(
+//       [&](Http::Response res) {
+//         dout(-1) << "Manager Info: " << res.body() << dendl;
+//         prom.set_value(true);
+//       },
+//       Async::IgnoreException);
+//   EXPECT_TRUE(fu.get());
+//   client.shutdown();
  }
 
 
@@ -314,31 +310,29 @@ class HVSZoneTest : public ::testing::Test {
 //   client.shutdown();
  }
 
-// TEST_F(HVSZoneTest, ZoneAdd) {
+ TEST_F(HVSZoneTest, ZoneAdd) {
 //     Http::Client client;
 //     char url[256];
 //     snprintf(url, 256, "http://localhost:%d/zone/add", manager->rest_port());
 //     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
 //     client.init(opts);
-
+//
 //     ZoneRegisterReq req;
-//     req.zoneName = "wbzone2";
-//     req.ownerID = "125";
+//     req.zoneName = "yxzone2";
+//     req.ownerID = "128";
 //     req.memberID.emplace_back("123");
 //     req.memberID.emplace_back("124");
-//     // req.spaceName = "changshaspace";
-//     // req.spaceSize = 100;
 //     SpaceMetaData tmpm;
-//     tmpm.hostCenterName = "shanghai";
-//     tmpm.storageSrcName = "lustre1";
-//     tmpm.spacePath = "";
+//     tmpm.hostCenterName = "zhongkeyuan2";
+//     tmpm.storageSrcName = "center_2";
+//     tmpm.spacePath = "62621dea-bd6b-4c12-b1ce-5b466eea69af";
 //     req.spacePathInfo = tmpm.serialize();
-
+//
 //     std::string value = req.serialize();
-
+//
 //     auto response = client.post(url).body(value).send();
 //         dout(-1) << "Client Info: post request " << url << dendl;
-
+//
 //     std::promise<bool> prom;
 //     auto fu = prom.get_future();
 //     response.then(
@@ -349,7 +343,7 @@ class HVSZoneTest : public ::testing::Test {
 //         Async::IgnoreException);
 //     EXPECT_TRUE(fu.get());
 //     client.shutdown();
-// }
+ }
 
 
 // TEST_F(HVSZoneTest, simpleInfo){

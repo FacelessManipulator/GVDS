@@ -71,7 +71,7 @@ namespace hvs{
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
             std::string tmps_value = *vs;
-            tmps.deserialize(tmps_value);
+            tmps.deserialize(jsonfilter(tmps_value));
 
             tmp_si.spaceName[tmps.spaceID] = tmps.spaceName;
             tmp_si.spaceSize[tmps.spaceID] = tmps.spaceSize;
@@ -164,7 +164,6 @@ namespace hvs{
 
     std::string SpaceServer::SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo)
     {
-        Space tmps;
         std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
               hvs::CouchbaseDatastore(spacebucket));
         spacePtr->init();
@@ -192,12 +191,18 @@ namespace hvs{
         if (vp->size() != 1) return "false";
         else
         {
+            Space tmps;
             std::vector<std::string>::iterator it = vp->begin();
             std::string n1ql_result = *it;
             std::string tmp_value = n1ql_result.substr(14, n1ql_result.length() - 15);
             std::cerr << "SpaceCheck: " << tmp_value << std::endl;
             tmps.deserialize(tmp_value);
             tmps.status = true;
+            // TODO：修改空间状态为可用状态，并增加聚合模块容量, 如果容量增加失败，则返回；
+            if(SpaceSizeAdd(tmps.storageSrcID, tmps.spaceSize) != 0){
+                perror("SpaceCheck.SpaceSizeAdd");
+                return "false";
+            }
             spacePtr->set(tmps.spaceID, tmps.serialize());
             return tmps.spaceID;
         }

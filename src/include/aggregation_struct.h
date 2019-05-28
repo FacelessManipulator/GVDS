@@ -26,6 +26,7 @@ struct StorageResource : public hvs::JsonSerializer {
   int64_t assign_capacity;       // 已经分配空间容量大小
   std::string mgs_address;       // 存储资源MGS地址
   StorageResState state;         // 存储资源状态
+//  std::string ioproxy_uuid;      // 存储集群对应的IO代理的UUID
 
   explicit StorageResource()
   {
@@ -35,7 +36,7 @@ struct StorageResource : public hvs::JsonSerializer {
   explicit StorageResource(const std::string& src_id,const std::string& src_name,
                            const std::string& center_id,const std::string& center_name,
                            const int64_t t_capacity, const int64_t a_capacity,
-                           const std::string& m_address, const StorageResState res_state) {
+                           const std::string& m_address, const StorageResState res_state/*, const std::string iop_uuid*/) {
     storage_src_id = src_id;
     storage_src_name = src_name;
     host_center_id = center_id;
@@ -44,6 +45,7 @@ struct StorageResource : public hvs::JsonSerializer {
     assign_capacity = a_capacity;
     mgs_address = m_address;
     state = res_state;
+//    ioproxy_uuid =  iop_uuid;
   }
 
   virtual void serialize_impl() override {
@@ -56,6 +58,7 @@ struct StorageResource : public hvs::JsonSerializer {
     put("mgs_address", mgs_address);
     int _state = static_cast<int>(state);
     put("state", _state);
+//    put("ioproxy_uuid", ioproxy_uuid);
   };
 
   virtual void deserialize_impl() override {
@@ -69,6 +72,7 @@ struct StorageResource : public hvs::JsonSerializer {
     int _state;
     get("state", _state);
     state = static_cast<StorageResState>(_state);
+//    get("ioproxy_uuid", ioproxy_uuid);
   };
  
  static const std::string& prefix() {

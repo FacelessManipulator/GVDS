@@ -27,7 +27,7 @@ bool ResAggregation_MGR::add(const Rest::Request& req, Http::ResponseWriter res)
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
       bucket, hvs::DatastoreType::couchbase, true);
   auto storage_res = parse_request(req);
-  // broken request, cannot assemble a ioproxy_node
+  // broken request
   if (!storage_res) {
     res.send(Code::Bad_Request);
     return false;

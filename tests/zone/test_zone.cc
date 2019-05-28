@@ -17,25 +17,26 @@ using namespace hvs;
 class HVSZoneTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    manager = static_cast<Manager*>(HvsContext::get_context()->node);
-    ASSERT_NE(manager, nullptr);
+//    manager = static_cast<Manager*>(HvsContext::get_context()->node);
+//    ASSERT_NE(manager, nullptr);
   }
-  void TearDown() override { manager = nullptr; }
+  void TearDown() override {
+//      manager = nullptr;
+  }
 
  protected:
   static void SetUpTestCase() {
     hvs::init_context();
-    hvs::init_manager();
+//    hvs::init_manager();
     usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-    hvs::destroy_manager(
-        static_cast<Manager*>(HvsContext::get_context()->node));
+//    hvs::destroy_manager(static_cast<Manager*>(HvsContext::get_context()->node));
     hvs::destroy_context();
   }
 
  public:
-  Manager* manager;
+//  Manager* manager;
 };
 
 TEST_F(HVSZoneTest, Rename) {
@@ -68,56 +69,56 @@ TEST_F(HVSZoneTest, Rename) {
 }
 
  TEST_F(HVSZoneTest, Locate) {
-//     Http::Client client;
-//     char url[256];
-//     snprintf(url, 256, "http://localhost:%d/zone/locate", manager->rest_port());
-//     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-//     client.init(opts);
-//
-//     GetZoneLocateInfoReq req;
-//     req.clientID = "123";
-//     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
-//     req.spaceID.emplace_back("62621dea-bd6b-4c12-b1ce-5b466eea69af");
-//
-//     std::string value = req.serialize();
-//
-//     auto response = client.post(url).body(value).send();
-//         dout(-1) << "Client Info: post request " << url << dendl;
-//
-//     std::promise<bool> prom;
-//     auto fu = prom.get_future();
-//     response.then(
-//         [&](Http::Response res) {
-//         dout(-1) << "Manager Info: " << res.body() << dendl;
-//         prom.set_value(true);
-//         },
-//         Async::IgnoreException);
-//     EXPECT_TRUE(fu.get());
-//     client.shutdown();
+     Http::Client client;
+     char url[256];
+     snprintf(url, 256, "http://localhost:%d/zone/locate", 37961);
+     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+     client.init(opts);
+
+     GetZoneLocateInfoReq req;
+     req.clientID = "128";
+     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+     req.spaceID.emplace_back("62621dea-bd6b-4c12-b1ce-5b466eea69af");
+
+     std::string value = req.serialize();
+
+     auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+     std::promise<bool> prom;
+     auto fu = prom.get_future();
+     response.then(
+         [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+         },
+         Async::IgnoreException);
+     EXPECT_TRUE(fu.get());
+     client.shutdown();
  }
 
  TEST_F(HVSZoneTest, GetInfo) {
-//     Http::Client client;
-//     char url[256];
-//     snprintf(url, 256, "http://localhost:%d/zone/info", manager->rest_port());
-//     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-//     client.init(opts);
-//
-//     std::string value = "124";
-//
-//     auto response = client.post(url).body(value).send();
-//         dout(-1) << "Client Info: post request " << url << dendl;
-//
-//     std::promise<bool> prom;
-//     auto fu = prom.get_future();
-//     response.then(
-//         [&](Http::Response res) {
-//         dout(-1) << "Manager Info: " << res.body() << dendl;
-//         prom.set_value(true);
-//         },
-//         Async::IgnoreException);
-//     EXPECT_TRUE(fu.get());
-//     client.shutdown();
+     Http::Client client;
+     char url[256];
+     snprintf(url, 256, "http://localhost:%d/zone/info", 37909);
+     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+     client.init(opts);
+
+     std::string value = "124";
+
+     auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+     std::promise<bool> prom;
+     auto fu = prom.get_future();
+     response.then(
+         [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+         },
+         Async::IgnoreException);
+     EXPECT_TRUE(fu.get());
+     client.shutdown();
  }
 
  TEST_F(HVSZoneTest, Share) {
@@ -151,53 +152,16 @@ TEST_F(HVSZoneTest, Rename) {
  }
 
  TEST_F(HVSZoneTest, ShareCancel) {
-     Http::Client client;
-     char url[256];
-     snprintf(url, 256, "http://localhost:%d/zone/sharecancel", manager->rest_port());
-     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-     client.init(opts);
-
-     ZoneShareReq req;
-     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
-     req.ownerID = "128";
-     req.memberID.emplace_back("123");
-//     req.memberID.emplace_back("16");
-
-     std::string value = req.serialize();
-
-     auto response = client.post(url).body(value).send();
-         dout(-1) << "Client Info: post request " << url << dendl;
-
-     std::promise<bool> prom;
-     auto fu = prom.get_future();
-     response.then(
-         [&](Http::Response res) {
-         dout(-1) << "Manager Info: " << res.body() << dendl;
-         prom.set_value(true);
-         },
-         Async::IgnoreException);
-     EXPECT_TRUE(fu.get());
-     client.shutdown();
- }
-
- TEST_F(HVSZoneTest, ZoneRegister) {
 //     Http::Client client;
 //     char url[256];
-//     snprintf(url, 256, "http://localhost:%d/zone/register", manager->rest_port());
+//     snprintf(url, 256, "http://localhost:%d/zone/sharecancel", manager->rest_port());
 //     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
 //     client.init(opts);
 //
-//     ZoneRegisterReq req;
-//     req.zoneName = "yxzone";
+//     ZoneShareReq req;
+//     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
 //     req.ownerID = "128";
 //     req.memberID.emplace_back("123");
-//     req.memberID.emplace_back("125");
-//     req.spaceName = "changshaspace";
-//     req.spaceSize = 100;
-//     SpaceMetaData tmpm;
-//     tmpm.hostCenterName = "zhongkeyuan1";
-//     tmpm.storageSrcName = "center_1";
-//     req.spacePathInfo = tmpm.serialize();
 //
 //     std::string value = req.serialize();
 //
@@ -214,6 +178,57 @@ TEST_F(HVSZoneTest, Rename) {
 //         Async::IgnoreException);
 //     EXPECT_TRUE(fu.get());
 //     client.shutdown();
+ }
+
+ TEST_F(HVSZoneTest, ZoneRegister) {
+     Http::Client client;
+     char url[256];
+     snprintf(url, 256, "http://192.168.5.224:%d/zone/register", 55877);
+//     snprintf(url, 256, "http://localhost:%d/zone/register", 55877);
+     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+     client.init(opts);
+
+     //本地区域创建 101 102 103
+//     ZoneRegisterReq req;
+//     req.zoneName = "bqzone";
+//     req.ownerID = "103";
+//     req.memberID.emplace_back("102");
+//     //req.memberID.emplace_back("103");
+//     req.spaceName = "bingqlocalspace";
+//     req.spaceSize = 200;
+//     SpaceMetaData tmpm;
+//     tmpm.hostCenterName = "beihang";
+//     tmpm.storageSrcName = "localstorage";
+//     req.spacePathInfo = tmpm.serialize();
+
+        //远程区域创建 201 202
+        ZoneRegisterReq req;
+        req.zoneName = "syremotezone";
+        req.ownerID = "202";
+//        req.memberID.emplace_back("202");
+        //req.memberID.emplace_back("103");
+        req.spaceName = "songyremotespace";
+        req.spaceSize = 200;
+        SpaceMetaData tmpm;
+        tmpm.hostCenterName = "zhongkeyuan";
+        tmpm.storageSrcName = "remotestorage";
+        req.spacePathInfo = tmpm.serialize();
+
+     std::string value = req.serialize();
+
+     auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+     std::promise<bool> prom;
+     auto fu = prom.get_future();
+     response.then(
+         [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+         },
+         Async::IgnoreException);
+     EXPECT_TRUE(fu.get());
+     client.shutdown();
  }
 
  TEST_F(HVSZoneTest, ZoneCancel) {
@@ -246,37 +261,37 @@ TEST_F(HVSZoneTest, Rename) {
 
 
  TEST_F(HVSZoneTest, MapAdd) {
-//   Http::Client client;
-//   char url[256];
-//   snprintf(url, 256, "http://localhost:%d/zone/mapadd", manager->rest_port());
-//   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-//   client.init(opts);
-//
-//   MapAddReq req;
-//   req.zoneID = "b71a3ad5-513e-4078-9f9b-d9eeb0691b1e";
-//   req.ownerID = "123";
-//   req.spaceName = "XXXXXXXXXXXXXXXXXXXX";
-//   req.spaceSize = 100;
-//   SpaceMetaData tmpm;
-//   tmpm.hostCenterName = "zhongkeyuan2";
-//   tmpm.storageSrcName = "center_2";
-//   req.spacePathInfo = tmpm.serialize();
-//
-//   std::string value = req.serialize();
-//
-//   auto response = client.post(url).body(value).send();
-//         dout(-1) << "Client Info: post request " << url << dendl;
-//
-//   std::promise<bool> prom;
-//   auto fu = prom.get_future();
-//   response.then(
-//       [&](Http::Response res) {
-//         dout(-1) << "Manager Info: " << res.body() << dendl;
-//         prom.set_value(true);
-//       },
-//       Async::IgnoreException);
-//   EXPECT_TRUE(fu.get());
-//   client.shutdown();
+   Http::Client client;
+   char url[256];
+   snprintf(url, 256, "http://192.168.5.224:%d/zone/mapadd", 55877);
+   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+   client.init(opts);
+
+   MapAddReq req;
+   req.zoneID = "00f6670b-71db-4bb2-9ebc-a53c7d311c15";
+   req.ownerID = "101";
+   req.spaceName = "yaoxusecondspace";
+   req.spaceSize = 100;
+   SpaceMetaData tmpm;
+   tmpm.hostCenterName = "zhongkeyuan";
+   tmpm.storageSrcName = "remotestorage";
+   req.spacePathInfo = tmpm.serialize();
+
+   std::string value = req.serialize();
+
+   auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+   std::promise<bool> prom;
+   auto fu = prom.get_future();
+   response.then(
+       [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+       },
+       Async::IgnoreException);
+   EXPECT_TRUE(fu.get());
+   client.shutdown();
  }
 
 

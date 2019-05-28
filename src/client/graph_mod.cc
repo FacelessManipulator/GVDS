@@ -4,11 +4,18 @@ using namespace std;
 
 void ClientGraph::start() {
   // TODO: currently we makeup an fake space. we should replace it with space mod.
-  auto ion = make_shared<IOProxyNode>();
-  ion->ip = "127.0.0.1";
-  ion->rpc_port = 9092;
-  ion->data_port = 9095;
-  set_mapping("space", ion, "/");
+  auto ion1 = make_shared<IOProxyNode>();
+  ion1->ip = "127.0.0.1";
+  ion1->rpc_port = 9092;
+  ion1->data_port = 9095;
+  set_mapping("127001", ion1, "/");
+
+  auto ion2 = make_shared<IOProxyNode>();
+  ion2->ip = "192.168.5.224";
+  ion2->rpc_port = 9092;
+  ion2->data_port = 9095;
+  set_mapping("192168", ion2, "/");
+
 }
 
 void ClientGraph::stop() {}
@@ -29,6 +36,7 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
 
 std::vector<Space> ClientGraph::list_space() {
   vector<Space> spaces;
-  spaces.emplace_back("space");
+  spaces.emplace_back("127001");
+  spaces.emplace_back("192168");
   return spaces;
 }

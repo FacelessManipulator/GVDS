@@ -30,12 +30,12 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("couchbase.bucket", string("test"));
   
   // fuse config options
-  _config->add("fuse.mountpoint", string("/mnt/hvs"));
+  _config->add("fuse.mountpoint", string("/home/yaowen/hvs"));
   _config->add("fuse.foreground", true);
-  _config->add("fuse.debug", true);
+  _config->add("fuse.debug", false);
   _config->add("fuse.multithread", true);
   _config->add("fuse.auto_unmount", true);
-  _config->add("fuse.use_udt", true);
+  _config->add("fuse.use_udt", false);
 
   // ioproxy config options
   _config->add("ioproxy.scher", 6);

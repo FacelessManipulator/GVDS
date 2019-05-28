@@ -36,10 +36,31 @@ private:
 public:
  //--------------------------------------------
     //define your function here
+    //1、权限增加模块
+    //区域初始权限记录接口
     int ZonePermissionAdd(std::string zoneID, std::string ownerID);
-
-    int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID);
     
+    //空间权限同步接口
+    int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID);
+
+    //TODO 副本权限同步接口
+    int ReplacePermissionSyne();
+
+    //成员权限增加接口
+    int ZoneMemberAdd(std::string zoneID, std::string ownerID, std::vector<string> memberID);
+
+    //2、权限删除模块
+    //区域权限删除接口
+    int ZonePermissionDeduct(std::string zoneID, std::string OwnerID);
+
+    //成员权限删除接口
+    int ZoneMemberDel(std::string zoneID, std::string OwnerID, std::vector<string> memberID);
+
+    //空间权限删除接口
+    int SpacePermissionDelete(std::string spaceID);
+
+    //3、权限修改模块
+
     /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);

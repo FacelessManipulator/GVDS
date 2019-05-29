@@ -20,7 +20,7 @@ int cmdlineTest(){
 //    const char* demo2[2] = {"command1", "-v"};
 //    CmdLineProxy cmdLineProxy2(2, demo2);
 //    cout << endl;
-    const char* demo3[7] = {"command1", "--name", "yaoxu", "--name", "superman", "--name", "password"};
+     char* demo3[7] = {"command1", "--name", "yaoxu", "--name", "superman", "--name", "password"};
 //    const char* demo3[2] = {"command1", "-h"};
     CmdLineProxy cmdLineProxy1(7, demo3);
     cmdLineProxy1.test(); // 进行测试模块的功能, 非必须，展示 lamda 表达式使用；

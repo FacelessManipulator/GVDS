@@ -107,6 +107,6 @@ std::tuple<std::string, std::string, std::string, std::string> hvs::ClientZone::
 void hvs::ClientZone::check() {
     std::cout << "空间模块同步空间信息完成！" << std::endl;
     // TODO：结合用户模块，获取账户信息
-    GetZoneInfo("127.0.0.1", 53953, "202");
+    GetZoneInfo("127.0.0.1", 55107, "202");
 }
 

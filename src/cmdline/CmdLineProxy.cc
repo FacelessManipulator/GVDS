@@ -59,6 +59,7 @@ void CmdLineProxy::do_global_decode() {
         notify(*sp_variables_map);
         if (sp_variables_map->count("help")) {
             std::cout << *cmdline_options << std::endl;
+            exit(0);
             return;
         }
         if (sp_variables_map->count("version")) {

@@ -5,7 +5,7 @@ using namespace hvs;
 using namespace std;
 
 void ClientGraph::start() {
-  // TODO: currently we makeup an fake space. we should replace it with space mod.
+  // TODO: 当前空间对应的IO代理是固定的，之后会重新建造一个映射表
   auto ion1 = make_shared<IOProxyNode>();
   ion1->ip = "127.0.0.1";
   ion1->rpc_port = 9092;
@@ -13,6 +13,8 @@ void ClientGraph::start() {
   set_mapping("306a36a6-0b69-40c5-b8e7-8eac7ad2bf7b", ion1, "/306a36a6-0b69-40c5-b8e7-8eac7ad2bf7b");
   set_mapping("9221b15c-2b99-4edd-953b-4aaf629aa3b0", ion1, "/9221b15c-2b99-4edd-953b-4aaf629aa3b0");
   set_mapping("f0a15be3-3196-4145-9b90-0f46b94d2eca", ion1, "/f0a15be3-3196-4145-9b90-0f46b94d2eca");
+  set_mapping("ff035007-0134-4c88-89db-bb520e572f90", ion1, "/ff035007-0134-4c88-89db-bb520e572f90");
+  set_mapping("1351d46e-5c77-4d89-b5da-1be57a079bbd", ion1, "/1351d46e-5c77-4d89-b5da-1be57a079bbd");
 
   auto ion2 = make_shared<IOProxyNode>();
   ion2->ip = "192.168.5.224";

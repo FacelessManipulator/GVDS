@@ -8,11 +8,12 @@
 #include "zone_mod.h"
 
 void hvs::ClientZone::start(){
-    std::cerr << "空间模块启动!" << std::endl;
-    GetZoneInfo("127.0.0.1", 49517, "101");
+    check();
 }
 
-void hvs::ClientZone::stop(){}
+void hvs::ClientZone::stop(){
+
+}
 
 bool hvs::ClientZone::GetZoneInfo(std::string ip, int port, std::string clientID) {
     // 调用获取区域信息；
@@ -22,7 +23,7 @@ bool hvs::ClientZone::GetZoneInfo(std::string ip, int port, std::string clientID
     auto opts = Pistache::Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
     std::string value = std::move(clientID);
-    std::cerr<< "Client Info: post request " << url << std::endl;
+    //std::cerr<< "Client Info: post request " << url << std::endl;
     auto response = client.post(url).body(value).send();
     std::promise<bool> prom;
     std::string inforesult;
@@ -46,7 +47,7 @@ bool hvs::ClientZone::GetZoneInfo(std::string ip, int port, std::string clientID
         ZoneInfo zoneinfo;
         zoneinfo.deserialize(it);
         zonemap[zoneinfo.zoneName] = it;
-        std::cout << it << std::endl;
+        //std::cout << it << std::endl;
     }
     zonemap_mutex.unlock_shared();
     return true;
@@ -101,5 +102,11 @@ std::tuple<std::string, std::string, std::string, std::string> hvs::ClientZone::
         }
     }
     return {zonename, spacename, spaceuuid, remotepath};
+}
+
+void hvs::ClientZone::check() {
+    std::cout << "空间模块同步空间信息完成！" << std::endl;
+    // TODO：结合用户模块，获取账户信息
+    GetZoneInfo("127.0.0.1", 53953, "202");
 }
 

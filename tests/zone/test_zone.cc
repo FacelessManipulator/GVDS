@@ -263,18 +263,18 @@ TEST_F(HVSZoneTest, Rename) {
  TEST_F(HVSZoneTest, MapAdd) {
    Http::Client client;
    char url[256];
-   snprintf(url, 256, "http://192.168.5.224:%d/zone/mapadd", 55877);
+   snprintf(url, 256, "http://127.0.0.1:%d/zone/mapadd", 53953);
    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
    client.init(opts);
 
    MapAddReq req;
-   req.zoneID = "00f6670b-71db-4bb2-9ebc-a53c7d311c15";
-   req.ownerID = "101";
-   req.spaceName = "yaoxusecondspace";
+   req.zoneID = "dca23148-b195-4ea0-b542-b3d08f1667d7";
+   req.ownerID = "202";
+   req.spaceName = "SYBUAA新空间";
    req.spaceSize = 100;
    SpaceMetaData tmpm;
-   tmpm.hostCenterName = "zhongkeyuan";
-   tmpm.storageSrcName = "remotestorage";
+   tmpm.hostCenterName = "beihang";
+   tmpm.storageSrcName = "localstorage";
    req.spacePathInfo = tmpm.serialize();
 
    std::string value = req.serialize();

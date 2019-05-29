@@ -26,6 +26,8 @@
 #include "context.h"
 #include "io_proxy/rpc_types.h"
 
+extern bool zonechecker_run;
+
 #define HVS_FUSE_DATA \
   ((struct ::hvs::ClientFuseData *)fuse_get_context()->private_data)
 
@@ -326,7 +328,9 @@ int hvsfs_opendir(const char *path, struct fuse_file_info *fi) {
   return retstat;
 }
 
-void hvsfs_destroy(void *private_data) {}
+void hvsfs_destroy(void *private_data) {
+    zonechecker_run = false;
+    }
 
 int hvsfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {
     auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);

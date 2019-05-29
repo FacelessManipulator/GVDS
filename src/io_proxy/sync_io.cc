@@ -64,6 +64,7 @@ ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, str
 }
 
 ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t offset, struct OP* op) {
+    std::cout << path << std::endl;
     int fd = open(path, O_WRONLY|O_CREAT, 0655);
     op->error_code = 0;
     if (fd == -1){
@@ -82,6 +83,7 @@ int sync_io::sstat(const char *pathname, IOProxyMetadataOP* op) {
     op->error_code = 0;
     if (ret == -1){
         perror("sync_io stat");
+        std::cout << pathname << std::endl;
         op->error_code = -errno;
     }
     return ret;

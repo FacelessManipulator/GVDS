@@ -123,7 +123,7 @@ std::tuple<std::shared_ptr<std::string>, int> hvs::CouchbaseDatastore::_get(
   Couchbase::GetResponse rs = client->get(key);
   std::shared_ptr<std::string> content;
   if (rs.status().success()) {
-    content.reset(new std::string(rs.value().data()));
+    content.reset(new std::string(rs.value().data(), rs.value().size()));
   } else {
     dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;

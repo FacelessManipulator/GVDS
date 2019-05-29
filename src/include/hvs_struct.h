@@ -63,8 +63,17 @@ struct IOProxyNode : public hvs::JsonSerializer {
 struct Space {
  public:
   std::string name;
-  boost::uuids::uuid tag;
+  std::string uuid;
+  int64_t size;
   Space(const std::string& _name) : name(_name) {}
+  Space(const std::string& _name, std::string _uuid, int64_t _size) : name(_name), uuid(_uuid), size(_size) {}
+};
+
+struct Zone {
+public:
+    std::string name;
+    boost::uuids::uuid tag;
+    Zone(const std::string& _name) : name(_name) {}
 };
 
 }  // namespace hvs

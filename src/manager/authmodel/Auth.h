@@ -32,6 +32,21 @@ public:
 };
 
 
+//请求self  rest 所需的结构
+class SelfAuthSpaceInfo: public hvs::JsonSerializer {
+public:
+    std::string spaceinformation;
+    std::string ownerID_zone;
+    std::vector<std::string> memberID;
+
+public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+
+public:
+    SelfAuthSpaceInfo() = default;
+};
+
 /*
 class Auth: public hvs::JsonSerializer {
 public:

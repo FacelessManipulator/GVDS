@@ -36,6 +36,13 @@ private:
 public:
  //--------------------------------------------
     //define your function here
+    //Rest
+    void self_AuthmemberaddRest(const Rest::Request& request, Http::ResponseWriter response);
+    int self_Authmemberadd(SelfAuthSpaceInfo &auth_space);
+
+    void self_AuthmemberdelRest(const Rest::Request& request, Http::ResponseWriter response);
+    int self_Authmemberdel(SelfAuthSpaceInfo &auth_space);
+
     //1、权限增加模块
     //区域初始权限记录接口
     int ZonePermissionAdd(std::string zoneID, std::string ownerID);

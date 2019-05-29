@@ -106,9 +106,9 @@ public:
     void deserialize_impl() override;
 public:
     LocalAccountPair() = default;
-    LocalAccountPair(string account, string pass)
+    LocalAccountPair(std::string account, std::string pass)
     : localaccount(account), localpassword(pass){}
-}
+};
 
 //int lbqprint();
 

@@ -56,21 +56,31 @@ public:
 
     //获取映射的本地账户接口
     string getLocalAccountinfo(string ownerID, string hostCenterName);
+
 public:
     UserModelServer() : ManagerModule("user") {};
     ~UserModelServer() {};
+
+private:
+    bool addSCaccount();
+    bool SubBuildAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
+    bool BuildAccountMapping(std::string accountID);
+
+    bool RemoveAccountMapping(std::string accountID);
+    bool SubRemoveAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
+
+private:
+    string supercomputing_A = "Beijing";
+    string supercomputing_B = "Shanghai";
+    string supercomputing_C = "Guangzhou";
+    string supercomputing_D = "Changsha";
+    string supercomputing_E = "Jinan";
+
 };
 
 std::string md5(std::string strPlain);
 void printCookies(const Http::Request& req);
 bool auth_token(const Rest::Request& request);
-
-bool addSCaccount();
-bool SubBuildAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
-bool BuildAccountMapping(std::string accountID);
-
-bool RemoveAccountMapping(std::string accountID);
-bool SubRemoveAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
 }// namespace hvs
 

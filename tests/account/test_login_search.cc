@@ -18,7 +18,7 @@ g++ UserModelClient.cc -lpistache  -std=c++11 -o userclient
 
 
 // #include "manager/usermodel/Account.h"
-// #include "manager/usermodel/UserModelServer.h"
+#include "manager/usermodel/UserModelServer.h"
 
 #include <pistache/client.h>
 #include <pistache/http.h>
@@ -122,6 +122,15 @@ TEST_F(HVSAccountTest, login_search) {
       },
       Async::IgnoreException);
   EXPECT_TRUE(fu_1.get());
+
+  // tmp
+  //UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+  //string value = p_usermodel->getLocalAccountinfo("127", "Shanghai");
+  cout << "=====*****============" << endl;
+  UserModelServer tmp_u;
+  string value = tmp_u.getLocalAccountinfo("127", "Jinan");
+  cout << "=====add account map" <<value << endl;
+  //
 
   client.shutdown();
 }

@@ -18,6 +18,13 @@ using namespace std;
 
 //联合调试可能的bug
 //1、hostCenterName 无法和空间模块匹配
+//2、请求ip和端口是否正确
+
+//待完成工作 （这个需要联合调试的时候）
+//有了hostCenterName，从配置文件获取对应的ip，不用if判断了
+//获取路径的时候，从配置文件读取对应超算的觉得路径，如/root/data/，拼接spacePath(这个是以区域uuid做为文件名的文件夹)，获取完整物理路径，设置相应权限
+
+
 
 
 namespace hvs{
@@ -27,7 +34,142 @@ using namespace Pistache::Http;
 void AuthModelServer::start() {}
 void AuthModelServer::stop() {}
 
-void AuthModelServer::router(Router& router){}
+void AuthModelServer::router(Router& router){
+    Routes::Post(router, "/auth/selfmemberadd", Routes::bind(&AuthModelServer::self_AuthmemberaddRest, this));
+    Routes::Post(router, "/auth/selfmemberdel", Routes::bind(&AuthModelServer::self_AuthmemberdelRest, this));
+}
+
+void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http::ResponseWriter response){
+    //这里不调用token验证    //因为这里接受的是服务端的rest请求
+
+    //包含的信息，*space_iter（该空间的信息），ownerID vector<string> memberID
+    //rest要做的事情：（1）获取ownerID对应的本地账户名字（2）获取每个成员对应的本地账户名
+    //              （3）设置相应权限
+    auto info = request.body();
+    cout << info << endl;
+
+    SelfAuthSpaceInfo auth_space;
+    auth_space.deserialize(info);
+
+    int flag = self_Authmemberadd(auth_space);
+    if(flag == 0){
+        dcout(-1) << "success" << dendl;
+        response.send(Http::Code::Ok, "0"); 
+    }
+    else{
+        dcout(-1) << "fail" << dendl;
+        response.send(Http::Code::Ok, "-1"); //point
+    }
+
+    cout << "====== end AuthModelServer function: self_AuthmemberaddRest ======"<< endl;
+}
+
+int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
+
+    string ownerID = auth_space.ownerID_zone;
+
+    SpaceMetaData spacemeta;
+    spacemeta.deserialize(auth_space.spaceinformation);
+
+    //TODO  确认是否匹配
+    string hostCenterName  = spacemeta.hostCenterName;
+
+    // 1、获取ownerID 本地对应的超算账户，testowner     这个要知道区域的每个空间都在哪个超算
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); //TODO 确认是否hostCenterName匹配
+    if (value.compare("fail") == 0){
+        cout << "SpacePermissionSyne fail" << endl;
+        return -1;
+    }
+    LocalAccountPair localpair;
+    localpair.deserialize(value);  //localpair.localaccount 这个是账户名
+
+    vector<string>::iterator m_iter;
+    for(m_iter = auth_space.memberID.begin(); m_iter != auth_space.memberID.end(); m_iter++){
+        //1.1获取*iter对应的相应超算的本地账户，test1
+        //TODO 确认是否hostCenterName匹配
+        string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
+        if (m_value.compare("fail") == 0){
+            cout << "SpacePermissionSyne fail" << endl;
+            return -1;
+        }
+        LocalAccountPair member_localpair;
+        member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
+
+        //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
+        //TODO   usermod -a -G localpair.localaccount member_localpair.localaccount
+        string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
+        system(cmd); //TODO 确认是否可行
+    }// for
+
+    return 0;
+}
+
+void AuthModelServer::self_AuthmemberdelRest(const Rest::Request& request, Http::ResponseWriter response){
+    //这里不调用token验证    //因为这里接受的是服务端的rest请求
+
+    //包含的信息，*space_iter（该空间的信息），ownerID vector<string> memberID
+    //rest要做的事情：（1）获取ownerID对应的本地账户名字（2）获取每个成员对应的本地账户名
+    //              （3）设置相应权限
+    auto info = request.body();
+    cout << info << endl;
+
+    SelfAuthSpaceInfo auth_space;
+    auth_space.deserialize(info);
+
+    int flag = self_Authmemberdel(auth_space);
+    if(flag == 0){
+        dcout(-1) << "success" << dendl;
+        response.send(Http::Code::Ok, "0"); 
+    }
+    else{
+        dcout(-1) << "fail" << dendl;
+        response.send(Http::Code::Ok, "-1"); //point
+    }
+
+    cout << "====== end AuthModelServer function: self_AuthmemberaddRest ======"<< endl;
+}
+
+int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
+    
+    string ownerID = auth_space.ownerID_zone;
+
+    SpaceMetaData spacemeta;
+    spacemeta.deserialize(auth_space.spaceinformation);
+
+    //TODO  确认是否匹配
+    string hostCenterName  = spacemeta.hostCenterName;
+
+    // 1、获取ownerID 本地对应的超算账户，testowner     这个要知道区域的每个空间都在哪个超算
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); //TODO 确认是否hostCenterName匹配
+    if (value.compare("fail") == 0){
+        cout << "SpacePermissionSyne fail" << endl;
+        return -1;
+    }
+    LocalAccountPair localpair;
+    localpair.deserialize(value);  //localpair.localaccount 这个是账户名
+
+    vector<string>::iterator m_iter;
+    for(m_iter = auth_space.memberID.begin(); m_iter != auth_space.memberID.end(); m_iter++){
+        //1.1获取*iter对应的相应超算的本地账户，test1
+        //TODO 确认是否hostCenterName匹配
+        string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
+        if (m_value.compare("fail") == 0){
+            cout << "member delete fail" << endl;
+            return -1;
+        }
+        LocalAccountPair member_localpair;
+        member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
+
+        //1.2将test1从testowner同名的组中删除    gpasswd testowner -d test222
+        //TODO       gpasswd localpair.localaccount -d member_localpair.localaccount
+        string cmd = "gpasswd " + localpair.localaccount + " -d " + member_localpair.localaccount;
+        system(cmd); //TODO 确认是否可行
+    }// for
+
+    return 0;
+}
 
 
 //1权限增加模块
@@ -63,6 +205,7 @@ int ZonePermissionAdd(std::string zoneID, std::string ownerID){
 }
 
 //1.2 空间权限同步接口  :: 被空间创建模块调用 :: 查询空间所属区域的权限，设置空间为此权限
+//一次只设置一个空间，不涉及跨超算调用【因此此接口已完成，不用再次修改】
 int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID){
     
     // string ZoneID;
@@ -118,7 +261,7 @@ int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string own
 
     //2、根据区域权限设置空间的权限
         //2.1 获取ownerid 对应的的本地账户(空间所在地)test1;
-    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("auth").get());
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
     //TODO   根据空间获取hostCenterName 值
         //2.1.1查询区域信息,获取区域对应空间信息
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -185,7 +328,6 @@ int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string own
 
 //1.3 副本权限同步接口   :: 被空间创建模块调用 ::  这个和sy商量下
 int ReplacePermissionSyne(){
-
 }
 
 //1.4 空间定位接口      我调sy
@@ -207,7 +349,7 @@ int ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
 
         //获取每个空间对应的超算
             //获取ownerid 对应的的本地账户(空间所在地)test1;
-    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("auth").get());
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
 
     vector<string> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
@@ -215,47 +357,76 @@ int ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
     p_space->GetSpacePosition(result, zone_content.spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
+    //+++++++
+    Http::Client client;
+    char url[256];
+
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+    int return_flag = 0;
+    //+++++++
+
     //for owner对应的区域的所有超算空间获取本地账户
     vector<string>::iterator space_iter;
     for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
         SpaceMetaData spacemeta;
-        spacemeta.deserialize(*space_iter); 
+        spacemeta.deserialize(*space_iter); //空间的信息
 
         string hostCenterName = spacemeta.hostCenterName;
 
-        // 1、获取ownerID 本地对应的超算账户，testowner     这个要知道区域的每个空间都在哪个超算
-        string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); //TODO 确认是否hostCenterName匹配
-        if (value.compare("fail") == 0){
-            cout << "SpacePermissionSyne fail" << endl;
-            return -1;
-        }
-        LocalAccountPair localpair;
-        localpair.deserialize(value);  //localpair.localaccount 这个是账户名
+        //++++++++++++++++++++++++++++++++++++
+        //获取hostCenterName，并进行判断，向对应超算中心发出请求,包含又发送到本超算的restful请求
+        //包含的信息，*space_iter（该空间的信息），ownerID vector<string> memberID
+        //rest要做的事情：（1）获取ownerID对应的本地账户名字（2）获取每个成员对应的本地账户名
+        //              （3）设置相应权限
 
-        vector<string>::iterator m_iter;
-        for(m_iter = memberID.begin(); m_iter != memberID.end(); m_iter++){
-            //1.1获取*iter对应的相应超算的本地账户，test1
-                //TODO 确认是否hostCenterName匹配
-            string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
-            if (m_value.compare("fail") == 0){
-                cout << "SpacePermissionSyne fail" << endl;
-                return -1;
-            }
-            LocalAccountPair member_localpair;
-            member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
+        //+++++
+        //获取空间对应ip地址   根据   spacemeta.hostCenterName 或者 spacemeta.hostCenterID 获取地址
+        //hostCenterName可能需要做转换
+        //TODO  暂时设置为localhost
+        string ip_space = "localhost";
+        //TODO 注意端口是否正确
+        snprintf(url, 256, "http://%s:%d/auth/selfmemberadd", ip_space ,manager->rest_port());
 
-            //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
-            //TODO   usermod -a -G localpair.localaccount member_localpair.localaccount
-            //csdn博客 fpopen?? 还是system？system吧
-            string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
-            system(cmd); //TODO 确认是否可行
-        }
+        SelfAuthSpaceInfo auth_space;
+        auth_space.spaceinformation = *space_iter;
+        auth_space.ownerID_zone = ownerID;
+        auth_space.memberID = memberID;//TODO 赋值有问题
 
+        string tmp_value = auth_space.serialize();
+
+        auto response = client.post(url).body(tmp_value).send();
+        dout(-1) << "Client Info: post request " << url << dendl;
+
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
+        response.then(
+        [&](Http::Response res) {
+          //dout(-1) << "Manager Info: " << res.body() << dendl;
+          std::cout << "Response code = " << res.code() << std::endl;
+          auto body = res.body();
+          if (!body.empty()){
+              std::cout << "Response body = " << body << std::endl;
+              //your code write here
+              if (body != "0"){
+                  cout << "body != 0, fail " << endl;
+                  return_flag = -1;
+              }
+
+          }
+          prom.set_value(true);
+        },
+        Async::IgnoreException);
+        //阻塞
+        fu.get();
+        //++++++++++++++++++++++++++++++++++++
     } // 外层for
 
     //数据库中无需记录任何东西
-
-    return 0;
+    //++++++++
+    client.close();
+    //++++++++
+    return return_flag; //0是成功
 }
 
 //1.6
@@ -296,7 +467,7 @@ int ZoneMemberDel(string zoneID, string OwnerID, vector<string> memberID){
 
     //获取每个空间对应的超算
             //获取ownerid 对应的的本地账户(空间所在地)test1;
-    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("auth").get());
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
 
     vector<string> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
@@ -304,6 +475,15 @@ int ZoneMemberDel(string zoneID, string OwnerID, vector<string> memberID){
     p_space->GetSpacePosition(result, zone_content.spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
+    //+++++++
+    Http::Client client;
+    char url[256];
+
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+    int return_flag = 0;
+    //+++++++
+
     //for owner对应的区域的所有超算空间获取本地账户
     vector<string>::iterator space_iter;
     for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
@@ -312,42 +492,68 @@ int ZoneMemberDel(string zoneID, string OwnerID, vector<string> memberID){
 
         string hostCenterName = spacemeta.hostCenterName;
 
-        // 1、获取ownerID 本地对应的超算账户，testowner     这个要知道区域的每个空间都在哪个超算
-        string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); //TODO 确认是否hostCenterName匹配
-        if (value.compare("fail") == 0){
-            cout << "SpacePermissionSyne fail" << endl;
-            return -1;
-        }
-        LocalAccountPair localpair;
-        localpair.deserialize(value);  //localpair.localaccount 这个是账户名
+        //++++++++++++++++++++++++++++++++++++
+        //获取hostCenterName，并进行判断，向对应超算中心发出请求,包含又发送到本超算的restful请求
+        //包含的信息，*space_iter（该空间的信息），ownerID vector<string> memberID
+        //rest要做的事情：（1）获取ownerID对应的本地账户名字（2）获取每个成员对应的本地账户名
+        //              （3）设置相应权限
 
-        vector<string>::iterator m_iter;
-        for(m_iter = memberID.begin(); m_iter != memberID.end(); m_iter++){
-            //1.1获取*iter对应的相应超算的本地账户，test1
-                //TODO 确认是否hostCenterName匹配
-            string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
-            if (m_value.compare("fail") == 0){
-                cout << "SpacePermissionSyne fail" << endl;
-                return -1;
-            }
-            LocalAccountPair member_localpair;
-            member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
+        //+++++
+        //获取空间对应ip地址   根据   spacemeta.hostCenterName 或者 spacemeta.hostCenterID 获取地址
+        //hostCenterName可能需要做转换
+        //TODO  暂时设置为localhost
+        string ip_space = "localhost";
 
-            //1.2将test1从testowner同名的组中删除    gpasswd testowner -d test222
-            //TODO       gpasswd localpair.localaccount -d member_localpair.localaccount
-            string cmd = "gpasswd " + localpair.localaccount + " -d " + member_localpair.localaccount;
-            system(cmd); //TODO 确认是否可行
-        }
+        //TODO 注意端口是否正确
+        snprintf(url, 256, "http://%s:%d/auth/selfmemberdel", ip_space ,manager->rest_port());
+
+        SelfAuthSpaceInfo auth_space;
+        auth_space.spaceinformation = *space_iter;
+        auth_space.ownerID_zone = ownerID;
+        auth_space.memberID = memberID;   //TODO 这块拷贝会有问题   添加的这块同样有问题
+
+        string tmp_value = auth_space.serialize();
+
+        auto response = client.post(url).body(tmp_value).send();
+        dout(-1) << "Client Info: post request " << url << dendl;
+
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
+        response.then(
+        [&](Http::Response res) {
+          //dout(-1) << "Manager Info: " << res.body() << dendl;
+          std::cout << "Response code = " << res.code() << std::endl;
+          auto body = res.body();
+          if (!body.empty()){
+              std::cout << "Response body = " << body << std::endl;
+              //your code write here
+              if (body != "0"){
+                  cout << "body != 0, fail " << endl;
+                  return_flag = -1;
+              }
+
+          }
+          prom.set_value(true);
+        },
+        Async::IgnoreException);
+
+        //阻塞
+        fu.get();
+        //++++++++++++++++++++++++++++++++++++
     }
-
+    
     //不需要改动数据库，
-    return 0；
+    //++++++++
+    client.close();
+    //++++++++
+    return return_flag; //0是成功
 }
 
 //2.3 空间定位，我调用sy 
 
 
 //2.4 空间权限删除接口  ：：被空间创建模块调用：：删除存储集群上空间对应的权限  //数据库不用更新，因为无此空间记录
+//这个也不跨超算，因此不用rest，【不用更改】
 int SpacePermissionDelete(string spaceID){
     vector<string> tmp_vec_spaceID;
     tmp_vec_spaceID.push_back(spaceID);

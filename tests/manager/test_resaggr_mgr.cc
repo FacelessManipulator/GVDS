@@ -82,11 +82,7 @@ TEST_F(ManagerResAggregationTest, resource_add) {
   client.shutdown();
 }
 
-<<<<<<< HEAD
 TEST_F(ManagerResAggregationTest, storage_list) {
-=======
-TEST_F(ManagerResAggregationTest, resource_list) {
->>>>>>> origin/wip-manager
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/resource/query", manager->rest_port());
@@ -113,11 +109,7 @@ TEST_F(ManagerResAggregationTest, resource_list) {
     client.shutdown();
 }
 
-<<<<<<< HEAD
 TEST_F(ManagerResAggregationTest, storage_del) {
-=======
-TEST_F(ManagerResAggregationTest, resource_del) {
->>>>>>> origin/wip-manager
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/resource/delete/%s", manager->rest_port(), uuid.c_str());

@@ -36,7 +36,7 @@ class ManagerResAggregationTest : public ::testing::Test {
 };
 std::string ManagerResAggregationTest::uuid = "";
 
-TEST_F(ManagerResAggregationTest, ioproxy_add) {
+TEST_F(ManagerResAggregationTest, resource_add) {
   Http::Client client;
   char url[256];
   snprintf(url, 256, "http://localhost:%d/resource/register", manager->rest_port());
@@ -45,8 +45,8 @@ TEST_F(ManagerResAggregationTest, ioproxy_add) {
 
   
   StorageResource newRes; 
-  newRes.storage_src_id = "1";                 // 存储资源UUID
-  newRes.storage_src_name = "center_1";        // 存储资源名称
+  newRes.storage_src_id = "resource_uuid_1";   // 存储资源UUID
+  newRes.storage_src_name = "resource_name_1"; // 存储资源名称
   newRes.host_center_id = "100";               // 存储资源所在超算中心UUID
   newRes.host_center_name = "zhongkeyuan";     // 存储资源所在超算中心名称
   newRes.total_capacity = 1024;                // 存储资源空间容量大小
@@ -54,11 +54,8 @@ TEST_F(ManagerResAggregationTest, ioproxy_add) {
   newRes.mgs_address = "http://193.195.34.65"; // 存储资源MGS地址
   newRes.state = Normal;                       // 存储资源状态
 
-
-
   auto response = client.post(url).body(newRes.serialize()).send();
         dout(-1) << "Client Info: post request " << url << dendl;
-
   std::promise<bool> prom;
   auto fu = prom.get_future();
   response.then(
@@ -69,17 +66,19 @@ TEST_F(ManagerResAggregationTest, ioproxy_add) {
       },
       Async::IgnoreException);
   EXPECT_TRUE(fu.get());
+  
+
   client.shutdown();
 }
 
-TEST_F(ManagerResAggregationTest, ioproxy_list) {
+TEST_F(ManagerResAggregationTest, resource_list) {
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/resource/query", manager->rest_port());
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    // list ioproxy
+    // list resource
     std::promise<std::string> prom;
     auto response = client.get(url).send();
     dout(-1) << "Client Info: get request " << url << dendl;
@@ -99,14 +98,14 @@ TEST_F(ManagerResAggregationTest, ioproxy_list) {
     client.shutdown();
 }
 
-TEST_F(ManagerResAggregationTest, ioproxy_del) {
+TEST_F(ManagerResAggregationTest, resource_del) {
     Http::Client client;
     char url[256];
-    snprintf(url, 256, "http://localhost:%d/ioproxy/%s", manager->rest_port(), uuid.c_str());
+    snprintf(url, 256, "http://localhost:%d/resource/delete/%s", manager->rest_port(), uuid.c_str());
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    // del ioproxy
+    // del resource
     std::promise<bool> prom;
     auto response = client.del(url).send();
     dout(-1) << "Client Info: del request " << url << dendl;

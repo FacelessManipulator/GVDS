@@ -14,18 +14,17 @@ using namespace Pistache;
 using namespace hvs;
 bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
- * zonesharecancel 命令行客户端
+ * zonecancel 命令行客户端
  */
 std::unordered_map<std::string, std::string> zonemap;
 
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[13] = {const_cast<char *>("zonesharecancel"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
+    char* demo1[9] = {const_cast<char *>("zonecancel"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
                        const_cast<char *>("-p"), const_cast<char *>("34779"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000"),
-                       const_cast<char *>("--member"), const_cast<char *>("111"), const_cast<char *>("--member"), const_cast<char *>("222")};
-    char* demo2[2] = {const_cast<char *>("zonesharecancel"), const_cast<char *>("--help")};
+                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000")};
+    char* demo2[2] = {const_cast<char *>("zonecancel"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
     std::string ip ;//= "127.0.0.1";
@@ -33,21 +32,19 @@ int main(int argc, char* argv[]){
     std::string zonename ;//= "syremotezone"; // 空间名称
     std::string ownID;// = "202"; // 用户ID
     std::string zoneuuid;
-    std::vector<std::string> memID;
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(13, demo1);
+    CmdLineProxy commandline(9, demo1);
 //    CmdLineProxy commandline(2, demo2);
-    std::string cmdname = "zonesharecancel";
+    std::string cmdname = "zonecancel";
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("区域共享取消模块");
+        po::options_description command("区域注销模块");
         command.add_options()
                 ("ip", po::value<std::string>(), "管理节点IP")
                 ("port,p", po::value<int>(), "管理节点端口号")
                 ("zonename", po::value<std::string>(), "区域名称")
                 ("id", po::value<std::string>(), "主人ID")
-                ("member", po::value<std::vector<std::string>>(), "区域删除的成员")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -68,10 +65,6 @@ int main(int argc, char* argv[]){
         if (sp_variables_map->count("id"))
         {
             ownID = (*sp_variables_map)["id"].as<std::string>();
-        }
-        if (sp_variables_map->count("member"))
-        {
-            memID = (*sp_variables_map)["member"].as<std::vector<std::string>>();
         }
     };
     commandline.start(); //开始解析命令行参数
@@ -95,15 +88,14 @@ int main(int argc, char* argv[]){
     // TODO: 构造间重命名请求
     Http::Client client;
     char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/sharecancel",ip.c_str(), port);
+    snprintf(url, 256, "http://%s:%d/zone/cancel",ip.c_str(), port);
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-
-    ZoneShareReq req;
+    ZoneCancelReq req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
-    req.memberID = memID;
+
 
     std::string value = req.serialize();
 

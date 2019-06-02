@@ -389,39 +389,41 @@ namespace hvs{
     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
           hvs::CouchbaseDatastore(zonebucket));
     zonePtr->init();
-    // SpaceMetaData tmp_smd;
-    // tmp_smd.deserialize(spacePathInfo);
+    //插入判断，加的这个区域是否已经存在
+    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
+    int pos = query.find("ownerID");
+    query.erase(pos, 7);
+    query.insert(pos, ownerID);
+    int pos2 = query.find("zonename");
+    query.erase(pos2, 8);
+    query.insert(pos2, zoneName);
+    auto [vp, err] = zonePtr->n1ql(query);
+    if(vp->size() != 0) return -1;
+    else{
+      //1、TODO: 调用spacecreate接口（涉及到跨域创建空间的情况，则返还客户端，并再次发送） , 目前在区域初始注册的时候，只能创建一个默认的空间
+      //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位
+      //2、TODO：调用权限模块
+      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端模块
+      std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo));
+      if (res_sc == "false")
+      {
+        return -1;
+      }
+      else
+      {
+        Zone tmp;
+        std::string spaceID = res_sc;
+        boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+        const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+        tmp.zoneID = tmp_uuid;
+        tmp.zoneName = std::move(zoneName);
+        tmp.ownerID = ownerID;
+        tmp.memberID = memberID;
+        tmp.spaceID.emplace_back(spaceID);
 
-    // if(tmp_smd.hostCenterID.empty())
-    // {
-    // }
-    // else
-    // {
-    // }在客户端判断
-
-    //1、TODO: 调用spacecreate接口（涉及到跨域创建空间的情况，则返还客户端，并再次发送） , 目前在区域初始注册的时候，只能创建一个默认的空间
-    //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位
-    //2、TODO：调用权限模块
-    SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端模块
-    std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo));
-    if (res_sc == "false")
-    {
-      return -1;
-    }
-    else
-    {
-      Zone tmp;
-      std::string spaceID = res_sc;
-      boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
-      const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
-      tmp.zoneID = tmp_uuid;
-      tmp.zoneName = std::move(zoneName);
-      tmp.ownerID = ownerID;
-      tmp.memberID = memberID;
-      tmp.spaceID.emplace_back(spaceID);
-
-      zonePtr->set(tmp.zoneID, tmp.serialize());
-      return 0;
+        zonePtr->set(tmp.zoneID, tmp.serialize());
+        return 0;
+      }
     }
   }
 
@@ -454,26 +456,60 @@ namespace hvs{
     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
           hvs::CouchbaseDatastore(zonebucket));
     zonePtr->init();
-    SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端
-    std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
-    if (res_sc == "false")
-    {
-      return -1;
-    }
-    else
-    {
-      std::string spaceID = res_sc;
-      boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
-      const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
-      tmp.zoneID = tmp_uuid;
-      tmp.zoneName = std::move(zoneName);
-      tmp.ownerID = ownerID;
-      tmp.memberID = memberID;
-      tmp.spaceID.emplace_back(spaceID);
+    //插入判断，加的这个区域是否已经存在
+    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
+    int pos = query.find("ownerID");
+    query.erase(pos, 7);
+    query.insert(pos, ownerID);
+    int pos2 = query.find("zonename");
+    query.erase(pos2, 8);
+    query.insert(pos2, zoneName);
+    auto [vp, err] = zonePtr->n1ql(query);
 
-      zonePtr->set(tmp.zoneID, tmp.serialize());
-      return 0;
+    if(vp->size() == 0)
+    {
+      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端
+      std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
+      if (res_sc == "false")
+      {
+        return -1;
+      }
+      else
+      {
+        std::string spaceID = res_sc;
+        boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+        const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+        tmp.zoneID = tmp_uuid;
+        tmp.zoneName = std::move(zoneName);
+        tmp.ownerID = ownerID;
+        tmp.memberID = memberID;
+        tmp.spaceID.emplace_back(spaceID);
+
+        zonePtr->set(tmp.zoneID, tmp.serialize());
+        return 0;
+      }
     }
+    else if(vp->size() == 1)
+    {
+      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端
+      std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
+      if (res_sc == "false")
+      {
+        return -1;
+      }
+      else
+      {
+        std::string spaceID = res_sc;
+        std::vector<std::string>::iterator it = vp->begin();
+        std::string n1ql_result = *it;
+        std::string tmp_value = n1ql_result.substr(13, n1ql_result.length() - 14);
+        tmp.deserialize(tmp_value);
+        tmp.spaceID.emplace_back(spaceID);
+        zonePtr->set(tmp.zoneID, tmp.serialize());
+        return 0;
+      }
+    }
+    else return -1;
   }
 
 

@@ -197,14 +197,17 @@ namespace hvs{
             std::string tmp_value = n1ql_result.substr(14, n1ql_result.length() - 15);
             std::cerr << "SpaceCheck: " << tmp_value << std::endl;
             tmps.deserialize(tmp_value);
-            tmps.status = true;
-            // TODO：修改空间状态为可用状态，并增加聚合模块容量, 如果容量增加失败，则返回；
-            if(SpaceSizeAdd(tmps.storageSrcID, tmps.spaceSize) != 0){
-                perror("SpaceCheck.SpaceSizeAdd");
-                return "false";
+            if (tmps.status == true) return "false";
+            else {
+                tmps.status = true;
+                // TODO：修改空间状态为可用状态，并增加聚合模块容量, 如果容量增加失败，则返回；
+                if(SpaceSizeAdd(tmps.storageSrcID, tmps.spaceSize) != 0){
+                    perror("SpaceCheck.SpaceSizeAdd");
+                    return "false";
+                }
+                spacePtr->set(tmps.spaceID, tmps.serialize());
+                return tmps.spaceID;
             }
-            spacePtr->set(tmps.spaceID, tmps.serialize());
-            return tmps.spaceID;
         }
     }
 

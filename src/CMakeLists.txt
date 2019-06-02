@@ -47,5 +47,6 @@ add_subdirectory(io_proxy)
 add_subdirectory(client)
 add_subdirectory(manager)
 add_subdirectory(spacecmdline)
+add_subdirectory(zonecmdline)
 
 #TARGET_LINK_LIBRARIES(hvsd hello)

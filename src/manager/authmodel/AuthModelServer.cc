@@ -39,7 +39,7 @@ void AuthModelServer::router(Router& router){
     Routes::Post(router, "/auth/selfmemberdel", Routes::bind(&AuthModelServer::self_AuthmemberdelRest, this));
 
     Routes::Post(router, "/auth/modify", Routes::bind(&AuthModelServer::AuthModifyRest, this));
-
+    Routes::Post(router, "/auth/search", Routes::bind(&AuthModelServer::AuthSearchRest, this));
 }
 
 void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http::ResponseWriter response){

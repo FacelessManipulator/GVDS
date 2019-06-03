@@ -38,3 +38,31 @@ void Auth::deserialize_impl() {
     get("other_write", other_write);
     get("other_exe", other_exe);
 }
+
+void SelfAuthSpaceInfo::serialize_impl() {
+    put("spaceinformation", spaceinformation);
+    put("ownerID_zone", ownerID_zone);
+    put("memberID", memberID);
+}
+
+void SelfAuthSpaceInfo::deserialize_impl() {
+    get("spaceinformation", spaceinformation);
+    get("ownerID_zone", ownerID_zone);
+    get("memberID", memberID);
+}
+
+void AuthSearch::serialize_impl(){
+    put("hvsID", hvsID);
+    put("vec_ZoneID", vec_ZoneID);
+    put("read", read);
+    put("write", write);
+    put("exe", exe);
+}
+
+void AuthSearch::deserialize_impl(){
+    get("hvsID", hvsID);
+    get("vec_ZoneID", vec_ZoneID);
+    get("read", read);
+    get("write", write);
+    get("exe", exe);
+}

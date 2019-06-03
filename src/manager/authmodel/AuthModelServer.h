@@ -43,6 +43,7 @@ public:
     void self_AuthmemberdelRest(const Rest::Request& request, Http::ResponseWriter response);
     int self_Authmemberdel(SelfAuthSpaceInfo &auth_space);
 
+
     //1、权限增加模块
     //区域初始权限记录接口
     int ZonePermissionAdd(std::string zoneID, std::string ownerID);
@@ -67,7 +68,13 @@ public:
     int SpacePermissionDelete(std::string spaceID);
 
     //3、权限修改模块
+    void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response);
+    int AuthModify();
 
+    //4、权限查询模块
+    void AuthSearchRest(const Rest::Request& request, Http::ResponseWriter response);
+    int AuthSearch(std::string &hvsID);
+    int subAuthSearch(ZoneInfo &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x)
     /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);

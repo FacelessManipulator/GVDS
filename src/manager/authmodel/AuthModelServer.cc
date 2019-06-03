@@ -37,6 +37,9 @@ void AuthModelServer::stop() {}
 void AuthModelServer::router(Router& router){
     Routes::Post(router, "/auth/selfmemberadd", Routes::bind(&AuthModelServer::self_AuthmemberaddRest, this));
     Routes::Post(router, "/auth/selfmemberdel", Routes::bind(&AuthModelServer::self_AuthmemberdelRest, this));
+
+    Routes::Post(router, "/auth/modify", Routes::bind(&AuthModelServer::AuthModifyRest, this));
+
 }
 
 void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http::ResponseWriter response){
@@ -586,8 +589,120 @@ int SpacePermissionDelete(string spaceID){
 //2.5
 
 
-//3、权限修改模块，提供一个rest api，让前端调用
+//3、权限修改模块，提供一个rest api，让前端调用  //TODO  这个等其他的测试都通过再写吧，否则没意义【流程参考A4纸上的】
+void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
+}
 
+//TODO
+int AuthModify(){
+        
+}
+
+
+
+
+//4、权限查询模块  //[完成 待测试]
+void AuthSearchRest(const Rest::Request& request, Http::ResponseWriter response){
+
+    auto info = request.body();
+    cout << info << endl;  //hvsid
+
+    string data = AuthModify(info);
+    if (data.compare("fail") == 0){
+        response.send(Http::Code::Not_Found, "notfound"); 
+    }
+    else{
+        response.send(Http::Code::Ok, data); // data 在C++客户端使用AuthSearch 返序列化
+    }
+
+}
+
+
+string AuthSearch(string &hvsID){
+    //1、查询hvsid对应的所有区域ID
+    vector<string> result_z;
+    ZoneServer *p_zone = static_cast<ZoneServer*>(mgr->get_module("zone").get());
+    bool result_b = p_zone->GetZoneInfo(result_z, hvsID);//sy函数
+    string result;
+    if( !result_b ){
+        cout << "get zoneID info fail" <<endl;
+        return "fail";
+    }
+   
+    GetZoneInfoRes res;
+    res.zoneInfoResult = result_z;
+
+    //result = res.serialize();
+
+    //2、然后for区域
+    AuthSearch myauth;
+    myauth.hvsID = hvsID;
+    vector<string>::iterator iter;
+    for(iter = res.zoneInfoResult.begin(); iter!=res.zoneInfoResult.end(); iter++){
+        ZoneInfo myzone;
+        myzone.deserialize(*iter);  //myzone.zoneID   myzone.ownerID    myzone.memberID
+        
+        string r,w,x;
+        int tmp = subAuthSearch(myzone, hvsID, r, w, x);
+        if (tmp==-1){
+            continue;// 直接接续下一个区域
+        }
+        myauth.vec_ZoneID.push_back(myzone.zoneID);
+        myauth.read[myzone.zoneID] = r;
+        myauth.write[myzone.zoneID] = w;
+        myauth.exe[myzone.zoneID] = x;
+
+        //2.1调用子函数
+            //查询在每个区域中是主人 还是 成员
+            //然后获取相应身份的权限数据
+            //并返回
+        //添加到（建议用map）    
+    }//for
+
+    return myauth.serialize();
+}
+ //2.1调用子函数
+int subAuthSearch(ZoneInfo &myzone, string hvsID, string &r, string &w, string &x){
+    bool isowner=false;
+    bool ismember=false;
+    //2.1.1查询在每个区域中是主人 还是 成员
+    if(myzone.ownerID.compare(hvsID)==0){
+        isowner = true;
+    }
+    else{
+        //不用查询了，因为这是这个用户所拥有的看见之一，因此不是owner，必然是member
+        ismember = true;
+    }
+
+    //2.1.2然后获取相应身份的权限数据
+    std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("auth_info"));
+    f3_dbPtr->init();
+
+    auto [pvalue, error] = f3_dbPtr->get(zoneID);
+    if(error){
+        cout << "fail" << endl;
+        return -1;
+    }
+
+    Auth person;
+    person.deserialize(*pvalue);
+
+    //2.1.3判读是主人还是成员
+    if(isowner){
+        r = person.owner_read;
+        w = person.owner_write;
+        x = person.owner_exe;
+        return 0;
+    }
+    if(ismember){
+        r = person.group_read;
+        w = person.group_write;
+        x = person.group_exe;
+        return 0;
+    }
+
+}
 
 }//namespace hvs
 

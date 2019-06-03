@@ -47,6 +47,21 @@ public:
     SelfAuthSpaceInfo() = default;
 };
 
+//subAuthSearch
+class AuthSearch: public hvs::JsonSerializer {
+public:
+  std::string hvsID;
+  std::vector<std::string> vec_ZoneID;
+  std::map<std::string, std::string> read;
+  std::map<std::string, std::string> write;
+  std::map<std::string, std::string> exe;
+
+public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+public:
+  AuthSearch() = default;
+};
 /*
 class Auth: public hvs::JsonSerializer {
 public:

@@ -59,9 +59,11 @@ public:
 public:
   void serialize_impl() override;
   void deserialize_impl() override;
+
 public:
   AuthSearch() = default;
 };
+
 /*
 class Auth: public hvs::JsonSerializer {
 public:

@@ -845,23 +845,17 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
             if (!tmp_flag){
                 return "fail";
             }
-            cout<<"sleep 3s"<<endl;
-            sleep(3);
-            cout << "111" << endl;
+         
             auto [pvalue_1, error_1] = f1_dbPtr->get(ownerID);
             if(error_1){
                 cout << "fail" << endl;
                 return "fail";//并返回结果，如果建立失败
             }
-            cout << "pvalue_1: "<< *pvalue_1 <<endl;
-            cout << "222" << endl;
+            
             SCAccount person_1;
             person_1.deserialize(*pvalue_1); cout << "333" << endl;
             iter = person_1.Jinan_account.begin();
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
-            cout << "4444"<<endl;
-            cout << localpair.serialize() <<endl;
-            cout <<"5555"<<endl;
             return localpair.serialize();
         }
         else{

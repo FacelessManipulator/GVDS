@@ -6,8 +6,8 @@ ADD_LIBRARY(managerO OBJECT
         usermodel/Account.cc
         usermodel/MD5.cc
         usermodel/UserModelServer.cc
-        #authmodel/Auth.cc
-        #authmodel/AuthModelServer.cc
+        authmodel/Auth.cc
+        authmodel/AuthModelServer.cc
         space/Space.cc
         space/SpaceServer.cc
         zone/Zone.cc

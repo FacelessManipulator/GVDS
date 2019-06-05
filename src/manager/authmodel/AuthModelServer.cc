@@ -6,15 +6,19 @@
 #include "datastore/datastore.h"
 
 #include "manager/authmodel/AuthModelServer.h"
-//include "manager/usermodel/Account.h"
 #include "manager/usermodel/UserModelServer.h"
-#include "manager/zone/zone.h"
+#include "manager/space/SpaceServer.h"
 
 #include <unistd.h> //
 #include <cstdlib> //system()
+
+
 using namespace std;
 
 //f3_dbPtr     auth_info
+
+
+//mgr 和 manager->rest_port()的问题
 
 //联合调试可能的bug
 //1、hostCenterName 无法和空间模块匹配
@@ -39,7 +43,7 @@ void AuthModelServer::router(Router& router){
     Routes::Post(router, "/auth/selfmemberdel", Routes::bind(&AuthModelServer::self_AuthmemberdelRest, this));
 
     Routes::Post(router, "/auth/modify", Routes::bind(&AuthModelServer::AuthModifyRest, this));
-    Routes::Post(router, "/auth/search", Routes::bind(&AuthModelServer::AuthSearchRest, this));
+    Routes::Post(router, "/auth/search", Routes::bind(&AuthModelServer::AuthSearchModelRest, this));
 }
 
 void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http::ResponseWriter response){
@@ -56,11 +60,11 @@ void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http:
 
     int flag = self_Authmemberadd(auth_space);
     if(flag == 0){
-        dcout(-1) << "success" << dendl;
+        dout(-1) << "success" << dendl;
         response.send(Http::Code::Ok, "0"); 
     }
     else{
-        dcout(-1) << "fail" << dendl;
+        dout(-1) << "fail" << dendl;
         response.send(Http::Code::Ok, "-1"); //point
     }
 
@@ -102,7 +106,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
         //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
         //TODO   usermod -a -G localpair.localaccount member_localpair.localaccount
         string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
-        system(cmd); //TODO 确认是否可行
+        system(cmd.c_str()); //TODO 确认是否可行
     }// for
 
     return 0;
@@ -122,11 +126,11 @@ void AuthModelServer::self_AuthmemberdelRest(const Rest::Request& request, Http:
 
     int flag = self_Authmemberdel(auth_space);
     if(flag == 0){
-        dcout(-1) << "success" << dendl;
-        response.send(Http::Code::Ok, "0"); 
+        dout(-1) << "success" << dendl;
+        response.send(Http::Code::Ok, "0");;
     }
     else{
-        dcout(-1) << "fail" << dendl;
+        dout(-1) << "fail" << dendl;
         response.send(Http::Code::Ok, "-1"); //point
     }
 
@@ -168,7 +172,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
         //1.2将test1从testowner同名的组中删除    gpasswd testowner -d test222
         //TODO       gpasswd localpair.localaccount -d member_localpair.localaccount
         string cmd = "gpasswd " + localpair.localaccount + " -d " + member_localpair.localaccount;
-        system(cmd); //TODO 确认是否可行
+        system(cmd.c_str()); //TODO 确认是否可行
     }// for
 
     return 0;
@@ -177,7 +181,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
 
 //1权限增加模块
 //1.1 区域初始权限记录接口  :: 被区域注册模块调用 :: 只记录数据库,不需访问存储集群设置权限,sy那边会设置
-int ZonePermissionAdd(std::string zoneID, std::string ownerID){
+int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
     Auth person(zoneID);
     person.HVSAccountID = ownerID;
     person.owner_read = 1;
@@ -209,7 +213,7 @@ int ZonePermissionAdd(std::string zoneID, std::string ownerID){
 
 //1.2 空间权限同步接口  :: 被空间创建模块调用 :: 查询空间所属区域的权限，设置空间为此权限
 //一次只设置一个空间，不涉及跨超算调用【因此此接口已完成，不用再次修改】
-int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID){
+int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID){
     
     // string ZoneID;
     // //调用sy的接口,获取空间对应的区域；
@@ -330,13 +334,13 @@ int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string own
 
 
 //1.3 副本权限同步接口   :: 被空间创建模块调用 ::  这个和sy商量下
-int ReplacePermissionSyne(){
+int AuthModelServer::ReplacePermissionSyne(){
 }
 
 //1.4 空间定位接口      我调sy
 
 //1.5 成员权限增加接口      ::区域共享模块调用  :: 设置新成员对区域的权限，记录数据库 
-int ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
+int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
     
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore("zone_info"));
@@ -389,7 +393,7 @@ int ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
         //TODO  暂时设置为localhost
         string ip_space = "localhost";
         //TODO 注意端口是否正确
-        snprintf(url, 256, "http://%s:%d/auth/selfmemberadd", ip_space ,manager->rest_port());
+        snprintf(url, 256, "http://%s:%d/auth/selfmemberadd", ip_space.c_str() ,manager->rest_port());
 
         SelfAuthSpaceInfo auth_space;
         auth_space.spaceinformation = *space_iter;
@@ -427,7 +431,7 @@ int ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
 
     //数据库中无需记录任何东西
     //++++++++
-    client.close();
+    client.shutdown();
     //++++++++
     return return_flag; //0是成功
 }
@@ -438,7 +442,7 @@ int ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
 //=============================================
 //2、权限删除模块
 //2.1 区域权限删除接口     ::被区域注销模块调用::删除相应权限,删除数据库中权限记录，无需知道ownerid
-int ZonePermissionDeduct(string zoneID, string OwnerID){
+int AuthModelServer::ZonePermissionDeduct(string zoneID, string OwnerID){
     std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore("auth_info"));
     f3_dbPtr->init();
@@ -455,7 +459,7 @@ int ZonePermissionDeduct(string zoneID, string OwnerID){
 }
 
 //2.2 成员权限删除接口  ::被区域共享模块调用::删除成员对区域的权限，不需要记录数据库 //区域拥有者的空间都在哪些超算，要分别从到每个超算对应的组删除
-int ZoneMemberDel(string zoneID, string OwnerID, vector<string> memberID){
+int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string> memberID){
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore("zone_info"));
     zone_dbPtr->init();
@@ -508,7 +512,7 @@ int ZoneMemberDel(string zoneID, string OwnerID, vector<string> memberID){
         string ip_space = "localhost";
 
         //TODO 注意端口是否正确
-        snprintf(url, 256, "http://%s:%d/auth/selfmemberdel", ip_space ,manager->rest_port());
+        snprintf(url, 256, "http://%s:%d/auth/selfmemberdel", ip_space.c_str() ,manager->rest_port());
 
         SelfAuthSpaceInfo auth_space;
         auth_space.spaceinformation = *space_iter;
@@ -547,7 +551,7 @@ int ZoneMemberDel(string zoneID, string OwnerID, vector<string> memberID){
     
     //不需要改动数据库，
     //++++++++
-    client.close();
+    client.shutdown();
     //++++++++
     return return_flag; //0是成功
 }
@@ -557,7 +561,7 @@ int ZoneMemberDel(string zoneID, string OwnerID, vector<string> memberID){
 
 //2.4 空间权限删除接口  ：：被空间创建模块调用：：删除存储集群上空间对应的权限  //数据库不用更新，因为无此空间记录
 //这个也不跨超算，因此不用rest，【不用更改】
-int SpacePermissionDelete(string spaceID){
+int AuthModelServer::SpacePermissionDelete(string spaceID){
     vector<string> tmp_vec_spaceID;
     tmp_vec_spaceID.push_back(spaceID);
 
@@ -590,11 +594,11 @@ int SpacePermissionDelete(string spaceID){
 
 
 //3、权限修改模块，提供一个rest api，让前端调用  //TODO  这个等其他的测试都通过再写吧，否则没意义【流程参考A4纸上的】
-void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
+void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
 }
 
 //TODO
-int AuthModify(){
+int AuthModelServer::AuthModify(){
         
 }
 
@@ -602,12 +606,13 @@ int AuthModify(){
 
 
 //4、权限查询模块  //[完成 待测试]
-void AuthSearchRest(const Rest::Request& request, Http::ResponseWriter response){
+void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response){
 
     auto info = request.body();
     cout << info << endl;  //hvsid
 
-    string data = AuthModify(info);
+    string m_info = info;
+    string data = AuthSearchModel(m_info);
     if (data.compare("fail") == 0){
         response.send(Http::Code::Not_Found, "notfound"); 
     }
@@ -618,7 +623,7 @@ void AuthSearchRest(const Rest::Request& request, Http::ResponseWriter response)
 }
 
 
-string AuthSearch(string &hvsID){
+string AuthModelServer::AuthSearchModel(string &hvsID){
     //1、查询hvsid对应的所有区域ID
     vector<string> result_z;
     ZoneServer *p_zone = static_cast<ZoneServer*>(mgr->get_module("zone").get());
@@ -643,7 +648,7 @@ string AuthSearch(string &hvsID){
         myzone.deserialize(*iter);  //myzone.zoneID   myzone.ownerID    myzone.memberID
         
         string r,w,x;
-        int tmp = subAuthSearch(myzone, hvsID, r, w, x);
+        int tmp = subAuthSearchModel(myzone, hvsID, r, w, x);
         if (tmp==-1){
             continue;// 直接接续下一个区域
         }
@@ -662,7 +667,7 @@ string AuthSearch(string &hvsID){
     return myauth.serialize();
 }
  //2.1调用子函数
-int subAuthSearch(ZoneInfo &myzone, string hvsID, string &r, string &w, string &x){
+int AuthModelServer::subAuthSearchModel(ZoneInfo &myzone, string hvsID, string &r, string &w, string &x){
     bool isowner=false;
     bool ismember=false;
     //2.1.1查询在每个区域中是主人 还是 成员
@@ -679,7 +684,7 @@ int subAuthSearch(ZoneInfo &myzone, string hvsID, string &r, string &w, string &
         hvs::CouchbaseDatastore("auth_info"));
     f3_dbPtr->init();
 
-    auto [pvalue, error] = f3_dbPtr->get(zoneID);
+    auto [pvalue, error] = f3_dbPtr->get(myzone.zoneID);
     if(error){
         cout << "fail" << endl;
         return -1;

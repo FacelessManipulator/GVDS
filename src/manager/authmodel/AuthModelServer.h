@@ -10,13 +10,22 @@ date:2019.03.21
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
-#include <iostream>
-#include <map>
+#include <pistache/client.h>
+#include <pistache/http.h>
+#include <pistache/net.h>
+#include <atomic>
 
 
 #include "datastore/couchbase_helper.h"
 #include "manager/authmodel/Auth.h"
 #include "manager/manager.h"
+#include "manager/zone/Zone.h"
+#include "manager/zone/ZoneServer.h"
+
+#include <iostream>
+#include <map>
+
+
 
 class Account;
 class SCAccount;
@@ -62,7 +71,7 @@ public:
     int ZonePermissionDeduct(std::string zoneID, std::string OwnerID);
 
     //成员权限删除接口
-    int ZoneMemberDel(std::string zoneID, std::string OwnerID, std::vector<string> memberID);
+    int ZoneMemberDel(std::string zoneID, std::string ownerID, std::vector<string> memberID);
 
     //空间权限删除接口
     int SpacePermissionDelete(std::string spaceID);
@@ -72,9 +81,9 @@ public:
     int AuthModify();
 
     //4、权限查询模块
-    void AuthSearchRest(const Rest::Request& request, Http::ResponseWriter response);
-    int AuthSearch(std::string &hvsID);
-    int subAuthSearch(ZoneInfo &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x)
+    void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string AuthSearchModel(std::string &hvsID);
+    int subAuthSearchModel(ZoneInfo &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x);
     /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);
@@ -96,8 +105,12 @@ public:
     */
  //--------------------------------------------
 public:
-    AuthModelServer() : ManagerModule("auth") {};
+    AuthModelServer() : ManagerModule("auth") {
+        manager = static_cast<Manager*>(HvsContext::get_context()->node);
+    };
     ~AuthModelServer() {};
+public:
+    Manager* manager;
 };
 
 

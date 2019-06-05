@@ -2,6 +2,7 @@
 SET(CommonSRCS
         common/Thread.cc
         log/Log.cc
+        cmdline/CmdLineProxy.cc
         config/ConfigureSettings.cc
         datastore/datastore.cc
         datastore/couchbase_helper.cc
@@ -11,10 +12,12 @@ SET(CommonSRCS
         #sermodel/UserModelServer.cc
         common/RestServer.cc
         common/JsonSerializer.cc
-        aggregation/AggregationServer.cc
-        aggregation/StorageResBicInfo.cc
         msg/rpc.cc
+        msg/udt_client.cc
+        msg/udt_writer.cc
+        msg/client_session.cc
 )
+
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         config++
         couchbase
@@ -22,6 +25,9 @@ SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         pistache_shared
         rpc
         boost_system
+        boost_thread
+        boost_program_options
+        udt
 )
 
 ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
@@ -38,5 +44,9 @@ install(TARGETS hvsd
 )
 
 add_subdirectory(io_proxy)
+add_subdirectory(client)
 add_subdirectory(manager)
+add_subdirectory(spacecmdline)
+add_subdirectory(zonecmdline)
+
 #TARGET_LINK_LIBRARIES(hvsd hello)

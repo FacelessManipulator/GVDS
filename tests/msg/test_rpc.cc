@@ -1,7 +1,7 @@
 #include "context.h"
 #include "gtest/gtest.h"
 #include "msg/rpc.h"
-#include "msg/stat.h"
+#include "msg/stat_demo.h"
 #include <unistd.h>
 #include <chrono>
 
@@ -11,7 +11,9 @@ using namespace hvs;
 class RPCTEST : public ::testing::Test {
  protected:
   void SetUp() override {
-    svr = HvsContext::get_context()->_rpc;
+    //svr = HvsContext::get_context()->_rpc;
+    svr = init_rpcserver();
+    HvsContext::get_context()->_rpc = svr;
     ASSERT_NE(svr, nullptr);
   }
   void TearDown() override {
@@ -44,8 +46,8 @@ TEST_F(RPCTEST, stat) {
     auto start = std::chrono::steady_clock::now();
 
     for(int i = 0; i < size; i++)
-        auto res = client.call("stat", pathname);
-    // dout(-1) << res->as<stat_buffer>().st_ino << dendl;
+        auto res = client.call("stat_test", pathname);
+    //dout(-1) << res->as<stat_buffer>().st_ino << dendl;
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> diff = end-start;
@@ -59,7 +61,7 @@ public:
         string pathname("/tmp/hvs/tests/data/example.cfg");
         RpcClient client(_ip, _port);
         for(int i = 0; i < 2000; i++)
-            client.call("stat", pathname);
+            client.call("stat_test", pathname);
     }
 private:
     string _ip;

@@ -16,6 +16,7 @@ class Log;
 class ConfigureSettings;
 class IOProxy;
 struct Node;
+class IOProxy;
 class HvsContext {
  public:
   static HvsContext* get_context() {
@@ -31,6 +32,7 @@ class HvsContext {
   ConfigureSettings* _config;
   RpcServer* _rpc;
   Node* node;
+  std::string ioproxy_rootdir;
 
  private:
   static HvsContext* _context_p;

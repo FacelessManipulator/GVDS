@@ -1,5 +1,5 @@
 #include "msg/rpc.h"
-#include "msg/bind.h"
+#include "msg/bind_demo.h"
 using namespace hvs;
 using namespace std;
 
@@ -27,6 +27,7 @@ RpcServer* hvs::init_rpcserver() {
 RpcClient::RpcClient(const std::string address, const unsigned port)
     : _address(address), _port(port) {
   auto _config = HvsContext::get_context()->_config;
+//  auto _config = init_config("/tmp/hvs/tests/data/example.cfg");
   auto timeout = _config->get<int>("rpc.timeout");
   auto retry = _config->get<int>("rpc.retry");
   if (!timeout && *timeout <= 0) {
@@ -36,5 +37,5 @@ RpcClient::RpcClient(const std::string address, const unsigned port)
   }
   _client = std::make_unique<rpc::client>(address, port);
   _client->set_timeout(*timeout);
-  _retry = *retry;
+  _retry = static_cast<unsigned int>(*retry);
 }

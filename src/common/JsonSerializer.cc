@@ -39,7 +39,7 @@ template <>
 int JsonSerializer::decode<unsigned>(rapidjson::Value* value, unsigned& dest) {
     if (!value->IsUint()) return -ERROR_INCORRECT_TYPE;
     dest = value->GetUint();
-    return SUCCESS;
+    return 0;
 }
 
 template <>

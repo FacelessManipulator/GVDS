@@ -1,5 +1,9 @@
 #include "io_proxy/io_proxy.h"
 #include "io_proxy/io_worker.h"
+#include "rpc_bindings.hpp"
+
+#include <mutex>
+#include <future>
 
 using namespace std;
 using namespace hvs;
@@ -16,6 +20,37 @@ bool IOProxy::add_idle_worker(IOProxyWorker* woker) {
   // should not wait, idle list max capcity > max number of idle worker
   while(!idle_list.push(woker));
 };
+
+bool IOProxy::queue_and_wait(std::shared_ptr<OP> op) {
+  promise<bool> worker_is_done;
+  auto f = worker_is_done.get_future();
+  boost::function0<void> cb = [&worker_is_done](){
+    worker_is_done.set_value(true);
+  };
+  op->complete_callbacks.push_back(cb);
+  queue_op(op, true);
+  f.wait();
+  // WARNING: DO NOT CHANGE THE COMPLETE_CALLBACKS DURING THIS PERIODS
+}
+
+bool IOProxy::queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops) {
+  promise<bool> worker_is_done;
+  atomic_long cnt = 0;
+  const long expect_done = ops.size();
+  auto f = worker_is_done.get_future();
+  boost::function0<void> cb = [&worker_is_done, &cnt, expect_done](){
+    ++cnt;
+    if(cnt.load() >= expect_done) {
+      worker_is_done.set_value(true);
+    }
+  };
+  for(auto op:ops) {
+    op->complete_callbacks.push_back(cb);
+    queue_op(op, true);
+  }
+  f.wait_for(std::chrono::milliseconds(100)*ops.size());
+  // WARNING: DO NOT CHANGE THE COMPLETE_CALLBACKS DURING THIS PERIODS
+}
 
 // producer op
 bool IOProxy::queue_op(std::shared_ptr<OP> op, bool block) {
@@ -75,9 +110,10 @@ void IOProxy::_dispatch() {
 }
 
 void IOProxy::_dispatch_unsafe(std::queue<std::shared_ptr<OP>>* t) {
-  std::shared_ptr<OP> op;
+  // declare release object
+  //  std::shared_ptr<OP> op;
   while(!t->empty()) {
-    op = t->front();
+    auto op = t->front();
     t->pop();
     assert(op.get()); // op ptr should not be empty
     auto worker = _get_idle_worker(); // may wait on spin lock
@@ -90,7 +126,9 @@ void IOProxy::start() {
   pthread_mutex_lock(&m_queue_mutex);
   m_stop = false;
   // TODO: read configs
-  int scher_num = 5;
+  auto _config = HvsContext::get_context()->_config;
+  auto scher_o = _config->get<int>("ioproxy.scher");
+  int scher_num = scher_o.value_or(8);
   for(int i = 0; i < scher_num; i++) {
     auto scher = make_shared<IOProxy_scheduler>(true);
     schedulers.push_back(scher);
@@ -102,11 +140,27 @@ void IOProxy::start() {
     worker_threads.push_back(t);
   }
   pthread_mutex_unlock(&m_queue_mutex);
+
+  _rpc = init_rpcserver();
+  if (!_rpc) {
+    dout(-1) << "failed to start rpc component, exit!" << dendl;
+    exit(-1);
+  }
+  _udt = init_udtserver();
+  if (!_udt) {
+    dout(-1) << "failed to start udt component, exit!" << dendl;
+    exit(-1);
+  }
   create("io_proxy");
 }
 
 void IOProxy::stop() {
   if (is_started()) {
+    if (_rpc != nullptr) {
+      _rpc->stop();
+      delete _rpc;
+      _rpc = nullptr;
+    }
     pthread_mutex_lock(&m_queue_mutex);
     m_stop = true;
     pthread_cond_signal(&m_cond_dispatcher);
@@ -114,6 +168,10 @@ void IOProxy::stop() {
     pthread_mutex_unlock(&m_queue_mutex);
     join();
   }
+}
+
+void IOProxy::rpc_bind(RpcServer* server) {
+  hvs_ioproxy_rpc_bind(server);
 }
 
 hvs::IOProxy* init_ioproxy() {

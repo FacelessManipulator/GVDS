@@ -7,6 +7,7 @@
  */
 
 #include "config/ConfigureSettings.h"
+#include "config/default_config.hpp"
 using namespace libconfig;
 using namespace hvs;
 using namespace std;
@@ -119,28 +120,7 @@ bool ConfigureSettings::writeFile(const char *outfile) {
 
 hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
   hvs::ConfigureSettings* _config = new hvs::ConfigureSettings(configPath);
-
-  // 添加默认配置项
-  _config->add("user.age", 1);
-  _config->add("user.hello.world", false);
-  // 目前由于template的限制，只能使用string包装，不能直接用字符串
-  _config->add("user.world", string("any string"));
-  _config->add("float", 3.14);
-  _config->add("list", vector{1, 2, 3});
-
-  _config->add("ip", string("0.0.0.0"));
-  _config->add("log.path", string("/var/log/hvs.log"));
-  _config->add("log.level", 10);
-  _config->add("rpc.port", 9092);
-  _config->add("rpc.workers", 5);
-  _config->add("rpc.timeout", 3000);
-  _config->add("rpc.retry", 3);
-  _config->add("couchbase.address", string("192.168.10.235"));
-  _config->add("couchbase.user", string("dev"));
-  _config->add("couchbase.password", string("buaaica"));
-  _config->add("rest.port", 9090);
-  _config->add("rest.thread_num", 5);
-  _config->add("couchbase.bucket", string("test"));
-
+  // default config code was moved to src/config/default_config.hpp
+  default_config(_config);
   return _config;
 }

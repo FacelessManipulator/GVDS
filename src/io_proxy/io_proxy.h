@@ -12,12 +12,13 @@
 #include "io_proxy/io_worker.h"
 #include "msg/op.h"
 #include "msg/node.h"
+#include "msg/udt_server.h"
 
 namespace hvs {
-
+class IOProxyRpcImpl;
 class IOProxy : public Thread, public Node {
  public:
-  IOProxy() : m_stop(false), Node(IO_PROXY_NODE) {
+  IOProxy() : m_stop(false), Node(IO_PROXY_NODE), _rpc(nullptr) {
     // TODO: should read from config file
     m_max_op = 1000;
     m_max_worker = 1024;
@@ -25,6 +26,8 @@ class IOProxy : public Thread, public Node {
   void start();
   void stop();
   bool queue_op(std::shared_ptr<OP> op, bool block = true);
+  bool queue_and_wait(std::shared_ptr<OP> op);
+  bool queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops);
   bool add_idle_worker(IOProxyWorker* woker);
   ~IOProxy() override {stop();};
 
@@ -54,6 +57,11 @@ class IOProxy : public Thread, public Node {
   pthread_t m_queue_mutex_holder;
   pthread_t m_dispatcher_mutex_holder;
   bool m_stop;
+
+  public:
+  RpcServer* _rpc;
+  UDTServer* _udt;
+  virtual void rpc_bind(RpcServer* server) override;
 };
 extern hvs::IOProxy* init_ioproxy();
 extern void destroy_ioproxy(hvs::IOProxy* iop);

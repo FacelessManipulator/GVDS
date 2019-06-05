@@ -8,7 +8,7 @@ option(HVS_CPPCHECK "use cpp check to check the syntax. Need /usr/bin/cppcheck p
 option(HVS_BOOST_BUILTIN "use builtin boost rather than depends on system library" ON)
 
 # boost build compoments
-SET(HVS_BOOST_COMP thread,system)
+SET(HVS_BOOST_COMP thread,system,program_options)
 
 # set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
 
@@ -86,3 +86,4 @@ ADD_SUBDIRECTORY(rapidjson)
 ADD_SUBDIRECTORY(libcouchbase)
 ADD_SUBDIRECTORY(rpclib)
 ADD_SUBDIRECTORY(libconfig/lib)
+ADD_SUBDIRECTORY(udt4/udt4)

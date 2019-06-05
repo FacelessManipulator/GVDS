@@ -8,7 +8,12 @@ ADD_LIBRARY(managerO OBJECT
         usermodel/UserModelServer.cc
         #authmodel/Auth.cc
         #authmodel/AuthModelServer.cc
-        )
+        space/Space.cc
+        space/SpaceServer.cc
+        zone/Zone.cc
+        zone/ZoneServer.cc
+        resaggregation_mgr.cc
+)
 
 ADD_EXECUTABLE(hvs_manager main.cc)
 TARGET_LINK_LIBRARIES(hvs_manager hvscommon ${HVSCOMMOM_DEPENDS_ON} boost_thread boost_system managerO)

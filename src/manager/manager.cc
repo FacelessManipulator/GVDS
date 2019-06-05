@@ -1,8 +1,8 @@
 #include "manager/manager.h"
 #include "manager/ioproxy_mgr.h"
-//#include "manager/resaggregation_mgr.h"
-//#include "zone/ZoneServer.h"
 #include "manager/usermodel/UserModelServer.h"
+#include "manager/resaggregation_mgr.h"
+#include "zone/ZoneServer.h"
 
 using namespace hvs;
 using namespace std;
@@ -108,12 +108,19 @@ hvs::Manager* init_manager() {
   mgr->addr.from_string(*ip);
   // registe modlues in manager node
   mgr->registe_module(std::make_shared<IOProxy_MGR>("ioproxy manager"));
+<<<<<<< HEAD
   //mgr->registe_module(std::make_shared<ResAggregation_MGR>("resaggregation manager"));
 
   //mgr->registe_module(std::make_shared<ZoneServer>());
   //mgr->registe_module(std::make_shared<SpaceServer>());
   mgr->registe_module(std::make_shared<UserModelServer>());
   //mgr->registe_module(std::make_shared<AuthModelServer>());
+=======
+  mgr->registe_module(std::make_shared<ResAggregation_MGR>("resaggregation manager"));
+
+  mgr->registe_module(std::make_shared<ZoneServer>());
+  mgr->registe_module(std::make_shared<SpaceServer>());
+>>>>>>> origin/wip-songyao
   hvs::HvsContext::get_context()->node = mgr;
   mgr->start();
   return mgr;

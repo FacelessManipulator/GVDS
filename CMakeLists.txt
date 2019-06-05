@@ -6,6 +6,8 @@ set(VERSION 0.1.0)
 
 # include(CTest)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 是否需要构建文档
@@ -31,6 +33,7 @@ if(BUILD_THIRD_PARTY)
       "${PROJECT_SOURCE_DIR}/third-party/rpclib/include"
       "${PROJECT_SOURCE_DIR}/third-party/boost"
       "${PROJECT_SOURCE_DIR}/third-party/libconfig/lib"
+      "${PROJECT_SOURCE_DIR}/third-party/udt4/udt4/src"
   )
 
   # download and update submodules

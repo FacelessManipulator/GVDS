@@ -7,15 +7,15 @@
 #include "common/debug.h"
 
 // avoid config with sys/syslog.h
-#undef LOG_INFO
-#undef LOG_DEBUG
+// #undef LOG_INFO
+// #undef LOG_DEBUG
 #include "rpc/client.h"
 #include "rpc/server.h"
 #include "rpc/rpc_error.h"
-#undef LOG_INFO
-#undef LOG_DEBUG
-#define LOG_INFO 6
-#define LOG_DEBUG 7
+// #undef LOG_INFO
+// #undef LOG_DEBUG
+// #define LOG_INFO 6
+// #define LOG_DEBUG 7
 
 namespace hvs {
 class RpcServer {
@@ -56,13 +56,14 @@ RpcServer* init_rpcserver();
 class RpcClient {
  public:
   RpcClient(const std::string address, const unsigned port);
-  RpcClient() = delete;
+  RpcClient() {};
   template <typename... Args>
   std::optional<RPCLIB_MSGPACK::object_handle> call(
       std::string const& func_name, Args... args);
+  void shutdown() {}
 
- private:
-  std::unique_ptr<rpc::client> _client;
+ public:
+  std::shared_ptr<rpc::client> _client;
   std::string _address;
   std::uint16_t _port;
   unsigned _retry;
@@ -81,7 +82,7 @@ std::optional<RPCLIB_MSGPACK::object_handle> RpcClient::call(
       dout(5) << "WARING: rpc client timeout, try " << retry_times << " time."
               << dendl;
     } catch (rpc::rpc_error error) {
-      dout(1) << "ERROR: rpc client call " << error.get_function_name()
+      dout(-1) << "ERROR: rpc client call " << error.get_function_name()
               << " error, reason: " << error.what() << dendl;
       return {};
     }

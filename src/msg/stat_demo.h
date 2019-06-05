@@ -37,7 +37,8 @@ struct stat_buffer {
                        st_size, st_atim, st_mtim, st_ctim);
 };
 
-stat_buffer get_stat(std::string pathname) {
+// this function should only be used in test!
+inline stat_buffer get_stat(std::string pathname) {
   struct stat _st;
   int err;
   if ((err = stat(pathname.c_str(), &_st)) == 0) {

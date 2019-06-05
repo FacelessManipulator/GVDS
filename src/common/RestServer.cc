@@ -1,7 +1,7 @@
 #include <signal.h>
 
-#include "aggregation/AggregationServer.h"
 #include "common/RestServer.h"
+#include "context.h"
 namespace hvs {
 
 void RestServer::init(size_t thr) {

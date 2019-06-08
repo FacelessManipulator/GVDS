@@ -6,6 +6,7 @@
 #include "datastore/datastore.h"
 
 #include "manager/zone/ZoneServer.h"
+#include "manager/authmodel/AuthModelServer.h"
 
 bool isSubset(std::vector<std::string> v1, std::vector<std::string> v2)
 {
@@ -422,7 +423,31 @@ namespace hvs{
         tmp.spaceID.emplace_back(spaceID);
 
         zonePtr->set(tmp.zoneID, tmp.serialize());
-        return 0;
+
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("user").get());
+        int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
+        if(res_za == 0)
+        {
+          if(tmp.memberID.empty())
+          {
+            return 0;
+          }
+          else
+          {            
+            int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);
+            if(memadd == 0) return 0;
+            else
+            {
+              std::cerr << "ZoneRegister:添加成员失败！" << std::endl;
+              return -1;
+            } 
+          }
+        }
+        else
+        {
+          std::cerr << "ZoneRegister:添加初始权限失败！" << std::endl;
+          return -1;
+        }
       }
     }
   }

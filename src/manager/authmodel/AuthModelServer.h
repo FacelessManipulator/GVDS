@@ -106,11 +106,11 @@ public:
  //--------------------------------------------
 public:
     AuthModelServer() : ManagerModule("auth") {
-        manager = static_cast<Manager*>(HvsContext::get_context()->node);
+        //aaaaa = *(HvsContext::get_context()->_config->get<std::string>("storage"));
     };
     ~AuthModelServer() {};
 public:
-    Manager* manager;
+    //std::string aaaaa; // 本机存储集群路径
 };
 
 

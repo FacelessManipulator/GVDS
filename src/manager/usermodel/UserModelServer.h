@@ -72,8 +72,8 @@ private:
     bool SubRemoveAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
 private:
-    string supercomputing_A = "Beijing";
-    string supercomputing_B = "Shanghai";
+    string supercomputing_A = "beihang"; //"Beijing";
+    string supercomputing_B = "zhongkeyuan"; //"Shanghai";
     string supercomputing_C = "Guangzhou";
     string supercomputing_D = "Changsha";
     string supercomputing_E = "Jinan";

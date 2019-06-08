@@ -69,7 +69,7 @@ TEST_F(HVSAccountTest, registration) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    Account person("lbq-7", "123456", "127", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang");
+    Account person("lbq-8", "123456", "128", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang");
     std::string value = person.serialize();
 
     auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();

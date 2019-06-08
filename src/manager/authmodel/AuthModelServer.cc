@@ -28,7 +28,7 @@ using namespace std;
 //有了hostCenterName，从配置文件获取对应的ip，不用if判断了
 //获取路径的时候，从配置文件读取对应超算的觉得路径，如/root/data/，拼接spacePath(这个是以区域uuid做为文件名的文件夹)，获取完整物理路径，设置相应权限
 
-
+// 0770 has some problem
 
 
 namespace hvs{
@@ -106,6 +106,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
         //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
         //TODO   usermod -a -G localpair.localaccount member_localpair.localaccount
         string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
+        cout << "cmd :" << cmd << endl;
         system(cmd.c_str()); //TODO 确认是否可行
     }// for
 
@@ -134,7 +135,7 @@ void AuthModelServer::self_AuthmemberdelRest(const Rest::Request& request, Http:
         response.send(Http::Code::Ok, "-1"); //point
     }
 
-    cout << "====== end AuthModelServer function: self_AuthmemberaddRest ======"<< endl;
+    cout << "====== end AuthModelServer function: self_AuthmemberdelRest ======"<< endl;
 }
 
 int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
@@ -172,6 +173,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
         //1.2将test1从testowner同名的组中删除    gpasswd testowner -d test222
         //TODO       gpasswd localpair.localaccount -d member_localpair.localaccount
         string cmd = "gpasswd " + localpair.localaccount + " -d " + member_localpair.localaccount;
+        cout << "cmd:" << cmd << endl;
         system(cmd.c_str()); //TODO 确认是否可行
     }// for
 
@@ -192,9 +194,9 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
     person.group_write = 1;
     person.group_exe = 1;
 
-    person.other_read = 1;
-    person.other_write = 1;
-    person.other_exe = 1;
+    person.other_read = 0;
+    person.other_write = 0;
+    person.other_exe = 0;
     
     string value = person.serialize();
 
@@ -214,7 +216,11 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
 //1.2 空间权限同步接口  :: 被空间创建模块调用 :: 查询空间所属区域的权限，设置空间为此权限
 //一次只设置一个空间，不涉及跨超算调用【因此此接口已完成，不用再次修改】
 int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID){
-    
+    cout << "=======start: SpacePermissionSyne=======" << endl;
+
+    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    cout <<"localstoragepath: " << localstoragepath << endl;
+
     // string ZoneID;
     // //调用sy的接口,获取空间对应的区域；
     // //bool getspace_zone(spaceID, & zoneID); 返回bool，  
@@ -265,12 +271,13 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         auth_sum_other += 1;
     string au_other = to_string(auth_sum_other);
 
-
+    cout << "111" << endl;
     //2、根据区域权限设置空间的权限
         //2.1 获取ownerid 对应的的本地账户(空间所在地)test1;
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
     //TODO   根据空间获取hostCenterName 值
         //2.1.1查询区域信息,获取区域对应空间信息
+    cout << "112.1" << endl;
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore("zone_info"));
     zone_dbPtr->init();
@@ -279,10 +286,10 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         cout << "authmodelserver: zone search fail" << endl;
         return -1;
     }
-
+    cout << "112.2" << endl;
     Zone zone_content;
     zone_content.deserialize(*pzone_value);  //为了获取zone_content.spaceID 一个vector
-    
+    cout << "112" << endl;
         //2.1.2获取每个空间对应的超算
     vector<string> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
@@ -290,13 +297,21 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
     p_space->GetSpacePosition(result, zone_content.spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
-    
+    cout << "113" << endl;
     vector<string>::iterator space_iter;
     for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
         SpaceMetaData spacemeta;
         spacemeta.deserialize(*space_iter);
 
+        if (spacemeta.spaceID.compare(spaceID) != 0){
+            continue;
+        }
+
+        //TODO 测试时假设是Shanghai
         string hostCenterName = spacemeta.hostCenterName;
+        cout <<"spacemeta.hostCenterName: " << spacemeta.hostCenterName << endl;
+        //string hostCenterName ="Shanghai";
+        cout <<"test hostCenterName: " << hostCenterName << endl;
 
         string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName);
         if (value.compare("fail") == 0){
@@ -308,19 +323,26 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
 
             //2.2 更改文件夹所属用户和组chown -R test1:test1 空间名
         //获取物理路径 spacepath值 
-        string spacepath = spacemeta.spacePath; //这个可能不是最终的路径，需确认TODO
+        string spacepath = localstoragepath + spacemeta.spacePath; //这个可能不是最终的路径，需确认TODO
+        cout << "localstoragepath : " << localstoragepath <<endl; 
+        cout << "final path :" << spacepath << endl;
         //TODO  获取账户名(localpair.localaccount)和组名（localpair.localaccount）的uid、gid
-        int uid;
-        int gid;
+        // int uid;
+        // int gid;
 
-        if(chown(spacepath.c_str(), uid, gid) == -1){
-            return -1;
-        }
+        // if(chown(spacepath.c_str(), uid, gid) == -1){
+        //     return -1;
+        // }
+
+        string tmp_cmd = "chown -R " + localpair.localaccount + ":" + localpair.localaccount + " " + spacepath;
+        system(tmp_cmd.c_str());
             //2.3 设置权限：chmod （au_person）(au_group)0 文件名
         string tmp_str = "0" + au_person + au_group + au_other;
         int tmp_int = atoi(tmp_str.c_str());
+        cout << "tmp_int: " << tmp_int << endl;
         //TODO  注意确认这块设置权限是否有问题
-        if (chmod(spacepath.c_str(), tmp_int) == -1){
+        if (chmod(spacepath.c_str(), 0770) == -1){ //TODO    tmp_int=770 这块参数类型有问题，要0770才正常
+            cout << "chmod fail";
             return -1;
         }
 
@@ -332,10 +354,16 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
 
 }
 
+//1、根据zoneid 获取区域的权限 
+//2  shezhi ci spaceID yu zoneid xiangtong quanxian
+        //huoqu space suozaidi de owner duiying de local zhanghu
+
+
+
+
 
 //1.3 副本权限同步接口   :: 被空间创建模块调用 ::  这个和sy商量下
-int AuthModelServer::ReplacePermissionSyne(){
-}
+int AuthModelServer::ReplacePermissionSyne(){}
 
 //1.4 空间定位接口      我调sy
 
@@ -380,6 +408,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         spacemeta.deserialize(*space_iter); //空间的信息
 
         string hostCenterName = spacemeta.hostCenterName;
+        cout << "hostCenterName: " << hostCenterName << endl;
 
         //++++++++++++++++++++++++++++++++++++
         //获取hostCenterName，并进行判断，向对应超算中心发出请求,包含又发送到本超算的restful请求
@@ -393,7 +422,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         //TODO  暂时设置为localhost
         string ip_space = "localhost";
         //TODO 注意端口是否正确
-        snprintf(url, 256, "http://%s:%d/auth/selfmemberadd", ip_space.c_str() ,manager->rest_port());
+        snprintf(url, 256, "http://%s:%d/auth/selfmemberadd", ip_space.c_str() ,mgr->rest_port());
 
         SelfAuthSpaceInfo auth_space;
         auth_space.spaceinformation = *space_iter;
@@ -511,8 +540,9 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
         //TODO  暂时设置为localhost
         string ip_space = "localhost";
 
-        //TODO 注意端口是否正确
-        snprintf(url, 256, "http://%s:%d/auth/selfmemberdel", ip_space.c_str() ,manager->rest_port());
+        //TODO 注意端口是否正确  
+
+        snprintf(url, 256, "http://%s:%d/auth/selfmemberdel", ip_space.c_str() ,mgr->rest_port());
 
         SelfAuthSpaceInfo auth_space;
         auth_space.spaceinformation = *space_iter;
@@ -560,8 +590,12 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
 
 
 //2.4 空间权限删除接口  ：：被空间创建模块调用：：删除存储集群上空间对应的权限  //数据库不用更新，因为无此空间记录
-//这个也不跨超算，因此不用rest，【不用更改】
+//这个也不跨超算，因此不用rest，【不用更改】 //这是因为在客户端就判断好了在哪个管理节点--宋尧
 int AuthModelServer::SpacePermissionDelete(string spaceID){
+
+    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    cout <<"localstoragepath: " << localstoragepath << endl;
+
     vector<string> tmp_vec_spaceID;
     tmp_vec_spaceID.push_back(spaceID);
 
@@ -577,7 +611,8 @@ int AuthModelServer::SpacePermissionDelete(string spaceID){
         spacemeta.deserialize(*space_iter); 
 
         //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
-        string spacepath = spacemeta.spacePath;
+        string spacepath = localstoragepath + spacemeta.spacePath;
+        cout << "final path: " << spacepath << endl;
 
         //root的gid、uid为0
         if(chown(spacepath.c_str(), 0, 0) == -1){

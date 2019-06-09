@@ -26,7 +26,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("couchbase.user", string("dev"));
   _config->add("couchbase.password", string("buaaica"));
   _config->add("rest.port", 9090);
-  _config->add("rest.thread_num", 1);
+  _config->add("rest.thread_num", 10);
   _config->add("couchbase.bucket", string("test"));
   
   // fuse config options

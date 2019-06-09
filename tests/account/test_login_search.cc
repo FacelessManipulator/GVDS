@@ -126,10 +126,11 @@ TEST_F(HVSAccountTest, login_search) {
   // tmp
   //UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
   //string value = p_usermodel->getLocalAccountinfo("127", "Shanghai");
-  cout << "=====*****============" << endl;
-  UserModelServer tmp_u;
-  string value = tmp_u.getLocalAccountinfo("127", "Jinan");
-  cout << "=====add account map" <<value << endl;
+  
+  // cout << "=====*****============" << endl;
+  // UserModelServer tmp_u;
+  // string value = tmp_u.getLocalAccountinfo("127", "Jinan");
+  // cout << "=====add account map" <<value << endl;
   //
 
   client.shutdown();

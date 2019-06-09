@@ -22,8 +22,8 @@ std::unordered_map<std::string, std::string> zonemap;
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
     char* demo1[11] = {const_cast<char *>("zonerename"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("34299"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest"), const_cast<char *>("--id"), const_cast<char *>("000"),
+                       const_cast<char *>("-p"), const_cast<char *>("52857"), const_cast<char *>("--zonename"),
+                       const_cast<char *>("123123"), const_cast<char *>("--id"), const_cast<char *>("000"),
                        const_cast<char *>("-n"), const_cast<char *>("compute-zonetest2")};
     char* demo2[2] = {const_cast<char *>("zonerename"), const_cast<char *>("--help")};
 

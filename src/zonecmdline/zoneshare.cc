@@ -21,10 +21,10 @@ std::unordered_map<std::string, std::string> zonemap;
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[13] = {const_cast<char *>("zoneshare"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("34779"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000"),
-                       const_cast<char *>("--member"), const_cast<char *>("111"), const_cast<char *>("--member"), const_cast<char *>("222")};
+    char* demo1[11] = {const_cast<char *>("zoneshare"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
+                       const_cast<char *>("-p"), const_cast<char *>("52857"), const_cast<char *>("--zonename"),
+                       const_cast<char *>("zone-auth-test2"), const_cast<char *>("--id"), const_cast<char *>("127"),
+                       const_cast<char *>("--member"), const_cast<char *>("128"),/* const_cast<char *>("--member"), const_cast<char *>("222")*/};
     char* demo2[2] = {const_cast<char *>("zoneshare"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
     std::vector<std::string> memID;
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(13, demo1);
+    CmdLineProxy commandline(11, demo1);
 //    CmdLineProxy commandline(2, demo2);
     std::string cmdname = "zoneshare";
     // TODO：设置当前命令行解析函数

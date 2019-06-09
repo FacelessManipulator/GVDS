@@ -282,16 +282,22 @@ namespace hvs{
     if(tmp.ownerID == ownerID)
     {
       //TODO:插入调用lbq模块
-      for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
+      AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+      int memadd = p_auth->ZoneMemberAdd(zoneID, ownerID, memberID);
+      if(memadd == 0)
       {
-        std::string tmp_mem = *it;
-        if(std::find(tmp.memberID.begin(), tmp.memberID.end(), tmp_mem) != tmp.memberID.end()) continue;
-        else
-          tmp.memberID.emplace_back(tmp_mem);
+        for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
+        {
+          std::string tmp_mem = *it;
+          if(std::find(tmp.memberID.begin(), tmp.memberID.end(), tmp_mem) != tmp.memberID.end()) continue;
+          else
+            tmp.memberID.emplace_back(tmp_mem);
+        }
+        tmp_value = tmp.serialize();
+        zonePtr->set(zoneID, tmp_value);
+        return 0;
       }
-      tmp_value = tmp.serialize();
-      zonePtr->set(zoneID, tmp_value);
-      return 0;
+      else return -1;
     }
     else
       return -1;
@@ -335,25 +341,31 @@ namespace hvs{
     if(tmp.ownerID == ownerID)
     {
       //插入调用lbq模块
-      for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
+      AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+      int memdel = p_auth->ZoneMemberDel(zoneID, ownerID, memberID);
+      if(memdel == 0)
       {
-        std::string tmp_mem = *it;
-        std::vector<std::string>::iterator m = tmp.memberID.begin();
-        while(m != tmp.memberID.end())
+        for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
         {
-          if(*m == tmp_mem)
+          std::string tmp_mem = *it;
+          std::vector<std::string>::iterator m = tmp.memberID.begin();
+          while(m != tmp.memberID.end())
           {
-            m = tmp.memberID.erase(m);
-          }
-          else
-          {
-            ++m;
+            if(*m == tmp_mem)
+            {
+              m = tmp.memberID.erase(m);
+            }
+            else
+            {
+              ++m;
+            }
           }
         }
+        tmp_value = tmp.serialize();
+        zonePtr->set(zoneID, tmp_value);
+        return 0;
       }
-      tmp_value = tmp.serialize();
-      zonePtr->set(zoneID, tmp_value);
-      return 0;
+      else return -1;
     }
     else
         return -1;
@@ -424,7 +436,7 @@ namespace hvs{
 
         zonePtr->set(tmp.zoneID, tmp.serialize());
 
-        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("user").get());
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
         int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
         if(res_za == 0)
         {
@@ -511,7 +523,36 @@ namespace hvs{
         tmp.spaceID.emplace_back(spaceID);
 
         zonePtr->set(tmp.zoneID, tmp.serialize());
-        return 0;
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+        int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
+        if(res_za == 0)
+        {
+          //空间权限同步
+          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID);
+          if(spacesyne == 0)
+          {
+            if(tmp.memberID.empty())
+            {
+              return 0;
+            }
+            else
+            {            
+              int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);
+              if(memadd == 0) return 0;
+              else
+              {
+                std::cerr << "ZoneAdd:添加成员失败！" << std::endl;
+                return -1;
+              } 
+            }
+          }
+          else return -1;
+        }
+        else
+        {
+          std::cerr << "ZoneAdd:添加初始权限失败！" << std::endl;
+          return -1;
+        }
       }
     }
     else if(vp->size() == 1)
@@ -531,7 +572,14 @@ namespace hvs{
         tmp.deserialize(tmp_value);
         tmp.spaceID.emplace_back(spaceID);
         zonePtr->set(tmp.zoneID, tmp.serialize());
-        return 0;
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+        int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID);
+        if(spacesyne == 0) return 0;
+        else
+        {
+          std::cerr << "ZoneAdd:空间权限同步失败！" << std::endl;
+          return -1;
+        }
       }
     }
     else return -1;
@@ -571,11 +619,17 @@ namespace hvs{
     if(tmp.ownerID == ownerID)
     {
       //TODO：插入lbq权限删除
-      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
-      if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+      AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+      int res_zd = p_auth->ZonePermissionDeduct(zoneID, ownerID);
+      if(res_zd == 0)
       {
-        zonePtr->remove(zoneID);
-        return 0;
+        SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
+        if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+        {
+          zonePtr->remove(zoneID);
+          return 0;
+        }
+        else return -1;
       }
       else return -1;
     }
@@ -629,7 +683,14 @@ namespace hvs{
         std::string spaceID = res_sc;
         tmp.spaceID.emplace_back(spaceID);
         zonePtr->set(tmp_key, tmp.serialize());
-        return 0;
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+        int spacesyne = p_auth->SpacePermissionSyne(spaceID, zoneID, ownerID);
+        if(spacesyne == 0) return 0;
+        else
+        {
+          std::cerr << "MapAdd:空间权限同步失败！" << std::endl;
+          return -1;
+        }
       }
     }
   }
@@ -664,26 +725,44 @@ namespace hvs{
     {
       if(isSubset(tmp.spaceID, spaceID))
       {
-        SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
-        tmp_server->SpaceDelete(spaceID); // 调用空间模块，删除空间条目
-        for(std::vector<std::string>::iterator it = spaceID.begin(); it != spaceID.end(); it++)
+        int spaceauthfault = 0;
+        for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
         {
-          std::string will_removed_spaceID = *it;
-          std::vector<std::string>::iterator m = tmp.spaceID.begin();
-          while(m != tmp.spaceID.end())
+          AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+          int spaceauthdel = p_auth->SpacePermissionDelete(*m);
+          if(spaceauthdel == 0) continue;
+          else
           {
-            if(*m == will_removed_spaceID)
+            std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+            spaceauthfault = 1;
+            break;
+          }
+
+        }
+        if(spaceauthfault == 0)
+        {
+          SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
+          tmp_server->SpaceDelete(spaceID); // 调用空间模块，删除空间条目
+          for(std::vector<std::string>::iterator it = spaceID.begin(); it != spaceID.end(); it++)
+          {
+            std::string will_removed_spaceID = *it;
+            std::vector<std::string>::iterator m = tmp.spaceID.begin();
+            while(m != tmp.spaceID.end())
             {
-              m = tmp.spaceID.erase(m);
-            }
-            else
-            {
-              ++m;
+              if(*m == will_removed_spaceID)
+              {
+                m = tmp.spaceID.erase(m);
+              }
+              else
+              {
+                ++m;
+              }
             }
           }
+          zonePtr->set(zoneID, tmp.serialize());
+          return 0;
         }
-        zonePtr->set(zoneID, tmp.serialize());
-        return 0;
+        else return -1;
       }
       else return -1;
     }

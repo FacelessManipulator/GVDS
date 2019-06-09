@@ -1,30 +1,35 @@
 #include "io_proxy/io_proxy.h"
+#include <pistache/client.h>
+#include <boost/filesystem.hpp>
+#include <future>
+#include <mutex>
+#include "hvs_struct.h"
 #include "io_proxy/io_worker.h"
 #include "rpc_bindings.hpp"
 
-#include <mutex>
-#include <future>
-
 using namespace std;
 using namespace hvs;
+using namespace Pistache;
 
 namespace hvs {
 IOProxyWorker* IOProxy::_get_idle_worker() {
   IOProxyWorker* ret;
   // cause io process is fast, use spin lock here
-  while(!idle_list.pop(ret));
+  while (!idle_list.pop(ret))
+    ;
   return ret;
 }
 
 bool IOProxy::add_idle_worker(IOProxyWorker* woker) {
   // should not wait, idle list max capcity > max number of idle worker
-  while(!idle_list.push(woker));
+  while (!idle_list.push(woker))
+    ;
 };
 
 bool IOProxy::queue_and_wait(std::shared_ptr<OP> op) {
   promise<bool> worker_is_done;
   auto f = worker_is_done.get_future();
-  boost::function0<void> cb = [&worker_is_done](){
+  boost::function0<void> cb = [&worker_is_done]() {
     worker_is_done.set_value(true);
   };
   op->complete_callbacks.push_back(cb);
@@ -38,17 +43,17 @@ bool IOProxy::queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops) {
   atomic_long cnt = 0;
   const long expect_done = ops.size();
   auto f = worker_is_done.get_future();
-  boost::function0<void> cb = [&worker_is_done, &cnt, expect_done](){
+  boost::function0<void> cb = [&worker_is_done, &cnt, expect_done]() {
     ++cnt;
-    if(cnt.load() >= expect_done) {
+    if (cnt.load() >= expect_done) {
       worker_is_done.set_value(true);
     }
   };
-  for(auto op:ops) {
+  for (auto op : ops) {
     op->complete_callbacks.push_back(cb);
     queue_op(op, true);
   }
-  f.wait_for(std::chrono::milliseconds(100)*ops.size());
+  f.wait_for(std::chrono::milliseconds(100) * ops.size());
   // WARNING: DO NOT CHANGE THE COMPLETE_CALLBACKS DURING THIS PERIODS
 }
 
@@ -58,8 +63,7 @@ bool IOProxy::queue_op(std::shared_ptr<OP> op, bool block) {
   m_queue_mutex_holder = pthread_self();
 
   // wait for dispatch to catch up
-  if(op_waiting_line.size() > m_max_op && !block)
-    return false;
+  if (op_waiting_line.size() > m_max_op && !block) return false;
   while (op_waiting_line.size() > m_max_op && block)
     pthread_cond_wait(&m_cond_ioproxy, &m_queue_mutex);
 
@@ -112,31 +116,57 @@ void IOProxy::_dispatch() {
 void IOProxy::_dispatch_unsafe(std::queue<std::shared_ptr<OP>>* t) {
   // declare release object
   //  std::shared_ptr<OP> op;
-  while(!t->empty()) {
+  while (!t->empty()) {
     auto op = t->front();
     t->pop();
-    assert(op.get()); // op ptr should not be empty
-    auto worker = _get_idle_worker(); // may wait on spin lock
+    assert(op.get());                  // op ptr should not be empty
+    auto worker = _get_idle_worker();  // may wait on spin lock
     boost::intrusive_ptr<OpQueued> opq = new OpQueued(op);
     worker->my_scheduler().queue_event(worker->my_handle(), opq);
   }
 }
 
-void IOProxy::start() {
+bool IOProxy::start() {
   pthread_mutex_lock(&m_queue_mutex);
   m_stop = false;
   // TODO: read configs
   auto _config = HvsContext::get_context()->_config;
   auto scher_o = _config->get<int>("ioproxy.scher");
+  data_path = _config->get<string>("ioproxy.data_path").value_or("/tmp/data");
+  auto __manager_addr = _config->get<std::string>("ioproxy.manager_addr");
+  if (!__manager_addr) {
+    dout(-1) << "ERROR: NO MANAGER ADDR FOUND IN CONFIG FILE!\nPlease add "
+                "manager addr in config file."
+             << dendl;
+    // may test with proxy only mode.
+    // exit(-1);
+  } else {
+    manager_addr = __manager_addr.value();
+  }
+  if (!_config->get<string>("ioproxy.uuid").has_value()) {
+    dout(-1) << "please use linux command UUID to generate IO proxy's UUID and "
+                "insert it into config file."
+             << dendl;
+    return false;
+  }
+  uuid = _config->get<string>("ioproxy.uuid").value();
+  if (!boost::filesystem::exists(data_path) ||
+      !boost::filesystem::is_directory(data_path)) {
+    dout(-1) << "ERROR: IOProxy data path not exists or is not directory."
+             << dendl;
+    return false;
+  }
+
   int scher_num = scher_o.value_or(8);
-  for(int i = 0; i < scher_num; i++) {
+  for (int i = 0; i < scher_num; i++) {
     auto scher = make_shared<IOProxy_scheduler>(true);
     schedulers.push_back(scher);
-    for(int j = 0; j < m_max_worker/scher_num; j++) {
+    for (int j = 0; j < m_max_worker / scher_num; j++) {
       auto worker = scher->create_processor<IOProxyWorker>();
       scher->initiate_processor(worker);
     }
-    boost::thread* t = new boost::thread(boost::bind(&IOProxy_scheduler::operator(), scher.get(), 0));
+    boost::thread* t = new boost::thread(
+        boost::bind(&IOProxy_scheduler::operator(), scher.get(), 0));
     worker_threads.push_back(t);
   }
   pthread_mutex_unlock(&m_queue_mutex);
@@ -144,19 +174,22 @@ void IOProxy::start() {
   _rpc = init_rpcserver();
   if (!_rpc) {
     dout(-1) << "failed to start rpc component, exit!" << dendl;
-    exit(-1);
+    return false;
   }
   _udt = init_udtserver();
   if (!_udt) {
     dout(-1) << "failed to start udt component, exit!" << dendl;
-    exit(-1);
+    return false;
   }
   create("io_proxy");
+  fresh_stat();
+  return true;
 }
 
 void IOProxy::stop() {
   if (is_started()) {
     if (_rpc != nullptr) {
+      dout(-1) << "stopping rpc service..." << dendl;
       _rpc->stop();
       delete _rpc;
       _rpc = nullptr;
@@ -170,18 +203,55 @@ void IOProxy::stop() {
   }
 }
 
-void IOProxy::rpc_bind(RpcServer* server) {
-  hvs_ioproxy_rpc_bind(server);
+void IOProxy::fresh_stat() {
+  // regist itself to manager node
+  Http::Client client;
+  char url[256];
+  snprintf(url, 256, "http://%s/ioproxy", manager_addr.c_str());
+  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+  client.init(opts);
+
+  // add ioproxy
+  IOProxyNode node;
+  node.name = Node::name;
+  node.ip = Node::addr.to_string();
+  node.rpc_port = _rpc->port;
+  node.data_port = _udt->port;
+  auto response = client.post(url).body(node.serialize()).send();
+  dout(-1) << "DEBUG: Connecting to manager server [" << url << "]" << dendl;
+
+  std::promise<bool> prom;
+  auto fu = prom.get_future();
+  response.then(
+      [&](Http::Response res) {
+        dout(10) << "INFO: connected to manager server. Response: " << res.code()
+                 << dendl;
+        // uuid = res.body();
+        prom.set_value(true);
+      },
+      Async::IgnoreException);
+  auto status = fu.wait_for(std::chrono::seconds(3));
+  if(status == std::future_status::timeout)
+    dout(-1) << "WARNING: Lost connection with manager server [" << url << "]" << dendl;
+  client.shutdown();
 }
 
+void IOProxy::rpc_bind(RpcServer* server) { hvs_ioproxy_rpc_bind(server); }
+
 hvs::IOProxy* init_ioproxy() {
-  hvs::IOProxy *ioproxy = new hvs::IOProxy;
+  hvs::IOProxy* ioproxy = new hvs::IOProxy;
   hvs::HvsContext::get_context()->node = ioproxy;
-  ioproxy->start();
-  return ioproxy;
+  if(ioproxy->start())
+    return ioproxy;
+  else {
+    delete ioproxy;
+    return nullptr;
+  }
 }
+
 void destroy_ioproxy(hvs::IOProxy* ioproxy) {
-  ioproxy->stop();
-//  delete ioproxy;
+  if(ioproxy)
+    ioproxy->stop();
+  //  delete ioproxy;
 }
-}
+}  // namespace hvs

@@ -7,7 +7,9 @@
  */
 
 #include "config/ConfigureSettings.h"
+#include <boost/filesystem.hpp>
 #include "config/default_config.hpp"
+
 using namespace libconfig;
 using namespace hvs;
 using namespace std;
@@ -21,20 +23,19 @@ CONFIG_DEFINE_TYPE(std::string, libconfig::Setting::TypeString);
 CONFIG_DEFINE_TYPE(char*, libconfig::Setting::TypeString);
 
 // 创建配置文件解析模块
-ConfigureSettings::ConfigureSettings(const std::string &configfile)
+ConfigureSettings::ConfigureSettings(const std::string& configfile)
     : _vaild(false) {
   try {
     baseCfg.readFile(configfile.c_str());
     _vaild = true;
-  } catch (const FileIOException &fileIOException) {
+  } catch (const FileIOException& fileIOException) {
     std::cerr << "无法读取配置文件: " << fileIOException.what() << std::endl;
-  } catch (const ParseException &parseException) {
+  } catch (const ParseException& parseException) {
     std::cerr << "配置文件解析错误： " << parseException.getFile() << ":"
               << parseException.getLine() << " - " << parseException.getError()
               << std::endl;
-  } catch (const SettingNameException &settingNameException) {
-    std::cerr << "配置文件读取错误"<< settingNameException.what()
-              << std::endl;
+  } catch (const SettingNameException& settingNameException) {
+    std::cerr << "配置文件读取错误" << settingNameException.what() << std::endl;
   }
 }
 
@@ -103,24 +104,40 @@ libconfig::Setting& ConfigureSettings::_build_group(libconfig::Setting& setting,
   return *setting_cur;
 }
 
-bool ConfigureSettings::writeFile(const char *outfile) {
+bool ConfigureSettings::writeFile(const char* outfile) {
   try {
     baseCfg.writeFile(outfile);
     // std::cerr << "配置文件更新成功: " << outfile << std::endl;
     return true;
-  } catch (const FileIOException &fileIOException) {
+  } catch (const FileIOException& fileIOException) {
     std::cerr << "文件写入过程 I/O 错误" << outfile << fileIOException.what()
               << std::endl;
     return false;
-  } catch (const SettingException &settingException) {
+  } catch (const SettingException& settingException) {
     std::cerr << "文件写入错误" << outfile << settingException.what()
               << std::endl;
   }
 }
 
-hvs::ConfigureSettings* hvs::init_config(std::string configPath) {
-  hvs::ConfigureSettings* _config = new hvs::ConfigureSettings(configPath);
-  // default config code was moved to src/config/default_config.hpp
-  default_config(_config);
-  return _config;
+hvs::ConfigureSettings* hvs::init_config() {
+  hvs::ConfigureSettings* _config = nullptr;
+  std::vector<std::string> default_config_paths{
+      "./hvs.conf", "/etc/hvs/hvs.conf", "/opt/hvs/hvs.conf"};
+  for (auto& path : default_config_paths) {
+    if (boost::filesystem::exists(path)) {
+      _config = new hvs::ConfigureSettings(path);
+      if(!_config->vaild()) {
+        return nullptr;
+      }
+      // default config code was moved to src/config/default_config.hpp
+      default_config(_config);
+      return _config;
+    }
+  }
+  std::cerr << "ERROR: can't find hvs.conf in [";
+  for(auto& path : default_config_paths) {
+    std::cerr << "\"" << path << "\", ";
+  }
+  std::cerr << "]" << std::endl;
+  return nullptr;
 }

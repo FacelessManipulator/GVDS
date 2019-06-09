@@ -58,6 +58,7 @@ hvs::Log *init_logger() {
   log->set_log_file(*log_path);
   log->set_log_level(*log_level);
   if (!log->reopen_log_file()) {
+    // cannot open log file, exit!
     return nullptr;
   }
   log->start();
@@ -202,6 +203,7 @@ void Log::_flush_logbuf() {
     _log_safe_write(m_log_buf, m_log_buf_pos);
     m_log_buf_pos = 0;
   }
+  m_fstream.flush();
 }
 
 void Log::_flush(std::queue<EntryPtr> *t) {

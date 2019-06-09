@@ -13,6 +13,7 @@ void ClientFuse::start() {
   auto multithread = _config->get<bool>("fuse.multithread");
   auto auto_unmount = _config->get<bool>("fuse.auto_unmount");
   use_udt = _config->get<bool>("fuse.use_udt").value_or(true);
+  snprintf(workers_argv, 32, "max_idle_threads=%u", _config->get<unsigned int>("fuse.workers").value_or(10));
   memcpy(mountpoint, mp.value_or("/mnt/hvs").c_str(), mp.value_or("/mnt/hvs").size());
   char *options[] = {
       const_cast<char *>("hvs_client"), const_cast<char *>("-f"),
@@ -29,7 +30,7 @@ void ClientFuse::start() {
     fuse_argv[fuse_argc] = options[2];
     fuse_argc++;
   }
-  if (multithread.value_or(true)) {
+  if (!multithread.value_or(true)) {
     fuse_argv[fuse_argc] = options[3];
     fuse_argc++;
   }
@@ -38,6 +39,10 @@ void ClientFuse::start() {
     fuse_argv[fuse_argc + 1] = options[5];
     fuse_argc += 2;
   }
+  // fuse worker threads
+    fuse_argv[fuse_argc] = options[4];
+    fuse_argv[fuse_argc+1] = workers_argv;
+    fuse_argc += 2;
   fuse_argv[fuse_argc] = mountpoint;
   fuse_argc ++;
   fs_priv.client = client;

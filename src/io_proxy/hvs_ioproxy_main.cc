@@ -3,42 +3,24 @@
 // 北航系统结构所-存储组
 //
 
-#include <iostream>
 #include <unistd.h>
+#include <iostream>
 #include "context.h"
 #include "io_proxy/io_proxy.h"
 #include "msg/rpc.h"
 #include "rpc_bindings.hpp"
 
-void init();
-void destroy();
-void run();
-
-hvs::IOProxy* ioproxy;
-
-int main(int argc, char* argv[]){
-    std::cout << "IO代理节点" << std::endl;
-    init();
-    run();
-    destroy();
-    return 0;
-}
-
-void run(){
-    std::cout << "正在运行！" << std::endl;
-}
-
-void init(){
-    hvs::init_context();
-    ioproxy = hvs::init_ioproxy();
-    // 设置IO代理根文件夹
-    hvs::HvsContext::get_context()->ioproxy_rootdir = "/tmp/hvs/tests/data";
-}
-
-void destroy(){
-    usleep(100); // give some time waiting the reset of state machine
-    ioproxy->join(); // 等待IO代理退出
-    ioproxy = nullptr;
-    hvs::destroy_ioproxy(static_cast<hvs::IOProxy*>(hvs::HvsContext::get_context()->node));
-    hvs::destroy_context();
+int main(int argc, char* argv[]) {
+  hvs::init_context();
+  std::cout << "IOProxy Node Context initilized." << std::endl;
+  hvs::IOProxy* ioproxy = hvs::init_ioproxy();
+  if(ioproxy) {
+    usleep(100);      // give some time waiting the reset of state machine
+    std::cout << "IOProxy Node {" << ioproxy->uuid << "} is running." << std::endl;
+    ioproxy->join();  // 等待IO代理退出
+    hvs::destroy_ioproxy(
+        static_cast<hvs::IOProxy*>(hvs::HvsContext::get_context()->node));
+  }
+  hvs::destroy_context();
+  return 0;
 }

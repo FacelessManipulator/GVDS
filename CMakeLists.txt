@@ -111,3 +111,7 @@ if(BUILD_DOC)
     message("Doxygen need to be installed to generate the doxygen documentation")
  endif (DOXYGEN_FOUND)
 endif(BUILD_DOC)
+
+SET(CONFIG_IN ${PROJECT_SOURCE_DIR}/hvs.conf.example)
+SET(CONFIG_OUT /opt/hvs//hvs.conf)
+configure_file(${CONFIG_IN} ${CONFIG_OUT} @ONLY)

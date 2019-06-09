@@ -24,7 +24,7 @@ class Manager : public Thread, public Node, public JsonSerializer {
   Manager() : m_stop(false), Node(MANAGER_NODE) {
     // TODO: should read from config file
   }
-  void start();
+  bool start();
   void stop();
   void registe_module(std::shared_ptr<ManagerModule> mod);
   std::shared_ptr<ManagerModule> get_module(const std::string & mod_name);

@@ -5,7 +5,9 @@ using namespace std;
 void ClientGraph::start() {
   // TODO: currently we makeup an fake space. we should replace it with space mod.
   auto ion = make_shared<IOProxyNode>();
-  ion->ip = "127.0.0.1";
+  auto _config = HvsContext::get_context()->_config;
+  auto ip = _config->get<string>("debug.ioproxy");
+  ion->ip = ip.value_or("127.0.0.1");
   ion->rpc_port = 9092;
   ion->data_port = 9095;
   set_mapping("space", ion, "/");

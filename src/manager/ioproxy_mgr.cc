@@ -19,7 +19,7 @@ void IOProxy_MGR::stop() { m_stop = true; }
 
 void* IOProxy_MGR::entry() {
   while (!m_stop) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(60));
     dout(5) << "ioproxy mgr check heart beat." << dendl;
   }
 }
@@ -42,7 +42,7 @@ bool IOProxy_MGR::add(const Rest::Request& req, Http::ResponseWriter res) {
     return false;
   }
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
-  auto err = cbd->insert(iop->uuid, iop->json_value());
+  auto err = cbd->upsert(iop->uuid, iop->json_value());
   usleep(100000); // may take 100ms to be effective
   res.send(Code::Accepted, iop->uuid);
   return true;
@@ -79,6 +79,7 @@ bool IOProxy_MGR::del(const Rest::Request& req, Http::ResponseWriter res) {
 }
 
 bool IOProxy_MGR::update(const Rest::Request& req, Http::ResponseWriter res) {}
+
 std::shared_ptr<IOProxyNode> IOProxy_MGR::parse_request(
     const Rest::Request& req) {
   auto cnt = req.body();

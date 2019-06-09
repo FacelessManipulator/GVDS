@@ -40,6 +40,7 @@ class UDTServer : public Thread {
   bool m_stop;
 
   friend class ServerSession;
+  friend class IOProxy;
 };
 
 UDTServer* init_udtserver();

@@ -16,6 +16,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("list", vector{1, 2, 3});
 
   _config->add("ip", string("0.0.0.0"));
+  _config->add("manager_addr", vector{string("127.0.0.1")});
   _config->add("log.path", string("/var/log/hvs.log"));
   _config->add("log.level", 10);
   _config->add("rpc.port", 9092);

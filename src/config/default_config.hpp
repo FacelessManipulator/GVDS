@@ -48,5 +48,9 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("client.data_port_begin", 9096);
   _config->add("client.data_port_end", 9150);
   _config->add("client.data_buffer", 10240000);
+
+  // manager config options
+  _config->add("manager.port", 9090);
+  _config->add("manager.thread_num", 6);
 }
 }  // namespace hvs

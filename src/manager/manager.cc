@@ -122,8 +122,10 @@ hvs::Manager* init_manager() {
   mgr->registe_module(std::make_shared<ZoneServer>());
   mgr->registe_module(std::make_shared<SpaceServer>());
   hvs::HvsContext::get_context()->node = mgr;
-  if(mgr->start())
+  if(mgr->start()) {
+    // TODO: use condition or mutex to wait the init stage
     return mgr;
+  }
   else {
     delete mgr;
     return nullptr;

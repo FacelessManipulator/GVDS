@@ -17,7 +17,7 @@ rpc = {
 ioproxy = {
     //use linux command uuid to generate your own uuid
     uuid = "a8a8eb78-8536-4bb5-a22a-c83483eff378";
-    manager_addr = "127.0.0.1";
+    manager_addr = "127.0.0.1:9090";
     scher = 6;
     data_path = "/opt/hvs/var/data";
     data_port = 9095;
@@ -28,6 +28,8 @@ ioproxy = {
 manager = {
     //use linux command uuid to generate your own uuid
     uuid = "6305fe8e-7fbd-11e9-a2ea-27b96962514c";
+    port = 9090;
+    thread_num = 6;
 };
 
 // only manager node need these settings
@@ -46,7 +48,7 @@ rest = {
 // only client node need these settings
 fuse = {
     mountpoint = "/mnt/hvs";
-    foreground = false;
+    foreground = true;
     debug = false;
     multithread = true;
     auto_unmount = true;

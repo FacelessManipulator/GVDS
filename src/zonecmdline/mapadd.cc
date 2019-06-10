@@ -21,10 +21,10 @@ std::unordered_map<std::string, std::string> zonemap;
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[15] = {const_cast<char *>("mapadd"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("34299"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest"), const_cast<char *>("--id"), const_cast<char *>("000"), const_cast<char *>("--spacename"),
-                       const_cast<char *>("compute3"), const_cast<char *>("--spacesize"), const_cast<char *>("50"),
+    char* demo1[15] = {const_cast<char *>("mapadd"), const_cast<char *>("--ip"), const_cast<char *>("192.168.5.222"),
+                       const_cast<char *>("-p"), const_cast<char *>("49069"), const_cast<char *>("--zonename"),
+                       const_cast<char *>("zonetest"), const_cast<char *>("--id"), const_cast<char *>("127"), const_cast<char *>("--spacename"),
+                       const_cast<char *>("spacetest2"), const_cast<char *>("--spacesize"), const_cast<char *>("50"),
                        const_cast<char *>("--center"), const_cast<char *>("beihang")};
     char* demo2[2] = {const_cast<char *>("mapadd"), const_cast<char *>("--help")};
 

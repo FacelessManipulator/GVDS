@@ -21,10 +21,10 @@ std::unordered_map<std::string, std::string> zonemap;
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[11] = {const_cast<char *>("zonerename"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("52857"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("123123"), const_cast<char *>("--id"), const_cast<char *>("000"),
-                       const_cast<char *>("-n"), const_cast<char *>("compute-zonetest2")};
+    char* demo1[11] = {const_cast<char *>("zonerename"), const_cast<char *>("--ip"), const_cast<char *>("192.168.5.222"),
+                       const_cast<char *>("-p"), const_cast<char *>("49069"), const_cast<char *>("--zonename"),
+                       const_cast<char *>("zonetest"), const_cast<char *>("--id"), const_cast<char *>("127"),
+                       const_cast<char *>("-n"), const_cast<char *>("zonetest2")};
     char* demo2[2] = {const_cast<char *>("zonerename"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
@@ -36,9 +36,9 @@ int main(int argc, char* argv[]){
     std::string zoneuuid;
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(11, demo1);
+    CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
-    std::string cmdname = "zonerename";
+    std::string cmdname = argv[0];//"zonerename";
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("区域重命名模块");

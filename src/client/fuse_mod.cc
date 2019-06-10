@@ -44,7 +44,9 @@ void ClientFuse::start() {
   fs_priv.fuse_client = this;
 }
 
-void ClientFuse::stop() {}
+void ClientFuse::stop() {
+  //exit(0);
+}
 
 void ClientFuse::run() {
   int fuse_stat = 0;

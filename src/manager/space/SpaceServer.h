@@ -12,6 +12,7 @@
 #include "datastore/couchbase_helper.h"
 #include "manager/space/Space.h" 
 #include "manager/manager.h"
+#include "include/aggregation_struct.h"
 
 
 using namespace Pistache;
@@ -37,45 +38,42 @@ public:
     //空间创建模块：空间创建接口
     std::string SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);
 
-    //空间创建模块：添加区域空间校验接口
-    std::string SpaceCheck(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);
+    //空间创建模块：添加区域空间校验接口 注：spacePathInfo 为空间元数据信息
+    std::string SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo);
     
-    //空间删除模块：空间删除接口；
+    //空间删除模块：空间删除接口
     int SpaceDelete(std::vector<std::string> spaceID);
 
-    //空间位置选择模块：空间位置选择接口
-    std::string GetSpaceCreatePath(int64_t spaceSize, std::string spacePathInfo);
+    //TODO：空间位置选择模块：空间位置选择接口, 初步实现
+    std::tuple<std::string, std::string> GetSpaceCreatePath(int64_t spaceSize, std::string hostCenterName, std::string storageSrcName);
 
     //空间重命名模块：空间重命名接口
     void SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceRename(std::string spaceID, std::string newSpaceName);
 
-    
-
-
-/*
-    void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string UserRegister(Account &person);
-    
-    void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool UserLogin(std::string account, std::string pass);
-
-    void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string getUserinfo(std::string uuid , bool &is_get_success);
-
-    void modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string modifyUserinfo(Account &person);*/
+    //空间缩放模块：空间缩放接口
+    void SpaceSizeChangeRest(const Rest::Request& request, Http::ResponseWriter response);
+    int SpaceSizeChange(std::string spaceID, int64_t newSpaceSize);
+    int SpaceSizeAdd(std::string StorageID, int64_t newSpaceSize);
+    int SpaceSizeDeduct(std::string StorageID, int64_t newSpaceSize);
 
  //--------------------------------------------
 public:
-    SpaceServer() : ManagerModule("space") {};
-    ~SpaceServer() {};
+    SpaceServer() : ManagerModule("space") {
+        storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
+        spacebucket = "space_info";
+        localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    };
+    ~SpaceServer() = default;
 
     static SpaceServer* instance;  //single object
+private:
+    std::string storagebucket;
+    std::string spacebucket;
+    std::string localstoragepath; // 本机存储集群路径
 };
 
 //std::string md5(std::string strPlain);
-
 
 }// namespace hvs
 

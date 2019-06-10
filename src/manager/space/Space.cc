@@ -2,6 +2,8 @@
 #include <iostream>
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
+#include "Space.h"
+
 //#include "context.h"
 
 void Space::serialize_impl() {
@@ -13,6 +15,7 @@ void Space::serialize_impl() {
     put("root_location", spacePath);
     put("Status", status);
 }
+
 void Space::deserialize_impl() {
     get("UUID", spaceID);
     get("name", spaceName);
@@ -29,6 +32,7 @@ void SpaceInfo::serialize_impl() {
     put("name", spaceName);
     put("capcity", spaceSize);
 }
+
 void SpaceInfo::deserialize_impl() {
     get("UUID", spaceID);
     get("name", spaceName);
@@ -63,4 +67,16 @@ void SpaceRenameReq::serialize_impl()   {
 void SpaceRenameReq::deserialize_impl()   {
     get("UUID", spaceID);
     get("newname", newSpaceName);
+}
+
+void SpaceSizeChangeReq::serialize_impl() {
+    put("UUID", spaceID);
+    put("name", spaceName);
+    put("capcity", newSpaceSize);
+}
+
+void SpaceSizeChangeReq::deserialize_impl() {
+    get("UUID", spaceID);
+    get("name", spaceName);
+    get("capcity", newSpaceSize);
 }

@@ -46,5 +46,6 @@ install(TARGETS hvsd
 add_subdirectory(io_proxy)
 add_subdirectory(client)
 add_subdirectory(manager)
+add_subdirectory(spacecmdline)
 
 #TARGET_LINK_LIBRARIES(hvsd hello)

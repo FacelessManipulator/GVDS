@@ -30,12 +30,12 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("couchbase.bucket", string("test"));
   
   // fuse config options
-  _config->add("fuse.mountpoint", string("/mnt/hvs"));
+  _config->add("fuse.mountpoint", string("/home/yaowen/hvs"));
   _config->add("fuse.foreground", true);
-  _config->add("fuse.debug", true);
+  _config->add("fuse.debug", false);
   _config->add("fuse.multithread", true);
   _config->add("fuse.auto_unmount", true);
-  _config->add("fuse.use_udt", true);
+  _config->add("fuse.use_udt", false);
 
   // ioproxy config options
   _config->add("ioproxy.scher", 6);
@@ -47,5 +47,8 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("client.data_port_begin", 9096);
   _config->add("client.data_port_end", 9150);
   _config->add("client.data_buffer", 10240000);
+
+  // storage 本地挂载的文件系统（lustre等）
+  _config->add("storage", string("/tmp/hvs/tests/data/"));
 }
 }  // namespace hvs

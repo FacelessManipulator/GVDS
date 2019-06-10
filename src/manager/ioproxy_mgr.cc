@@ -15,11 +15,16 @@ void IOProxy_MGR::start() {
   create("ioproxy-mgr-module");
 }
 
-void IOProxy_MGR::stop() { m_stop = true; }
+void IOProxy_MGR::stop() {
+    if(m_stop)
+        return;
+    m_stop = true;
+    join();
+}
 
 void* IOProxy_MGR::entry() {
   while (!m_stop) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     dout(5) << "ioproxy mgr check heart beat." << dendl;
   }
 }

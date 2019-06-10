@@ -17,494 +17,302 @@ using namespace hvs;
 class HVSZoneTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    manager = static_cast<Manager*>(HvsContext::get_context()->node);
-    ASSERT_NE(manager, nullptr);
+//    manager = static_cast<Manager*>(HvsContext::get_context()->node);
+//    ASSERT_NE(manager, nullptr);
   }
-  void TearDown() override { manager = nullptr; }
+  void TearDown() override {
+//      manager = nullptr;
+  }
 
  protected:
   static void SetUpTestCase() {
     hvs::init_context();
-    hvs::init_manager();
+//    hvs::init_manager();
     usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-    hvs::destroy_manager(
-        static_cast<Manager*>(HvsContext::get_context()->node));
+//    hvs::destroy_manager(static_cast<Manager*>(HvsContext::get_context()->node));
     hvs::destroy_context();
   }
 
  public:
-  Manager* manager;
+//  Manager* manager;
 };
-/*
+
 TEST_F(HVSZoneTest, Rename) {
-  Http::Client client;
-  char url[256];
-  snprintf(url, 256, "http://localhost:%d/zone/rename", manager->rest_port());
-  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-  client.init(opts);
-
-  ZoneRenameReq req;
-  req.zoneID = "1213411";
-  req.ownerID = "123";
-  req.newZoneName = "zonerenametest3";
-
-  std::string value = req.serialize();
-
-  auto response = client.post(url).body(value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
-
-  std::promise<bool> prom;
-  auto fu = prom.get_future();
-  response.then(
-      [&](Http::Response res) {
-        dout(-1) << "Manager Info: " << res.body() << dendl;
-        prom.set_value(true);
-      },
-      Async::IgnoreException);
-  EXPECT_TRUE(fu.get());
-  client.shutdown();
+//    Http::Client client;
+//    char url[256];
+//    snprintf(url, 256, "http://localhost:%d/zone/rename", manager->rest_port());
+//    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+//    client.init(opts);
+//
+//    ZoneRenameReq req;
+//    req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+//    req.ownerID = "128";
+//    req.newZoneName = "superzone";
+//
+//    std::string value = req.serialize();
+//
+//    auto response = client.post(url).body(value).send();
+//        dout(-1) << "Client Info: post request " << url << dendl;
+//
+//    std::promise<bool> prom;
+//    auto fu = prom.get_future();
+//    response.then(
+//        [&](Http::Response res) {
+//        dout(-1) << "Manager Info: " << res.body() << dendl;
+//        prom.set_value(true);
+//        },
+//        Async::IgnoreException);
+//    EXPECT_TRUE(fu.get());
+//    client.shutdown();
 }
 
-TEST_F(HVSZoneTest, Locate) {
-    cout<< "******start client: zonelocate ******"<<endl;
-
-    // 第二个参数传地址 第三个参数传请求数量 默认1
-    std::string page = "http://localhost:9080/zone/locate";//gai
-    int count = 1;
-
-    Http::Client client;
-
-    auto opts = Http::Client::options()
-        .threads(1)
-        .maxConnectionsPerHost(8);
-    client.init(opts);
-
-    std::vector<Async::Promise<Http::Response>> responses;
-
-    std::atomic<size_t> completedRequests(0);
-    std::atomic<size_t> failedRequests(0);
-
-    //计时
-    auto start = std::chrono::steady_clock::now();
-
-    GetZoneLocateInfoReq req;
-    req.clientID = "2";
-    req.zoneID = "1213411";
-    req.spaceID.emplace_back("1213411-1");
-    req.spaceID.emplace_back("1213411-2");
-
-    std::string value = req.serialize();
-
-    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-    resp.then([&](Http::Response response) {
-            ++completedRequests;
-        std::cout << "Response code = " << response.code() << std::endl;
-        //response body
-        auto body = response.body();
-        if (!body.empty()){
-            //GetZoneLocateInfoRes res;
-            //res.deserialize(body);
-            std::cout << "Response body = " << body << std::endl;
-            //====================
-            //your code write here
-
-            //====================
-        }
-    }, Async::IgnoreException);
-    responses.push_back(std::move(resp));
-
-    auto sync = Async::whenAll(responses.begin(), responses.end());
-    Async::Barrier<std::vector<Http::Response>> barrier(sync);
-    barrier.wait_for(std::chrono::seconds(5));
-
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Summary of execution" << std::endl
-              << "Total number of requests sent     : " << count << std::endl
-              << "Total number of responses received: " << completedRequests.load() << std::endl
-              << "Total number of requests failed   : " << failedRequests.load() << std::endl
-              << "Total time of execution           : "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    client.shutdown();
-
-    cout<< "******endl client: zonelocate ******"<<endl;
-}
-
-TEST_F(HVSZoneTest, GetInfo) {
-    cout<< "******start client: getzoneinfo ******"<<endl;
-
-    // 第二个参数传地址 第三个参数传请求数量 默认1
-    std::string page = "http://localhost:9080/zone/info";//gai
-    int count = 1;
-
-    Http::Client client;
-
-    auto opts = Http::Client::options()
-        .threads(1)
-        .maxConnectionsPerHost(8);
-    client.init(opts);
-
-    std::vector<Async::Promise<Http::Response>> responses;
-
-    std::atomic<size_t> completedRequests(0);
-    std::atomic<size_t> failedRequests(0);
-
-    //计时
-    auto start = std::chrono::steady_clock::now();
-
-    std::string value = "123";
-
-    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-    resp.then([&](Http::Response response) {
-            ++completedRequests;
-        std::cout << "Response code = " << response.code() << std::endl;
-        //response body
-        auto body = response.body();
-        if (!body.empty()){
-            std::cout << "Response body = " << body << std::endl;
-            //====================
-            //your code write here
-
-            //====================
-        }
-    }, Async::IgnoreException);
-    responses.push_back(std::move(resp));
-
-    auto sync = Async::whenAll(responses.begin(), responses.end());
-    Async::Barrier<std::vector<Http::Response>> barrier(sync);
-    barrier.wait_for(std::chrono::seconds(5));
-
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Summary of execution" << std::endl
-              << "Total number of requests sent     : " << count << std::endl
-              << "Total number of responses received: " << completedRequests.load() << std::endl
-              << "Total number of requests failed   : " << failedRequests.load() << std::endl
-              << "Total time of execution           : "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    client.shutdown();
-
-    cout<< "******endl client: getzoneinfo ******"<<endl;
-}
-
-TEST_F(HVSZoneTest, Share) {
-    cout<< "******start client: zoneshare ******"<<endl;
-
-    // 第二个参数传地址 第三个参数传请求数量 默认1
-    std::string page = "http://localhost:9080/zone/share";//gai
-    int count = 1;
-
-    Http::Client client;
-
-    auto opts = Http::Client::options()
-        .threads(1)
-        .maxConnectionsPerHost(8);
-    client.init(opts);
-
-    std::vector<Async::Promise<Http::Response>> responses;
-
-    std::atomic<size_t> completedRequests(0);
-    std::atomic<size_t> failedRequests(0);
-
-    //计时
-    auto start = std::chrono::steady_clock::now();
-
-    ZoneShareReq req;
-    req.zoneID = "1213411";
-    req.ownerID = "123";
-    req.memberID.emplace_back("14");
-    req.memberID.emplace_back("16");
-
-    std::string value = req.serialize();
-
-    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-    resp.then([&](Http::Response response) {
-            ++completedRequests;
-        std::cout << "Response code = " << response.code() << std::endl;
-        //response body
-        auto body = response.body();
-        if (!body.empty()){
-            std::cout << "Response body = " << body << std::endl;
-            //====================
-            //your code write here
-
-            //====================
-        }
-    }, Async::IgnoreException);
-    responses.push_back(std::move(resp));
-
-    auto sync = Async::whenAll(responses.begin(), responses.end());
-    Async::Barrier<std::vector<Http::Response>> barrier(sync);
-    barrier.wait_for(std::chrono::seconds(5));
-
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Summary of execution" << std::endl
-              << "Total number of requests sent     : " << count << std::endl
-              << "Total number of responses received: " << completedRequests.load() << std::endl
-              << "Total number of requests failed   : " << failedRequests.load() << std::endl
-              << "Total time of execution           : "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    client.shutdown();
-
-    cout<< "******endl client: zoneshare ******"<<endl;
-}
-
-TEST_F(HVSZoneTest, ShareCancel) {
-    cout<< "******start client: zonesharecancel ******"<<endl;
-
-    // 第二个参数传地址 第三个参数传请求数量 默认1
-    std::string page = "http://localhost:9080/zone/sharecancel";//gai
-    int count = 1;
-
-    Http::Client client;
-
-    auto opts = Http::Client::options()
-        .threads(1)
-        .maxConnectionsPerHost(8);
-    client.init(opts);
-
-    std::vector<Async::Promise<Http::Response>> responses;
-
-    std::atomic<size_t> completedRequests(0);
-    std::atomic<size_t> failedRequests(0);
-
-    //计时
-    auto start = std::chrono::steady_clock::now();
-
-    ZoneShareReq req;
-    req.zoneID = "1213411";
-    req.ownerID = "123";
-    req.memberID.emplace_back("14");
-    req.memberID.emplace_back("16");
-
-    std::string value = req.serialize();
-
-    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-    resp.then([&](Http::Response response) {
-            ++completedRequests;
-        std::cout << "Response code = " << response.code() << std::endl;
-        //response body
-        auto body = response.body();
-        if (!body.empty()){
-            std::cout << "Response body = " << body << std::endl;
-            //====================
-            //your code write here
-
-            //====================
-        }
-    }, Async::IgnoreException);
-    responses.push_back(std::move(resp));
-
-    auto sync = Async::whenAll(responses.begin(), responses.end());
-    Async::Barrier<std::vector<Http::Response>> barrier(sync);
-    barrier.wait_for(std::chrono::seconds(5));
-
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Summary of execution" << std::endl
-              << "Total number of requests sent     : " << count << std::endl
-              << "Total number of responses received: " << completedRequests.load() << std::endl
-              << "Total number of requests failed   : " << failedRequests.load() << std::endl
-              << "Total time of execution           : "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    client.shutdown();
-
-    cout<< "******endl client: zonesharecancel ******"<<endl;
-}
-
-TEST_F(HVSZoneTest, ZoneRegister) {
-  Http::Client client;
-  char url[256];
-  snprintf(url, 256, "http://localhost:%d/zone/register", manager->rest_port());
-  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-  client.init(opts);
-
-  ZoneRegisterReq req;
-  req.zoneName = "lbqzone";
-  req.ownerID = "124";
-  req.memberID.emplace_back("123");
-  req.memberID.emplace_back("125");
-  req.spaceName = "changshaspace";
-  req.spaceSize = 100;
-  SpaceMetaData tmpm;
-  tmpm.hostCenterName = "changsha";
-  tmpm.storageSrcName = "lustre1";
-  req.spacePathInfo = tmpm.serialize();
-
-  std::string value = req.serialize();
-
-  auto response = client.post(url).body(value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
-
-  std::promise<bool> prom;
-  auto fu = prom.get_future();
-  response.then(
-      [&](Http::Response res) {
-        dout(-1) << "Manager Info: " << res.body() << dendl;
-        prom.set_value(true);
-      },
-      Async::IgnoreException);
-  EXPECT_TRUE(fu.get());
-  client.shutdown();
-}
-
-
-TEST_F(HVSZoneTest, ZoneCancel) {
-    cout<< "******start client: zonecancel ******"<<endl;
-
-    // 第二个参数传地址 第三个参数传请求数量 默认1
-    std::string page = "http://localhost:9080/zone/cancel";//gai
-    int count = 1;
-
-    Http::Client client;
-
-    auto opts = Http::Client::options()
-        .threads(1)
-        .maxConnectionsPerHost(8);
-    client.init(opts);
-
-    std::vector<Async::Promise<Http::Response>> responses;
-
-    std::atomic<size_t> completedRequests(0);
-    std::atomic<size_t> failedRequests(0);
-
-    //计时
-    auto start = std::chrono::steady_clock::now();
-
-    ZoneCancelReq req;
-    req.zoneID = "1213411";
-    req.ownerID = "123";
-
-
-    std::string value = req.serialize();
-
-    auto resp = client.post(page).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-    resp.then([&](Http::Response response) {
-            ++completedRequests;
-        std::cout << "Response code = " << response.code() << std::endl;
-        //response body
-        auto body = response.body();
-        if (!body.empty()){
-            std::cout << "Response body = " << body << std::endl;
-            //====================
-            //your code write here
-
-            //====================
-        }
-    }, Async::IgnoreException);
-    responses.push_back(std::move(resp));
-
-    auto sync = Async::whenAll(responses.begin(), responses.end());
-    Async::Barrier<std::vector<Http::Response>> barrier(sync);
-    barrier.wait_for(std::chrono::seconds(5));
-
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Summary of execution" << std::endl
-              << "Total number of requests sent     : " << count << std::endl
-              << "Total number of responses received: " << completedRequests.load() << std::endl
-              << "Total number of requests failed   : " << failedRequests.load() << std::endl
-              << "Total time of execution           : "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    client.shutdown();
-
-    cout<< "******endl client: zonecancel ******"<<endl;
-}
-
-
-TEST_F(HVSZoneTest, MapAdd) {
-  Http::Client client;
-  char url[256];
-  snprintf(url, 256, "http://localhost:%d/zone/mapadd", manager->rest_port());
-  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-  client.init(opts);
-
-  MapAddReq req;
-  req.zoneID = "aeed1d09-779d-4b8b-9005-c4c73d8b5ba1";
-  req.ownerID = "124";
-  req.spaceName = "beijingspace";
-  req.spaceSize = 58;
-  SpaceMetaData tmpm;
-  tmpm.hostCenterName = "beijing";
-  tmpm.storageSrcName = "lustre1";
-  req.spacePathInfo = tmpm.serialize();
-
-  std::string value = req.serialize();
-
-  auto response = client.post(url).body(value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
-
-  std::promise<bool> prom;
-  auto fu = prom.get_future();
-  response.then(
-      [&](Http::Response res) {
-        dout(-1) << "Manager Info: " << res.body() << dendl;
-        prom.set_value(true);
-      },
-      Async::IgnoreException);
-  EXPECT_TRUE(fu.get());
-  client.shutdown();
-}
-*/
-
-TEST_F(HVSZoneTest, MapDeduct) {
-  Http::Client client;
-  char url[256];
-  snprintf(url, 256, "http://localhost:%d/zone/mapdeduct", manager->rest_port());
-  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-  client.init(opts);
-
-  MapDeductReq req;
-  req.zoneID = "aeed1d09-779d-4b8b-9005-c4c73d8b5ba1";
-  req.ownerID = "124";
-  req.spaceID.emplace_back("3625ea4b-6759-44a7-b785-ae34d63b2566");
-  req.spaceID.emplace_back("ee9637e0-f13f-46d5-b15d-38dcf1043708");
-
-  std::string value = req.serialize();
-
-  auto response = client.post(url).body(value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
-
-  std::promise<bool> prom;
-  auto fu = prom.get_future();
-  response.then(
-      [&](Http::Response res) {
-        dout(-1) << "Manager Info: " << res.body() << dendl;
-        prom.set_value(true);
-      },
-      Async::IgnoreException);
-  EXPECT_TRUE(fu.get());
-  client.shutdown();
-}
-
-// TEST_F(HVSZoneTest, ZoneAdd) {
+ TEST_F(HVSZoneTest, Locate) {
+     Http::Client client;
+     char url[256];
+     snprintf(url, 256, "http://localhost:%d/zone/locate", 37961);
+     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+     client.init(opts);
+
+     GetZoneLocateInfoReq req;
+     req.clientID = "128";
+     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+     req.spaceID.emplace_back("62621dea-bd6b-4c12-b1ce-5b466eea69af");
+
+     std::string value = req.serialize();
+
+     auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+     std::promise<bool> prom;
+     auto fu = prom.get_future();
+     response.then(
+         [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+         },
+         Async::IgnoreException);
+     EXPECT_TRUE(fu.get());
+     client.shutdown();
+ }
+
+ TEST_F(HVSZoneTest, GetInfo) {
+     Http::Client client;
+     char url[256];
+     snprintf(url, 256, "http://localhost:%d/zone/info", 37909);
+     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+     client.init(opts);
+
+     std::string value = "124";
+
+     auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+     std::promise<bool> prom;
+     auto fu = prom.get_future();
+     response.then(
+         [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+         },
+         Async::IgnoreException);
+     EXPECT_TRUE(fu.get());
+     client.shutdown();
+ }
+
+ TEST_F(HVSZoneTest, Share) {
+//     Http::Client client;
+//     char url[256];
+//     snprintf(url, 256, "http://localhost:%d/zone/share", manager->rest_port());
+//     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+//     client.init(opts);
+//
+//     ZoneShareReq req;
+//     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+//     req.ownerID = "128";
+//     req.memberID.emplace_back("124");
+//     req.memberID.emplace_back("128");
+//
+//     std::string value = req.serialize();
+//
+//     auto response = client.post(url).body(value).send();
+//         dout(-1) << "Client Info: post request " << url << dendl;
+//
+//     std::promise<bool> prom;
+//     auto fu = prom.get_future();
+//     response.then(
+//         [&](Http::Response res) {
+//         dout(-1) << "Manager Info: " << res.body() << dendl;
+//         prom.set_value(true);
+//         },
+//         Async::IgnoreException);
+//     EXPECT_TRUE(fu.get());
+//     client.shutdown();
+ }
+
+ TEST_F(HVSZoneTest, ShareCancel) {
+//     Http::Client client;
+//     char url[256];
+//     snprintf(url, 256, "http://localhost:%d/zone/sharecancel", manager->rest_port());
+//     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+//     client.init(opts);
+//
+//     ZoneShareReq req;
+//     req.zoneID = "21219e04-f2a2-4d8b-80db-a254caaf9d7e";
+//     req.ownerID = "128";
+//     req.memberID.emplace_back("123");
+//
+//     std::string value = req.serialize();
+//
+//     auto response = client.post(url).body(value).send();
+//         dout(-1) << "Client Info: post request " << url << dendl;
+//
+//     std::promise<bool> prom;
+//     auto fu = prom.get_future();
+//     response.then(
+//         [&](Http::Response res) {
+//         dout(-1) << "Manager Info: " << res.body() << dendl;
+//         prom.set_value(true);
+//         },
+//         Async::IgnoreException);
+//     EXPECT_TRUE(fu.get());
+//     client.shutdown();
+ }
+
+ TEST_F(HVSZoneTest, ZoneRegister) {
+     Http::Client client;
+     char url[256];
+     snprintf(url, 256, "http://192.168.5.224:%d/zone/register", 55877);
+//     snprintf(url, 256, "http://localhost:%d/zone/register", 55877);
+     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+     client.init(opts);
+
+     //本地区域创建 101 102 103
+//     ZoneRegisterReq req;
+//     req.zoneName = "bqzone";
+//     req.ownerID = "103";
+//     req.memberID.emplace_back("102");
+//     //req.memberID.emplace_back("103");
+//     req.spaceName = "bingqlocalspace";
+//     req.spaceSize = 200;
+//     SpaceMetaData tmpm;
+//     tmpm.hostCenterName = "beihang";
+//     tmpm.storageSrcName = "localstorage";
+//     req.spacePathInfo = tmpm.serialize();
+
+        //远程区域创建 201 202
+        ZoneRegisterReq req;
+        req.zoneName = "syremotezone";
+        req.ownerID = "202";
+//        req.memberID.emplace_back("202");
+        //req.memberID.emplace_back("103");
+        req.spaceName = "songyremotespace";
+        req.spaceSize = 200;
+        SpaceMetaData tmpm;
+        tmpm.hostCenterName = "zhongkeyuan";
+        tmpm.storageSrcName = "remotestorage";
+        req.spacePathInfo = tmpm.serialize();
+
+     std::string value = req.serialize();
+
+     auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+     std::promise<bool> prom;
+     auto fu = prom.get_future();
+     response.then(
+         [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+         },
+         Async::IgnoreException);
+     EXPECT_TRUE(fu.get());
+     client.shutdown();
+ }
+
+ TEST_F(HVSZoneTest, ZoneCancel) {
+//     Http::Client client;
+//     char url[256];
+//     snprintf(url, 256, "http://localhost:%d/zone/cancel", manager->rest_port());
+//     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+//     client.init(opts);
+//
+//     ZoneCancelReq req;
+//     req.zoneID = "7bf24cee-6499-47f1-b9d8-90137255c2a2";
+//     req.ownerID = "125";
+//
+//     std::string value = req.serialize();
+//
+//     auto response = client.post(url).body(value).send();
+//         dout(-1) << "Client Info: post request " << url << dendl;
+//
+//     std::promise<bool> prom;
+//     auto fu = prom.get_future();
+//     response.then(
+//         [&](Http::Response res) {
+//         dout(-1) << "Manager Info: " << res.body() << dendl;
+//         prom.set_value(true);
+//         },
+//         Async::IgnoreException);
+//     EXPECT_TRUE(fu.get());
+//     client.shutdown();
+ }
+
+
+ TEST_F(HVSZoneTest, MapAdd) {
+   Http::Client client;
+   char url[256];
+   snprintf(url, 256, "http://127.0.0.1:%d/zone/mapadd", 53953);
+   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+   client.init(opts);
+
+   MapAddReq req;
+   req.zoneID = "dca23148-b195-4ea0-b542-b3d08f1667d7";
+   req.ownerID = "202";
+   req.spaceName = "SYBUAA新空间";
+   req.spaceSize = 100;
+   SpaceMetaData tmpm;
+   tmpm.hostCenterName = "beihang";
+   tmpm.storageSrcName = "localstorage";
+   req.spacePathInfo = tmpm.serialize();
+
+   std::string value = req.serialize();
+
+   auto response = client.post(url).body(value).send();
+         dout(-1) << "Client Info: post request " << url << dendl;
+
+   std::promise<bool> prom;
+   auto fu = prom.get_future();
+   response.then(
+       [&](Http::Response res) {
+         dout(-1) << "Manager Info: " << res.body() << dendl;
+         prom.set_value(true);
+       },
+       Async::IgnoreException);
+   EXPECT_TRUE(fu.get());
+   client.shutdown();
+ }
+
+
+ TEST_F(HVSZoneTest, MapDeduct) {
 //   Http::Client client;
 //   char url[256];
-//   snprintf(url, 256, "http://localhost:%d/zone/add", manager->rest_port());
+//   snprintf(url, 256, "http://localhost:%d/zone/mapdeduct", manager->rest_port());
 //   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
 //   client.init(opts);
-
-//   ZoneRegisterReq req;
-//   req.zoneName = "wbzone";
-//   req.ownerID = "125";
-//   req.memberID.emplace_back("123");
-//   req.memberID.emplace_back("121");
-//   req.spaceName = "changshaspace";
-//   req.spaceSize = 100;
-//   SpaceMetaData tmpm;
-//   tmpm.hostCenterName = "changsha";
-//   tmpm.storageSrcName = "lustre1";
-//   tmpm.spacePath = "../123/changshaspace";
-//   req.spacePathInfo = tmpm.serialize();
-
+//
+//   MapDeductReq req;
+//   req.zoneID = "b71a3ad5-513e-4078-9f9b-d9eeb0691b1e";
+//   req.ownerID = "123";
+//   req.spaceID.emplace_back("8fb17838-f3e1-43ae-8a60-6bc122672013");
+//   req.spaceID.emplace_back("873b5bac-1218-4737-82f1-d1b4f027139c");
+//
 //   std::string value = req.serialize();
-
+//
 //   auto response = client.post(url).body(value).send();
-//         dout(-1) << "Client Info: post request " << url << dendl;
-
+//   dout(-1) << "Client Info: post request " << url << dendl;
+//
 //   std::promise<bool> prom;
 //   auto fu = prom.get_future();
 //   response.then(
@@ -515,10 +323,45 @@ TEST_F(HVSZoneTest, MapDeduct) {
 //       Async::IgnoreException);
 //   EXPECT_TRUE(fu.get());
 //   client.shutdown();
-// }
+ }
+
+ TEST_F(HVSZoneTest, ZoneAdd) {
+//     Http::Client client;
+//     char url[256];
+//     snprintf(url, 256, "http://localhost:%d/zone/add", manager->rest_port());
+//     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+//     client.init(opts);
+//
+//     ZoneRegisterReq req;
+//     req.zoneName = "yxzone2";
+//     req.ownerID = "128";
+//     req.memberID.emplace_back("123");
+//     req.memberID.emplace_back("124");
+//     SpaceMetaData tmpm;
+//     tmpm.hostCenterName = "zhongkeyuan2";
+//     tmpm.storageSrcName = "center_2";
+//     tmpm.spacePath = "62621dea-bd6b-4c12-b1ce-5b466eea69af";
+//     req.spacePathInfo = tmpm.serialize();
+//
+//     std::string value = req.serialize();
+//
+//     auto response = client.post(url).body(value).send();
+//         dout(-1) << "Client Info: post request " << url << dendl;
+//
+//     std::promise<bool> prom;
+//     auto fu = prom.get_future();
+//     response.then(
+//         [&](Http::Response res) {
+//         dout(-1) << "Manager Info: " << res.body() << dendl;
+//         prom.set_value(true);
+//         },
+//         Async::IgnoreException);
+//     EXPECT_TRUE(fu.get());
+//     client.shutdown();
+ }
 
 
-// TEST_F(HVSZoneTest, Info){
+// TEST_F(HVSZoneTest, simpleInfo){
 //     Zone tmp;
 //     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
 //           hvs::CouchbaseDatastore("zone_info"));

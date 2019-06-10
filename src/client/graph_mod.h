@@ -6,6 +6,7 @@
 #include "common/Thread.h"
 #include "hvs_struct.h"
 #include "msg/node.h"
+#include "zone_mod.h"
 #include <unordered_map>
 
 namespace hvs {
@@ -25,8 +26,9 @@ class ClientGraph : public ClientModule {
   }
 
   // get global path of path
-  std::tuple<std::shared_ptr<IOProxyNode>, std::string> get_mapping(const std::string& path);
-  std::vector<Space> list_space();
+  std::tuple<std::shared_ptr<IOProxyNode>, std::string> get_mapping(const std::string& space_uuid);
+  std::vector<Space> list_space(std::string zonename);
+  std::vector<Zone> list_zone();
   void set_mapping(const std::string& path, std::shared_ptr<IOProxyNode> ion, const std::string& rpath) {
     mappings[path] = {ion, rpath};
   }

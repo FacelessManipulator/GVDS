@@ -75,4 +75,19 @@ class SpaceRenameReq : public hvs::JsonSerializer//区域重命名请求
  public:
   SpaceRenameReq() = default;
 };
+
+class SpaceSizeChangeReq : public hvs::JsonSerializer//空间缩放请求
+{
+public:
+    std::string     spaceID;//空间ID
+    std::string     spaceName;//空间名
+    int64_t         newSpaceSize;//空间容量
+
+public:
+    void serialize_impl() override;
+    void deserialize_impl() override;
+
+public:
+    SpaceSizeChangeReq() = default;
+};
 #endif/*SPACE_H*/

@@ -43,16 +43,27 @@ TEST_F(ManagerResAggregationTest, ioproxy_add) {
   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
   client.init(opts);
 
-  
-  StorageResource newRes; 
-  newRes.storage_src_id = "1";                 // 存储资源UUID
-  newRes.storage_src_name = "center_1";        // 存储资源名称
-  newRes.host_center_id = "100";               // 存储资源所在超算中心UUID
-  newRes.host_center_name = "zhongkeyuan";     // 存储资源所在超算中心名称
-  newRes.total_capacity = 1024;                // 存储资源空间容量大小
-  newRes.assign_capacity = 0;                  // 已经分配空间容量大小
-  newRes.mgs_address = "http://193.195.34.65"; // 存储资源MGS地址
-  newRes.state = Normal;                       // 存储资源状态
+  //BeiHang
+//  StorageResource newRes;
+//  newRes.storage_src_id = "127001";            // 存储资源UUID
+//  newRes.storage_src_name = "localstorage";    // 存储资源名称
+//  newRes.host_center_id = "10001";             // 存储资源所在超算中心UUID
+//  newRes.host_center_name = "beihang";         // 存储资源所在超算中心名称
+//  newRes.total_capacity = 1024;                // 存储资源空间容量大小
+//  newRes.assign_capacity = 0;                  // 已经分配空间容量大小
+//  newRes.mgs_address = "http://127.0.0.1";     // 存储资源MGS地址
+//  newRes.state = Normal;                       // 存储资源状态
+
+    //ZhongKeYuan
+    StorageResource newRes;
+    newRes.storage_src_id = "192168";            // 存储资源UUID
+    newRes.storage_src_name = "remotestorage";   // 存储资源名称
+    newRes.host_center_id = "20001";             // 存储资源所在超算中心UUID
+    newRes.host_center_name = "zhongkeyuan";     // 存储资源所在超算中心名称
+    newRes.total_capacity = 2048;                // 存储资源空间容量大小
+    newRes.assign_capacity = 0;                  // 已经分配空间容量大小
+    newRes.mgs_address = "http://192.168.5.224"; // 存储资源MGS地址
+    newRes.state = Normal;                       // 存储资源状态
 
 
 
@@ -72,7 +83,7 @@ TEST_F(ManagerResAggregationTest, ioproxy_add) {
   client.shutdown();
 }
 
-TEST_F(ManagerResAggregationTest, ioproxy_list) {
+TEST_F(ManagerResAggregationTest, storage_list) {
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/resource/query", manager->rest_port());
@@ -99,7 +110,7 @@ TEST_F(ManagerResAggregationTest, ioproxy_list) {
     client.shutdown();
 }
 
-TEST_F(ManagerResAggregationTest, ioproxy_del) {
+TEST_F(ManagerResAggregationTest, storage_del) {
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/ioproxy/%s", manager->rest_port(), uuid.c_str());

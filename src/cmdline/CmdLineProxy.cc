@@ -14,7 +14,7 @@
 
 CmdLineProxy::~CmdLineProxy() = default;
 
-CmdLineProxy::CmdLineProxy(int argc, const char **argv) {
+CmdLineProxy::CmdLineProxy(int argc, char **argv) {
     this->argc = argc;
     this->argv = argv;
     command = std::string(argv[0]); // 当前模块信息
@@ -22,14 +22,14 @@ CmdLineProxy::CmdLineProxy(int argc, const char **argv) {
 }
 
 void CmdLineProxy::set_global_description() {
-    cmdline_options = std::make_shared<po::options_description> ("命令格式: [COMMAND] [SUBMODULE] [OPTION] ... [FILE] ... \n使用说明");
+    cmdline_options = std::make_shared<po::options_description> ("命令格式: [COMMAND]  [OPTION] ... \n使用说明");
     //配置命令行信息描述模块
     std::string config_file;
     po::options_description generic("一般选项");
     generic.add_options()
             ("version,v", "输出可执行程序版本信息")
             ("help,h", "输出帮助信息");
-    //("submod,S", po::value<string>(),"子模块")
+
     po::options_description advanced("高级选项");
     advanced.add_options()
             ("input-file,I", po::value< std::vector<std::string> >(), "输入文件")
@@ -59,6 +59,7 @@ void CmdLineProxy::do_global_decode() {
         notify(*sp_variables_map);
         if (sp_variables_map->count("help")) {
             std::cout << *cmdline_options << std::endl;
+            exit(0);
             return;
         }
         if (sp_variables_map->count("version")) {
@@ -110,7 +111,6 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 
 void CmdLineProxy::test() {
     //设置当前命令行解析函数
-
     cmd_desc_func_map["command1"] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command1("子模块(1)命令");
         command1.add_options()

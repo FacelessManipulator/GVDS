@@ -3,6 +3,7 @@
 #include "client/fuse_mod.h"
 #include "client/graph_mod.h"
 #include "client/rpc_mod.h"
+#include "client/zone_mod.h"
 
 using namespace hvs;
 using namespace std;
@@ -62,7 +63,7 @@ hvs::Client* init_client() {
   auto _config = HvsContext::get_context()->_config;
   auto ip = _config->get<std::string>("ip");
   if (!ip) {
-    std::cerr << "restserver warning: invalid ip, turning to use 0.0.0.0"
+    std::cerr << "Warning: invalid ip, turning to use 0.0.0.0"
               << std::endl;
     ip = "0.0.0.0";
   }
@@ -72,9 +73,11 @@ hvs::Client* init_client() {
   client->graph = std::make_shared<ClientGraph>("graph", client);
   client->rpc = std::make_shared<ClientRpc>("rpc", client);
   client->fuse = std::make_shared<ClientFuse>("fuse", client);
+  client->zone = std::make_shared<ClientZone>("zone", client); // 空间客户端模块
   client->registe_module(client->graph);
   client->registe_module(client->rpc);
   client->registe_module(client->fuse);
+  client->registe_module(client->zone); // 注册空间客户端模块
 
   client->start();
   return client;

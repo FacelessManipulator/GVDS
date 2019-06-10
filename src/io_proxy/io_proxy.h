@@ -23,8 +23,13 @@ class IOProxy : public Thread, public Node {
     m_max_op = 1000;
     m_max_worker = 1024;
   }
-  void start();
+  bool start();
   void stop();
+  std::string absolute_path(const std::string& path_rel) {
+    std::string path_abs(data_path);
+    path_abs.append(path_rel);
+    return path_abs;
+  }
   bool queue_op(std::shared_ptr<OP> op, bool block = true);
   bool queue_and_wait(std::shared_ptr<OP> op);
   bool queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops);
@@ -33,6 +38,7 @@ class IOProxy : public Thread, public Node {
 
  private:
   void* entry() override;
+  void fresh_stat();
   void _dispatch();
   void _dispatch_unsafe(std::queue<std::shared_ptr<OP>>* t);
   IOProxyWorker* _get_idle_worker();
@@ -46,6 +52,7 @@ class IOProxy : public Thread, public Node {
   std::queue<std::shared_ptr<OP>> op_waiting_line;
   int m_max_op;  // the max number of op in ioproxy
   int m_max_worker;      // the max number of worker
+  std::string manager_addr;
 
  private:
   // thread saft variables
@@ -56,6 +63,7 @@ class IOProxy : public Thread, public Node {
 
   pthread_t m_queue_mutex_holder;
   pthread_t m_dispatcher_mutex_holder;
+  std::string data_path;
   bool m_stop;
 
   public:

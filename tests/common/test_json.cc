@@ -102,6 +102,18 @@ TEST(HVSJsonTest, Simple) {
   EXPECT_EQ(u1, u2);
 }
 
+TEST(HVSJsonTest, Simple2) {
+  User u1 = generate_user();
+  User u2;
+  std::string u1_json = u1.serialize();
+  std::cout << u1_json << std::endl;
+  u2.deserialize(u1_json);
+  u2.serialize();
+  u2.age = 1;
+  std::cout << u2.serialize() << std::endl;
+  // EXPECT_EQ(u1, u2);
+}
+
 TEST(HVSJsonTest, DencVector) {
   std::vector<int> vec = {1, 2, 3, 4, 5};
   std::string json_str = hvs::json_encode(vec);

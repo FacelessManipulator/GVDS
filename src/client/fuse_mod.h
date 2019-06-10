@@ -22,6 +22,7 @@ class ClientFuse : public ClientModule {
   char mountpoint[256];
   int fuse_argc;
   char* fuse_argv[16];
+  char workers_argv[32];
   ClientFuseData fs_priv;
 
  public:

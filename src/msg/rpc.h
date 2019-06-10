@@ -79,7 +79,7 @@ std::optional<RPCLIB_MSGPACK::object_handle> RpcClient::call(
       auto obj = _client->call(func_name, args...);
       return move(obj);
     } catch (rpc::timeout timeout) {
-      dout(5) << "WARING: rpc client timeout, try " << retry_times << " time."
+      dout(10) << "WARING: rpc client timeout, try " << retry_times << " time."
               << dendl;
     } catch (rpc::rpc_error error) {
       dout(-1) << "ERROR: rpc client call " << error.get_function_name()

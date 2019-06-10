@@ -79,8 +79,7 @@ void* UDTServer::entry() {
     std::set<UDTSOCKET> readfds;
     std::set<UDTSOCKET> writefds;
     // check per 1s
-    int state =
-        UDT::epoll_wait(epoll_fd, &readfds, &writefds, -1, NULL, NULL);
+    int state = UDT::epoll_wait(epoll_fd, &readfds, &writefds, -1, NULL, NULL);
     if (state > 0) {
       // read
       handleReadFds(readfds, serv_fd);
@@ -92,12 +91,12 @@ void* UDTServer::entry() {
           (CUDTException::ECONNLOST == UDT::getlasterror().getErrorCode())) {
         m_stop = true;
         // UDT::epoll_remove_usock(eid, cur_sock);
-          // error happend
-          std::cout << "UDT epoll_wait: " << UDT::getlasterror().getErrorCode()
-                    << ' ' << UDT::getlasterror().getErrorMessage() << std::endl;
+        // error happend
+        std::cout << "UDT epoll_wait: " << UDT::getlasterror().getErrorCode()
+                  << ' ' << UDT::getlasterror().getErrorMessage() << std::endl;
       } else {
-          // maybe timeout
-          // std::cout << "." << std::flush;
+        // maybe timeout
+        // std::cout << "." << std::flush;
       }
     }
   }
@@ -117,7 +116,7 @@ void* UDTServer::entry() {
 
 void UDTServer::handleReadFds(const std::set<UDTSOCKET>& readfds,
                               const UDTSOCKET& listen_sock_) {
-//  dout(-1) << "epoll event on server" << dendl;
+  //  dout(-1) << "epoll event on server" << dendl;
   for (const UDTSOCKET cur_sock : readfds) {
     // new connection
     if (cur_sock == listen_sock_) {
@@ -157,6 +156,11 @@ void UDTServer::handleReadFds(const std::set<UDTSOCKET>& readfds,
       do {
         auto it = sessions.find(cur_sock);
         it->second->do_read();
+        if (it->second->is_stop()) {
+          UDT::epoll_remove_usock(epoll_fd, cur_sock);
+          UDT::close(cur_sock);
+          sessions.erase(cur_sock);
+        }
       } while (false);
     }
   }

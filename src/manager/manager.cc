@@ -2,17 +2,26 @@
 #include "manager/ioproxy_mgr.h"
 #include "manager/resaggregation_mgr.h"
 #include "zone/ZoneServer.h"
+#include "manager/rpc_mod.h"
 
 using namespace hvs;
 using namespace std;
 using namespace Pistache::Rest;
 
-void Manager::start() {
+bool Manager::start() {
   // init rest server
   auto _config = HvsContext::get_context()->_config;
-  auto rest_port = _config->get<int>("rest.port");
-  auto rest_thread = _config->get<int>("rest.thread_num");
+  auto rest_port = _config->get<int>("manager.port");
+  auto rest_thread = _config->get<int>("manager.thread_num");
   auto ip = _config->get<std::string>("ip");
+  auto _uuid = _config->get<std::string>("manager.uuid");
+  if (!_uuid.has_value()) {
+    dout(-1) << "ERROR: Manager UUID not found! Please use linux command UUID "
+                "to generate IO proxy's UUID and insert it into config file."
+             << dendl;
+    return false;
+  }
+  uuid = _uuid.value();
   if (!rest_port) {
     std::cerr << "restserver error: invalid port." << std::endl;
   } else if (!rest_thread) {
@@ -31,6 +40,7 @@ void Manager::start() {
   route(restserver->router);
   // init modules
   for (auto mod : modules) {
+    mod.second->mgr = this;
     mod.second->start();
     // set router in modules
     mod.second->router(restserver->router);
@@ -38,6 +48,7 @@ void Manager::start() {
   m_stop = false;
   restserver->start();
   create("Manager");
+  return true;
 }
 
 void Manager::stop() {
@@ -79,20 +90,20 @@ void Manager::manager_info(const Rest::Request& req, Http::ResponseWriter res) {
   res.send(Pistache::Http::Code::Ok, serialize());
 }
 
+void Manager::registe_module(std::shared_ptr<ManagerModule> mod) {
+  modules[mod->module_name] = mod;
+  mod->mgr = this;
+}
 
-  void Manager::registe_module(std::shared_ptr<ManagerModule> mod) {
-    modules[mod->module_name] = mod;
-    mod->mgr = this;
+std::shared_ptr<ManagerModule> Manager::get_module(
+    const std::string& mod_name) {
+  auto it = modules.find(mod_name);
+  if (it != modules.end()) {
+    return modules[mod_name];
+  } else {
+    return nullptr;
   }
-
-  std::shared_ptr<ManagerModule> Manager::get_module(const std::string & mod_name) {
-    auto it = modules.find(mod_name);
-    if(it != modules.end()) {
-      return modules[mod_name];
-    } else {
-      return nullptr;
-    }
-  }
+}
 
 namespace hvs {
 hvs::Manager* init_manager() {
@@ -106,14 +117,23 @@ hvs::Manager* init_manager() {
   auto mgr = new Manager();
   mgr->addr.from_string(*ip);
   // registe modlues in manager node
+  mgr->rpc = std::make_shared<ManagerRpc>("rpc");
+  mgr->registe_module(mgr->rpc);
   mgr->registe_module(std::make_shared<IOProxy_MGR>("ioproxy manager"));
-  mgr->registe_module(std::make_shared<ResAggregation_MGR>("resaggregation manager"));
+  mgr->registe_module(
+      std::make_shared<ResAggregation_MGR>("resaggregation manager"));
 
   mgr->registe_module(std::make_shared<ZoneServer>());
   mgr->registe_module(std::make_shared<SpaceServer>());
   hvs::HvsContext::get_context()->node = mgr;
-  mgr->start();
-  return mgr;
+  if(mgr->start()) {
+    // TODO: use condition or mutex to wait the init stage
+    return mgr;
+  }
+  else {
+    delete mgr;
+    return nullptr;
+  }
 }
 
 void destroy_manager(hvs::Manager* mgr) {

@@ -10,12 +10,16 @@
 namespace hvs {
 
 class UDTServer;
+class IOProxy;
 
 class ServerSession {
  public:
   ServerSession(UDTServer *srv, UDTSOCKET socket);
   void close();
   void do_read();
+  bool is_stop() {
+    return m_stop;
+  }
 
  protected:
   std::shared_ptr<UDTWriter> writer;
@@ -26,5 +30,6 @@ class ServerSession {
   clmdep_msgpack::sbuffer output_buf;
   UDTSOCKET socket_;
   bool m_stop = false;
+  IOProxy* iop;
 };
 }  // namespace hvs

@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 #define ERROR_INCORRECT_TYPE 111
 
@@ -101,6 +102,8 @@ class JsonSerializer {
   void encode(std::vector<V>& _vec);
   template <class V>
   void encode(std::map<std::string, V>& _map);
+  template <class V>
+  void encode(std::shared_ptr<V> _ptr);
 
   template <class T>
   int decode(rapidjson::Value* value, T& dest);
@@ -135,6 +138,16 @@ void JsonSerializer::encode(std::map<std::string, T>& _map) {
     encode(value);
   }
   _writer->EndObject();
+}
+
+template <class V>
+void JsonSerializer::encode(std::shared_ptr<V> _ptr) {
+  if(_ptr)
+    encode<V>(*_ptr);
+  else {
+    int tmp = 0;
+    encode<int>(tmp);
+  }
 }
 
 template <>

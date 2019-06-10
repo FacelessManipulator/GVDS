@@ -17,7 +17,6 @@ struct IOProxyNode : public hvs::JsonSerializer {
     Stopped,
     Starting,
   };
-  boost::uuids::uuid tag;
   int rpc_port;
   int data_port;
   std::string ip;
@@ -29,20 +28,32 @@ struct IOProxyNode : public hvs::JsonSerializer {
     return _prefix;
   }
   explicit IOProxyNode()
-      : tag(), status(Stopped) {
+      : status(Stopped) {
     auto id = boost::uuids::random_generator()();
-    key(boost::lexical_cast<std::string>(tag).c_str());
+    uuid = boost::lexical_cast<std::string>(id);
   }
 
   explicit IOProxyNode(const char* _key) {
     key(_key);
   }
+
+  IOProxyNode& operator=(const IOProxyNode& oths) {
+    rpc_port = oths.rpc_port;
+    data_port = oths.data_port;
+    ip = oths.ip;
+    name = oths.name;
+    status = oths.status;
+    uuid = oths.uuid;
+  }
+  
   virtual void serialize_impl() override {
     put("uuid", uuid);
     put("ip", ip);
     put("name", name);
     put("rpc_port", rpc_port);
     put("data_port", data_port);
+    int s = status;
+    put("status", s);
   };
   virtual void deserialize_impl() override {
     get("uuid", uuid);
@@ -50,11 +61,15 @@ struct IOProxyNode : public hvs::JsonSerializer {
     get("name", name);
     get("rpc_port", rpc_port);
     get("data_port", data_port);
+    int s;
+    get("status", s);
+    status = static_cast<Status>(s);
   };
   void key(const char* key) {
+    boost::uuids::uuid tag;
     std::stringstream ss(key);
     ss >> tag;
-    uuid = prefix() + boost::lexical_cast<std::string>(tag);
+    uuid = boost::lexical_cast<std::string>(tag);
   }
   std::string json_value() { return serialize(); }
 };

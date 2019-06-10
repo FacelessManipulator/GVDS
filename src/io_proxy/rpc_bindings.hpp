@@ -306,6 +306,11 @@ namespace hvs {
         return op->error_code;
     }
 
+    inline int ioproxy_heartbeat() {
+        dout(15) << "INFO: heartbeat from manager" << dendl;
+        return 1;
+    }
+
     inline void hvs_ioproxy_rpc_bind(RpcServer* rpc_server) {
         rpc_server->bind("ioproxy_stat", ioproxy_stat);
         rpc_server->bind("ioproxy_read", ioproxy_read);
@@ -328,5 +333,6 @@ namespace hvs {
         rpc_server->bind("ioproxy_chmod", ioproxy_chmod);
         rpc_server->bind("ioproxy_chown", ioproxy_chown);
         rpc_server->bind("ioproxy_stat_multi", ioproxy_stat);
+        rpc_server->bind("ioproxy_heartbeat", ioproxy_heartbeat);
     }
 }

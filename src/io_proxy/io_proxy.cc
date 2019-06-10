@@ -131,8 +131,16 @@ bool IOProxy::start() {
   m_stop = false;
   // TODO: read configs
   auto _config = HvsContext::get_context()->_config;
+  auto ip = _config->get<string>("ip");
+  Node::addr =  boost::asio::ip::make_address(ip.value_or("0.0.0.0"));
   auto scher_o = _config->get<int>("ioproxy.scher");
   data_path = _config->get<string>("ioproxy.data_path").value_or("/tmp/data");
+  if (!boost::filesystem::exists(data_path) ||
+      !boost::filesystem::is_directory(data_path)) {
+    dout(-1) << "ERROR: IOProxy data path not exists or is not directory."
+             << dendl;
+    return false;
+  }
   auto __manager_addr = _config->get<std::string>("ioproxy.manager_addr");
   if (!__manager_addr) {
     dout(-1) << "ERROR: NO MANAGER ADDR FOUND IN CONFIG FILE!\nPlease add "
@@ -150,12 +158,6 @@ bool IOProxy::start() {
     return false;
   }
   uuid = _config->get<string>("ioproxy.uuid").value();
-  if (!boost::filesystem::exists(data_path) ||
-      !boost::filesystem::is_directory(data_path)) {
-    dout(-1) << "ERROR: IOProxy data path not exists or is not directory."
-             << dendl;
-    return false;
-  }
 
   int scher_num = scher_o.value_or(8);
   for (int i = 0; i < scher_num; i++) {
@@ -213,6 +215,7 @@ void IOProxy::fresh_stat() {
 
   // add ioproxy
   IOProxyNode node;
+  node.uuid = uuid;
   node.name = Node::name;
   node.ip = Node::addr.to_string();
   node.rpc_port = _rpc->port;

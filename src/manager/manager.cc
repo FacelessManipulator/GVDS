@@ -2,6 +2,7 @@
 #include "manager/ioproxy_mgr.h"
 #include "manager/resaggregation_mgr.h"
 #include "zone/ZoneServer.h"
+#include "manager/rpc_mod.h"
 
 using namespace hvs;
 using namespace std;
@@ -39,6 +40,7 @@ bool Manager::start() {
   route(restserver->router);
   // init modules
   for (auto mod : modules) {
+    mod.second->mgr = this;
     mod.second->start();
     // set router in modules
     mod.second->router(restserver->router);
@@ -115,6 +117,8 @@ hvs::Manager* init_manager() {
   auto mgr = new Manager();
   mgr->addr.from_string(*ip);
   // registe modlues in manager node
+  mgr->rpc = std::make_shared<ManagerRpc>("rpc");
+  mgr->registe_module(mgr->rpc);
   mgr->registe_module(std::make_shared<IOProxy_MGR>("ioproxy manager"));
   mgr->registe_module(
       std::make_shared<ResAggregation_MGR>("resaggregation manager"));

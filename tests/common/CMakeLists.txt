@@ -17,13 +17,6 @@ ADD_EXECUTABLE(unittest_json test_json.cc)
 TARGET_LINK_LIBRARIES(unittest_json gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON})
 ADD_TEST(NAME unittest_json COMMAND unittest_json)
 
-ADD_EXECUTABLE(unittest_account test_account.cc)
-TARGET_LINK_LIBRARIES(unittest_account gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON})
-ADD_TEST(NAME unittest_account COMMAND unittest_account)
-
-ADD_EXECUTABLE(unittest_rest test_rest.cc)
-TARGET_LINK_LIBRARIES(unittest_rest gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON})
-ADD_TEST(NAME unittest_rest COMMAND unittest_rest)
 
 ADD_EXECUTABLE(unittest_lru test_lru.cc)
 TARGET_LINK_LIBRARIES(unittest_lru gtest gtest_main)

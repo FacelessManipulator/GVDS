@@ -1,8 +1,13 @@
 GET_PROPERTY(HVSCOMMOM_DEPENDS_ON GLOBAL PROPERTY "HVSCOMMOM_DEPENDS_ON")
 
 ADD_LIBRARY(managerO OBJECT 
-        manager.cc 
-        ioproxy_mgr.cc
+        ioproxy_mgr.cc 
+        manager.cc
+        usermodel/Account.cc
+        usermodel/MD5.cc
+        usermodel/UserModelServer.cc
+        authmodel/Auth.cc
+        authmodel/AuthModelServer.cc
         space/Space.cc
         space/SpaceServer.cc
         zone/Zone.cc

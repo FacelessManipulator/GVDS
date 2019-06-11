@@ -14,27 +14,27 @@ using namespace Pistache;
 using namespace hvs;
 bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
- * spacerename 命令行客户端
+ * spacesizechange 命令行客户端
  */
 std::unordered_map<std::string, std::string> zonemap;
 
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[13] = {const_cast<char *>("spacerename"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("34779"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000"),
-                       const_cast<char *>("-o"), const_cast<char *>(""), const_cast<char *>("-n"),
-                       const_cast<char *>("compute3")};
-    char* demo2[2] = {const_cast<char *>("spacerename"), const_cast<char *>("--help")};
+    char* demo1[13] = {const_cast<char *>("spacesizechange"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
+                       const_cast<char *>("-p"), const_cast<char *>("51867"), const_cast<char *>("--zonename"),
+                       const_cast<char *>("compute-zone2"), const_cast<char *>("--id"), const_cast<char *>("000"),
+                       const_cast<char *>("--spacename"), const_cast<char *>("compute4"), const_cast<char *>("-n"),
+                       const_cast<char *>("100")};
+    char* demo2[2] = {const_cast<char *>("spacesizechange"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
     std::string ip ;//= "127.0.0.1";
     int port ;//= 55107;
     std::string zonename ;//= "syremotezone"; // 空间名称
     std::string ownID;// = "202"; // 用户ID
-    std::string oldspacename;// = "NewWorld";
-    std::string newspacename;// = "BUAABUAA";
+    std::string spacename;// = "NewWorld";
+    int64_t newspacesize;// = "BUAABUAA";
     std::string spaceuuid;
 
     // TODO: 获取命令行信息
@@ -48,9 +48,9 @@ int main(int argc, char* argv[]){
                 ("ip", po::value<std::string>(), "管理节点IP")
                 ("port,p", po::value<int>(), "管理节点端口号")
                 ("zonename", po::value<std::string>(), "区域名称")
-                ("id", po::value<std::string>(), "管理员ID")
-                ("oldname,o", po::value<std::string>(), "空间旧名称")
-                ("newname,n", po::value<std::string>(), "空间新名称")
+                ("id", po::value<std::string>(), "主人ID")
+                ("spacename", po::value<std::string>(), "空间名称")
+                ("newsize,n", po::value<int64_t>(), "空间新容量")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -72,13 +72,13 @@ int main(int argc, char* argv[]){
         {
             ownID = (*sp_variables_map)["id"].as<std::string>();
         }
-        if (sp_variables_map->count("oldname"))
+        if (sp_variables_map->count("spacename"))
         {
-            oldspacename = (*sp_variables_map)["oldname"].as<std::string>();
+            spacename = (*sp_variables_map)["spacename"].as<std::string>();
         }
-        if (sp_variables_map->count("newname"))
+        if (sp_variables_map->count("newsize"))
         {
-            newspacename = (*sp_variables_map)["newname"].as<std::string>();
+            newspacesize = (*sp_variables_map)["newsize"].as<int64_t>();
         }
     };
     commandline.start(); //开始解析命令行参数
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]){
         ZoneInfo zoneinfo;
         zoneinfo.deserialize(mapping->second);
         for(const auto &it : zoneinfo.spaceBicInfo.spaceID){
-            if (zoneinfo.spaceBicInfo.spaceName[it] == oldspacename){
+            if (zoneinfo.spaceBicInfo.spaceName[it] == spacename){
                 spaceuuid = it;
                 break;
             }
@@ -111,14 +111,16 @@ int main(int argc, char* argv[]){
     // TODO: 构造间重命名请求
     Http::Client client;
     char url[256];
-    snprintf(url, 256, "http://%s:%d/space/rename",ip.c_str(), port);
+    snprintf(url, 256, "http://%s:%d/space/changesize",ip.c_str(), port);
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    SpaceRenameReq req;
+    SpaceSizeChangeReq req;
     req.spaceID = spaceuuid;
-    req.newSpaceName = newspacename;
+    req.newSpaceSize = newspacesize;
+
     std::string value = req.serialize();
+
 
     // TODO: 发送间重命名请求，并输出结果
     auto response = client.post(url).body(value).send();

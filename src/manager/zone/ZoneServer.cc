@@ -6,6 +6,7 @@
 #include "datastore/datastore.h"
 
 #include "manager/zone/ZoneServer.h"
+#include "manager/authmodel/AuthModelServer.h"
 
 bool isSubset(std::vector<std::string> v1, std::vector<std::string> v2)
 {
@@ -104,8 +105,8 @@ namespace hvs{
       if(tmp.ownerID == ownerID)
       {
         tmp.zoneName = std::move(newZoneName);
-        zonePtr->set(zoneID, tmp.serialize());
-        return 0;
+        if(zonePtr->set(zoneID, tmp.serialize()) != 0) return -1;//插入报错
+        else return 0;
       }
       else return -1;
    }
@@ -280,16 +281,22 @@ namespace hvs{
     if(tmp.ownerID == ownerID)
     {
       //TODO:插入调用lbq模块
-      for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
+      AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+      int memadd = p_auth->ZoneMemberAdd(zoneID, ownerID, memberID);
+      if(memadd == 0)
       {
-        std::string tmp_mem = *it;
-        if(std::find(tmp.memberID.begin(), tmp.memberID.end(), tmp_mem) != tmp.memberID.end()) continue;
-        else
-          tmp.memberID.emplace_back(tmp_mem);
+        for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
+        {
+          std::string tmp_mem = *it;
+          if(std::find(tmp.memberID.begin(), tmp.memberID.end(), tmp_mem) != tmp.memberID.end()) continue;
+          else
+            tmp.memberID.emplace_back(tmp_mem);
+        }
+        tmp_value = tmp.serialize();
+        zonePtr->set(zoneID, tmp_value);
+        return 0;
       }
-      tmp_value = tmp.serialize();
-      zonePtr->set(zoneID, tmp_value);
-      return 0;
+      else return -1;
     }
     else
       return -1;
@@ -333,25 +340,31 @@ namespace hvs{
     if(tmp.ownerID == ownerID)
     {
       //插入调用lbq模块
-      for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
+      AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+      int memdel = p_auth->ZoneMemberDel(zoneID, ownerID, memberID);
+      if(memdel == 0)
       {
-        std::string tmp_mem = *it;
-        std::vector<std::string>::iterator m = tmp.memberID.begin();
-        while(m != tmp.memberID.end())
+        for(std::vector<std::string>::iterator it = memberID.begin(); it != memberID.end(); it++)
         {
-          if(*m == tmp_mem)
+          std::string tmp_mem = *it;
+          std::vector<std::string>::iterator m = tmp.memberID.begin();
+          while(m != tmp.memberID.end())
           {
-            m = tmp.memberID.erase(m);
-          }
-          else
-          {
-            ++m;
+            if(*m == tmp_mem)
+            {
+              m = tmp.memberID.erase(m);
+            }
+            else
+            {
+              ++m;
+            }
           }
         }
+        tmp_value = tmp.serialize();
+        zonePtr->set(zoneID, tmp_value);
+        return 0;
       }
-      tmp_value = tmp.serialize();
-      zonePtr->set(zoneID, tmp_value);
-      return 0;
+      else return -1;
     }
     else
         return -1;
@@ -388,39 +401,65 @@ namespace hvs{
     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
           hvs::CouchbaseDatastore(zonebucket));
     zonePtr->init();
-    // SpaceMetaData tmp_smd;
-    // tmp_smd.deserialize(spacePathInfo);
+    //插入判断，加的这个区域是否已经存在
+    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
+    int pos = query.find("ownerID");
+    query.erase(pos, 7);
+    query.insert(pos, ownerID);
+    int pos2 = query.find("zonename");
+    query.erase(pos2, 8);
+    query.insert(pos2, zoneName);
+    auto [vp, err] = zonePtr->n1ql(query);
+    if(vp->size() != 0) return -1;
+    else{
+      //1、TODO: 调用spacecreate接口（涉及到跨域创建空间的情况，则返还客户端，并再次发送） , 目前在区域初始注册的时候，只能创建一个默认的空间
+      //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位
+      //2、TODO：调用权限模块
+      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端模块
+      std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo));
+      if (res_sc == "false")
+      {
+        return -1;
+      }
+      else
+      {
+        Zone tmp;
+        std::string spaceID = res_sc;
+        boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+        const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+        tmp.zoneID = tmp_uuid;
+        tmp.zoneName = std::move(zoneName);
+        tmp.ownerID = ownerID;
+        tmp.memberID = memberID;
+        tmp.spaceID.emplace_back(spaceID);
 
-    // if(tmp_smd.hostCenterID.empty())
-    // {
-    // }
-    // else
-    // {
-    // }在客户端判断
+        zonePtr->set(tmp.zoneID, tmp.serialize());
 
-    //1、TODO: 调用spacecreate接口（涉及到跨域创建空间的情况，则返还客户端，并再次发送） , 目前在区域初始注册的时候，只能创建一个默认的空间
-    //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位
-    //2、TODO：调用权限模块
-    SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端模块
-    std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo));
-    if (res_sc == "false")
-    {
-      return -1;
-    }
-    else
-    {
-      Zone tmp;
-      std::string spaceID = res_sc;
-      boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
-      const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
-      tmp.zoneID = tmp_uuid;
-      tmp.zoneName = std::move(zoneName);
-      tmp.ownerID = ownerID;
-      tmp.memberID = memberID;
-      tmp.spaceID.emplace_back(spaceID);
-
-      zonePtr->set(tmp.zoneID, tmp.serialize());
-      return 0;
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+        int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
+        if(res_za == 0)
+        {
+          if(tmp.memberID.empty())
+          {
+            return 0;
+          }
+          else
+          {            
+            int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);
+            if(memadd == 0) return 0;
+            else
+            {
+              std::cerr << "ZoneRegister:添加成员失败！" << std::endl;
+              return -1;
+            } 
+          }
+        }
+        else
+        {
+          std::cerr << "ZoneRegister:添加初始权限失败！" << std::endl;
+          return -1;
+        }
+      }
     }
   }
 
@@ -453,26 +492,96 @@ namespace hvs{
     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
           hvs::CouchbaseDatastore(zonebucket));
     zonePtr->init();
-    SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端
-    std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
-    if (res_sc == "false")
-    {
-      return -1;
-    }
-    else
-    {
-      std::string spaceID = res_sc;
-      boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
-      const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
-      tmp.zoneID = tmp_uuid;
-      tmp.zoneName = std::move(zoneName);
-      tmp.ownerID = ownerID;
-      tmp.memberID = memberID;
-      tmp.spaceID.emplace_back(spaceID);
+    //插入判断，加的这个区域是否已经存在
+    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
+    int pos = query.find("ownerID");
+    query.erase(pos, 7);
+    query.insert(pos, ownerID);
+    int pos2 = query.find("zonename");
+    query.erase(pos2, 8);
+    query.insert(pos2, zoneName);
+    auto [vp, err] = zonePtr->n1ql(query);
 
-      zonePtr->set(tmp.zoneID, tmp.serialize());
-      return 0;
+    if(vp->size() == 0)
+    {
+      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端
+      std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
+      if (res_sc == "false")
+      {
+        return -1;
+      }
+      else
+      {
+        std::string spaceID = res_sc;
+        boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+        const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+        tmp.zoneID = tmp_uuid;
+        tmp.zoneName = std::move(zoneName);
+        tmp.ownerID = ownerID;
+        tmp.memberID = memberID;
+        tmp.spaceID.emplace_back(spaceID);
+
+        zonePtr->set(tmp.zoneID, tmp.serialize());
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+        int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
+        if(res_za == 0)
+        {
+          //空间权限同步
+          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID);
+          if(spacesyne == 0)
+          {
+            if(tmp.memberID.empty())
+            {
+              return 0;
+            }
+            else
+            {            
+              int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);
+              if(memadd == 0) return 0;
+              else
+              {
+                std::cerr << "ZoneAdd:添加成员失败！" << std::endl;
+                return -1;
+              } 
+            }
+          }
+          else return -1;
+        }
+        else
+        {
+          std::cerr << "ZoneAdd:添加初始权限失败！" << std::endl;
+          return -1;
+        }
+      }
     }
+    else if(vp->size() == 1)
+    {
+      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端
+      std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
+      if (res_sc == "false")
+      {
+        return -1;
+      }
+      else
+      {
+        std::string spaceID = res_sc;
+        std::vector<std::string>::iterator it = vp->begin();
+        std::string n1ql_result = *it;
+        std::string tmp_value = n1ql_result.substr(13, n1ql_result.length() - 14);
+        tmp.deserialize(tmp_value);
+        tmp.spaceID.emplace_back(spaceID);
+        zonePtr->set(tmp.zoneID, tmp.serialize());
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+        int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID);
+        if(spacesyne == 0) return 0;
+        else
+        {
+          std::cerr << "ZoneAdd:空间权限同步失败！" << std::endl;
+          return -1;
+        }
+      }
+    }
+    else return -1;
   }
 
 
@@ -509,11 +618,17 @@ namespace hvs{
     if(tmp.ownerID == ownerID)
     {
       //TODO：插入lbq权限删除
-      SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
-      if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+      AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+      int res_zd = p_auth->ZonePermissionDeduct(zoneID, ownerID);
+      if(res_zd == 0)
       {
-        zonePtr->remove(zoneID);
-        return 0;
+        SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
+        if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+        {
+          zonePtr->remove(zoneID);
+          return 0;
+        }
+        else return -1;
       }
       else return -1;
     }
@@ -567,7 +682,14 @@ namespace hvs{
         std::string spaceID = res_sc;
         tmp.spaceID.emplace_back(spaceID);
         zonePtr->set(tmp_key, tmp.serialize());
-        return 0;
+        AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+        int spacesyne = p_auth->SpacePermissionSyne(spaceID, zoneID, ownerID);
+        if(spacesyne == 0) return 0;
+        else
+        {
+          std::cerr << "MapAdd:空间权限同步失败！" << std::endl;
+          return -1;
+        }
       }
     }
   }
@@ -602,26 +724,44 @@ namespace hvs{
     {
       if(isSubset(tmp.spaceID, spaceID))
       {
-        SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
-        tmp_server->SpaceDelete(spaceID); // 调用空间模块，删除空间条目
-        for(std::vector<std::string>::iterator it = spaceID.begin(); it != spaceID.end(); it++)
+        int spaceauthfault = 0;
+        for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
         {
-          std::string will_removed_spaceID = *it;
-          std::vector<std::string>::iterator m = tmp.spaceID.begin();
-          while(m != tmp.spaceID.end())
+          AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
+          int spaceauthdel = p_auth->SpacePermissionDelete(*m);
+          if(spaceauthdel == 0) continue;
+          else
           {
-            if(*m == will_removed_spaceID)
+            std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+            spaceauthfault = 1;
+            break;
+          }
+
+        }
+        if(spaceauthfault == 0)
+        {
+          SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
+          tmp_server->SpaceDelete(spaceID); // 调用空间模块，删除空间条目
+          for(std::vector<std::string>::iterator it = spaceID.begin(); it != spaceID.end(); it++)
+          {
+            std::string will_removed_spaceID = *it;
+            std::vector<std::string>::iterator m = tmp.spaceID.begin();
+            while(m != tmp.spaceID.end())
             {
-              m = tmp.spaceID.erase(m);
-            }
-            else
-            {
-              ++m;
+              if(*m == will_removed_spaceID)
+              {
+                m = tmp.spaceID.erase(m);
+              }
+              else
+              {
+                ++m;
+              }
             }
           }
+          zonePtr->set(zoneID, tmp.serialize());
+          return 0;
         }
-        zonePtr->set(zoneID, tmp.serialize());
-        return 0;
+        else return -1;
       }
       else return -1;
     }

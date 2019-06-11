@@ -6,32 +6,99 @@ g++ UserModelClient.cc -lpistache  -std=c++11 -o userclient
 ./client http://localhost:9080 3
 */
 
+//=============
 #include <iostream>
-#include "usermodel/Account.h"
-//#include <uuid/uuid.h>
 #include "common/JsonSerializer.h"
 #include "context.h"
 #include "datastore/datastore.h"
+#include "common/json.h"
+#include "datastore/couchbase_helper.h"
 #include "gtest/gtest.h"
 
 
-#include <atomic>
-#include <pistache/net.h>
-#include <pistache/http.h>
-#include <pistache/client.h>
 
+#include "manager/usermodel/Account.h"
+// #include "manager/usermodel/UserModelServer.h"
+
+#include <pistache/client.h>
+#include <pistache/http.h>
+#include <pistache/net.h>
+#include <atomic>
+
+#include "manager/manager.h"
+
+//#include "include/context.h"
 using namespace Pistache;
 using namespace Pistache::Http;
+using namespace hvs;
 using namespace std;
 
 class HVSAccountTest : public ::testing::Test {
  protected:
-  void SetUp() override {}
-  void TearDown() override {}
-  static void SetUpTestCase() { hvs::init_context(); }
-  static void TearDownTestCase() { hvs::destroy_context(); }
+  void SetUp() override {
+    manager = static_cast<Manager*>(HvsContext::get_context()->node);
+    ASSERT_NE(manager, nullptr);
+  }
+  void TearDown() override { manager = nullptr; }
+
+ protected:
+  static void SetUpTestCase() {
+    hvs::init_context();
+    hvs::init_manager();
+    usleep(100000); // wait 100 ms. rest server may started.
+  }
+  static void TearDownTestCase() {
+    hvs::destroy_manager(
+        static_cast<Manager*>(HvsContext::get_context()->node));
+    hvs::destroy_context();
+  }
+
+ public:
+  Manager* manager;
 };
 
+
+
+
+TEST_F(HVSAccountTest, registration) {
+    cout<< "******start client: registration ******"<<endl;
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://localhost:%d/users/registration", manager->rest_port());
+
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+    Account person("lbq-8", "123456", "128", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang");
+    std::string value = person.serialize();
+
+    auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();
+        dout(-1) << "Client Info: post request " << url << dendl;
+
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+        [&](Http::Response res) {
+          //dout(-1) << "Manager Info: " << res.body() << dendl;
+          std::cout << "Response code = " << res.code() << std::endl;
+          auto body = res.body();
+          if (!body.empty()){
+              std::cout << "Response body = " << body << std::endl;
+              //====================
+              //your code write here
+
+              //====================
+          }
+          prom.set_value(true);
+        },
+        Async::IgnoreException);
+    EXPECT_TRUE(fu.get());
+
+    client.shutdown();
+}
+
+
+/*
 TEST_F(HVSAccountTest, atry) {
     cout<< "******start client: registration ******"<<endl;
 
@@ -95,3 +162,4 @@ TEST_F(HVSAccountTest, atry) {
     cout<< "******endl client: registration ******"<<endl;
   
 }
+*/

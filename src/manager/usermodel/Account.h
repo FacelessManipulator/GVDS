@@ -7,19 +7,24 @@
 #include <map>  
 
 
-
+//对应sc_account_info表
 class SCAccount : public hvs::JsonSerializer {
 public:
-    std::string sc_flag;
-    std::map<std::string, std::string> location_scacc;
-    std::map<std::string, std::string> scacc_password;
+    std::string accountID;
+    std::map<std::string, std::string> Beijing_account;
+    std::map<std::string, std::string> Shanghai_account;
+    std::map<std::string, std::string> Guangzhou_account;
+    std::map<std::string, std::string> Changsha_account;
+    std::map<std::string, std::string> Jinan_account;
+
+
 public:
   void serialize_impl() override;
   void deserialize_impl() override;
 
 public:
     SCAccount() = default;
-    SCAccount(std::string has) : sc_flag(has){}
+    SCAccount(std::string id) : accountID(id){}
 };
 
 
@@ -34,7 +39,7 @@ public:
     std::string accountPhone;//虚拟数据空间用户电话
     std::string accountAddress;//虚拟数据空间用户住址
     std::string Department;//单位名称
-    SCAccount sc;
+    //SCAccount sc;
 
  public:
   void serialize_impl() override;
@@ -43,8 +48,8 @@ public:
  public:
   Account() = default;
   Account(std::string name, std::string pass, std::string AID, 
-          std::string email, std::string phone,std::string address, std::string dep, std::string has)
-           : accountName(name), Password(pass), accountID(AID), accountEmail(email), accountPhone(phone), accountAddress(address), Department(dep), sc(has) {}
+          std::string email, std::string phone,std::string address, std::string dep)
+           : accountName(name), Password(pass), accountID(AID), accountEmail(email), accountPhone(phone), accountAddress(address), Department(dep){}
 };
 
 //账户注册时写入，账户登录时查询，对应account_map_id 表
@@ -79,9 +84,31 @@ public:
 };
 
 
+//登录时获取从账户池获取账户
+class AccountSCPool : public hvs::JsonSerializer{
+public:
+    std::map<std::string, std::string> unuse_account;
+    std::map<std::string, std::string> use_account;
+public:
+    void serialize_impl() override;
+    void deserialize_impl() override;
+public:
+    AccountSCPool() = default;
+};
 
-
-
+//getLocalAccountinfo用到,本地账户名，和密码// 不用和数据库交互
+class LocalAccountPair : public hvs::JsonSerializer{
+public:
+    std::string localaccount;
+    std::string localpassword;
+public:
+    void serialize_impl() override;
+    void deserialize_impl() override;
+public:
+    LocalAccountPair() = default;
+    LocalAccountPair(std::string account, std::string pass)
+    : localaccount(account), localpassword(pass){}
+};
 
 //int lbqprint();
 

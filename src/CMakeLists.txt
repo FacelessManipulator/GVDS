@@ -7,9 +7,9 @@ SET(CommonSRCS
         datastore/datastore.cc
         datastore/couchbase_helper.cc
         common/context.cc
-        usermodel/Account.cc
-        usermodel/MD5.cc
-        usermodel/UserModelServer.cc
+        #usermodel/Account.cc
+        #usermodel/MD5.cc
+        #sermodel/UserModelServer.cc
         common/RestServer.cc
         common/JsonSerializer.cc
         msg/rpc.cc
@@ -48,5 +48,7 @@ add_subdirectory(io_proxy)
 add_subdirectory(client)
 add_subdirectory(manager)
 add_subdirectory(spacecmdline)
+add_subdirectory(zonecmdline)
+add_subdirectory(usercmdline)
 
 #TARGET_LINK_LIBRARIES(hvsd hello)

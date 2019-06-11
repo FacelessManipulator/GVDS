@@ -630,6 +630,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID){
 
 //3、权限修改模块，提供一个rest api，让前端调用  //TODO  这个等其他的测试都通过再写吧，否则没意义【流程参考A4纸上的】
 void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
+    
 }
 
 //TODO
@@ -640,11 +641,11 @@ int AuthModelServer::AuthModify(){
 
 
 
-//4、权限查询模块  //[完成 待测试]
+//4、权限查询模块  
 void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response){
-
+    cout << "====== start AuthModelServer function: AuthSearchModelRest ======"<< endl;
     auto info = request.body();
-    cout << info << endl;  //hvsid
+    cout << "info: " <<info << endl;  //hvsid
 
     string m_info = info;
     string data = AuthSearchModel(m_info);
@@ -654,11 +655,13 @@ void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::Re
     else{
         response.send(Http::Code::Ok, data); // data 在C++客户端使用AuthSearch 返序列化
     }
-
+   
+    cout << "====== end AuthModelServer function: AuthSearchModelRest ======"<< endl;
 }
 
 
 string AuthModelServer::AuthSearchModel(string &hvsID){
+     cout << "enter AuthSearchModel"<< endl;
     //1、查询hvsid对应的所有区域ID
     vector<string> result_z;
     ZoneServer *p_zone = static_cast<ZoneServer*>(mgr->get_module("zone").get());
@@ -691,7 +694,6 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
         myauth.read[myzone.zoneID] = r;
         myauth.write[myzone.zoneID] = w;
         myauth.exe[myzone.zoneID] = x;
-
         //2.1调用子函数
             //查询在每个区域中是主人 还是 成员
             //然后获取相应身份的权限数据
@@ -730,15 +732,15 @@ int AuthModelServer::subAuthSearchModel(ZoneInfo &myzone, string hvsID, string &
 
     //2.1.3判读是主人还是成员
     if(isowner){
-        r = person.owner_read;
-        w = person.owner_write;
-        x = person.owner_exe;
+        r = to_string(person.owner_read);
+        w = to_string(person.owner_write);
+        x = to_string(person.owner_exe);
         return 0;
     }
     if(ismember){
-        r = person.group_read;
-        w = person.group_write;
-        x = person.group_exe;
+        r = to_string(person.group_read);
+        w = to_string(person.group_write);
+        x = to_string(person.group_exe);
         return 0;
     }
 

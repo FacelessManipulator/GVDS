@@ -1,0 +1,51 @@
+/**
+ * Created by Yaowen Xu on 2019-03-20.
+ * 作者: Yaowen Xu
+ * 时间: 2019-03-20
+ * 工程: HVSONE
+ * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
+ */
+
+#ifndef HVSONE_IPCCLIENT_H
+#define HVSONE_IPCCLIENT_H
+#include <iostream>
+#include <boost/asio.hpp>
+#include "IPCMessage.hpp" // 引入消息格式
+#include <cstdlib>
+#include <deque>
+#include <thread>
+#include <string>
+
+namespace hvs{
+    typedef std::deque<IPCMessage> ipc_message_queue;
+
+    class IPCClient {
+    public:
+        IPCClient();
+        IPCClient(std::string ip, int port);
+        ~IPCClient();
+        void set_callback_func(std::function <void (IPCMessage)>);
+        bool run();
+        bool test();
+        void write(const IPCMessage& msg);
+        bool stop();
+    private:
+        void do_connect(const boost::asio::ip::tcp::resolver::results_type& endpoints); // 处理 connect 信息
+        void do_read_header();
+        void do_read_body();
+        void do_write();
+        void do_jobs();
+        void push_to_return_msgs(const IPCMessage msg);
+
+    private:
+        boost::asio::io_context io_context_;
+        boost::asio::ip::tcp::socket socket_;
+        IPCMessage read_msg_;
+        ipc_message_queue write_msgs_; // 写入的消息队列
+        ipc_message_queue return_msgs_; // 返回的消息队列
+        std::shared_ptr<std::thread> sp_context_thread; // 用来指向线程
+        std::shared_ptr<std::function <void (IPCMessage)>>  sp_process_func; // 指向函数和lamda 表达式的智能指针
+    };
+}
+
+#endif //HVSONE_IPCCLIENT_H

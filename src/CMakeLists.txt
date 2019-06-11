@@ -16,6 +16,9 @@ SET(CommonSRCS
         msg/udt_client.cc
         msg/udt_writer.cc
         msg/client_session.cc
+        ipc/IPCClient.cc
+        ipc/IPCServer.cc
+        ipc/IPCMessage.hpp
 )
 
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON

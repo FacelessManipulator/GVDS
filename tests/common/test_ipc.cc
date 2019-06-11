@@ -40,11 +40,11 @@ bool recv() {
     cout << endl;
     try {
         IPCServer ipcServer(6666);
-        ipcServer.set_callback_func([](IPCMessage msg)-> bool{
+        ipcServer.set_callback_func([](IPCMessage msg)-> std::string {
             char tmp[IPCMessage::max_body_length] = {0};
             std::memcpy(tmp, msg.body(), msg.body_length());
             std::cout << "Server端输出：" << tmp << endl;
-            return true;
+            return "";
         });
         ipcServer.run(); // 启动 IPCServer 进行运行
         cout << "服务端已经运行！" << endl;

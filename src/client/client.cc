@@ -4,6 +4,7 @@
 #include "client/graph_mod.h"
 #include "client/rpc_mod.h"
 #include "client/zone_mod.h"
+#include "client/ipc_mod.h"
 
 using namespace hvs;
 using namespace std;
@@ -78,6 +79,7 @@ hvs::Client* init_client() {
   client->registe_module(client->rpc);
   client->registe_module(client->fuse);
   client->registe_module(client->zone); // 注册空间客户端模块
+  client->registe_module(std::make_shared<ClientIPC>("ipc", client));
 
   client->start();
   return client;

@@ -21,3 +21,7 @@ ADD_TEST(NAME unittest_json COMMAND unittest_json)
 ADD_EXECUTABLE(unittest_lru test_lru.cc)
 TARGET_LINK_LIBRARIES(unittest_lru gtest gtest_main)
 ADD_TEST(NAME unittest_lru COMMAND unittest_lru)
+
+ADD_EXECUTABLE(unittest_ipc test_ipc.cc)
+TARGET_LINK_LIBRARIES(unittest_ipc gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON})
+ADD_TEST(NAME unittest_ipc COMMAND unittest_ipc)

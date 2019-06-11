@@ -50,5 +50,22 @@ inline void default_config(hvs::ConfigureSettings* _config) {
 
   // storage 本地挂载的文件系统（lustre等）
   _config->add("storage", string("/tmp/hvs/tests/data/"));
+
+  // 管理节点ip port
+  _config->add("ipBeijing", string("192.168.5.224"));  //zhongkeyuan
+  _config->add("portBeijing", string("45311"));
+
+  _config->add("ipShanghai", string("192.168.5.222")); //beihang
+  _config->add("portShanghai", string("58955"));
+
+  _config->add("ipGuangzhou", string());
+  _config->add("portGuangzhou", string());
+
+  _config->add("ipChangsha", string());
+  _config->add("portChangsha", string());
+
+  _config->add("ipJinan", string());
+  _config->add("portJinan", string());
+
 }
 }  // namespace hvs

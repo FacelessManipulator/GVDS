@@ -111,7 +111,7 @@ TEST_F(HVSAuthTest, auth_addmodel) {
     // else cout << "fail: 空间权限删除接口" << endl;
     // cout << "结束：空间权限删除接口" << endl << endl;
     // 查看 spaceID 的权限
-    //显示: [root : root]   表明成功
+    // 显示: [root : root]   表明成功
 
   /*
   Http::Client client;

@@ -105,8 +105,8 @@ namespace hvs{
       if(tmp.ownerID == ownerID)
       {
         tmp.zoneName = std::move(newZoneName);
-        zonePtr->set(zoneID, tmp.serialize());
-        return 0;
+        if(zonePtr->set(zoneID, tmp.serialize()) != 0) return -1;//插入报错
+        else return 0;
       }
       else return -1;
    }

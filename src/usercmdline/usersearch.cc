@@ -21,8 +21,8 @@ int main(int argc, char* argv[]){
     // 1、用户登录
     char* demo1[7] = {const_cast<char *>("usersearch"), 
                        const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("41685"), 
-                       const_cast<char *>("-s"), const_cast<char *>("lbq-7")};
+                       const_cast<char *>("-p"), const_cast<char *>("40333"), 
+                       const_cast<char *>("-u"), const_cast<char *>("lbq-7")};
     char* demo2[2] = {const_cast<char *>("usersearch"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
@@ -33,16 +33,16 @@ int main(int argc, char* argv[]){
 
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(7, demo1);
+    CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
-    std::string cmdname = "usersearch";
+    std::string cmdname = argv[0];
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("账户登录");
         command.add_options()
                 ("ip", po::value<std::string>(), "管理节点IP")
                 ("port,p", po::value<int>(), "管理节点端口号")
-                ("search,s", po::value<std::string>(), "账户名")
+                ("user,u", po::value<std::string>(), "账户名")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -56,9 +56,9 @@ int main(int argc, char* argv[]){
         {
             port = (*sp_variables_map)["port"].as<int>();
         }
-        if (sp_variables_map->count("search"))
+        if (sp_variables_map->count("user"))
         {
-            username = (*sp_variables_map)["search"].as<std::string>();
+            username = (*sp_variables_map)["user"].as<std::string>();
         }
     };
     commandline.start(); //开始解析命令行参数

@@ -55,7 +55,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("ipBeijing", string("192.168.5.224"));  //zhongkeyuan
   _config->add("portBeijing", string("45311"));
 
-  _config->add("ipShanghai", string("192.168.5.222")); //shanghai
+  _config->add("ipShanghai", string("192.168.5.222")); //beihang
   _config->add("portShanghai", string("58955"));
 
   _config->add("ipGuangzhou", string());

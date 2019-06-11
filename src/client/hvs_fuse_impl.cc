@@ -20,7 +20,7 @@
 #include "client/client.h"
 #include "client/fuse_mod.h"
 #include "client/graph_mod.h"
-#include "client/rpc_mod.h"
+#include "client/msg_mod.h"
 #include "client/zone_mod.h"
 #include "client/zone_struct.h"
 #include "context.h"
@@ -113,6 +113,9 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   }
 
   auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
+  if(spaceuuid.empty()){
+      return -ENOENT;
+  }
 
   auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
   // not exists
@@ -469,15 +472,19 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
     auto [nzonename, nspacename, nspaceuuid, nlpath] = HVS_FUSE_DATA->client->zone->locatePosition(newpath);
 
   // access content level
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+    auto [siop, srpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+    auto [diop, drpath] = HVS_FUSE_DATA->client->graph->get_mapping(nspaceuuid);
   // not exists
-  if (!iop) {
+  if (!siop || !diop) {
     return -ENOENT;
+  } else if (siop->uuid != diop->uuid) {
+      // over ioproxy move is not support yet
+      return -ENOTSUP;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_rename",
-                                              (rpath + lpath).c_str(),
-                                              (rpath + nlpath).c_str());
+  auto res = HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename",
+                                              (srpath + lpath).c_str(),
+                                              (drpath + nlpath).c_str());
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;

@@ -1,10 +1,11 @@
 #include "client/graph_mod.h"
-#include "graph_mod.h"
+#include "client/msg_mod.h"
 
 using namespace hvs;
 using namespace std;
 
 void ClientGraph::start() {
+  fresh_ioproxy();
   // TODO: 当前空间对应的IO代理是固定的，之后会重新建造一个映射表
   auto ion1 = make_shared<IOProxyNode>();
   ion1->ip = "127.0.0.1";
@@ -29,15 +30,28 @@ void ClientGraph::stop() {}
 
 std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
     const std::string& space_uuid) {
-  graph_mutex.lock_shared();
-  auto mapping = mappings.find(space_uuid);
-  graph_mutex.unlock_shared();
-  if (mapping != mappings.end()) {
-    return mapping->second;
-  } else {
-    // mapping not found, maybe deleted
-    return {nullptr, ""};
-  }
+//  graph_mutex.lock_shared();
+//  auto mapping = mappings.find(space_uuid);
+//  graph_mutex.unlock_shared();
+//  if (mapping != mappings.end()) {
+//    return mapping->second;
+//  } else {
+//    // mapping not found, maybe deleted
+//    return {nullptr, ""};
+//  }
+    // TODO: best node selection mod handle this
+    std::shared_ptr<IOProxyNode> iop;
+    for(auto iop_it : ioproxy_list) {
+      iop = iop_it.second;
+      break;
+    }
+    if(ioproxy_list.size() > 0) {
+        string forward_path("/");
+        forward_path.append(space_uuid);
+        return make_tuple(iop, forward_path);
+    } else {
+        return make_tuple(nullptr, "");
+    }
 }
 
 std::vector<Space> ClientGraph::list_space(std::string zonename) {
@@ -60,4 +74,13 @@ std::vector<Zone> ClientGraph::list_zone() {
     zones.emplace_back(zo.first);
   }
   return zones;
+}
+
+void ClientGraph::fresh_ioproxy() {
+  string endpoint = client->get_manager();
+  string res = client->rpc->get_request(endpoint, "/ioproxy");
+  if(res.size()) {
+    json_decode(res, ioproxy_list);
+    dout(10) << "INFO: get " << ioproxy_list.size() << " ioproxy from manager." << dendl;
+  }
 }

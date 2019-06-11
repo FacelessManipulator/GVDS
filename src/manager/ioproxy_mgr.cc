@@ -75,9 +75,6 @@ bool IOProxy_MGR::add(const Rest::Request& req, Http::ResponseWriter res) {
 }
 
 bool IOProxy_MGR::list(const Rest::Request& req, Http::ResponseWriter res) {
-    for(auto iop : live_ioproxy) {
-      iop.second->json_value();
-    }
     res.send(Code::Ok, json_encode(live_ioproxy));
     return true;
 }

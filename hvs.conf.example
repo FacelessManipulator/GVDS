@@ -4,7 +4,7 @@ log = {
     level = 10;
 };
 
-manager_addr = ("127.0.0.1", );
+manager_addr = ("http://127.0.0.1:9090", );
 
 // only ioproxy node need these settings
 rpc = {

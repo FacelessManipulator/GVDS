@@ -160,7 +160,7 @@ namespace hvs{
 
   //区域信息检索
   void ZoneServer::GetZoneInfoRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: GetZoneInfoRest ======"<< std::endl;
+    dout(15) << "INFO: ZoneServer: GetZoneInfoRest request."<< dendl;
     auto info = request.body();
 
     std::string clientID = info;
@@ -177,7 +177,6 @@ namespace hvs{
       result = "fail";
     }
     response.send(Http::Code::Ok, result);
-    std::cout << "====== end ZoneServer function: GetZoneInfoRest ======"<< std::endl;
   }
 
   bool ZoneServer::GetZoneInfo(std::vector<std::string> &result_z, std::string clientID)

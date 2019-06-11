@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pistache/client.h>
 #include <cerrno>
 #include <shared_mutex>
 #include <unordered_map>
@@ -20,8 +21,10 @@ class ClientRpc : public ClientModule {
   std::shared_mutex rpc_mutex;
   std::unordered_map<std::string, std::shared_ptr<RpcClient>> rpc_clients;
   std::unordered_map<std::string, std::shared_ptr<ClientSession>> udt_clients;
+  std::unordered_map<std::string, std::shared_ptr<Pistache::Http::Client>> rest_clients;
   std::shared_ptr<RpcClient> rpc_channel(std::shared_ptr<IOProxyNode> node);
   std::shared_ptr<ClientSession> udt_channel(std::shared_ptr<IOProxyNode> node);
+  std::shared_ptr<Pistache::Http::Client> rest_channel(std::string endpoint);
 
  public:
   ClientRpc(const char* name, Client* cli) : ClientModule(name, cli) {
@@ -34,8 +37,12 @@ class ClientRpc : public ClientModule {
       Args... args);
 
   int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
-  std::unique_ptr<ioproxy_rpc_buffer> 
-    read_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
+  std::unique_ptr<ioproxy_rpc_buffer> read_data(
+      std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
+  // WARNNING: the return result may be empty if request failed
+  std::string post_request(const std::string& endpoint, const std::string& url,
+                           const std::string& data = "");
+  std::string get_request(const std::string& endpoint, const std::string& url);
 
   friend class Client;
 };

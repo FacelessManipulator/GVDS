@@ -41,22 +41,26 @@ int ClientSession::write(ioproxy_rpc_buffer &buffer) {
   // send the resp back
   promise<std::unique_ptr<ioproxy_rpc_buffer>> ready_promise;
 
-  future<std::unique_ptr<ioproxy_rpc_buffer>> ready_future(
-      ready_promise.get_future());
+  future<std::unique_ptr<ioproxy_rpc_buffer>> ready_future = ready_promise.get_future();
+  session_lock.lock();
   futures[buffer.id] = move(ready_future);
   ready_promises[buffer.id] = move(ready_promise);
+  session_lock.unlock();
   writer->write(std::move(data));
   return buffer.id;
 }
 
 std::unique_ptr<ioproxy_rpc_buffer> ClientSession::wait_op(int id) {
+  session_lock.lock();
   auto it = futures.find(id);
-  if (it == futures.end()) return nullptr;
+  if (it == futures.end()) {
+    session_lock.unlock();
+    return nullptr;
+  }
   future<std::unique_ptr<ioproxy_rpc_buffer>> ft = move(it->second);
-  // unlock
-  unique_ptr<ioproxy_rpc_buffer> res = ft.get();
-  // lock
   futures.erase(id);
+  session_lock.unlock();
+  unique_ptr<ioproxy_rpc_buffer> res = ft.get();
   return res;
 }
 

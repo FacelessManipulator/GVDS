@@ -29,6 +29,7 @@ SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         rpc
         boost_system
         boost_thread
+        boost_filesystem
         boost_program_options
         udt
 )

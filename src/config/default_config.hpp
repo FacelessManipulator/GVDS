@@ -16,6 +16,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("list", vector{1, 2, 3});
 
   _config->add("ip", string("0.0.0.0"));
+  _config->add("manager_addr", vector{string("127.0.0.1")});
   _config->add("log.path", string("/var/log/hvs.log"));
   _config->add("log.level", 10);
   _config->add("rpc.port", 9092);
@@ -30,12 +31,12 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("couchbase.bucket", string("test"));
   
   // fuse config options
-  _config->add("fuse.mountpoint", string("/home/yaowen/hvs"));
+  _config->add("fuse.mountpoint", string("/mnt/hvs"));
   _config->add("fuse.foreground", true);
   _config->add("fuse.debug", false);
   _config->add("fuse.multithread", true);
   _config->add("fuse.auto_unmount", true);
-  _config->add("fuse.use_udt", false);
+  _config->add("fuse.use_udt", true);
 
   // ioproxy config options
   _config->add("ioproxy.scher", 6);
@@ -50,22 +51,8 @@ inline void default_config(hvs::ConfigureSettings* _config) {
 
   // storage 本地挂载的文件系统（lustre等）
   _config->add("storage", string("/tmp/hvs/tests/data/"));
-
-  // 管理节点ip port
-  _config->add("ipBeijing", string("192.168.5.224"));  //zhongkeyuan
-  _config->add("portBeijing", string("45311"));
-
-  _config->add("ipShanghai", string("192.168.5.222")); //beihang
-  _config->add("portShanghai", string("58955"));
-
-  _config->add("ipGuangzhou", string());
-  _config->add("portGuangzhou", string());
-
-  _config->add("ipChangsha", string());
-  _config->add("portChangsha", string());
-
-  _config->add("ipJinan", string());
-  _config->add("portJinan", string());
-
+  // manager config options
+  _config->add("manager.port", 9090);
+  _config->add("manager.thread_num", 6);
 }
 }  // namespace hvs

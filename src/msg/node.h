@@ -13,6 +13,7 @@ enum HVSNodeType {
 class Node {
  public:
   std::string name;
+  std::string uuid;
   HVSNodeType type;
   boost::asio::ip::address addr;
   Node(const std::string& _name, HVSNodeType _type, const std::string& ip)

@@ -38,6 +38,7 @@ class ClientSession : public Thread {
   UDTSOCKET socket_;
   bool m_stop = false;
   std::atomic_uint64_t seq_n;
+  std::mutex session_lock;
   friend class UDTClient;
 };
 }  // namespace hvs

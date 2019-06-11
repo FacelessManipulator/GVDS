@@ -6,38 +6,34 @@
 //
 
 #include "zone_mod.h"
+#include "client/msg_mod.h"
+
+using namespace std;
+using namespace hvs;
 
 void hvs::ClientZone::start(){
-    check();
+    m_stop = false;
+    create("client-zone-mod");
 }
 
 void hvs::ClientZone::stop(){
-
+    m_stop = true;
 }
 
-bool hvs::ClientZone::GetZoneInfo(std::string ip, int port, std::string clientID) {
-    // 调用获取区域信息；
-    Pistache::Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/info", ip.c_str(), port);
-    auto opts = Pistache::Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
-    std::string value = std::move(clientID);
-    //std::cerr<< "Client Info: post request " << url << std::endl;
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    std::string inforesult;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Pistache::Http::Response res) {
-                inforesult = res.body();
-                prom.set_value(true);
-            },
-            Pistache::Async::IgnoreException);
-    fu.get();
-    client.shutdown();
+void* ClientZone::entry() {
+    while(!m_stop) {
+        client->zone->GetZoneInfo("202");
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+    }
+}
+
+bool hvs::ClientZone::GetZoneInfo(std::string clientID) {
     GetZoneInfoRes zoneinfores;
-    zoneinfores.deserialize(inforesult); //获取返回的结果
+    string endpoint = client->get_manager();
+    string inforesult = client->rpc->post_request(endpoint, "/zone/info", clientID);
+    if (inforesult.size() > 0) {
+        zoneinfores.deserialize(inforesult); //获取返回的结果
+    }
     if(zoneinfores.zoneInfoResult.empty()){
         return false;
     }
@@ -103,10 +99,3 @@ std::tuple<std::string, std::string, std::string, std::string> hvs::ClientZone::
     }
     return {zonename, spacename, spaceuuid, remotepath};
 }
-
-void hvs::ClientZone::check() {
-    std::cout << "空间模块同步空间信息完成！" << std::endl;
-    // TODO：结合用户模块，获取账户信息
-    GetZoneInfo("192.168.5.222", 43107, "202");
-}
-

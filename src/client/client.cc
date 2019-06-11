@@ -2,7 +2,7 @@
 
 #include "client/fuse_mod.h"
 #include "client/graph_mod.h"
-#include "client/rpc_mod.h"
+#include "client/msg_mod.h"
 #include "client/zone_mod.h"
 #include "client/ipc_mod.h"
 
@@ -15,6 +15,7 @@ void Client::start() {
   auto rest_port = _config->get<int>("rest.port");
   auto rpc_port = _config->get<int>("rpc.port");
   auto ip = _config->get<std::string>("ip");
+  manager_endpoints = _config->get_list<std::string>("manager_addr");
   if (!rest_port) {
     std::cerr << "restserver error: invalid port." << std::endl;
   } else if (!rpc_port) {
@@ -59,6 +60,14 @@ void Client::registe_module(std::shared_ptr<ClientModule> mod) {
   modules[mod->module_name] = mod;
 }
 
+string Client::get_manager() {
+  if(manager_endpoints->size() > 0) {
+    return manager_endpoints->at(0);
+  } else {
+    dout(-1) << "ERROR: Connot get manager endpoint from config file." << dendl;
+  }
+}
+
 namespace hvs {
 hvs::Client* init_client() {
   auto _config = HvsContext::get_context()->_config;
@@ -71,15 +80,15 @@ hvs::Client* init_client() {
   auto client = new Client();
   hvs::HvsContext::get_context()->node = client;
   // registe modlues in manager node
-  client->graph = std::make_shared<ClientGraph>("graph", client);
-  client->rpc = std::make_shared<ClientRpc>("rpc", client);
   client->fuse = std::make_shared<ClientFuse>("fuse", client);
+  client->rpc = std::make_shared<ClientRpc>("rpc", client);
   client->zone = std::make_shared<ClientZone>("zone", client); // 空间客户端模块
-  client->registe_module(client->graph);
-  client->registe_module(client->rpc);
+  client->graph = std::make_shared<ClientGraph>("graph", client);
   client->registe_module(client->fuse);
+  client->registe_module(client->rpc);
   client->registe_module(client->zone); // 注册空间客户端模块
   client->registe_module(std::make_shared<ClientIPC>("ipc", client));
+  client->registe_module(client->graph);
 
   client->start();
   return client;

@@ -19,6 +19,7 @@ class ClientGraph : public ClientModule {
   std::shared_mutex graph_mutex;
   // currently I store space-gpath mappings in a map, please dev a space mod to handle this
   std::unordered_map<std::string, std::tuple<std::shared_ptr<IOProxyNode>, std::string>> mappings;
+  std::map<std::string, std::shared_ptr<IOProxyNode>> ioproxy_list;
 
  public:
   ClientGraph(const char* name, Client* cli) : ClientModule(name, cli) {
@@ -29,6 +30,7 @@ class ClientGraph : public ClientModule {
   std::tuple<std::shared_ptr<IOProxyNode>, std::string> get_mapping(const std::string& space_uuid);
   std::vector<Space> list_space(std::string zonename);
   std::vector<Zone> list_zone();
+  void fresh_ioproxy();
   void set_mapping(const std::string& path, std::shared_ptr<IOProxyNode> ion, const std::string& rpath) {
     mappings[path] = {ion, rpath};
   }

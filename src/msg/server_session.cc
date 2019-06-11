@@ -11,6 +11,7 @@ ServerSession::ServerSession(UDTServer *srv, UDTSOCKET socket)
   unpacker.reserve_buffer(10240000);
   writer = make_shared<UDTWriter>(socket_);
   writer->start();
+  iop = static_cast<IOProxy *>(hvs::HvsContext::get_context()->node);
 }
 
 void ServerSession::close() {
@@ -41,7 +42,6 @@ void ServerSession::do_read() {
              << dendl;
     // maybe close session?
     m_stop = true;
-    return;
   } else {
     unpacker.buffer_consumed(rs);
   }
@@ -60,8 +60,7 @@ void ServerSession::do_read() {
       auto buf = msg.as<ioproxy_rpc_buffer>();
       auto op = std::make_shared<IOProxyDataOP>();
       // TODO: use dynamic prefix path
-      op->path.assign("/tmp/hvs/tests/data");
-      op->path.append(buf.path);
+      op->path = this->iop->absolute_path(buf.path);
       op->type = IO_PROXY_DATA;
       op->offset = buf.offset;
       op->id = buf.id;
@@ -107,9 +106,7 @@ void ServerSession::do_read() {
   }
 
   if (m_stop) {
-    // remove from epoll
-    UDT::epoll_remove_usock(parent->epoll_fd, socket_);
-    UDT::close(socket_);
+    // remove from epoll out of session
   } else {
     if (unpacker.buffer_capacity() < max_read_bytes) {
       unpacker.reserve_buffer(max_read_bytes);

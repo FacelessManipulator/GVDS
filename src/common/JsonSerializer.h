@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 #define ERROR_INCORRECT_TYPE 111
 
@@ -31,19 +32,19 @@ class JsonSerializer {
   }
 
   void deserialize(const char* jsonString) {
-    rapidjson::Document document;
-    document.Parse(jsonString);
-    assert(document.IsObject());
-    setJsonValue(document.GetObject());
-    deserialize_impl();
+    try {
+      rapidjson::Document document;
+      document.Parse(jsonString);
+      if(!document.IsObject()) return;
+      setJsonValue(document.GetObject());
+      deserialize_impl();
+    } catch (std::exception& e) {
+      return ;
+    }
   }
 
   void deserialize(const std::string& jsonString) {
-    rapidjson::Document document;
-    document.Parse(jsonString.c_str());
-    assert(document.IsObject());
-    setJsonValue(document.GetObject());
-    deserialize_impl();
+    deserialize(jsonString.c_str());
   }
 
   void deserialize(rapidjson::Value* value) {
@@ -101,6 +102,8 @@ class JsonSerializer {
   void encode(std::vector<V>& _vec);
   template <class V>
   void encode(std::map<std::string, V>& _map);
+  template <class V>
+  void encode(std::shared_ptr<V> _ptr);
 
   template <class T>
   int decode(rapidjson::Value* value, T& dest);
@@ -109,6 +112,8 @@ class JsonSerializer {
   int decode(rapidjson::Value* value, std::vector<V>& _vec);
   template <class V>
   int decode(rapidjson::Value* value, std::map<std::string, V>& _map);
+  template <class V>
+  int decode(rapidjson::Value* value, std::shared_ptr<V>& _ptr);
 
   inline void setJsonValue(rapidjson::Value value) { this->_jsonValue = value; }
 
@@ -135,6 +140,16 @@ void JsonSerializer::encode(std::map<std::string, T>& _map) {
     encode(value);
   }
   _writer->EndObject();
+}
+
+template <class V>
+void JsonSerializer::encode(std::shared_ptr<V> _ptr) {
+  if(_ptr)
+    encode<V>(*_ptr);
+  else {
+    int tmp = 0;
+    encode<int>(tmp);
+  }
 }
 
 template <>
@@ -181,6 +196,14 @@ int JsonSerializer::decode(rapidjson::Value* value,
     decode(&(itr->value), tmp[itr->name.GetString()]);
   }
   _map.swap(tmp);
+}
+
+template <class V>
+int JsonSerializer::decode(rapidjson::Value* value, std::shared_ptr<V>& _ptr) {
+  if (!_ptr) {
+    _ptr = std::make_shared<V>();
+  }
+  decode<V>(value, *_ptr);
 }
 
 template <>

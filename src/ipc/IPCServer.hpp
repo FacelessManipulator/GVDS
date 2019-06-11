@@ -52,16 +52,16 @@ namespace hvs{
         IPCServer();
         IPCServer(int port);
         ~IPCServer();
-        void set_callback_func(std::function <bool (IPCMessage)>);
+        void set_callback_func(std::function <std::string (IPCMessage)>);
         bool run();
-    private:
         bool stop(); // 服务器结束函数，处理函数结束时的现场工作；
+    private:
         void do_accept();
         boost::asio::io_context io_context_; // 服务端上下文
         std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor_; // 服务端接收器
         IPCTaskCollection task_collection_;
         std::shared_ptr<std::thread> sp_context_thread;
-        std::shared_ptr<std::function <bool (IPCMessage)>>  sp_process_func; // 指向函数和lamda 表达式的智能指针
+        std::shared_ptr<std::function <std::string (IPCMessage)>>  sp_process_func; // 指向函数和lamda 表达式的智能指针
     };
 }
 

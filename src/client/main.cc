@@ -24,7 +24,7 @@ int main() {
   auto client = init_client();
   std::thread zonechecker([&](){
     while(zonechecker_run){
-      sleep(20);
+      sleep(10);
       client->zone->check();
     }
   });

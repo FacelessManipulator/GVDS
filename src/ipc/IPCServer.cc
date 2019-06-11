@@ -16,7 +16,7 @@ typedef std::deque<IPCMessage> ipc_message_queue; // 声明一个消息队列
 class IPCSession:public IPCTask, public std::enable_shared_from_this<IPCSession> {//允许从内部获取自己的智能指针
     class  IPCSessionWorker {
     public:
-        IPCSessionWorker(IPCSession &session, std::shared_ptr<std::function <bool (IPCMessage)>>  sp_func):
+        IPCSessionWorker(IPCSession &session, std::shared_ptr<std::function <std::string (IPCMessage)>>  sp_func):
         session_(session),
         sp_process_func(std::move(sp_func))
         {
@@ -33,20 +33,17 @@ class IPCSession:public IPCTask, public std::enable_shared_from_this<IPCSession>
         }
         void do_work(){ // 进行重新开一个线程，进行处理工作; 进行重新开一个线程进行处理消息
             // TODO： 所有消息在这里进行调用回调函数, 处理！并返回成功与否
-            if((*sp_process_func)(tasks_queue_.front())){
-                session_.deal_with_msg(*(IPCMessage::make_message_by_charstring("success")));// 如果回调函数返回true, 成功！
-            }else{
-                session_.deal_with_msg(*(IPCMessage::make_message_by_charstring("failed")));// 反之，返回失败！
-            }
+            std::string ret = (*sp_process_func)(tasks_queue_.front());
+            session_.deal_with_msg(*(IPCMessage::make_message_by_charstring(ret.c_str())));// 返回执行结果！
             tasks_queue_.pop_front(); // 进行处理消息
         }
     private:
         IPCSession& session_;
         ipc_message_queue tasks_queue_; // 当前任务队列
-        std::shared_ptr<std::function <bool (IPCMessage)>>  sp_process_func;
+        std::shared_ptr<std::function <std::string (IPCMessage)>>  sp_process_func;
     };
 public:
-    IPCSession(tcp::socket socket, std::shared_ptr<std::function <bool (IPCMessage)>>  sp_func, IPCTaskCollection& task_collection):
+    IPCSession(tcp::socket socket, std::shared_ptr<std::function <std::string (IPCMessage)>>  sp_func, IPCTaskCollection& task_collection):
     socket_(std::move(socket)),
     task_collection_(task_collection),
     session_worker_(*this, std::move(sp_func))
@@ -151,7 +148,7 @@ IPCServer::IPCServer() {
 }
 
 IPCServer::IPCServer(int port) {
-    std::cout << "Listen: 0.0.0.0:" << port << std::endl;
+    std::cout << "IPC listen: 0.0.0.0:" << port << std::endl;
     boost::asio::ip::tcp::resolver resolver(io_context_);
     tcp::endpoint endpoint(tcp::v4(), static_cast<unsigned short>(port));
     acceptor_ = std::make_shared<tcp::acceptor>(io_context_, endpoint);
@@ -160,7 +157,7 @@ IPCServer::IPCServer(int port) {
 
 
 IPCServer::~IPCServer() {
-    stop();
+    // stop();
 }
 
 bool IPCServer::run() {
@@ -176,8 +173,8 @@ bool IPCServer::run() {
 bool IPCServer::stop() {
     // 上下文结束执行
     try {
-        sp_context_thread->join(); // 等待server自身线程结束；
         io_context_.stop();
+        sp_context_thread->join(); // 等待server自身线程结束；
     }catch (std::exception& e){
         std::cerr << "Exception: " << e.what() << "\n";
     }
@@ -194,9 +191,9 @@ void IPCServer::do_accept() {
             });
 }
 
-void IPCServer::set_callback_func(std::function<bool (IPCMessage)> func) {
+void IPCServer::set_callback_func(std::function<std::string (IPCMessage)> func) {
     // 传递回调指针；
-    sp_process_func = std::make_shared<std::function<bool (IPCMessage)>>(func);
+    sp_process_func = std::make_shared<std::function<std::string (IPCMessage)>>(func);
 }
 
 

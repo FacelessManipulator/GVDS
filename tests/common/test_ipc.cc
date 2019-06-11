@@ -12,6 +12,7 @@
 #include <iostream>
 #include <thread>
 #include <boost/asio.hpp>
+#include "client/ipc_struct.h"
 using namespace std;
 using namespace hvs;
 
@@ -55,11 +56,42 @@ bool recv() {
 
 // 测试发送
 TEST(IPC_Test, Send) {
-    EXPECT_TRUE(send());
+    // EXPECT_TRUE(send());
+    try {
+        IPCClient ipcClient("192.168.5.222", 6666);
+        ipcClient.set_callback_func([&](IPCMessage msg)->void {
+            // TODO:客户端输出服务端发送来的消息
+            char tmp[IPCMessage::max_body_length] = {0};
+            std::memcpy(tmp, msg.body(), msg.body_length());
+            std::cout << "执行结果：" << tmp << endl;
+        });
+        ipcClient.run(); // 不用调用stop 函数；
+        std::cout << "正在执行命令..." << endl;
+        // TODO：构造命令行参数，并进行发送；
+        char* demo[13] = {const_cast<char *>("spacerename"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
+                          const_cast<char *>("-p"), const_cast<char *>("34779"), const_cast<char *>("--zonename"),
+                          const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000"),
+                          const_cast<char *>("-o"), const_cast<char *>(""), const_cast<char *>("-n"),
+                          const_cast<char *>("compute3")};
+        int count = 13;
+        CmdlineParameters cmdlineParameters(13, demo); //  初始化参数
+        auto msg = IPCMessage::make_message_by_charstring(cmdlineParameters.serialize().c_str());
+        ipcClient.write(*msg); // 传递一个消息；
+        sleep(1); // TODO: 等待客户端返回结果
+        ipcClient.stop();
+    } catch (exception &e) {
+        cout << e.what() << endl;
+    }
 }
 
 // 测试接收
 TEST(IPC_Test, Recv) {
-    EXPECT_TRUE(recv());
+    // EXPECT_TRUE(recv());
 }
 
+
+// 测试接收
+TEST(IPC_Test, client) {
+
+    EXPECT_TRUE(true);
+}

@@ -34,9 +34,11 @@ private:
     void do_global_decode(); // 做全局命令行解析
     void do_module_router();
     void cmdline_print(const char *);
-private:
+public:
+    void print_options();
     int argc; // 命令行参数的个数
     char** argv; // 命令行参数数组
+private:
     const char* version = "0.0.1"; // 命令行参数组件版本
     std::string command; // 当前命令的名称
     std::shared_ptr<po::options_description> cmdline_options;

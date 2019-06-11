@@ -6,10 +6,10 @@
 
 #include <algorithm>
 #include "common/JsonSerializer.h"
-#include "datastore/datastore.h"
+//#include "datastore/datastore.h"
 #include "context.h"
 #include "common/json.h"
-#include "datastore/couchbase_helper.h"
+//#include "datastore/couchbase_helper.h"
 #include "manager/space/Space.h"
 
 

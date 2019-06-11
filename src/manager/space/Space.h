@@ -4,10 +4,10 @@
 
 //#include <uuid/uuid.h>
 #include "common/JsonSerializer.h"
-#include "datastore/datastore.h"
+//#include "datastore/datastore.h"
 //#include "context.h"
 #include "common/json.h"
-#include "datastore/couchbase_helper.h"
+//#include "datastore/couchbase_helper.h"
 
 class Space : public hvs::JsonSerializer {
  public:

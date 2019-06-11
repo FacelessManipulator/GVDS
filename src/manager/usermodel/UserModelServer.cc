@@ -245,11 +245,11 @@ bool UserModelServer::UserLogin(std::string account, std::string pass){
 void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: getUserinfoRest ======"<< endl;
 
-    bool valid = auth_token(request);
-    if (!valid){
-        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-        return;
-    }
+    // bool valid = auth_token(request);
+    // if (!valid){
+    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+    //     return;
+    // }
     
     
     auto uuid = request.param(":name").as<std::string>();
@@ -307,11 +307,11 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
 void UserModelServer::modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: modifyUserinfoRest ======"<< endl;
 
-    bool valid = auth_token(request);
-    if (!valid){
-        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-        return;
-    }
+    // bool valid = auth_token(request);
+    // if (!valid){
+    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+    //     return;
+    // }
 
     auto info = request.body();
     cout << info << endl;
@@ -354,11 +354,11 @@ string UserModelServer::modifyUserinfo(Account &person){
 void UserModelServer::exitUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: exitUserAccountRest ======"<< endl;
 
-    bool valid = auth_token(request);
-    if (!valid){
-        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-        return;
-    }
+    // bool valid = auth_token(request);
+    // if (!valid){
+    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+    //     return;
+    // }
     
     //auto uuid = request.param(":id").as<std::string>();
     
@@ -410,11 +410,11 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
 void UserModelServer::cancellationUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: cancellationUserAccountRest ======"<< endl;
 
-    bool valid = auth_token(request);
-    if (!valid){
-        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-        return;
-    }
+    // bool valid = auth_token(request);
+    // if (!valid){
+    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+    //     return;
+    // }
 
     auto uuid = request.param(":id").as<std::string>();
     bool is_cancel_success = true;

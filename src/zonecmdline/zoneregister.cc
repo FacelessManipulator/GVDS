@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
                        const_cast<char *>("zonetest"), const_cast<char *>("--id"), const_cast<char *>("127"),
                        const_cast<char *>("--member"), const_cast<char *>("128"), /*const_cast<char *>("--member"), const_cast<char *>("322"),*/
                        const_cast<char *>("--spacename"), const_cast<char *>("spacetest"), const_cast<char *>("--spacesize"), const_cast<char *>("10"),
-                       const_cast<char *>("--center"), const_cast<char *>("zhongkeyuan")};
+                       const_cast<char *>("--center"), const_cast<char *>("beihang")};
     char* demo2[2] = {const_cast<char *>("zoneregister"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
@@ -44,9 +44,9 @@ int main(int argc, char* argv[]){
 
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(17, demo1);
+    CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
-    std::string cmdname = "zoneregister";
+    std::string cmdname = argv[0];//"zoneregister";
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("区域注册模块");

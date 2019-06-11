@@ -42,9 +42,9 @@ int main(int argc, char* argv[]){
 
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(19, demo1);
+    CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
-    std::string cmdname = "zoneadd";
+    std::string cmdname = argv[0];
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("管理员区域添加模块");

@@ -23,11 +23,11 @@ using namespace hvs;
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
     // ./spacerename_ipc --ip 192.168.5.222 -p 43107 --zonename syremotezone --id 202 -o BIGBOSSSY -n BUAABUAA
-    char* demo1[13] = {const_cast<char *>("spacerename"), const_cast<char *>("--ip"), const_cast<char *>("192.168.5.222"),
-                       const_cast<char *>("-p"), const_cast<char *>("43107"), const_cast<char *>("--zonename"),
+    char* demo1[13] = {const_cast<char *>("spacerename"), const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
+                       const_cast<char *>("-p"), const_cast<char *>("9091"), const_cast<char *>("--zonename"),
                        const_cast<char *>("syremotezone"), const_cast<char *>("--id"), const_cast<char *>("202"),
-                       const_cast<char *>("-o"), const_cast<char *>("BIGBOSSSY"), const_cast<char *>("-n"),
-                       const_cast<char *>("BUAABUAA")};
+                       const_cast<char *>("-o"), const_cast<char *>("BUAABUAA"), const_cast<char *>("-n"),
+                       const_cast<char *>("BIGBOSSSY")}; //BIGBOSSSY
     char* demo2[2] = {const_cast<char *>("spacerename"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
@@ -40,10 +40,10 @@ int main(int argc, char* argv[]){
     std::string spaceuuid;
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(argc, argv);
-//    CmdLineProxy commandline(13, demo1); // TODO 命令行赋值
-    std::string cmdname = argv[0];
-//    std::string cmdname = demo1[0]; // TODO 命令名字
+//    CmdLineProxy commandline(argc, argv);
+    CmdLineProxy commandline(13, demo1); // TODO 命令行赋值
+//    std::string cmdname = argv[0];
+    std::string cmdname = demo1[0]; // TODO 命令名字
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("空间重命名模块");

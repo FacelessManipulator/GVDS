@@ -42,11 +42,19 @@ namespace hvs{
         std::string cmdname;  //命令行具体执行的功能
         std::string ip ; // ip
         int port ;  // 端口号
-        std::string zonename ; // 空间名称
+        std::string zonename; // 空间名称
+        std::string newzonename;
+        std::string zoneuuid;
         std::string ownID; // 用户ID
-        std::string oldspacename; // "NewWorld";
+        std::vector<std::string> memID;
         std::string newspacename; // "BUAABUAA";
         std::string spaceuuid;
+        std::vector<std::string> spaceuuids;
+        std::string spacename;
+        std::vector<std::string> spacenames;
+        int64_t newspacesize;
+        int64_t spacesize;
+        std::string spaceurl;
 
     public:
         void serialize_impl() override {
@@ -54,10 +62,18 @@ namespace hvs{
             put("ip", ip);
             put("port", port);
             put("zonename", zonename);
+            put("newzonename", newzonename);
+            put("zoneuuid", zoneuuid);
             put("ownID", ownID);
-            put("oldspacename", oldspacename);
+            put("memID", memID);
             put("newspacename", newspacename);
             put("spaceuuid", spaceuuid);
+            put("spaceuuids", spaceuuids);
+            put("spacename", spacename);
+            put("spacenames", spacenames);
+            put("newspacesize", newspacesize);
+            put("spacesize", spacesize);
+            put("spaceurl", spaceurl);
         };
 
         void deserialize_impl() override {
@@ -65,10 +81,18 @@ namespace hvs{
             get("ip", ip);
             get("port", port);
             get("zonename", zonename);
+            get("newzonename", newzonename);
+            get("zoneuuid", zoneuuid);
             get("ownID", ownID);
-            get("oldspacename", oldspacename);
+            get("memID", memID);
             get("newspacename", newspacename);
             get("spaceuuid", spaceuuid);
+            get("spaceuuids", spaceuuids);
+            get("spacename", spacename);
+            get("spacenames", spacenames);
+            get("newspacesize", newspacesize);
+            get("spacesize", spacesize);
+            get("spaceurl", spaceurl);                      
         };
     };
 }

@@ -1,5 +1,5 @@
 //
-// Created by yaowen on 6/11/19.
+// Created by sy on 5/30/19.
 // 北航系统结构所-存储组
 //
 
@@ -17,43 +17,51 @@
 using namespace hvs;
 
 /*
- * spacerename 命令行客户端
+ * zoneregister 命令行客户端
  */
+
+
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    // ./spacerename_ipc --ip 192.168.5.222 -p 43107 --zonename syremotezone --id 202 -o BIGBOSSSY -n BUAABUAA
-    char* demo1[13] = {const_cast<char *>("spacerename"), const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
-                       const_cast<char *>("-p"), const_cast<char *>("9090"), const_cast<char *>("--zonename"),
+    char* demo1[17] = {const_cast<char *>("zoneregister"), const_cast<char *>("--ip"), const_cast<char *>("192.168.5.222"),
+                       const_cast<char *>("-p"), const_cast<char *>("49069"), const_cast<char *>("--zonename"),
                        const_cast<char *>("zonetest"), const_cast<char *>("--id"), const_cast<char *>("127"),
-                       const_cast<char *>("-o"), const_cast<char *>("spacetest"), const_cast<char *>("-n"),
-                       const_cast<char *>("spacetest2")}; //BIGBOSSSY
-    char* demo2[2] = {const_cast<char *>("spacerename"), const_cast<char *>("--help")};
+                       const_cast<char *>("--member"), const_cast<char *>("128"), /*const_cast<char *>("--member"), const_cast<char *>("322"),*/
+                       const_cast<char *>("--spacename"), const_cast<char *>("spacetest"), const_cast<char *>("--spacesize"), const_cast<char *>("10"),
+                       const_cast<char *>("--center"), const_cast<char *>("beihang")};
+    char* demo2[2] = {const_cast<char *>("zoneregister"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
     std::string ip ;//= "127.0.0.1";
     int port ;//= 55107;
-    std::string zonename ;//= "syremotezone"; // 空间名称
-    std::string ownID;// = "202"; // 用户ID
-    std::string spacename;// = "NewWorld";
-    std::string newspacename;// = "BUAABUAA";
-    std::string spaceuuid;
+    std::string zonename ;//= "syremotezone"; 
+    //std::string zoneuuid;
+    std::string ownID;// = "202"; 
+    std::vector<std::string> memID;// memberID
+    std::string spacename ;//= "syremotezone"; // 空间名称
+    int64_t spacesize;//空间大小
+    SpaceMetaData spaceurl;
+
+
+
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
-//    CmdLineProxy commandline(13, demo1); // TODO 命令行赋值
-    std::string cmdname = argv[0];
-//    std::string cmdname = demo1[0]; // TODO 命令名字
+//    CmdLineProxy commandline(2, demo2);
+    std::string cmdname = argv[0];//"zoneregister";
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("空间重命名模块");
+        po::options_description command("区域注册模块");
         command.add_options()
                 ("ip", po::value<std::string>(), "管理节点IP")
                 ("port,p", po::value<int>(), "管理节点端口号")
                 ("zonename", po::value<std::string>(), "区域名称")
-                ("id", po::value<std::string>(), "管理员ID")
-                ("oldname,o", po::value<std::string>(), "空间旧名称")
-                ("newname,n", po::value<std::string>(), "空间新名称")
+                ("id", po::value<std::string>(), "主人ID")
+                ("member", po::value<std::vector<std::string>>(), "区域成员")
+                ("spacename", po::value<std::string>(), "空间名称")
+                ("spacesize", po::value<int64_t>(), "空间大小")
+                ("center", po::value<std::string>(), "超算名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -61,7 +69,7 @@ int main(int argc, char* argv[]){
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
         if (sp_variables_map->count("ip"))
         {
-            ip = (*sp_variables_map)["ip"].as<std::string>();
+            ip = (*sp_variables_map)["ip"].as<std::string>();//TODO:全局最优节点
         }
         if (sp_variables_map->count("port"))
         {
@@ -75,13 +83,21 @@ int main(int argc, char* argv[]){
         {
             ownID = (*sp_variables_map)["id"].as<std::string>();
         }
-        if (sp_variables_map->count("oldname"))
+        if (sp_variables_map->count("member"))
         {
-            spacename = (*sp_variables_map)["oldname"].as<std::string>();
+            memID = (*sp_variables_map)["member"].as<std::vector<std::string>>();
         }
-        if (sp_variables_map->count("newname"))
+        if (sp_variables_map->count("spacename"))
         {
-            newspacename = (*sp_variables_map)["newname"].as<std::string>();
+            spacename = (*sp_variables_map)["spacename"].as<std::string>();
+        }
+        if (sp_variables_map->count("spacesize"))
+        {
+            spacesize = (*sp_variables_map)["spacesize"].as<int64_t>();
+        }
+        if (sp_variables_map->count("center"))//TODO:全局最优节点
+        {
+            spaceurl.hostCenterName = (*sp_variables_map)["center"].as<std::string>();
         }
     };
     commandline.start(); //开始解析命令行参数
@@ -113,14 +129,16 @@ int main(int argc, char* argv[]){
 
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "spacerename";
+        ipcreq.cmdname = "zoneregister";
         ipcreq.ip = ip ; // ip
         ipcreq.port = port;  // 端口号
         ipcreq.zonename = zonename; // 空间名称
         ipcreq.ownID = ownID; // 用户ID
-        ipcreq.spacename = spacename; // "NewWorld";
-        ipcreq.newspacename = newspacename; // "BUAABUAA";
-        ipcreq.spaceuuid = spaceuuid; // uuid
+        ipcreq.memID = memID;
+        ipcreq.spacename = spacename; // 
+        ipcreq.spacesize = spacesize; // 
+        ipcreq.spaceurl = spaceurl.serialize();
+
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());

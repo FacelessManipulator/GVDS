@@ -38,7 +38,35 @@ void ClientIPC::init() {
             // TODO: 添加命令信息
             if(ipcreq.cmdname == "spacerename"){
                 return dospacerename(ipcreq);
-            }else{
+            }
+            if(ipcreq.cmdname == "spacesizechange"){
+                return dospacesizechange(ipcreq);
+            }
+            if(ipcreq.cmdname == "mapadd"){
+                return domapadd(ipcreq);
+            }
+            if(ipcreq.cmdname == "mapdeduct"){
+                return domapdeduct(ipcreq);
+            }
+            if(ipcreq.cmdname == "zoneadd"){
+                return dozoneadd(ipcreq);
+            }
+            if(ipcreq.cmdname == "zonecancel"){
+                return dozonecancel(ipcreq);
+            }
+            if(ipcreq.cmdname == "zoneregister"){
+                return dozoneregister(ipcreq);
+            }
+            if(ipcreq.cmdname == "zonerename"){
+                return dozonerename(ipcreq);
+            }
+            if(ipcreq.cmdname == "zoneshare"){
+                return dozoneshare(ipcreq);
+            }
+            if(ipcreq.cmdname == "zonesharecancel"){
+                return dozonesharecancel(ipcreq);
+            }
+            else{
                 std::cerr << "警告：出现不支持的命令的请求！" << std::endl;
                 return "警告：出现不支持的命令的请求！";
             }
@@ -54,7 +82,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     int port = ipcreq.port;
     std::string zonename = ipcreq.zonename;
     std::string ownID = ipcreq.ownID;
-    std::string oldspacename = ipcreq.oldspacename;
+    std::string spacename = ipcreq.spacename;
     std::string newspacename = ipcreq.newspacename;
     std::string spaceuuid = ipcreq.spaceuuid;
 
@@ -70,7 +98,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
         ZoneInfo zoneinfo;
         zoneinfo.deserialize(mapping->second);
         for(const auto &it : zoneinfo.spaceBicInfo.spaceID){
-            if (zoneinfo.spaceBicInfo.spaceName[it] == oldspacename){
+            if (zoneinfo.spaceBicInfo.spaceName[it] == spacename){
                 spaceuuid = it;
                 break;
             }
@@ -103,6 +131,499 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     response.then(
             [&](Http::Response res) {
                 std::cout << url << std::endl;
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::string spacename = ipcreq.spacename;
+    int newspacesize = ipcreq.newspacesize;
+    std::string spaceuuid = ipcreq.spaceuuid;
+    
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ip, port, ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+       return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        ZoneInfo zoneinfo;
+        zoneinfo.deserialize(mapping->second);
+        for(const auto &it : zoneinfo.spaceBicInfo.spaceID){
+            if (zoneinfo.spaceBicInfo.spaceName[it] == spacename){
+                spaceuuid = it;
+                break;
+            }
+        }
+        if(spaceuuid.empty()){
+            std::cerr << "空间名不存在，请确认空间名称正确！" << std::endl;
+            return "空间名不存在，请确认空间名称正确！";
+        }
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+    // TODO: 构造间重命名请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/space/changesize",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+    SpaceSizeChangeReq req;
+    req.spaceID = spaceuuid;
+    req.newSpaceSize = newspacesize;
+
+    std::string value = req.serialize();
+
+
+    // TODO: 发送间重命名请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::domapadd(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::string spacename = ipcreq.spacename;
+    int64_t spacesize = ipcreq.spacesize;
+    std::string spaceurl = ipcreq.spaceurl;
+    std::string zoneuuid = ipcreq.zoneuuid;
+
+
+    // TODO: 获取区域信息
+    int ret = GetZoneInfo(ip, port, ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        ZoneInfo zoneinfo;
+        zoneinfo.deserialize(mapping->second);
+        zoneuuid = zoneinfo.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+    if(spacename == "" || spacesize == 0){
+        std::cerr << "信息不全，无法创建映射" << std::endl;
+        return  "信息不全，无法创建映射";
+    }
+    else{
+        // TODO: 构造映射增加请求
+        Http::Client client;
+        char url[256];
+        snprintf(url, 256, "http://%s:%d/zone/mapadd",ip.c_str(), port);
+        auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+        client.init(opts);
+
+
+        MapAddReq req;
+        req.zoneID = zoneuuid;
+        req.ownerID = ownID;
+        req.spaceName = spacename;
+        req.spaceSize = spacesize;
+        req.spacePathInfo = spaceurl;
+        std::string value = req.serialize();
+
+        // TODO: 发送间重命名请求，并输出结果
+        auto response = client.post(url).body(value).send();
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
+        response.then(
+                [&](Http::Response res) {
+                    std::cout << res.body() << std::endl; //结果
+                    prom.set_value(true);
+                },Async::IgnoreException);
+        fu.get();
+        client.shutdown();
+        return "success";
+    }
+}
+
+std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::vector<std::string> spacenames = ipcreq.spacenames;
+    std::vector<std::string> spaceuuids = ipcreq.spaceuuids;
+    std::string zoneuuid = ipcreq.zoneuuid;
+
+    //获取区域信息
+    int ret = GetZoneInfo(ip, port, ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        ZoneInfo zoneinfo;
+        zoneinfo.deserialize(mapping->second);
+        zoneuuid = zoneinfo.zoneID;
+        for(const auto &m : spacenames){
+            bool finded = false;
+            for(const auto &it : zoneinfo.spaceBicInfo.spaceID){
+                if (zoneinfo.spaceBicInfo.spaceName[it] == m){
+                    spaceuuids.emplace_back(it);
+                    finded = true;
+                    break;
+                }
+            }
+            if (finded == false){
+                std::cerr << "空间名" << m << "不存在，请确认空间名称正确！" << std::endl;
+                return "空间名"+m+"不存在，请确认空间名称正确！";
+            }
+        }
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    // TODO: 构造映射请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/zone/mapdeduct",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+
+
+    MapDeductReq req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID;
+    req.spaceID = spaceuuids;
+    std::string value = req.serialize();
+
+    // TODO: 发送间重命名请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::dozoneadd(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::vector<std::string> memID = ipcreq.memID;
+    std::string spaceurl = ipcreq.spaceurl;
+
+    // TODO: 构造请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/zone/add",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+    ZoneRegisterReq req;
+    req.zoneName = zonename;
+    req.ownerID = ownID;
+    req.memberID = memID;
+    req.spacePathInfo = spaceurl;
+
+
+    std::string value = req.serialize();
+
+    // TODO: 发送请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::string zoneuuid = ipcreq.zoneuuid;
+
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ip, port, ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        ZoneInfo zoneinfo;
+        zoneinfo.deserialize(mapping->second);
+        zoneuuid = zoneinfo.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+    // TODO: 构造间重命名请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/zone/cancel",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+    ZoneCancelReq req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID;
+
+
+    std::string value = req.serialize();
+
+    // TODO: 发送间重命名请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::vector<std::string> memID = ipcreq.memID;
+    std::string spacename = ipcreq.spacename;
+    int64_t spacesize = ipcreq.spacesize;
+    std::string spaceurl = ipcreq.spaceurl;
+
+        // TODO: 构造请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/zone/register",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+    ZoneRegisterReq req;
+    req.zoneName = zonename;
+    req.ownerID = ownID;
+    req.memberID = memID;
+    req.spaceName = spacename;
+    req.spaceSize = spacesize;
+    req.spacePathInfo = spaceurl;
+
+
+    std::string value = req.serialize();
+
+    // TODO: 发送请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::string newzonename = ipcreq.newzonename;
+    std::string zoneuuid = ipcreq.zoneuuid;
+
+        // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ip, port, ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        ZoneInfo zoneinfo;
+        zoneinfo.deserialize(mapping->second);
+        zoneuuid = zoneinfo.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+    // TODO: 构造间重命名请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/zone/rename",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+
+
+    ZoneRenameReq req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID;
+    req.newZoneName = newzonename;
+    std::string value = req.serialize();
+
+    // TODO: 发送间重命名请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::vector<std::string> memID = ipcreq.memID;
+    std::string zoneuuid = ipcreq.zoneuuid;
+
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ip, port, ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        ZoneInfo zoneinfo;
+        zoneinfo.deserialize(mapping->second);
+        zoneuuid = zoneinfo.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+    // TODO: 构造间重命名请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/zone/share",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+
+    ZoneShareReq req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID;
+    req.memberID = memID;
+
+    std::string value = req.serialize();
+
+    // TODO: 发送间重命名请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
+                std::cout << res.body() << std::endl; //结果
+                prom.set_value(true);
+            },Async::IgnoreException);
+    fu.get();
+    client.shutdown();
+    return "success";
+}
+
+std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = ipcreq.ownID;
+    std::vector<std::string> memID = ipcreq.memID;
+    std::string zoneuuid = ipcreq.zoneuuid;
+
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ip, port, ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        ZoneInfo zoneinfo;
+        zoneinfo.deserialize(mapping->second);
+        zoneuuid = zoneinfo.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+    // TODO: 构造间重命名请求
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/zone/sharecancel",ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+
+    ZoneShareReq req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID;
+    req.memberID = memID;
+
+    std::string value = req.serialize();
+
+    // TODO: 发送间重命名请求，并输出结果
+    auto response = client.post(url).body(value).send();
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+            [&](Http::Response res) {
                 std::cout << res.body() << std::endl; //结果
                 prom.set_value(true);
             },Async::IgnoreException);

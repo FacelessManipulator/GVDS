@@ -20,8 +20,8 @@ int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
     // 1、用户登录
     char* demo1[7] = {const_cast<char *>("userexit"), 
-                       const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("44769"), 
+                       const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
+                       const_cast<char *>("-p"), const_cast<char *>("9090"), 
                        const_cast<char *>("--user"), const_cast<char *>("lbq-7")};
     char* demo2[2] = {const_cast<char *>("userexit"), const_cast<char *>("--help")};
 

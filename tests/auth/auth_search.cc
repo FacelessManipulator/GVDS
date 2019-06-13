@@ -84,7 +84,7 @@ TEST_F(HVSAuthTest, auth_search) {
                     cout << *iter << endl;
                     cout << myauth.read[*iter] << endl;
                     cout << myauth.write[*iter] << endl;
-                    cout << myauth.exe[*iter] << endl;
+                    cout << myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
                 }
                 //====================
             }

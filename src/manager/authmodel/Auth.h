@@ -64,6 +64,33 @@ public:
   AuthSearch() = default;
 };
 
+//modift group auth
+class AuthModifygroupinfo: public hvs::JsonSerializer {
+  public:
+  std::string spaceinformation;
+  std::string hvsID;
+  std::string au_person;
+  std::string au_group;
+  std::string au_other;
+public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+public:
+  AuthModifygroupinfo() = default;
+};
+
+
+class FEAuthModifygroupinfo: public hvs::JsonSerializer {
+  public:
+  std::string hvsID;
+  std::string zonename;
+  std::string modify_groupauth;
+public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+public:
+  FEAuthModifygroupinfo() = default;
+};
 /*
 class Auth: public hvs::JsonSerializer {
 public:

@@ -52,6 +52,8 @@ public:
     void self_AuthmemberdelRest(const Rest::Request& request, Http::ResponseWriter response);
     int self_Authmemberdel(SelfAuthSpaceInfo &auth_space);
 
+    void self_AuthgroupmodifyRest(const Rest::Request& request, Http::ResponseWriter response);
+    int self_Authgroupmodify(AuthModifygroupinfo &groupinfo);
 
     //1、权限增加模块
     //区域初始权限记录接口
@@ -78,7 +80,7 @@ public:
 
     //3、权限修改模块
     void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response);
-    int AuthModify();
+    int AuthModify(std::string hvsID, std::string zonename, std::string modify_groupauth);
 
     //4、权限查询模块
     void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);

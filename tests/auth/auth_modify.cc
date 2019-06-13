@@ -51,18 +51,23 @@ class HVSAuthTest : public ::testing::Test {
 };
 
 
-TEST_F(HVSAuthTest, auth_search) {
+TEST_F(HVSAuthTest, auth_modify) {
     Http::Client client;
     char url[256];
-    //snprintf(url, 256, "http://localhost:%d/auth/search", manager->rest_port());
-    snprintf(url, 256, "http://localhost:9090/auth/search");
-
+    //snprintf(url, 256, "http://localhost:%d/auth/modify", manager->rest_port());
+    snprintf(url, 256, "http://localhost:9090/auth/modify");
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    std::string hvsID = "127";
+    FEAuthModifygroupinfo FEgroup;
+    FEgroup.hvsID = "127";
+    FEgroup.zonename = "zone-auth-test1";
+    FEgroup.modify_groupauth = "0";
+
+    string value = FEgroup.serialize();
+
     std::cout << "before" << endl;
-    auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(hvsID).send();
+    auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();
             dout(-1) << "Client Info: post request " << url << dendl;
 
     std::cout << "after" << endl;
@@ -77,17 +82,7 @@ TEST_F(HVSAuthTest, auth_search) {
                 std::cout << "Response body = " << body << std::endl;
                 //====================
                 //your code write here
-                AuthSearch myauth;
-                myauth.deserialize(body);
-
-                cout << myauth.hvsID << endl;
-                vector<string>::iterator iter;
-                for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
-                    cout << *iter << endl;
-                    cout << myauth.read[*iter] << endl;
-                    cout << myauth.write[*iter] << endl;
-                    cout << myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
-                }
+            
                 //====================
             }
             prom.set_value(true);
@@ -96,5 +91,4 @@ TEST_F(HVSAuthTest, auth_search) {
     EXPECT_TRUE(fu.get());
 
     client.shutdown();
-
 }

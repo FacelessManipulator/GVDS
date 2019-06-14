@@ -18,7 +18,7 @@ class ClientGraph : public ClientModule {
  private:
   std::shared_mutex graph_mutex;
   // currently I store space-gpath mappings in a map, please dev a space mod to handle this
-  std::unordered_map<std::string, std::tuple<std::shared_ptr<IOProxyNode>, std::string>> mappings;
+//  std::unordered_map<std::string, std::tuple<std::shared_ptr<IOProxyNode>, std::string>> mappings;
   std::map<std::string, std::shared_ptr<IOProxyNode>> ioproxy_list;
 
  public:
@@ -31,9 +31,10 @@ class ClientGraph : public ClientModule {
   std::vector<Space> list_space(std::string zonename);
   std::vector<Zone> list_zone();
   void fresh_ioproxy();
-  void set_mapping(const std::string& path, std::shared_ptr<IOProxyNode> ion, const std::string& rpath) {
-    mappings[path] = {ion, rpath};
-  }
+  // 缓存空间路径到IO代理节点的映射
+//  void set_mapping(const std::string& path, std::shared_ptr<IOProxyNode> ion, const std::string& rpath) {
+//    mappings[path] = {ion, rpath};
+//  }
 
   friend class Client;
 };

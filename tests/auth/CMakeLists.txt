@@ -11,3 +11,7 @@ ADD_TEST(NAME unittest_auth_search COMMAND unittest_auth_search)
 ADD_EXECUTABLE(unittest_auth_modify auth_modify.cc)
 TARGET_LINK_LIBRARIES(unittest_auth_modify gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON} managerO)
 ADD_TEST(NAME unittest_auth_modify COMMAND unittest_auth_modify)
+
+#ADD_EXECUTABLE(unittest_centerinfo_conf centerinfo_conf.cc)
+#TARGET_LINK_LIBRARIES(unittest_centerinfo_conf gtest gtest_main hvscommon ${HVSCOMMOM_DEPENDS_ON} managerO)
+#ADD_TEST(NAME unittest_centerinfo_conf COMMAND unittest_centerinfo_conf)

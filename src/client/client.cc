@@ -5,6 +5,7 @@
 #include "client/msg_mod.h"
 #include "client/zone_mod.h"
 #include "client/ipc_mod.h"
+#include "client/OPTNode/opt_node.h"
 
 using namespace hvs;
 using namespace std;
@@ -84,11 +85,14 @@ hvs::Client* init_client() {
   client->rpc = std::make_shared<ClientRpc>("rpc", client);
   client->zone = std::make_shared<ClientZone>("zone", client); // 空间客户端模块
   client->graph = std::make_shared<ClientGraph>("graph", client);
+  client->optNode = std::make_shared<SelectNode>("optNode", client);
+
   client->registe_module(client->fuse);
   client->registe_module(client->rpc);
   client->registe_module(client->zone); // 注册空间客户端模块
   client->registe_module(std::make_shared<ClientIPC>("ipc", client));
   client->registe_module(client->graph);
+   client->registe_module(client->optNode); 
 
   client->start();
   return client;

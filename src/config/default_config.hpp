@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include "config/ConfigureSettings.h"
+#include "common/centerinfo.h"
 
 namespace hvs {
 using std::string;
@@ -54,5 +55,46 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   // manager config options
   _config->add("manager.port", 9090);
   _config->add("manager.thread_num", 6);
+
+
+
+_config->add("center_information", string("center_id1,center_id2,centerid3"));
+_config->add("center_id1",string("192,168,1,2|192,168,1,3"));
+
+
+_config->add("center_information", string("{"\
+  "\"center1\":{"\
+    "\"centerID\":\"1\","\
+    "\"centerName\":\"Beijing\","\
+    "\"managerPort\":\"9090\","\
+    "\"managerIP\":\"127.0.0.1\""\
+  "},"\
+  "\"center2\":{"\
+    "\"centerID\":\"2\","\
+    "\"centerName\":\"Beijing\","\
+    "\"managerPort\":\"9090\","\
+    "\"managerIP\":\"127.0.0.1\""\
+  "},"\
+    "\"center3\":{"\
+    "\"centerID\":\"3\","\
+    "\"centerName\":\"Beijing\","\
+    "\"managerPort\":\"9090\","\
+    "\"managerIP\":\"127.0.0.1\""\
+  "},"\
+    "\"center4\":{"\
+    "\"centerID\":\"4\","\
+    "\"centerName\":\"Beijing\","\
+    "\"managerPort\":\"9090\","\
+    "\"managerIP\":\"127.0.0.1\""\
+  "},"\
+    "\"center5\":{"\
+    "\"centerID\":\"5\","\
+    "\"centerName\":\"Beijing\","\
+    "\"managerPort\":\"9090\","\
+    "\"managerIP\":\"127.0.0.1\""\
+  "}"\
+"}"));
+
+
 }
 }  // namespace hvs

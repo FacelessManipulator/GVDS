@@ -14,6 +14,7 @@ ADD_LIBRARY(managerO OBJECT
         zone/ZoneServer.cc
         resaggregation_mgr.cc
         rpc_mod.cc
+        mconf/mconf.cc
 )
 
 ADD_EXECUTABLE(hvs_manager main.cc)

@@ -23,6 +23,8 @@ class ClientGraph;
 class ClientFuse;
 class ClientZone;
 class SelectNode;
+class ClientUser;
+
 class Client : public Thread, public Node, public JsonSerializer {
  public:
   Client() : m_stop(false), Node(CLIENT_NODE) {
@@ -59,6 +61,7 @@ public:
   std::shared_ptr<ClientRpc> rpc;
   std::shared_ptr<ClientZone> zone;
   std::shared_ptr<SelectNode> optNode;
+  std::shared_ptr<ClientUser> user;
 };
 
 class ClientModule {

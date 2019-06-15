@@ -1,4 +1,4 @@
-#include "client/clientUser/clientUser_struct.h"   // 只有这块和服务端不一样 Account.cc
+#include "client/clientuser/ClientUser_struct.h"   // 只有这块和服务端不一样 Account.cc
 #include <iostream>
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"

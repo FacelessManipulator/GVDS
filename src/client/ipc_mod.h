@@ -10,7 +10,7 @@
 #include "manager/zone/Zone.h"
 #include "manager/space/Space.h"
 #include "ipc_struct.h"
-#include "client/clientUser/clientUser_struct.h"
+#include "client/clientuser/ClientUser_struct.h"
 #include <future>
 #include <pistache/client.h>
 

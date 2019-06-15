@@ -27,31 +27,23 @@ using namespace hvs;
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
     // 1、用户登录
-    char* demo1[9] = {const_cast<char *>("userlogin_ipc"),
+    char* demo1[7] = {const_cast<char *>("usersearch"), 
                        const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
                        const_cast<char *>("-p"), const_cast<char *>("9090"), 
-                       const_cast<char *>("--user"), const_cast<char *>("lbq-7"), 
-                       const_cast<char *>("--pass"), const_cast<char *>("123456")};
-    char* demo2[2] = {const_cast<char *>("userlogin_ipc"), const_cast<char *>("--help")};
+                       const_cast<char *>("-u"), const_cast<char *>("lbq-7")};
+    char* demo2[2] = {const_cast<char *>("usersearch"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
     std::string ip ;//= "127.0.0.1";
     int port ;//= 55107;
     std::string username;//= "lbq-7";
-    std::string password; // = "123456"; // 用户ID
+    std::string ownerid; // = "123456"; // 用户ID
 
 
     // TODO: 获取命令行信息
-    // CmdLineProxy commandline(9, demo1);
-     CmdLineProxy commandline(argc, argv);
+    CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
-    //std::string cmdname = "userlogin_ipc";
     std::string cmdname = argv[0];
-    std::cout << "agrv[0]" <<argv[0] << std::endl;
-    std::cout << "agrv[1]" <<argv[1] << std::endl;
-
-
-
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("账户登录");
@@ -59,7 +51,6 @@ int main(int argc, char* argv[]){
                 ("ip", po::value<std::string>(), "管理节点IP")
                 ("port,p", po::value<int>(), "管理节点端口号")
                 ("user,u", po::value<std::string>(), "账户名")
-                ("pass", po::value<std::string>(), "账户密码")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -76,10 +67,6 @@ int main(int argc, char* argv[]){
         if (sp_variables_map->count("user"))
         {
             username = (*sp_variables_map)["user"].as<std::string>();
-        }
-        if (sp_variables_map->count("pass"))
-        {
-            password = (*sp_variables_map)["pass"].as<std::string>();
         }
     };
     commandline.start(); //开始解析命令行参数
@@ -109,14 +96,12 @@ int main(int argc, char* argv[]){
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
 
-
          // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "userlogin";
+        ipcreq.cmdname = "usersearch";  // 这块要和if 一致
         ipcreq.ip = ip ; // ip
         ipcreq.port = port;  // 端口号
         ipcreq.accountName = username; //账户名
-        ipcreq.Password = password; //密码
         
 
         // TODO: 发送

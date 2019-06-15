@@ -41,7 +41,7 @@ public:
     std::string UserRegister(Account &person);
     
     void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool UserLogin(std::string account, std::string pass);
+    bool UserLogin(std::string account, std::string pass, std::string &userID);
 
     void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string getUserinfo(std::string uuid , bool &is_get_success);

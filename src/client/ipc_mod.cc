@@ -4,11 +4,14 @@
 //
 
 #include "ipc_mod.h"
+#include "client/msg_mod.h"
+
 
 using namespace hvs;
 using namespace Pistache;
 using namespace std;
 
+namespace hvs{
 void ClientIPC::start() {
     sp_ipcserver->run(); // ipc 服务器启动
 }
@@ -68,6 +71,7 @@ void ClientIPC::init() {
                 return dozonesharecancel(ipcreq);
             }
             if(ipcreq.cmdname == "userlogin"){
+                cout << "can get here?" <<endl;
                 return douserlogin(ipcreq);
             }
             else{
@@ -681,11 +685,11 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
 
 
     //账户登录
-    Http::Client client;
+    Http::Client Pclient;
     char url[256];
     snprintf(url, 256, "http://%s:%d/users/login", ip.c_str(), port);
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
+    Pclient.init(opts);
 
 
     AccountPass myaccount;
@@ -694,21 +698,80 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     std::string mes = myaccount.serialize();
 
     std::string mtoken;
-    std::string return_value = "fail";
+    std::string return_value = "login fail";
 
     //auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(mes).send();
-    auto response = client.post(url).body(mes).send();
+    auto response = Pclient.post(url).body(mes).send();
             //dout(-1) << "Client Info: post request " << url << dendl;
 
-    std::cout << "2222" << std::endl;
     std::promise<bool> prom;
     auto fu = prom.get_future();
     response.then(
         [&](Http::Response res) {
             //dout(-1) << "Manager Info: " << res.body() << dendl;
             std::cout << "Response code = " << res.code() << std::endl;
-            //auto co = res.code();
-            // if (co == "OK") return_value = "success";
+            if (Http::Code::Ok ==  res.code()){
+                auto body = res.body();
+                if (!body.empty()){
+                    std::cout << "Response body = " << body << std::endl;
+                    //====================
+                    //your code write here
+
+                    //====================
+                }
+                std::cout<< "Response cookie = ";
+                auto cookies = res.cookies();
+                for (const auto& c: cookies) {
+                    std::cout << c.name << " : " << c.value << std::endl;
+                    mtoken = c.value;
+                }
+                client->user->setToken(mtoken);
+                
+                //client->zone->GetZoneInfo("202");
+                return_value = "login success";
+            }//if
+
+            prom.set_value(true);
+        },
+        Async::IgnoreException);
+    fu.get();
+    
+    Pclient.shutdown();
+
+    return return_value;
+}
+
+/* 
+std::string ClientIPC::dousersearch(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    string username = ipcreq.accountName;
+
+    //客户端处理流程
+        //TODO获取username对应的 uuid   发get请求要用
+        //这块调用客户端用户模块接口    登录成功返回的token存下来，返回的账户uuid存下来 ！！！
+        // 并且登录完 要在客户端存 token  uuid 账户名这三个
+        //client->user->getToken()
+        //client->user->getUUID()
+        //client->user->getAccountName()     //int getMemberID(std::vector<std::string> Name, std::vector<std::string> memberID)
+
+    //账户查询
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/users/search/%s", ip.c_str(), port, user_id[username].c_str());
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+     auto response_1 = client.get(url).cookie(Http::Cookie("token", mtoken)).send();
+        //dout(-1) << "Client Info: get request " << url << dendl;
+    cout << "Client Info: get request " << url << endl;
+    std::promise<bool> prom_1;
+    auto fu_1 = prom_1.get_future();
+    response_1.then(
+        [&](Http::Response res) {
+            //dout(-1) << "Manager Info: " << res.body() << dendl;
+            std::cout << "Response code = " << res.code() << std::endl;
             auto body = res.body();
             if (!body.empty()){
                 std::cout << "Response body = " << body << std::endl;
@@ -717,19 +780,15 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
 
                 //====================
             }
-            std::cout<< "Response cookie = ";
-            auto cookies = res.cookies();
-            for (const auto& c: cookies) {
-                std::cout << c.name << " : " << c.value << std::endl;
-                mtoken = c.value;
-            }
-            return_value = "success";
-            prom.set_value(true);
+            prom_1.set_value(true);
         },
         Async::IgnoreException);
-    fu.get();
-    
+    fu_1.get();
+
     client.shutdown();
 
-    return return_value;
 }
+*/
+
+
+}//namespace

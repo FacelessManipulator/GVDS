@@ -1,11 +1,9 @@
-/
+//
 // Created by sy on 5/30/19.
 // 北航系统结构所-存储组
 //
 
 #include <iostream>
-// #include "manager/space/Space.h"
-// #include "manager/zone/Zone.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
@@ -29,7 +27,7 @@ using namespace hvs;
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
     // 1、用户登录
-    char* demo1[9] = {const_cast<char *>("userlogin"), 
+    char* demo1[9] = {const_cast<char *>("userlogin_ipc"),
                        const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
                        const_cast<char *>("-p"), const_cast<char *>("9090"), 
                        const_cast<char *>("--user"), const_cast<char *>("lbq-7"), 
@@ -123,6 +121,4 @@ int main(int argc, char* argv[]){
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;
     }
-
-
 }

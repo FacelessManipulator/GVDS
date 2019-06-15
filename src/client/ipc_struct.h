@@ -55,6 +55,9 @@ namespace hvs{
         int64_t newspacesize;
         int64_t spacesize;
         std::string spaceurl;
+        //usermodel
+        std::string accountName; //账户名
+        std::string Password; //密码
 
     public:
         void serialize_impl() override {
@@ -74,6 +77,8 @@ namespace hvs{
             put("newspacesize", newspacesize);
             put("spacesize", spacesize);
             put("spaceurl", spaceurl);
+            put("accountName", accountName);
+            put("Password", Password);
         };
 
         void deserialize_impl() override {
@@ -92,7 +97,9 @@ namespace hvs{
             get("spacenames", spacenames);
             get("newspacesize", newspacesize);
             get("spacesize", spacesize);
-            get("spaceurl", spaceurl);                      
+            get("spaceurl", spaceurl);   
+            get("accountName", accountName);
+            get("Password", Password);                   
         };
     };
 }

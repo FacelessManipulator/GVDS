@@ -10,6 +10,7 @@
 #include "manager/zone/Zone.h"
 #include "manager/space/Space.h"
 #include "ipc_struct.h"
+#include "client/clientUser/clientUser_struct.h"
 #include <future>
 #include <pistache/client.h>
 
@@ -46,6 +47,9 @@ namespace hvs{
         std::string dozoneshare(IPCreq &ipcreq);
         std::string dozonesharecancel(IPCreq &ipcreq);
         bool GetZoneInfo(std::string ip, int port, std::string clientID);
+
+        //user
+        std::string douserlogin(IPCreq &ipcreq);
     };
 }
 

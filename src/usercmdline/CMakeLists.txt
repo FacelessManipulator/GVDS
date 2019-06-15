@@ -17,3 +17,6 @@ target_link_libraries(usersignup hvscommon ${HVSCOMMOM_DEPENDS_ON} managerO)
 
 add_executable(usercancel usercancel.cc)
 target_link_libraries(usercancel hvscommon ${HVSCOMMOM_DEPENDS_ON} managerO)
+
+add_executable(userlogin_ipc userlogin_ipc.cc ../client/clientUser/clientUser_struct.cc)
+target_link_libraries(userlogin_ipc hvscommon ${HVSCOMMOM_DEPENDS_ON} managerO)

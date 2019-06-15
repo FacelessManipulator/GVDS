@@ -7,6 +7,7 @@
 
 using namespace hvs;
 using namespace Pistache;
+using namespace std;
 
 void ClientIPC::start() {
     sp_ipcserver->run(); // ipc 服务器启动
@@ -65,6 +66,9 @@ void ClientIPC::init() {
             }
             if(ipcreq.cmdname == "zonesharecancel"){
                 return dozonesharecancel(ipcreq);
+            }
+            if(ipcreq.cmdname == "userlogin"){
+                return douserlogin(ipcreq);
             }
             else{
                 std::cerr << "警告：出现不支持的命令的请求！" << std::endl;
@@ -663,4 +667,69 @@ bool ClientIPC::GetZoneInfo(std::string ip, int port, std::string clientID) {
         zonemap[zoneinfo.zoneName] = it;
     }
     return true;
+}
+
+//user客户端函数
+std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    string ip = ipcreq.ip;
+    int port = ipcreq.port;
+    string username = ipcreq.accountName;
+    string password = ipcreq.Password;
+
+    //客户端处理流程
+
+
+    //账户登录
+    Http::Client client;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/users/login", ip.c_str(), port);
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+
+    AccountPass myaccount;
+    myaccount.accountName = username;
+    myaccount.Password = password;
+    std::string mes = myaccount.serialize();
+
+    std::string mtoken;
+    std::string return_value = "fail";
+
+    //auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(mes).send();
+    auto response = client.post(url).body(mes).send();
+            //dout(-1) << "Client Info: post request " << url << dendl;
+
+    std::cout << "2222" << std::endl;
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+        [&](Http::Response res) {
+            //dout(-1) << "Manager Info: " << res.body() << dendl;
+            std::cout << "Response code = " << res.code() << std::endl;
+            //auto co = res.code();
+            // if (co == "OK") return_value = "success";
+            auto body = res.body();
+            if (!body.empty()){
+                std::cout << "Response body = " << body << std::endl;
+                //====================
+                //your code write here
+
+                //====================
+            }
+            std::cout<< "Response cookie = ";
+            auto cookies = res.cookies();
+            for (const auto& c: cookies) {
+                std::cout << c.name << " : " << c.value << std::endl;
+                mtoken = c.value;
+            }
+            return_value = "success";
+            prom.set_value(true);
+        },
+        Async::IgnoreException);
+    fu.get();
+    
+    client.shutdown();
+
+    return return_value;
 }

@@ -58,8 +58,15 @@ public:
         std::cout << "end: SelectNode构造函数" << std::endl;
     }
     ~SelectNode(){};
+
+    //设置缓存初始值 [目前在构造函数实现]
+    //void setOPT_init();
     
-    //expo
+    //提供对外接口
+    //1、获取管理节点IP信息
+    std::string getCenterInfo(); //向客户端其他模块提供结果
+
+    //2、获取最优节点选择策略结果
     std::vector<struct_Node> getNode(int choice);
     void mutex_lock(); //因为mtx是私有，只能定义成员函数来操作
     void mutex_unlock();
@@ -71,6 +78,8 @@ public:
     //buf_area 2
     void setNode_area(struct_Node &mynode);
     void erase_v_area();
+    
+    
 
 private:
     double subgetRTT(std::string hostOrIp);
@@ -100,7 +109,7 @@ private:
     std::string supercomputing_D = "Changsha";
     std::string supercomputing_E = "Jinan";
 
-    std::string center_Information = "nothing";
+    std::string center_Information = "nothing"; //TODO设置成全局变量？？  是否设置成static
 };
 
 

@@ -48,6 +48,10 @@ vector<struct_Node> SelectNode::getNode(int choice){
     }
 }
 
+string SelectNode::getCenterInfo(){
+    return center_Information;
+}
+
 //delay
 void SelectNode::setNode_delay(struct_Node &mynode){
     buf_delay.push_back(mynode);
@@ -75,6 +79,30 @@ void SelectNode::stop(){
     m_stop = true;
 }
 
+// void SelectNode::setOPT_init(){
+//     getCenterInformation();//获取center_Information
+//     std::cout << "center_Information : " << center_Information << std::endl;
+
+//         if(center_Information!= "nothing"){
+//             std::cout << "设置opt缓存初值" << std::endl;
+//             CenterInfo mycenter;
+//             mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
+            
+//             //读取配置文件，作为初值
+//             struct_Node local;
+//             std::vector<std::string>::iterator iter;
+//             for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
+
+//                 local.location = mycenter.centerName[*iter];  //从centerInfo里获取
+//                 local.ip_addr = mycenter.centerIP[*iter];
+//                 local.port = mycenter.centerPort[*iter];
+//                 buf_delay.push_back(local);
+//             }
+//         }
+//         else{
+//             getCenterInformation();//再次获取
+//         }
+// }
 
 void* SelectNode::entry() {
     
@@ -87,8 +115,8 @@ void* SelectNode::entry() {
             sort(myvec.begin(), myvec.end(), CmpByValue()); //排序
             write_rtt(myvec);  //加锁，写入
         }
-        cout << "write sleep 10" << endl;
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        cout << "write sleep 100" << endl;
+        std::this_thread::sleep_for(std::chrono::seconds(100));
     }
 }
 
@@ -230,7 +258,7 @@ void SelectNode::getCenterInformation(){
   cout << "enter: getCenterInformation" << endl;
   Http::Client client;
   char url[256];
-  snprintf(url, 256, "http://localhost:9090/mconf/searchCenter");  //固定一个IP
+  snprintf(url, 256, "http://localhost:9090/mconf/searchCenter");  // TODO 固定一个IP 端口
   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
   client.init(opts);
 

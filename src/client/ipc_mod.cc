@@ -5,6 +5,7 @@
 
 #include "ipc_mod.h"
 #include "client/msg_mod.h"
+#include "client/clientuser/ClientUser.h"
 
 
 using namespace hvs;
@@ -704,6 +705,7 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     auto response = Pclient.post(url).body(mes).send();
             //dout(-1) << "Client Info: post request " << url << dendl;
 
+    //client->user->setToken("mtoken");
     std::promise<bool> prom;
     auto fu = prom.get_future();
     response.then(
@@ -726,6 +728,11 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
                     mtoken = c.value;
                 }
                 client->user->setToken(mtoken);
+                client->user->setAccountName(myaccount.accountName);
+                client->user->setAccountID(body);
+                cout << "getToken(): " << client->user->getToken() << endl;
+                cout << "getAccountName(): " << client->user->getAccountName() << endl;
+                cout << "getAccountID(): " << client->user->getAccountID() << endl;
                 
                 //client->zone->GetZoneInfo("202");
                 return_value = "login success";

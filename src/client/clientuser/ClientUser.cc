@@ -46,10 +46,11 @@ std::string ClientUser::getAccountName(){
     return this->accountName;
 }
 
-void ClientUser::getAccountID(std::string m){
+void ClientUser::setAccountID(std::string m){
     this->accountID = m;
 }
-std::string ClientUser::setAccountID(){
+std::string ClientUser::getAccountID(){
     return this->accountID;
 }
+
 }//namespace

@@ -32,10 +32,9 @@ public:
     void setAccountName(std::string m);
     std::string getAccountName();
 
-    void getAccountID(std::string m);
-    std::string setAccountID();
-
-
+    void setAccountID(std::string m);
+    std::string getAccountID();
+ 
 
 private:
     bool m_stop;

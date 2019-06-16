@@ -48,6 +48,9 @@ namespace hvs{
         std::string dozonesharecancel(IPCreq &ipcreq);
         bool GetZoneInfo(std::string ip, int port, std::string clientID);
 
+
+        std::string doresourceregister(IPCreq &ipcreq);  //资源注册
+
         //user
         std::string douserlogin(IPCreq &ipcreq);
     };

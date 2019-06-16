@@ -75,6 +75,14 @@ void ClientIPC::init() {
                 cout << "can get here?" <<endl;
                 return douserlogin(ipcreq);
             }
+
+            //resource register
+            if(ipcreq.cmdname == "resourceregister"){
+                cout << "here is resource register" <<endl;
+                return doresourceregister(ipcreq);
+            }
+
+
             else{
                 std::cerr << "警告：出现不支持的命令的请求！" << std::endl;
                 return "警告：出现不支持的命令的请求！";
@@ -83,6 +91,12 @@ void ClientIPC::init() {
     } catch (std::exception &e){
         std::cout << e.what() << std::endl;
     }
+}
+
+std::string ClientIPC::doresourceregister(IPCreq &ipcreq) {
+
+std::cout<<"here is right";
+return "ok";
 }
 
 std::string ClientIPC::dospacerename(IPCreq &ipcreq) {

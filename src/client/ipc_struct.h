@@ -59,6 +59,14 @@ namespace hvs{
         std::string accountName; //账户名
         std::string Password; //密码
 
+        //resource aggregation
+        std::string storage_src_id;     // 存储资源UUID
+        std::string storage_src_name;   // 存储资源名称
+        std::string host_center_id;     // 存储资源所在超算中心UUID
+        std::string host_center_name;   // 存储资源所在超算中心名称
+        int64_t total_capacity;         // 存储资源空间容量大小
+        std::string mgs_address;        // 存储资源MGS地址
+
     public:
         void serialize_impl() override {
             put("cmdname", cmdname);
@@ -79,6 +87,14 @@ namespace hvs{
             put("spaceurl", spaceurl);
             put("accountName", accountName);
             put("Password", Password);
+
+            //resource aggregation
+            put("storage_src_id", storage_src_id);
+            put("storage_src_name", storage_src_name);
+            put("host_center_id", host_center_id);
+            put("host_center_name", host_center_name);
+            put("total_capacity", total_capacity);
+            put("mgs_address", mgs_address);
         };
 
         void deserialize_impl() override {
@@ -99,7 +115,15 @@ namespace hvs{
             get("spacesize", spacesize);
             get("spaceurl", spaceurl);   
             get("accountName", accountName);
-            get("Password", Password);                   
+            get("Password", Password);    
+
+            //resource aggregation
+            get("storage_src_id", storage_src_id);
+            get("storage_src_name", storage_src_name);
+            get("host_center_id", host_center_id);
+            get("host_center_name", host_center_name);
+            get("total_capacity", total_capacity);
+            get("mgs_address", mgs_address);               
         };
     };
 }

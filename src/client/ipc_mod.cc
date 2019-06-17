@@ -6,6 +6,8 @@
 #include "ipc_mod.h"
 #include "client/msg_mod.h"
 #include "client/clientuser/ClientUser.h"
+#include "manager/manager.h"
+#include "aggregation_struct.h"
 
 
 using namespace hvs;
@@ -78,9 +80,15 @@ void ClientIPC::init() {
 
             //resource register
             if(ipcreq.cmdname == "resourceregister"){
-                cout << "here is resource register" <<endl;
+                cout << "resource register..." <<endl;
                 return doresourceregister(ipcreq);
             }
+            //resource delete
+            if(ipcreq.cmdname == "resourcedelete"){
+                cout << "resource delete..." <<endl;
+                return doresourcedelete(ipcreq);
+            }
+
 
 
             else{
@@ -93,11 +101,34 @@ void ClientIPC::init() {
     }
 }
 
-std::string ClientIPC::doresourceregister(IPCreq &ipcreq) {
+std::string ClientIPC::doresourcedelete(IPCreq &ipcreq) {
+  
+//   string endpoint = client->get_manager();
+//   string url  = "resource/delete/" + 
+//   string res = client->rpc->post_request(endpoint, "/resource/register", newRes.serialize());
+//   return res;
 
-std::cout<<"here is right";
-return "ok";
+  std::cout<<"delete successfully";
+  return "OK";
 }
+
+std::string ClientIPC::doresourceregister(IPCreq &ipcreq) {
+  StorageResource newRes; 
+  newRes.storage_src_id = ipcreq.storage_src_id;        // 存储资源UUID
+  newRes.storage_src_name = ipcreq.storage_src_name;    // 存储资源名称
+  newRes.host_center_id = ipcreq.host_center_id;        // 存储资源所在超算中心UUID
+  newRes.host_center_name = ipcreq.host_center_name;    // 存储资源所在超算中心名称
+  newRes.total_capacity = ipcreq.total_capacity;        // 存储资源空间容量大小
+  newRes.assign_capacity = 0;                           // 已经分配空间容量大小
+  newRes.mgs_address = ipcreq.mgs_address;              // 存储资源MGS地址
+  newRes.state = Normal;                                // 存储资源状态
+  string endpoint = client->get_manager();
+  string res = client->rpc->post_request(endpoint, "/resource/register", newRes.serialize());
+  return res;
+}
+
+
+
 
 std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     // TODO: 提前准备的数据

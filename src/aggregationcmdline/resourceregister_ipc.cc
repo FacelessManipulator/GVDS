@@ -20,8 +20,7 @@ using namespace hvs;
  */
 
 int main(int argc, char* argv[]){
-    // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    // ./spacerename_ipc --ip 192.168.5.222 -p 43107 --zonename syremotezone --id 202 -o BIGBOSSSY -n BUAABUAA
+    
     char* demo1[13] = {const_cast<char *>("resourceregister"), const_cast<char *>("-ri"), const_cast<char *>("resource_0001"),
                        const_cast<char *>("-rn"), const_cast<char *>("lustre_0001"), 
                        const_cast<char *>("-ci"), const_cast<char *>("centerid_0001"),

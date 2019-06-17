@@ -476,21 +476,12 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
 
 std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
-    std::string ip = ipcreq.ip;
-    int port = ipcreq.port;
     std::string zonename = ipcreq.zonename;
     std::string ownID = ipcreq.ownID;
     std::vector<std::string> memID = ipcreq.memID;
     std::string spacename = ipcreq.spacename;
     int64_t spacesize = ipcreq.spacesize;
     std::string spaceurl = ipcreq.spaceurl;
-
-        // TODO: 构造请求
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/register",ip.c_str(), port);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
 
     ZoneRequest req;
     req.zoneName = zonename;
@@ -499,22 +490,8 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
     req.spaceName = spacename;
     req.spaceSize = spacesize;
     req.spacePathInfo = spaceurl;
-
-
-    std::string value = req.serialize();
-
-    // TODO: 发送请求，并输出结果
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Http::Response res) {
-                std::cout << res.body() << std::endl; //结果
-                prom.set_value(true);
-            },Async::IgnoreException);
-    fu.get();
-    client.shutdown();
-    return "success";
+    string response = client->rpc->post_request(client->get_manager(), "/zone/register", req.serialize());
+    return response;
 }
 
 std::string ClientIPC::dozonerename(IPCreq &ipcreq) {

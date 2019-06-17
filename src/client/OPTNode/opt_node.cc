@@ -38,6 +38,7 @@ void SelectNode::mutex_unlock(){
 }
 
 vector<struct_Node> SelectNode::getNode(int choice){
+    mutex_lock();
     if (choice == 1){
         return buf_delay;
     }
@@ -47,6 +48,7 @@ vector<struct_Node> SelectNode::getNode(int choice){
     else{
         return buf_delay;
     }
+    mutex_unlock();
 }
 
 string SelectNode::getCenterInfo(){

@@ -58,6 +58,11 @@ namespace hvs{
         //usermodel
         std::string accountName; //账户名
         std::string Password; //密码
+        std::string hvsID;
+        std::string email;
+        std::string phone;
+        std::string address;
+        std::string department;
 
         //resource aggregation
         std::string storage_src_id;     // 存储资源UUID
@@ -87,6 +92,11 @@ namespace hvs{
             put("spaceurl", spaceurl);
             put("accountName", accountName);
             put("Password", Password);
+            put("hvsID", hvsID);
+            put("email",email);
+            put("phone", phone);
+            put("address", address);
+            put("department", department);
 
             //resource aggregation
             put("storage_src_id", storage_src_id);
@@ -116,6 +126,11 @@ namespace hvs{
             get("spaceurl", spaceurl);   
             get("accountName", accountName);
             get("Password", Password);    
+            get("hvsID", hvsID);
+            get("email",email);
+            get("phone", phone);
+            get("address", address);
+            get("department", department);
 
             //resource aggregation
             get("storage_src_id", storage_src_id);

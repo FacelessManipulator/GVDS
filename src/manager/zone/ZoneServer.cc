@@ -398,7 +398,10 @@ namespace hvs{
     query.erase(pos2, 8);
     query.insert(pos2, zoneName);
     auto [vp, err] = zonePtr->n1ql(query);
-    if(vp->size() != 0) return -1;
+    if(vp->size() != 0) 
+    {
+      return -1;
+    }
     else{
       //1、TODO: 调用spacecreate接口（涉及到跨域创建空间的情况，则返还客户端，并再次发送） , 目前在区域初始注册的时候，只能创建一个默认的空间
       //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位

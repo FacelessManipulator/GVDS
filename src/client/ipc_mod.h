@@ -53,6 +53,10 @@ namespace hvs{
 
         //user
         std::string douserlogin(IPCreq &ipcreq);
+        std::string dousersearch(IPCreq &ipcreq);
+        std::string dousersignup(IPCreq &ipcreq);
+        std::string dousermodify(IPCreq &ipcreq);
+        std::string douserexit(IPCreq &ipcreq);
     };
 }
 

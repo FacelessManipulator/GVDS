@@ -50,6 +50,7 @@ namespace hvs{
 
 
         std::string doresourceregister(IPCreq &ipcreq);  //资源注册
+        std::string doresourcedelete(IPCreq &ipcreq);  //资源注册
 
         //user
         std::string douserlogin(IPCreq &ipcreq);

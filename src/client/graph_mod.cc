@@ -59,7 +59,7 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
         iop->ip = "127.0.0.1";
       break;
     }
-    std::cout << "IOPROXY: " << space_uuid << " " << centerID << " " << iop->ip << std::endl;
+//    std::cout << "IOPROXY: " << space_uuid << " " << centerID << " " << iop->ip << std::endl;
 
     if(ioproxy_list.size() > 0) {
         string forward_path("/");
@@ -72,24 +72,23 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
     }
 }
 
-std::vector<Space> ClientGraph::list_space(std::string zonename) {
-  vector<Space> spaces;
+std::vector<string> ClientGraph::list_space(std::string zonename) {
+  vector<string> spaces;
   auto mapping = client->zone->zonemap.find(zonename);
   if(mapping !=  client->zone->zonemap.end()) {
-    ZoneInfo zoneinfo;
-    zoneinfo.deserialize(mapping->second);
-    for(auto it : zoneinfo.spaceBicInfo.spaceID){
-        spaces.emplace_back(zoneinfo.spaceBicInfo.spaceName[it], it, zoneinfo.spaceBicInfo.spaceSize[it]); // 寻找空间
+    Zone zoneinfo = mapping->second;
+    for(auto it : zoneinfo.spaceBicInfo){
+        spaces.push_back(it.spaceName); // 寻找空间
     }
   }
   return spaces;
 }
 
-std::vector<Zone> ClientGraph::list_zone() {
-  vector<Zone> zones;
+std::vector<std::string> ClientGraph::list_zone() {
+  vector<string> zones;
 //  client->zone->GetZoneInfo("127.0.0.1", 54485, "101");
   for(const auto &zo : client->zone->zonemap){
-    zones.emplace_back(zo.first);
+    zones.push_back(zo.first);
   }
   return zones;
 }

@@ -22,12 +22,13 @@ class JsonSerializer {
  public:
   // 每次调用都会重新生成文档，并没有重用
   std::string serialize() {
+    _buffer = new rapidjson::StringBuffer();
+    _writer = new rapidjson::Writer<rapidjson::StringBuffer>(*_buffer);
     _writer->StartObject();
     serialize_impl();
     _writer->EndObject();
     std::string document(_buffer->GetString());
-    _buffer->Clear();
-    _writer->Reset(*_buffer);
+    clear();
     return document;
   }
 
@@ -54,25 +55,27 @@ class JsonSerializer {
   }
 
  public:
-  JsonSerializer() {
-    _buffer = new rapidjson::StringBuffer();
-    _writer = new rapidjson::Writer<rapidjson::StringBuffer>(*_buffer);
-  }
-  JsonSerializer(JsonSerializer& oths) {
+  JsonSerializer() {}
+  JsonSerializer(const JsonSerializer& oths) {
     // there is no need to support json value copying
     // _jsonValue.CopyFrom(oths._jsonValue, ALLOCATOR);
   }
   JsonSerializer(JsonSerializer&& oths) {}
-  ~JsonSerializer() {
-    delete _writer;
-    delete _buffer;
+  ~JsonSerializer() {}
+
+  JsonSerializer& operator= (const JsonSerializer& oths) {
+    return *this;
   }
 
   void clear() {
-    delete _writer;
-    delete _buffer;
-    _buffer = new rapidjson::StringBuffer();
-    _writer = new rapidjson::Writer<rapidjson::StringBuffer>(*_buffer);
+    if(_writer) {
+      delete _writer;
+      _writer = nullptr;
+    }
+    if(_buffer) {
+      delete _buffer;
+      _buffer = nullptr;
+    }
   }
 
  protected:

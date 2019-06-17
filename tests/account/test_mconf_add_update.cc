@@ -60,8 +60,8 @@ TEST_F(HVSAccountTest, test_mconf_add_update) {
   client.init(opts);
 
   FECenterInfo FEcenter;
-  FEcenter.centerID = "5";
-  FEcenter.centerIP = "127.0.0.1";
+  FEcenter.centerID = "4";
+  FEcenter.centerIP = "127.0.0.9";
   FEcenter.centerPort = "9090";
   FEcenter.centerName = "Jinan";
 

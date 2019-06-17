@@ -4,8 +4,7 @@
 //
 
 #include <iostream>
-#include "manager/space/Space.h"
-#include "manager/zone/Zone.h"
+#include <hvs_struct.h>
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"

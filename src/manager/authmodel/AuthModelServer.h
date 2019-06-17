@@ -19,7 +19,6 @@ date:2019.03.21
 #include "datastore/couchbase_helper.h"
 #include "manager/authmodel/Auth.h"
 #include "manager/manager.h"
-#include "manager/zone/Zone.h"
 #include "manager/zone/ZoneServer.h"
 
 #include <iostream>
@@ -85,7 +84,7 @@ public:
     //4、权限查询模块
     void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string AuthSearchModel(std::string &hvsID);
-    int subAuthSearchModel(ZoneInfo &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x);
+    int subAuthSearchModel(Zone &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x);
     /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);

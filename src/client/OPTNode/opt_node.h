@@ -32,30 +32,7 @@ class SelectNode: public ClientModule, public Thread{
 public:
     SelectNode (const char* name, Client* cli) : ClientModule(name, cli), m_stop(true) {
         std::cout << "start: SelectNode构造函数" << std::endl;
-        isThread = false;  //TODO 这是什么意思？
-        
-        getCenterInformation();//获取center_Information
-        std::cout << "center_Information : " << center_Information << std::endl;
-        if(center_Information!= "nothing"){
-            std::cout << "设置opt缓存初值" << std::endl;
-            CenterInfo mycenter;
-            mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
-            
-            //读取配置文件，作为初值
-            struct_Node local;
-            std::vector<std::string>::iterator iter;
-            for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
-
-                local.location = mycenter.centerName[*iter];  //从centerInfo里获取
-                local.ip_addr = mycenter.centerIP[*iter];
-                local.port = mycenter.centerPort[*iter];
-                buf_delay.push_back(local);
-            }
-        }
-        else{
-            getCenterInformation();//再次获取
-        }
-        std::cout << "end: SelectNode构造函数" << std::endl;
+        isThread = true;  //TODO 这是什么意思？
     }
     ~SelectNode(){};
 

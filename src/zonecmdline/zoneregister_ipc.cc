@@ -4,8 +4,7 @@
 //
 
 #include <iostream>
-#include "manager/space/Space.h"
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
@@ -41,7 +40,7 @@ int main(int argc, char* argv[]){
     std::vector<std::string> memID;// memberID
     std::string spacename ;//= "syremotezone"; // 空间名称
     int64_t spacesize;//空间大小
-    SpaceMetaData spaceurl;
+    Space spaceurl;
 
 
 

@@ -118,11 +118,10 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        for(const auto &it : zoneinfo.spaceBicInfo.spaceID){
-            if (zoneinfo.spaceBicInfo.spaceName[it] == spacename){
-                spaceuuid = it;
+        Zone zoneinfo = mapping->second;
+        for(const auto &it : zoneinfo.spaceBicInfo){
+            if (it.spaceName == spacename){
+                spaceuuid = it.spaceID;
                 break;
             }
         }
@@ -142,7 +141,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    SpaceRenameReq req;
+    SpaceRequest req;
     req.spaceID = spaceuuid;
     req.newSpaceName = newspacename;
     std::string value = req.serialize();
@@ -181,11 +180,10 @@ std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        for(const auto &it : zoneinfo.spaceBicInfo.spaceID){
-            if (zoneinfo.spaceBicInfo.spaceName[it] == spacename){
-                spaceuuid = it;
+        Zone zoneinfo = mapping->second;
+        for(const auto &it : zoneinfo.spaceBicInfo){
+            if (it.spaceName == spacename){
+                spaceuuid = it.spaceID;
                 break;
             }
         }
@@ -204,7 +202,7 @@ std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    SpaceSizeChangeReq req;
+    SpaceRequest req;
     req.spaceID = spaceuuid;
     req.newSpaceSize = newspacesize;
 
@@ -246,9 +244,7 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        zoneuuid = zoneinfo.zoneID;
+        zoneuuid = mapping->second.zoneID;
     } else{
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
@@ -266,7 +262,7 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq) {
         client.init(opts);
 
 
-        MapAddReq req;
+        ZoneRequest req;
         req.zoneID = zoneuuid;
         req.ownerID = ownID;
         req.spaceName = spacename;
@@ -308,19 +304,18 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
+        Zone zoneinfo = mapping->second;
         zoneuuid = zoneinfo.zoneID;
         for(const auto &m : spacenames){
-            bool finded = false;
-            for(const auto &it : zoneinfo.spaceBicInfo.spaceID){
-                if (zoneinfo.spaceBicInfo.spaceName[it] == m){
-                    spaceuuids.emplace_back(it);
-                    finded = true;
+            bool found = false;
+            for(const auto &it : zoneinfo.spaceBicInfo){
+                if (it.spaceName == m){
+                    spaceuuids.push_back(it.spaceID);
+                    found = true;
                     break;
                 }
             }
-            if (finded == false){
+            if (!found){
                 std::cerr << "空间名" << m << "不存在，请确认空间名称正确！" << std::endl;
                 return "空间名"+m+"不存在，请确认空间名称正确！";
             }
@@ -339,7 +334,7 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
 
 
 
-    MapDeductReq req;
+    ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     req.spaceID = spaceuuids;
@@ -375,7 +370,7 @@ std::string ClientIPC::dozoneadd(IPCreq &ipcreq) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    ZoneRegisterReq req;
+    ZoneRequest req;
     req.zoneName = zonename;
     req.ownerID = ownID;
     req.memberID = memID;
@@ -415,9 +410,7 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        zoneuuid = zoneinfo.zoneID;
+        zoneuuid = mapping->second.zoneID;
     } else{
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
@@ -429,7 +422,7 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    ZoneCancelReq req;
+    ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
 
@@ -468,7 +461,7 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    ZoneRegisterReq req;
+    ZoneRequest req;
     req.zoneName = zonename;
     req.ownerID = ownID;
     req.memberID = memID;
@@ -511,9 +504,7 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        zoneuuid = zoneinfo.zoneID;
+        zoneuuid = mapping->second.zoneID;
     } else{
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
@@ -527,7 +518,7 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
 
 
 
-    ZoneRenameReq req;
+    ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     req.newZoneName = newzonename;
@@ -565,9 +556,7 @@ std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        zoneuuid = zoneinfo.zoneID;
+        zoneuuid = mapping->second.zoneID;
     } else{
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
@@ -580,7 +569,7 @@ std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
     client.init(opts);
 
 
-    ZoneShareReq req;
+    ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     req.memberID = memID;
@@ -619,9 +608,7 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        zoneuuid = zoneinfo.zoneID;
+        zoneuuid = mapping->second.zoneID;
     } else{
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
@@ -634,7 +621,7 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     client.init(opts);
 
 
-    ZoneShareReq req;
+    ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     req.memberID = memID;
@@ -675,15 +662,13 @@ bool ClientIPC::GetZoneInfo(std::string ip, int port, std::string clientID) {
             },Pistache::Async::IgnoreException);
     fu.get();
     client.shutdown();
-    GetZoneInfoRes zoneinfores;
-    zoneinfores.deserialize(inforesult); //获取返回的结果
-    if(zoneinfores.zoneInfoResult.empty()){
+    std::vector<Zone> zoneinfores;
+    json_decode(inforesult, zoneinfores); //获取返回的结果
+    if(zoneinfores.empty()){
         return false;
     }
-    for(const auto &it : zoneinfores.zoneInfoResult){
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(it);
-        zonemap[zoneinfo.zoneName] = it;
+    for(const auto &it : zoneinfores) {
+        zonemap[it.zoneName] = it;
     }
     return true;
 }

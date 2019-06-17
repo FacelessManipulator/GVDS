@@ -10,7 +10,7 @@
 
 
 #include "datastore/couchbase_helper.h"
-#include "manager/space/Space.h" 
+#include "hvs_struct.h"
 #include "manager/manager.h"
 #include "include/aggregation_struct.h"
 
@@ -30,10 +30,10 @@ public:
     //define your function here
     
     //空间定位模块：空间定位接口
-    void GetSpacePosition(std::vector<std::string> &result, std::vector<std::string> spaceID);
+    void GetSpacePosition(std::vector<Space> &result, std::vector<std::string> spaceID);
 
     //空间信息检索模块：空间信息检索接口
-    void GetSpaceInfo(std::string &result_s, std::vector<std::string> spaceID);
+    void GetSpaceInfo(std::vector<Space> &result_s, std::vector<std::string> spaceID);
 
     //空间创建模块：空间创建接口
     std::string SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);

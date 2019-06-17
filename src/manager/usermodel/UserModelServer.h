@@ -17,8 +17,7 @@ date:2019.03.21
 #include "datastore/couchbase_helper.h"
 #include "manager/usermodel/Account.h"
 #include "manager/manager.h"
-
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 
 class Account;
 class SCAccount;

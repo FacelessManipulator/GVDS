@@ -13,6 +13,7 @@
 
 #include "opt_node.h"
 #include "myping.h"
+#include "client/msg_mod.h"
 
 using namespace Pistache;
 using namespace Pistache::Http;
@@ -72,6 +73,23 @@ void SelectNode::erase_v_area(){
 
 void SelectNode::start(){
     m_stop = false;
+    getCenterInformation();
+    if(center_Information!= "nothing"){
+        std::cout << "设置opt缓存初值" << std::endl;
+        CenterInfo mycenter;
+        mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
+
+        //读取配置文件，作为初值
+        struct_Node local;
+        std::vector<std::string>::iterator iter;
+        for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
+
+            local.location = mycenter.centerName[*iter];  //从centerInfo里获取
+            local.ip_addr = mycenter.centerIP[*iter];
+            local.port = mycenter.centerPort[*iter];
+            buf_delay.push_back(local);
+        }
+    }
     create("opt_node");
 }
 
@@ -116,6 +134,7 @@ void* SelectNode::entry() {
             write_rtt(myvec);  //加锁，写入
         }
         cout << "write sleep 100" << endl;
+        cout << "****"<<getCenterInfo() << endl;
         std::this_thread::sleep_for(std::chrono::seconds(100));
     }
 }
@@ -256,52 +275,9 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
 
 void SelectNode::getCenterInformation(){
   cout << "enter: getCenterInformation" << endl;
-  Http::Client client;
-  char url[256];
-  snprintf(url, 256, "http://localhost:9090/mconf/searchCenter");  // TODO 固定一个IP 端口
-  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-  client.init(opts);
-
-  
-  auto response = client.get(url).cookie(Http::Cookie("FOO", "bar")).send();
-        //dout(-1) << "Client Info: post request " << url << dendl;
-        cout << "Client Info: post request " << url << endl;
-
-  std::promise<bool> prom;
-  auto fu = prom.get_future();
-  response.then(
-      [&](Http::Response res) {
-        //dout(-1) << "Manager Info: " << res.body() << dendl;
-        std::cout << "Response code = " << res.code() << std::endl;
-        auto body = res.body();
-        if (!body.empty()){
-            std::cout << "Response body = " << body << std::endl;
-            if(body!="fail"){
-                //====================
-                //your code write here
-
-                center_Information = body;
-                // CenterInfo mycenter;
-                // mycenter.deserialize(center_Information);   
-
-                // vector<string>::iterator iter;
-                // for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
-                //   cout << "centerID: "<< *iter << endl;
-                //   cout << "centerIP: "<< mycenter.centerIP[*iter] << endl;
-                //   cout << "centerPort: "<< mycenter.centerPort[*iter] << endl;
-                //   cout << "centerName: "<< mycenter.centerName[*iter] << endl;
-                // }
-              //====================
-            }
-        }
-        prom.set_value(true);
-      },
-      Async::IgnoreException);
-  fu.get();
-
-  client.shutdown();
-
-  cout << "end: getCenterInformation" << endl;
+  string response = client->rpc->get_request("http://localhost:9090", "/mconf/searchCenter");
+    center_Information = response;
+    cout << "end: getCenterInformation: " << response << endl;
 }
 
 

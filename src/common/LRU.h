@@ -11,24 +11,51 @@ namespace hvs {
 // Attention: LRU list isn't designed to manage memory, it only provide the
 // infomation. PLEASE keep key simple, like long or pointer NOT THREAD SAFE.
 
-template <class T>
+template <class K, class V>
 struct LRUObject {
   bool pinned;
-  T data;
-  LRUObject(T _data) : data(_data), pinned(false) {}
+  K key;
+  V data;
+  LRUObject(const K& _key) : key(_key), pinned(false) {}
+  LRUObject() : pinned(false) {}
+  void swap(LRUObject& oths) {
+    LRUObject tmp = oths;
+    oths = *this;
+    *this = tmp;
+  }
 };
 
-template <class T>
+template <class K, class V>
 class LRU {
  private:
-  typedef std::list<LRUObject<T>> LruList;
+  typedef std::list<LRUObject<K, V>> LruList;
   typedef typename LruList::iterator LruIter;
   typedef typename LruList::reverse_iterator rLruIter;
+
  public:
-  int expire() {}
+  LRU(unsigned long max = 0) : max_n(max) {}
+  std::optional<LRUObject<K, V>> expire() {
+    LRUObject<K, V> tmp;
+    auto list_it = lrulist.end();
+    --list_it;
+    if (list_it == lrulist.end()) return std::nullopt;
+    tmp.swap(*list_it);
+    lrulist.erase(list_it);
+    lruindex.erase(tmp.key);
+    return tmp;
+  }
+
+  size_t size() { return lrulist.size(); }
+
+  std::optional<LRUObject<K, V>> find(const K& key) {
+    auto index_it = lruindex.find(key);
+    if (index_it == lruindex.end()) return std::nullopt;
+    // LRUObject may destroyed by lru, so we copy rather than referrence
+    return *index_it;
+  }
 
   bool empty() { return lruindex.empty(); }
-  bool remove(T key) {
+  bool remove(const K& key) {
     auto indexIter = lruindex.find(key);
     if (indexIter == lruindex.end()) {
       return false;
@@ -39,19 +66,38 @@ class LRU {
     }
   }
 
-  bool touch(T key) {
+  LRUObject<K, V> touch(K key) {
     auto indexIter = lruindex.find(key);
     // not exists
     if (indexIter == lruindex.end()) {
+      if (max_n != 0 && size() >= max_n) {
+        expire();
+      }
       // I want to use emplace_front but unluckily, emplace_front not return
       // iterator
       auto lruit = lrulist.emplace(lrulist.begin(), key);
       lruindex.insert_or_assign(key, lruit);
-      return true;
+      return *lruit;
     } else {
+      LRUObject<K, V> tmp = *(indexIter->second);
       lrulist.erase(indexIter->second);
-      auto lruit = lrulist.emplace(lrulist.begin(), key);
+      auto lruit = lrulist.emplace(lrulist.begin(), tmp);
       indexIter->second = lruit;
+      return tmp;
+    }
+  }
+
+  bool hit(K key) {
+    auto indexIter = lruindex.find(key);
+    // not exists
+    if (indexIter == lruindex.end()) {
+      return false;
+    } else {
+      LRUObject<K, V> tmp = *(indexIter->second);
+      lrulist.erase(indexIter->second);
+      auto lruit = lrulist.emplace(lrulist.begin(), tmp);
+      indexIter->second = lruit;
+      return true;
     }
   }
 
@@ -59,12 +105,12 @@ class LRU {
     std::cout << "<<<< observing lru status." << std::endl;
     std::cout << "lru index contains: [";
     for (auto it : lruindex) {
-      std::cout << it.second->data << ", ";
+      std::cout << it.second->key << ", ";
     }
     std::cout << " ]" << std::endl;
     std::cout << "lru list contains: [";
     for (auto it : lrulist) {
-      std::cout << it.data << ", ";
+      std::cout << it.key << ", ";
     }
     std::cout << " ]" << std::endl;
 
@@ -77,7 +123,9 @@ class LRU {
 
  private:
   LruList lrulist;
-  std::unordered_map<T, LruIter> lruindex;
+  std::unordered_map<K, LruIter> lruindex;
+  // 0 means infinite
+  unsigned int max_n;
 };
 
 }  // namespace hvs

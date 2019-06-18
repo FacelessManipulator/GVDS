@@ -39,8 +39,15 @@ void SelectNode::mutex_unlock(){
 
 vector<struct_Node> SelectNode::getNode(int choice){
     mutex_lock();
+    std::vector<struct_Node> return_buf;
+
     if (choice == 1){
-        return buf_delay;
+        for (int i=0; i< buf_delay.size(); i++){
+             //cout <<"1:"<< buf_delay.at(i).location << " " << buf_delay.at(i).ip_addr << " " << buf_delay.at(i).port<< endl;
+             return_buf.push_back(buf_delay.at(i));
+        }
+        mutex_unlock();
+        return return_buf;
     }
     else if (choice == 2){
         return buf_area;
@@ -48,7 +55,6 @@ vector<struct_Node> SelectNode::getNode(int choice){
     else{
         return buf_delay;
     }
-    mutex_unlock();
 }
 
 string SelectNode::getCenterInfo(){
@@ -135,8 +141,8 @@ void* SelectNode::entry() {
             sort(myvec.begin(), myvec.end(), CmpByValue()); //排序
             write_rtt(myvec);  //加锁，写入
         }
-        cout << "write sleep 100" << endl;
-        cout << "****"<<getCenterInfo() << endl;
+        cout << "opt_node sleep 100" << endl;
+        // cout << "****"<<getCenterInfo() << endl;
         std::this_thread::sleep_for(std::chrono::seconds(100));
     }
 }
@@ -181,7 +187,8 @@ double SelectNode::subgetRTT(string hostOrIp){
     for (int count = 1; count <= forvalue; count++){
         ret = ping.ping(hostOrIp, 1, pingResult);
         if (count == 1){
-            cout << "PING " << hostOrIp << "(" << pingResult.ip.c_str() << "):" << pingResult.dataLen << " bytes data in ICMP packets." << endl;
+            //（1/2） 展示工作量时输出
+            // cout << "PING " << hostOrIp << "(" << pingResult.ip.c_str() << "):" << pingResult.dataLen << " bytes data in ICMP packets." << endl;
         }
         if (!ret){
             //printf("%s\n", pingResult.error.c_str());
@@ -194,7 +201,8 @@ double SelectNode::subgetRTT(string hostOrIp){
         rtt += pingResult.icmpEchoReplys.at(0).rtt; 
     }
     if (ret){
-        cout << nsend << "packets transmitted, " << nreceived << "received ,"<< ((nsend - nreceived) / nsend * 100) << "lost." << endl;
+         //（2/2）展示工作量时输出
+        // cout << nsend << "packets transmitted, " << nreceived << "received ,"<< ((nsend - nreceived) / nsend * 100) << "lost." << endl;
         rtt = rtt/forvalue * 1.0;
     }
     else{
@@ -220,10 +228,11 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
     
         // anode.mutex_lock(); cout<<"wirte lock"<<endl;
         // anode.erase_v_delay();
-        mutex_lock(); cout<<"wirte lock"<<endl;
+        mutex_lock(); //cout<<"wirte lock"<<endl; //展示工作量时输出
         erase_v_delay();
         for (int i = 0; i != myvec.size(); ++i) {
-            cout << myvec[i].first << " : " << myvec[i].second << endl;
+            //展示工作量时输出
+            //cout << myvec[i].first << " : " << myvec[i].second << endl;
             if (myvec[i].first.compare(supercomputing_A) == 0){
                 Beijing.location = mycenter.centerName["1"];   //TODO从客户端获取CenterName
                 Beijing.ip_addr = mycenter.centerIP["1"];
@@ -265,12 +274,10 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
     else{
         getCenterInformation();
     }
-    //cout << "sleep 1" << endl;
-    //sleep(1);
-    cout<<"wirte unlock"<<endl;
-    //anode.mutex_unlock();
+    //展示工作量时输出
+    //cout<<"wirte unlock"<<endl;
+    
     mutex_unlock();
-
 
 }
 
@@ -278,8 +285,8 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
 void SelectNode::getCenterInformation(){
   cout << "enter: getCenterInformation" << endl;
   string response = client->rpc->get_request("http://localhost:9090", "/mconf/searchCenter");
-    center_Information = response;
-    cout << "end: getCenterInformation: " << response << endl;
+  center_Information = response;
+  cout << "end: getCenterInformation" << endl;
 }
 
 

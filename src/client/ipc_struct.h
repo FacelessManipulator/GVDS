@@ -64,6 +64,8 @@ namespace hvs{
         std::string address;
         std::string department;
 
+        std::string changeauth;
+
         //resource aggregation
         std::string storage_src_id;     // 存储资源UUID
         std::string storage_src_name;   // 存储资源名称
@@ -97,6 +99,7 @@ namespace hvs{
             put("phone", phone);
             put("address", address);
             put("department", department);
+            put("changeauth", changeauth);
 
             //resource aggregation
             put("storage_src_id", storage_src_id);
@@ -131,6 +134,7 @@ namespace hvs{
             get("phone", phone);
             get("address", address);
             get("department", department);
+            get("changeauth", changeauth);
 
             //resource aggregation
             get("storage_src_id", storage_src_id);

@@ -33,6 +33,7 @@ namespace hvs{
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
             std::string tmps_value = *vs;
+            std::cout << "1" << tmps_value << std::endl;
             tmps.deserialize(tmps_value);
 
             //TODO:资源聚合模块查询名字

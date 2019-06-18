@@ -93,10 +93,14 @@ void ClientIPC::init() {
                 cout << "can get here5" <<endl;
                 return douserexit(ipcreq);
             }
-            // if(ipcreq.cmdname == "authsearch"){
-            //     cout << "can get here1" <<endl;
-            //     return doauthsearch(ipcreq);
-            // }
+            if(ipcreq.cmdname == "authsearch"){
+                cout << "can get here1" <<endl;
+                return doauthsearch(ipcreq);
+            }
+            if(ipcreq.cmdname == "authmodify"){
+                cout << "can get here1" <<endl;
+                return doauthmodify(ipcreq);
+            }
 
             
             //resource register
@@ -896,7 +900,111 @@ std::string ClientIPC::douserexit(IPCreq &ipcreq){
 
 //auth
  std::string ClientIPC::doauthsearch(IPCreq &ipcreq){
+     // TODO: 提前准备的数据
+    string ip = ipcreq.ip;
+    int port = ipcreq.port;
 
+    std::string hvsID = client->user->getAccountID(); //在服务端产生 
+
+    //权限查询
+    std::string return_value = "authsearch fail";
+     Http::Client client;
+    char url[256];
+    //snprintf(url, 256, "http://localhost:%d/auth/search", manager->rest_port());
+    snprintf(url, 256, "http://localhost:9090/auth/search");
+
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+    std::cout << "before" << endl;
+    auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(hvsID).send();
+            dout(-1) << "Client Info: post request " << url << dendl;
+
+    std::cout << "after" << endl;
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+        [&](Http::Response res) {
+            //dout(-1) << "Manager Info: " << res.body() << dendl;
+            std::cout << "Response code = " << res.code() << std::endl;
+            return_value = "authsearch success";
+            auto body = res.body();
+            if (!body.empty()){
+                std::cout << "Response body = " << body << std::endl;
+                //====================
+                //your code write here
+                AuthSearch myauth;
+                myauth.deserialize(body);
+
+                cout << myauth.hvsID << endl;
+                vector<string>::iterator iter;
+                for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
+                    cout << *iter << endl;
+                    cout << myauth.read[*iter] << endl;
+                    cout << myauth.write[*iter] << endl;
+                    cout << myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
+                }
+                //====================
+            }
+            prom.set_value(true);
+        },
+        Async::IgnoreException);
+    fu.get();
+
+    client.shutdown();
+
+    return return_value;
+ }
+
+ std::string ClientIPC::doauthmodify(IPCreq &ipcreq){
+         // TODO: 提前准备的数据
+    string ip = ipcreq.ip;
+    int port = ipcreq.port;
+
+    FEAuthModifygroupinfo FEgroup;
+    FEgroup.hvsID = client->user->getAccountID(); //在服务端产生 
+    FEgroup.zonename = ipcreq.zonename;
+    FEgroup.modify_groupauth = ipcreq.changeauth;
+
+    string value = FEgroup.serialize();
+
+    //权限修改
+    std::string return_value = "authmodify fail";
+    Http::Client client;
+    char url[256];
+    //snprintf(url, 256, "http://localhost:%d/auth/modify", manager->rest_port());
+    snprintf(url, 256, "http://localhost:9090/auth/modify");
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+
+
+    std::cout << "before" << endl;
+    auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();
+            dout(-1) << "Client Info: post request " << url << dendl;
+
+    std::cout << "after" << endl;
+    std::promise<bool> prom;
+    auto fu = prom.get_future();
+    response.then(
+        [&](Http::Response res) {
+            //dout(-1) << "Manager Info: " << res.body() << dendl;
+            std::cout << "Response code = " << res.code() << std::endl;
+            return_value = "authmodify success";
+            auto body = res.body();
+            if (!body.empty()){
+                std::cout << "Response body = " << body << std::endl;
+                //====================
+                //your code write here
+            
+                //====================
+            }
+            prom.set_value(true);
+        },
+        Async::IgnoreException);
+    fu.get();
+
+    client.shutdown();
+    return return_value;
  }
 
 

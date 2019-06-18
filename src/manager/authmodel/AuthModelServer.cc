@@ -897,6 +897,7 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     //1、查询hvsid对应的所有区域ID
     vector<Zone> result_z;
     ZoneServer *p_zone = static_cast<ZoneServer*>(mgr->get_module("zone").get());
+    cout << "123" << hvsID << endl;
     bool result_b = p_zone->GetZoneInfo(result_z, hvsID);//sy函数
     string result;
     if( !result_b ){

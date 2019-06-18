@@ -7,5 +7,6 @@ ADD_EXECUTABLE(hvs_client main.cc fuse_mod.cc client.cc graph_mod.cc hvs_fuse_im
                 ./OPTNode/opt_node.cc
                 ./clientuser/ClientUser_struct.cc
                 ./clientuser/ClientUser.cc
+                ./clientuser/ClientAuth_struct.cc
                 )
 TARGET_LINK_LIBRARIES(hvs_client fuse3 hvscommon ${HVSCOMMOM_DEPENDS_ON})

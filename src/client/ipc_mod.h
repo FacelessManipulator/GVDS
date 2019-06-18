@@ -10,6 +10,7 @@
 #include <hvs_struct.h>
 #include "ipc_struct.h"
 #include "client/clientuser/ClientUser_struct.h"
+#include "client/clientuser/ClientAuth_struct.h"
 #include <future>
 #include <pistache/client.h>
 
@@ -60,6 +61,7 @@ namespace hvs{
         std::string douserexit(IPCreq &ipcreq);
 
         std::string doauthsearch(IPCreq &ipcreq);
+        std::string doauthmodify(IPCreq &ipcreq);
     };
 }
 

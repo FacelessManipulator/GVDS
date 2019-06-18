@@ -61,6 +61,7 @@ namespace hvs{
         std::string dousersignup(IPCreq &ipcreq);
         std::string dousermodify(IPCreq &ipcreq);
         std::string douserexit(IPCreq &ipcreq);
+        std::string dousercancel(IPCreq &ipcreq);
 
         std::string doauthsearch(IPCreq &ipcreq);
         std::string doauthmodify(IPCreq &ipcreq);

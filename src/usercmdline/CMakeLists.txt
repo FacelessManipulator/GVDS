@@ -34,5 +34,5 @@ target_link_libraries(usermodify_ipc hvscommon ${HVSCOMMOM_DEPENDS_ON})
 add_executable(userexit_ipc userexit_ipc.cc ../client/clientuser/ClientUser_struct.cc)
 target_link_libraries(userexit_ipc hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
-#add_executable(usercancel_ipc userexit_ipc.cc ../client/clientuser/ClientUser_struct.cc)
-#target_link_libraries(userexit_ipc hvscommon ${HVSCOMMOM_DEPENDS_ON})
+add_executable(usercancel_ipc usercancel_ipc.cc ../client/clientuser/ClientUser_struct.cc)
+target_link_libraries(usercancel_ipc hvscommon ${HVSCOMMOM_DEPENDS_ON})

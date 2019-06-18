@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
     char* demo1[7] = {const_cast<char *>("usercancel"), 
                        const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
                        const_cast<char *>("-p"), const_cast<char *>("9090"), 
-                       const_cast<char *>("--user"), const_cast<char *>("lbq-7")};
+                       const_cast<char *>("--user"), const_cast<char *>("lbq_test7")};
     char* demo2[2] = {const_cast<char *>("usercancel"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据

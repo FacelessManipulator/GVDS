@@ -74,6 +74,7 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "zonesharecancel"){
                 return dozonesharecancel(ipcreq);
             }
+            //auth
             if(ipcreq.cmdname == "userlogin"){
                 cout << "can get here1" <<endl;
                 return douserlogin(ipcreq);
@@ -93,6 +94,10 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "userexit"){
                 cout << "can get here5" <<endl;
                 return douserexit(ipcreq);
+            }
+            if(ipcreq.cmdname == "usercancel"){
+                cout << "can get here5" <<endl;
+                return dousercancel(ipcreq);
             }
             if(ipcreq.cmdname == "authsearch"){
                 cout << "can get here1" <<endl;
@@ -1043,5 +1048,47 @@ std::string ClientIPC::douserexit(IPCreq &ipcreq){
     return return_value;
  }
 
+
+std::string ClientIPC::dousercancel(IPCreq &ipcreq){
+     // TODO: 提前准备的数据
+    string ip = ipcreq.ip;
+    int port = ipcreq.port;
+
+    //用户注销
+    std::string return_value = "usercancel fail";
+    Http::Client Pclient;
+    char url[256];
+    snprintf(url, 256, "http://%s:%d/users/cancel/%s", ip.c_str(), port, client->user->getAccountID().c_str());
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    Pclient.init(opts);
+
+    auto response_1 = Pclient.get(url).cookie(Http::Cookie("token", "mtoken")).send();
+            //dout(-1) << "Client Info: get request " << url << dendl;
+
+    std::cout << "Client Info: get request " << url << std::endl;
+
+    std::promise<bool> prom_1;
+    auto fu_1 = prom_1.get_future();
+    response_1.then(
+        [&](Http::Response res) {
+            //dout(-1) << "Manager Info: " << res.body() << dendl;
+            std::cout << "Response code = " << res.code() << std::endl;
+            return_value = "usercancel success";
+            auto body = res.body();
+            if (!body.empty()){
+                std::cout << "Response body = " << body << std::endl;
+                //====================
+                //your code write here
+
+                //====================
+            }
+            prom_1.set_value(true);
+        },
+        Async::IgnoreException);
+    fu_1.get();
+
+    Pclient.shutdown();
+    return return_value;
+}
 
 }//namespace

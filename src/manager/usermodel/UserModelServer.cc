@@ -89,7 +89,7 @@ bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &me
 
     
     for(int i=0; i<memberName.size(); i++){
-        //cout << "memberName[i]: " << memberName[i] << endl;
+        cout << "memberName[i]: " << memberName[i] << endl;
         auto [pvalue, error_0] = f0_dbPtr->get(memberName[i]);
         if(error_0 != 0){  
             return false;
@@ -99,6 +99,7 @@ bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &me
         acc_pair.deserialize(*pvalue);
 
         memberID.push_back(acc_pair.accountID);
+        sleep(1);
     }
     return true;
 }

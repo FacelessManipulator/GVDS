@@ -32,13 +32,13 @@ void* ClientZone::entry() {
 }
 
 bool hvs::ClientZone::GetZoneInfo(std::string clientID) {
-    GetZoneInfoRes zoneinfores;
+    vector<Zone> zoneinfores;
     string endpoint = client->get_manager();
     string inforesult = client->rpc->post_request(endpoint, "/zone/info", clientID);
     if (!inforesult.empty()) {
-        zoneinfores.deserialize(inforesult); //获取返回的结果
+        json_decode(inforesult, zoneinfores); //获取返回的结果
     }
-    if(zoneinfores.zoneInfoResult.empty()){
+    if(zoneinfores.empty()){
         return false;
     }
     spacemap_mutex.lock_shared();
@@ -46,35 +46,37 @@ bool hvs::ClientZone::GetZoneInfo(std::string clientID) {
     spacemap_mutex.unlock_shared();
     zonemap_mutex.lock_shared();
     zonemap.clear();
-    for(const auto &it : zoneinfores.zoneInfoResult){
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(it);
+    for(auto &it : zoneinfores){
         // TODO: 获取空间信息对每个空间，并更新到内存中；
-        GetLocateInfo(clientID, zoneinfo.zoneID, zoneinfo.spaceBicInfo.spaceID);
-        zonemap[zoneinfo.zoneName] = it;
+//        GetLocateInfo(clientID, it.zoneID, it.spaceBicInfo);
+        zonemap[it.zoneName] = it;
+        spacemap_mutex.lock_shared();
+        for(auto &sp : it.spaceBicInfo) {
+            spaceuuid_to_metadatamap[sp.spaceID] = sp;
+        }
+        spacemap_mutex.unlock_shared();
     }
     zonemap_mutex.unlock_shared();
     return true;
 }
 
-bool ClientZone::GetLocateInfo(std::string clientID, std::string zoneID, std::vector<std::string> &spaceIDs) {
-    GetZoneLocateInfoReq req;
+bool ClientZone::GetLocateInfo(std::string clientID, std::string zoneID, std::vector<Space> &spaces) {
+    ZoneRequest req;
     req.clientID = std::move(clientID);
     req.zoneID = std::move(zoneID);
-    req.spaceID = spaceIDs;
+    for(auto &it:spaces)
+        req.spaceID.push_back(it.spaceID);
     std::string req_value = req.serialize();
-    GetZoneLocateInfoRes zonelocateresult;
+    std::vector<Space> zonelocateresult;
     string endpoint = client->get_manager();
     string inforesult = client->rpc->post_request(endpoint, "/zone/locate", req_value);
     if (!inforesult.empty()) {
-        zonelocateresult.deserialize(inforesult); //获取返回的结果
+        json_decode(inforesult, zonelocateresult); //获取返回的结果
     }
     spacemap_mutex.lock_shared(); // 锁定 spaceuuid_to_metadatamap 保证线程安全
-    for(const auto &it : zonelocateresult.zoneLocateInfoResult){
-        SpaceMetaData space_metadata;
-        space_metadata.deserialize(it);
+    for(const auto &it : zonelocateresult){
         // TODO: 目前暂时存储在内存中的 spaceuuid_to_metadatamap 之中
-        spaceuuid_to_metadatamap[space_metadata.spaceID] = it;
+        spaceuuid_to_metadatamap[it.spaceID] = it;
     }
     spacemap_mutex.unlock_shared();
     return false;
@@ -121,11 +123,10 @@ std::tuple<std::string, std::string, std::string, std::string> hvs::ClientZone::
     }
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        for(auto it : zoneinfo.spaceBicInfo.spaceID){
-            if (zoneinfo.spaceBicInfo.spaceName[it] == namev[2]){
-                spaceuuid = it;
+        Zone zoneinfo = mapping->second;
+        for(auto it : zoneinfo.spaceBicInfo){
+            if (it.spaceName == namev[2]){
+                spaceuuid = it.spaceID;
 
             }
         }
@@ -135,21 +136,13 @@ std::tuple<std::string, std::string, std::string, std::string> hvs::ClientZone::
 
 std::string ClientZone::spaceuuid_to_spacerpath(std::string uuid) {
     std::string rpath;
-    SpaceMetaData space_metadata;
-    spacemap_mutex.lock_shared();
-    space_metadata.deserialize(spaceuuid_to_metadatamap[uuid]);
-    spacemap_mutex.unlock_shared();
-    rpath = space_metadata.spacePath;
+    rpath = spaceuuid_to_metadatamap[uuid].spacePath;
     return rpath; // 返回存储集群路径
 }
 
 std::string ClientZone::spaceuuid_to_hostcenterID(std::string uuid) {
     std::string centerID;
-    spacemap_mutex.lock_shared();
-    SpaceMetaData space_metadata;
-    space_metadata.deserialize(spaceuuid_to_metadatamap[uuid]);
-    centerID = space_metadata.hostCenterID;
-    spacemap_mutex.unlock_shared();
+    centerID = spaceuuid_to_metadatamap[uuid].hostCenterID;
     return centerID;
 
 }

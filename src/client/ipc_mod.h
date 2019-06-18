@@ -7,10 +7,10 @@
 #pragma once //HVSONE_IPC_MOD_H
 #include "client.h"
 #include "ipc/IPCServer.hpp"
-#include "manager/zone/Zone.h"
-#include "manager/space/Space.h"
+#include <hvs_struct.h>
 #include "ipc_struct.h"
 #include "client/clientuser/ClientUser_struct.h"
+#include "client/clientuser/ClientAuth_struct.h"
 #include <future>
 #include <pistache/client.h>
 
@@ -32,7 +32,8 @@ namespace hvs{
     private:
         friend class Client;
         std::shared_ptr<IPCServer> sp_ipcserver;
-        std::unordered_map<std::string, std::string> zonemap; // 区域重命名使用
+        std::unordered_map<std::string, Zone> zonemap; // 区域重命名使用
+    
 
     private:
         // TODO: 客户端具体处理函数
@@ -46,7 +47,7 @@ namespace hvs{
         std::string dozonerename(IPCreq &ipcreq);
         std::string dozoneshare(IPCreq &ipcreq);
         std::string dozonesharecancel(IPCreq &ipcreq);
-        bool GetZoneInfo(std::string ip, int port, std::string clientID);
+        bool GetZoneInfo(std::string clientID);
 
 
         //资源聚合相关函数
@@ -56,6 +57,13 @@ namespace hvs{
 
         //user
         std::string douserlogin(IPCreq &ipcreq);
+        std::string dousersearch(IPCreq &ipcreq);
+        std::string dousersignup(IPCreq &ipcreq);
+        std::string dousermodify(IPCreq &ipcreq);
+        std::string douserexit(IPCreq &ipcreq);
+
+        std::string doauthsearch(IPCreq &ipcreq);
+        std::string doauthmodify(IPCreq &ipcreq);
     };
 }
 

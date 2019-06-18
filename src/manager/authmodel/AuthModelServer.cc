@@ -76,7 +76,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
 
     string ownerID = auth_space.ownerID_zone;
 
-    SpaceMetaData spacemeta;
+    Space spacemeta;
     spacemeta.deserialize(auth_space.spaceinformation);
 
     //TODO  确认是否匹配
@@ -142,7 +142,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
     
     string ownerID = auth_space.ownerID_zone;
 
-    SpaceMetaData spacemeta;
+    Space spacemeta;
     spacemeta.deserialize(auth_space.spaceinformation);
 
     //TODO  确认是否匹配
@@ -208,7 +208,7 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
     //chmod 7修改值0 spaceID
     string hvsID = groupinfo.hvsID;
 
-    SpaceMetaData spacemeta;
+    Space spacemeta;
     spacemeta.deserialize(groupinfo.spaceinformation);
 
     //TODO  确认是否匹配
@@ -347,17 +347,15 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
     zone_content.deserialize(*pzone_value);  //为了获取zone_content.spaceID 一个vector
     cout << "112" << endl;
         //2.1.2获取每个空间对应的超算
-    vector<string> result; //里面存储每个空间的string信息 需要饭序列化
+    vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
         dout(-1) << "start: recall GetSpacePosition" << dendl;
     p_space->GetSpacePosition(result, zone_content.spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
     cout << "113" << endl;
-    vector<string>::iterator space_iter;
-    for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
-        SpaceMetaData spacemeta;
-        spacemeta.deserialize(*space_iter);
+    for (auto& space_iter : result) {
+        Space spacemeta = space_iter;
 
         if (spacemeta.spaceID.compare(spaceID) != 0){
             continue;
@@ -442,7 +440,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
             //获取ownerid 对应的的本地账户(空间所在地)test1;
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
 
-    vector<string> result; //里面存储每个空间的string信息 需要饭序列化
+    vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
         dout(-1) << "start: recall GetSpacePosition" << dendl;
     p_space->GetSpacePosition(result, zone_content.spaceID);
@@ -458,10 +456,8 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
     //+++++++
 
     //for owner对应的区域的所有超算空间获取本地账户
-    vector<string>::iterator space_iter;
-    for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
-        SpaceMetaData spacemeta;
-        spacemeta.deserialize(*space_iter); //空间的信息
+    for (auto space_iter : result){
+        Space spacemeta = space_iter;
 
         string hostCenterName = spacemeta.hostCenterName;
         cout << "hostCenterName: " << hostCenterName << endl;
@@ -481,7 +477,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         snprintf(url, 256, "http://%s:%d/auth/selfmemberadd", ip_space.c_str() ,mgr->rest_port());
 
         SelfAuthSpaceInfo auth_space;
-        auth_space.spaceinformation = *space_iter;
+        auth_space.spaceinformation = space_iter.serialize();
         auth_space.ownerID_zone = ownerID;
         auth_space.memberID = memberID;//TODO 赋值有问题
 
@@ -561,7 +557,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
             //获取ownerid 对应的的本地账户(空间所在地)test1;
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
 
-    vector<string> result; //里面存储每个空间的string信息 需要饭序列化
+    vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
         dout(-1) << "start: recall GetSpacePosition" << dendl;
     p_space->GetSpacePosition(result, zone_content.spaceID);
@@ -578,9 +574,8 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
 
     //for owner对应的区域的所有超算空间获取本地账户
     vector<string>::iterator space_iter;
-    for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
-        SpaceMetaData spacemeta;
-        spacemeta.deserialize(*space_iter); 
+    for (auto space_iter : result){
+        Space spacemeta = space_iter;
 
         string hostCenterName = spacemeta.hostCenterName;
 
@@ -601,7 +596,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
         snprintf(url, 256, "http://%s:%d/auth/selfmemberdel", ip_space.c_str() ,mgr->rest_port());
 
         SelfAuthSpaceInfo auth_space;
-        auth_space.spaceinformation = *space_iter;
+        auth_space.spaceinformation = space_iter.serialize();
         auth_space.ownerID_zone = ownerID;
         auth_space.memberID = memberID;   //TODO 这块拷贝会有问题   添加的这块同样有问题
 
@@ -655,16 +650,14 @@ int AuthModelServer::SpacePermissionDelete(string spaceID){
     vector<string> tmp_vec_spaceID;
     tmp_vec_spaceID.push_back(spaceID);
 
-    vector<string> result; //里面存储每个空间的string信息 需要饭序列化
+    vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
         dout(-1) << "start: recall GetSpacePosition" << dendl;
     p_space->GetSpacePosition(result, tmp_vec_spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
-    vector<string>::iterator space_iter;
-    for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
-        SpaceMetaData spacemeta;
-        spacemeta.deserialize(*space_iter); 
+    for (auto space_iter : result){
+        Space spacemeta = space_iter;
 
         //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
         string spacepath = localstoragepath + spacemeta.spacePath;
@@ -802,7 +795,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
             //获取ownerid 对应的的本地账户(空间所在地)test1;
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
 
-    vector<string> result; //里面存储每个空间的string信息 需要饭序列化
+    vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
         dout(-1) << "start: recall GetSpacePosition" << dendl;
     p_space->GetSpacePosition(result, zone_content.spaceID);
@@ -819,9 +812,8 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
 
     //for owner对应的区域的所有超算空间获取本地账户
     vector<string>::iterator space_iter;
-    for (space_iter = result.begin(); space_iter != result.end(); space_iter++){
-        SpaceMetaData spacemeta;
-        spacemeta.deserialize(*space_iter); 
+    for (auto space_iter : result){
+        Space spacemeta = space_iter;
 
         //spaceID 的hostCenterName 发rest
         string hostCenterName = spacemeta.hostCenterName;
@@ -835,7 +827,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
             //rest中：hvsID对应的本地ID
                      //chmod 7修改值0 spaceID
         AuthModifygroupinfo groupinfo;
-        groupinfo.spaceinformation = *space_iter;
+        groupinfo.spaceinformation = space_iter.serialize();
         groupinfo.hvsID = hvsID;
         groupinfo.au_person = au_person;
         groupinfo.au_group = modify_groupauth;
@@ -903,27 +895,23 @@ void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::Re
 string AuthModelServer::AuthSearchModel(string &hvsID){
      cout << "enter AuthSearchModel"<< endl;
     //1、查询hvsid对应的所有区域ID
-    vector<string> result_z;
+    vector<Zone> result_z;
     ZoneServer *p_zone = static_cast<ZoneServer*>(mgr->get_module("zone").get());
+    cout << "123" << hvsID << endl;
     bool result_b = p_zone->GetZoneInfo(result_z, hvsID);//sy函数
     string result;
     if( !result_b ){
         cout << "get zoneID info fail" <<endl;
         return "fail";
     }
-   
-    GetZoneInfoRes res;
-    res.zoneInfoResult = result_z;
 
     //result = res.serialize();
 
     //2、然后for区域
     AuthSearch myauth;
     myauth.hvsID = hvsID;
-    vector<string>::iterator iter;
-    for(iter = res.zoneInfoResult.begin(); iter!=res.zoneInfoResult.end(); iter++){
-        ZoneInfo myzone;
-        myzone.deserialize(*iter);  //myzone.zoneID   myzone.ownerID    myzone.memberID
+    for(auto iter : result_z){
+        Zone myzone = iter;
         
         string r,w,x;
         int tmp = subAuthSearchModel(myzone, hvsID, r, w, x);
@@ -944,7 +932,7 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     return myauth.serialize();
 }
  //2.1调用子函数
-int AuthModelServer::subAuthSearchModel(ZoneInfo &myzone, string hvsID, string &r, string &w, string &x){
+int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, string &w, string &x){
     bool isowner=false;
     bool ismember=false;
     //2.1.1查询在每个区域中是主人 还是 成员

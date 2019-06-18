@@ -34,6 +34,9 @@ public:
 
     void setAccountID(std::string m);
     std::string getAccountID();
+
+    //输入member的vector<string> name , 返回一个vector<string> id;
+    bool getMemberID(std::vector<std::string> memberName, std::vector<std::string> &memberID);
  
 
 private:

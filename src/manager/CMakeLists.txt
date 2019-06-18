@@ -8,9 +8,7 @@ ADD_LIBRARY(managerO OBJECT
         usermodel/UserModelServer.cc
         authmodel/Auth.cc
         authmodel/AuthModelServer.cc
-        space/Space.cc
         space/SpaceServer.cc
-        zone/Zone.cc
         zone/ZoneServer.cc
         resaggregation_mgr.cc
         rpc_mod.cc

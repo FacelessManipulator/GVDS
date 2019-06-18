@@ -13,6 +13,7 @@
 
 #include "opt_node.h"
 #include "myping.h"
+#include "client/msg_mod.h"
 
 using namespace Pistache;
 using namespace Pistache::Http;
@@ -37,8 +38,16 @@ void SelectNode::mutex_unlock(){
 }
 
 vector<struct_Node> SelectNode::getNode(int choice){
+    mutex_lock();
+    std::vector<struct_Node> return_buf;
+
     if (choice == 1){
-        return buf_delay;
+        for (int i=0; i< buf_delay.size(); i++){
+             //cout <<"1:"<< buf_delay.at(i).location << " " << buf_delay.at(i).ip_addr << " " << buf_delay.at(i).port<< endl;
+             return_buf.push_back(buf_delay.at(i));
+        }
+        mutex_unlock();
+        return return_buf;
     }
     else if (choice == 2){
         return buf_area;
@@ -72,6 +81,23 @@ void SelectNode::erase_v_area(){
 
 void SelectNode::start(){
     m_stop = false;
+    getCenterInformation();
+    if(center_Information!= "nothing"){
+        std::cout << "设置opt缓存初值" << std::endl;
+        CenterInfo mycenter;
+        mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
+
+        //读取配置文件，作为初值
+        struct_Node local;
+        std::vector<std::string>::iterator iter;
+        for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
+
+            local.location = mycenter.centerName[*iter];  //从centerInfo里获取
+            local.ip_addr = mycenter.centerIP[*iter];
+            local.port = mycenter.centerPort[*iter];
+            buf_delay.push_back(local);
+        }
+    }
     create("opt_node");
 }
 
@@ -115,7 +141,8 @@ void* SelectNode::entry() {
             sort(myvec.begin(), myvec.end(), CmpByValue()); //排序
             write_rtt(myvec);  //加锁，写入
         }
-        cout << "write sleep 100" << endl;
+        cout << "opt_node sleep 100" << endl;
+        // cout << "****"<<getCenterInfo() << endl;
         std::this_thread::sleep_for(std::chrono::seconds(100));
     }
 }
@@ -160,7 +187,8 @@ double SelectNode::subgetRTT(string hostOrIp){
     for (int count = 1; count <= forvalue; count++){
         ret = ping.ping(hostOrIp, 1, pingResult);
         if (count == 1){
-            cout << "PING " << hostOrIp << "(" << pingResult.ip.c_str() << "):" << pingResult.dataLen << " bytes data in ICMP packets." << endl;
+            //（1/2） 展示工作量时输出
+            // cout << "PING " << hostOrIp << "(" << pingResult.ip.c_str() << "):" << pingResult.dataLen << " bytes data in ICMP packets." << endl;
         }
         if (!ret){
             //printf("%s\n", pingResult.error.c_str());
@@ -173,7 +201,8 @@ double SelectNode::subgetRTT(string hostOrIp){
         rtt += pingResult.icmpEchoReplys.at(0).rtt; 
     }
     if (ret){
-        cout << nsend << "packets transmitted, " << nreceived << "received ,"<< ((nsend - nreceived) / nsend * 100) << "lost." << endl;
+         //（2/2）展示工作量时输出
+        // cout << nsend << "packets transmitted, " << nreceived << "received ,"<< ((nsend - nreceived) / nsend * 100) << "lost." << endl;
         rtt = rtt/forvalue * 1.0;
     }
     else{
@@ -199,10 +228,11 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
     
         // anode.mutex_lock(); cout<<"wirte lock"<<endl;
         // anode.erase_v_delay();
-        mutex_lock(); cout<<"wirte lock"<<endl;
+        mutex_lock(); //cout<<"wirte lock"<<endl; //展示工作量时输出
         erase_v_delay();
         for (int i = 0; i != myvec.size(); ++i) {
-            cout << myvec[i].first << " : " << myvec[i].second << endl;
+            //展示工作量时输出
+            //cout << myvec[i].first << " : " << myvec[i].second << endl;
             if (myvec[i].first.compare(supercomputing_A) == 0){
                 Beijing.location = mycenter.centerName["1"];   //TODO从客户端获取CenterName
                 Beijing.ip_addr = mycenter.centerIP["1"];
@@ -244,66 +274,34 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
     else{
         getCenterInformation();
     }
-    //cout << "sleep 1" << endl;
-    //sleep(1);
-    cout<<"wirte unlock"<<endl;
-    //anode.mutex_unlock();
+    //展示工作量时输出
+    //cout<<"wirte unlock"<<endl;
+    
     mutex_unlock();
-
 
 }
 
 
 void SelectNode::getCenterInformation(){
   cout << "enter: getCenterInformation" << endl;
-  Http::Client client;
-  char url[256];
-  snprintf(url, 256, "http://localhost:9090/mconf/searchCenter");  // TODO 固定一个IP 端口
-  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-  client.init(opts);
-
-  
-  auto response = client.get(url).cookie(Http::Cookie("FOO", "bar")).send();
-        //dout(-1) << "Client Info: post request " << url << dendl;
-        cout << "Client Info: post request " << url << endl;
-
-  std::promise<bool> prom;
-  auto fu = prom.get_future();
-  response.then(
-      [&](Http::Response res) {
-        //dout(-1) << "Manager Info: " << res.body() << dendl;
-        std::cout << "Response code = " << res.code() << std::endl;
-        auto body = res.body();
-        if (!body.empty()){
-            std::cout << "Response body = " << body << std::endl;
-            if(body!="fail"){
-                //====================
-                //your code write here
-
-                center_Information = body;
-                // CenterInfo mycenter;
-                // mycenter.deserialize(center_Information);   
-
-                // vector<string>::iterator iter;
-                // for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
-                //   cout << "centerID: "<< *iter << endl;
-                //   cout << "centerIP: "<< mycenter.centerIP[*iter] << endl;
-                //   cout << "centerPort: "<< mycenter.centerPort[*iter] << endl;
-                //   cout << "centerName: "<< mycenter.centerName[*iter] << endl;
-                // }
-              //====================
-            }
-        }
-        prom.set_value(true);
-      },
-      Async::IgnoreException);
-  fu.get();
-
-  client.shutdown();
-
+  string response = client->rpc->get_request("http://localhost:9090", "/mconf/searchCenter");
+  center_Information = response;
   cout << "end: getCenterInformation" << endl;
 }
 
+
+std::string SelectNode::getmapIdName(std::string centerName){
+    //输入一个centername，返回一个centerid
+    CenterInfo mycenter;
+    mycenter.deserialize(center_Information); 
+    vector<string>::iterator iter;
+    for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
+        if (mycenter.centerName[*iter] == centerName){
+            return *iter;
+        }
+    }
+    return "fail";
+}
 
 
 /*

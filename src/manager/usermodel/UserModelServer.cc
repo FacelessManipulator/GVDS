@@ -52,8 +52,56 @@ void UserModelServer::router(Router& router){
     Routes::Get(router, "/users/exit/:id", Routes::bind(&UserModelServer::exitUserAccountRest, this));
     Routes::Get(router, "/users/cancel/:id", Routes::bind(&UserModelServer::cancellationUserAccountRest, this));
 
+    Routes::Post(router, "/users/memberID", Routes::bind(&UserModelServer::getMemberIDRest, this));
 }
 
+void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::ResponseWriter response){
+     cout << "====== start UserModelServer function: getMemberIDRest ======"<< endl;
+    auto info = request.body();
+    cout << info << endl;
+
+    //反序列化
+    vector<string> memberName;
+    json_decode(info, memberName);
+
+
+    vector<string> memberID;
+    bool flag = getMemberID(memberName, memberID);
+    if(flag){
+        cout << "get getMemberIDRest success" << endl;
+        string json_str = json_encode(memberID); //序列号 返回
+        response.send(Http::Code::Ok, json_str);
+    }
+    else{
+        cout << "get getMemberIDRest fail" << endl;
+        response.send(Http::Code::Not_Found, "fail");
+    }
+    cout << "====== end UserModelServer function: getMemberIDRest ======"<< endl;
+}
+
+bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &memberID){
+    cout << " enter getMemberID "<< endl;
+    
+    //获取每一个membername 对应的 hvsid
+     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info"));
+    f0_dbPtr->init();
+
+    
+    for(int i=0; i<memberName.size(); i++){
+        //cout << "memberName[i]: " << memberName[i] << endl;
+        auto [pvalue, error_0] = f0_dbPtr->get(memberName[i]);
+        if(error_0 != 0){  
+            return false;
+        }
+
+        AccountPair acc_pair;
+        acc_pair.deserialize(*pvalue);
+
+        memberID.push_back(acc_pair.accountID);
+    }
+    return true;
+}
 
 //账户注册
 void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
@@ -85,7 +133,7 @@ void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::Respo
 string UserModelServer::UserRegister(Account &person){
     cout << "enter UserRegister ======"<< endl;
 
-    std::string person_key = person.accountID;
+    //std::string person_key = person.accountID;
     //检查是否存在key，不存在，则进行下面代码开始注册，存在则返回注册失败
     
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -98,7 +146,17 @@ string UserModelServer::UserRegister(Account &person){
     }
 
     //不存在此key，开始注册
-    //写入account_map_info表
+    //1、生成uuid
+    boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+    const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+
+    std::string person_key = tmp_uuid;
+
+    //赋值
+    person.accountID = tmp_uuid;
+
+
+    //2、写入account_map_info表
     AccountPair acc_pair(person.accountName, person.accountID);
     string pari_key = person.accountName;
     string pair_value = acc_pair.serialize();

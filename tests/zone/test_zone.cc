@@ -1,5 +1,5 @@
 #include <iostream>
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 #include "manager/zone/ZoneServer.h"
 #include "common/JsonSerializer.h"
 #include "context.h"
@@ -332,12 +332,12 @@ TEST_F(HVSZoneTest, Rename) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    ZoneRegisterReq req;
+    ZoneRequest req;
     req.zoneName = "compute-zone";
     req.ownerID = "000";
     req.memberID.emplace_back("111");
     req.memberID.emplace_back("222");
-    SpaceMetaData tmpm;
+    Space tmpm;
     tmpm.hostCenterName = "beihang";
     tmpm.storageSrcName = "localstorage";
     tmpm.spacePath = "6f607624-d570-4cd0-afcc-574bec802110";

@@ -10,9 +10,8 @@
 
 
 #include "datastore/couchbase_helper.h"
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 #include "manager/space/SpaceServer.h"
-#include "manager/zone/Zone.h"
 #include "manager/manager.h"
 
 
@@ -36,11 +35,11 @@ public:
 
     //区域定位模块：区域定位接口 并获取到空间元数据信息 复查
     void GetZoneLocateInfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool GetZoneLocateInfo(std::vector<std::string> &result, std::string clientID, std::string zoneID, std::vector<std::string> spaceID);
+    bool GetZoneLocateInfo(std::vector<Space> &result, std::string clientID, std::string zoneID, std::vector<std::string> spaceID);
 
     //区域信息检索模块：区域信息检索接口 复查
     void GetZoneInfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool GetZoneInfo(std::vector<std::string> &result_z, std::string clientID);
+    bool GetZoneInfo(std::vector<Zone> &result_z, std::string clientID);
 
     //区域共享模块：区域共享接口 复查
     void ZoneShareRest(const Rest::Request& request, Http::ResponseWriter response);

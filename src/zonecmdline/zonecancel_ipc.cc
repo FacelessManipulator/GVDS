@@ -4,8 +4,7 @@
 //
 
 #include <iostream>
-#include "manager/space/Space.h"
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
@@ -30,8 +29,6 @@ int main(int argc, char* argv[]){
     char* demo2[2] = {const_cast<char *>("zonecancel"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
-    std::string ip ;//= "127.0.0.1";
-    int port ;//= 55107;
     std::string zonename ;//= "syremotezone"; // 空间名称
     std::string ownID;// = "202"; // 用户ID
     std::string zoneuuid;
@@ -44,8 +41,6 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("区域注销模块");
         command.add_options()
-                ("ip", po::value<std::string>(), "管理节点IP")
-                ("port,p", po::value<int>(), "管理节点端口号")
                 ("zonename", po::value<std::string>(), "区域名称")
                 ("id", po::value<std::string>(), "主人ID")
                 ;
@@ -53,14 +48,6 @@ int main(int argc, char* argv[]){
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
-        if (sp_variables_map->count("ip"))
-        {
-            ip = (*sp_variables_map)["ip"].as<std::string>();
-        }
-        if (sp_variables_map->count("port"))
-        {
-            port = (*sp_variables_map)["port"].as<int>();
-        }
         if (sp_variables_map->count("zonename"))
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
@@ -73,7 +60,7 @@ int main(int argc, char* argv[]){
     commandline.start(); //开始解析命令行参数
 
     //TODO :判断是否有参数，如果没有，则报错
-    if (commandline.argc <= 1 || ip.empty() ) {
+    if (commandline.argc <= 1) {
         std::cerr << "请输入命令参数！" << std::endl;
         commandline.print_options();
         exit(-1);
@@ -100,8 +87,6 @@ int main(int argc, char* argv[]){
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
         ipcreq.cmdname = "zonecancel";
-        ipcreq.ip = ip ; // ip
-        ipcreq.port = port;  // 端口号
         ipcreq.zonename = zonename; // 空间名称
         ipcreq.ownID = ownID; // 用户ID
         ipcreq.zoneuuid = zoneuuid;

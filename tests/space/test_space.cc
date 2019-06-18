@@ -1,5 +1,5 @@
 #include <iostream>
-#include "manager/space/Space.h"
+#include "hvs_struct.h"
 #include "manager/space/SpaceServer.h"
 #include "common/JsonSerializer.h"
 #include "context.h"
@@ -60,7 +60,7 @@ TEST_F(HVSSpaceTest, Rename) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    SpaceRenameReq req;
+    SpaceRequest req;
     req.spaceID = "965e3ce8-d8a6-492e-accc-02469c24a42c";
     req.newSpaceName = "10000";
 
@@ -88,7 +88,7 @@ TEST_F(HVSSpaceTest, changesize) {
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
-    SpaceSizeChangeReq req;
+    SpaceRequest req;
     req.spaceID = "18530785-7f85-4ebd-ab58-75469c03c718";
     req.newSpaceSize = 50;
 

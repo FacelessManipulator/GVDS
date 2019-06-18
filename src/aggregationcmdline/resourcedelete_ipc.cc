@@ -4,6 +4,7 @@
 //
 
 #include <iostream>
+#include "hvs_struct.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"

@@ -7,7 +7,7 @@
 #pragma once //HVSONE_ZONE_MOD_H
 
 #include "client.h"
-#include "zone_struct.h"
+#include "hvs_struct.h"
 #include <pistache/client.h>
 #include <vector>
 #include <unordered_map>
@@ -35,12 +35,12 @@ namespace hvs {
         }
         //区域信息检索前端模块
         bool GetZoneInfo(std::string clientID); // 区域信息检索前端模块，返回区域信息；
-        bool GetLocateInfo(std::string clientID, std::string zoneID, std::vector<std::string> &spaceIDs); // 空间位置信息检索前端模块，用来获取空间位置；
+        bool GetLocateInfo(std::string clientID, std::string zoneID, std::vector<Space> &spaceIDs); // 空间位置信息检索前端模块，用来获取空间位置；
         std::string spaceuuid_to_spacerpath(std::string uuid); // TODO: 直接通过uuid，获取到空间远程路径;
         std::string spaceuuid_to_hostcenterID(std::string uuid); // TODO: 直接通过uuid，获取负责传输远程数据中心;
-        std::unordered_map<std::string, std::string> zonemap;
+        std::unordered_map<std::string, Zone> zonemap;
         std::tuple<std::string, std::string, std::string, std::string> locatePosition(const std::string path);
-        std::unordered_map<std::string, std::string> spaceuuid_to_metadatamap;
+        std::unordered_map<std::string, Space> spaceuuid_to_metadatamap;
 
     private:
         friend class Client;

@@ -114,6 +114,11 @@ void ClientIPC::init() {
                 cout << "resource delete..." <<endl;
                 return doresourcedelete(ipcreq);
             }
+            //resource query
+            if(ipcreq.cmdname == "resourcequery"){
+                cout << "resource query..." <<endl;
+                return doresourcequery(ipcreq);
+            }
 
 
 
@@ -125,6 +130,19 @@ void ClientIPC::init() {
     } catch (std::exception &e){
         std::cout << e.what() << std::endl;
     }
+}
+
+std::string ClientIPC::doresourcequery(IPCreq &ipcreq) {
+
+    string endpoint = client->get_manager();
+    string res = client->rpc->get_request(endpoint, "/resource/query");
+    vector<string> lists;
+    json_decode(res, lists);
+    string rst;
+    for(auto str : lists) {
+        rst = rst + "|" + str;
+    }
+    return res;
 }
 
 std::string ClientIPC::doresourcedelete(IPCreq &ipcreq) {
@@ -139,6 +157,11 @@ std::string ClientIPC::doresourcedelete(IPCreq &ipcreq) {
 }
 
 std::string ClientIPC::doresourceregister(IPCreq &ipcreq) {
+
+
+  //TODO 需要判断 center id 和 name
+
+
   StorageResource newRes; 
   newRes.storage_src_id = ipcreq.storage_src_id;        // 存储资源UUID
   newRes.storage_src_name = ipcreq.storage_src_name;    // 存储资源名称

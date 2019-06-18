@@ -22,7 +22,7 @@ using namespace hvs;
 int main(int argc, char* argv[]){
     
     char* demo1[2] = {const_cast<char *>("resourcedelete"), const_cast<char *>("-ri")
-                       }; //BIGBOSSSY
+                       }; 
 
     char* demo2[2] = {const_cast<char *>("resourcedelete"), const_cast<char *>("--help")};
 
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
 //    std::string cmdname = demo1[0]; // TODO 命令名字
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> res_cmdline_options)->void {
-        po::options_description command("资源注册模块");
+        po::options_description command("资源删除模块");
         command.add_options()
                 ("resourceid,ri", po::value<std::string>(), "存储资源UUID")
                 ;

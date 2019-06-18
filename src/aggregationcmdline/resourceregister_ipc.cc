@@ -21,12 +21,12 @@ using namespace hvs;
 
 int main(int argc, char* argv[]){
     
-    char* demo1[13] = {const_cast<char *>("resourceregister"), const_cast<char *>("-ri"), const_cast<char *>("resource_0001"),
-                       const_cast<char *>("-rn"), const_cast<char *>("lustre_0001"), 
-                       const_cast<char *>("-ci"), const_cast<char *>("centerid_0001"),
-                       const_cast<char *>("-cn"), const_cast<char *>("zhongkeyuan"),
-                       const_cast<char *>("-tc"), const_cast<char *>("1000"),
-                       const_cast<char *>("-mgs"), const_cast<char *>("http://192.168.5.119")
+    char* demo1[13] = {const_cast<char *>("resourceregister"), const_cast<char *>("--ri"), const_cast<char *>("resource_0001"),
+                       const_cast<char *>("--rn"), const_cast<char *>("lustre_0001"), 
+                       const_cast<char *>("--ci"), const_cast<char *>("centerid_0001"),
+                       const_cast<char *>("--cn"), const_cast<char *>("zhongkeyuan"),
+                       const_cast<char *>("--tc"), const_cast<char *>("1000"),
+                       const_cast<char *>("--mgs"), const_cast<char *>("http://192.168.5.119")
                        }; //BIGBOSSSY
 
     char* demo2[2] = {const_cast<char *>("resourceregister"), const_cast<char *>("--help")};
@@ -49,40 +49,40 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> res_cmdline_options)->void {
         po::options_description command("资源注册模块");
         command.add_options()
-                ("resourceid,ri", po::value<std::string>(), "存储资源UUID")
-                ("resourcename,rn", po::value<std::string>(), "存储资源名称")
-                ("centerid,ci", po::value<std::string>(), "超算中心UUID")
-                ("centername,cn", po::value<std::string>(), "超算中心名称")
-                ("totalcapacity,tc", po::value<int64_t>(), "存储资源空间容量大小")
-                ("mgsaddress,mgs", po::value<std::string>(), "资源的mgs地址")
+                ("ri", po::value<std::string>(), "存储资源UUID")
+                ("rn", po::value<std::string>(), "存储资源名称")
+                ("ci", po::value<std::string>(), "超算中心UUID")
+                ("cn", po::value<std::string>(), "超算中心名称")
+                ("tc", po::value<int64_t>(), "存储资源空间容量大小")
+                ("mgs", po::value<std::string>(), "资源的mgs地址")
                 ;
         res_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> res_variables_map)->void {
-        if (res_variables_map->count("resourceid"))
+        if (res_variables_map->count("ri"))
         {
-            storage_src_id = (*res_variables_map)["resourceid"].as<std::string>();
+            storage_src_id = (*res_variables_map)["ri"].as<std::string>();
         }
-        if (res_variables_map->count("resourcename"))
+        if (res_variables_map->count("rn"))
         {
-            storage_src_name = (*res_variables_map)["resourcename"].as<std::string>();
+            storage_src_name = (*res_variables_map)["rn"].as<std::string>();
         }
-        if (res_variables_map->count("centerid"))
+        if (res_variables_map->count("ci"))
         {
-            host_center_id = (*res_variables_map)["centerid"].as<std::string>();
+            host_center_id = (*res_variables_map)["ci"].as<std::string>();
         }
-        if (res_variables_map->count("centername"))
+        if (res_variables_map->count("cn"))
         {
-            host_center_name = (*res_variables_map)["centername"].as<std::string>();
+            host_center_name = (*res_variables_map)["cn"].as<std::string>();
         }
-        if (res_variables_map->count("totalcapacity"))
+        if (res_variables_map->count("tc"))
         {
-            total_capacity = (*res_variables_map)["totalcapacity"].as<int64_t>();
+            total_capacity = (*res_variables_map)["tc"].as<int64_t>();
         }
-        if (res_variables_map->count("msgaddress"))
+        if (res_variables_map->count("mgs"))
         {
-            mgs_address = (*res_variables_map)["msgaddress"].as<std::string>();
+            mgs_address = (*res_variables_map)["mgs"].as<std::string>();
         }
         
     };

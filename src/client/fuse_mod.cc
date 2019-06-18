@@ -40,9 +40,9 @@ void ClientFuse::start() {
     fuse_argc += 2;
   }
   // fuse worker threads
-    fuse_argv[fuse_argc] = options[4];
-    fuse_argv[fuse_argc+1] = workers_argv;
-    fuse_argc += 2;
+    // fuse_argv[fuse_argc] = options[4];
+    // fuse_argv[fuse_argc+1] = workers_argv;
+    // fuse_argc += 2;
   fuse_argv[fuse_argc] = mountpoint;
   fuse_argc ++;
   fs_priv.client = client;

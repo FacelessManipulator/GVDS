@@ -54,7 +54,9 @@ class HVSAuthTest : public ::testing::Test {
 TEST_F(HVSAuthTest, auth_search) {
     Http::Client client;
     char url[256];
-    snprintf(url, 256, "http://localhost:%d/auth/search", manager->rest_port());
+    //snprintf(url, 256, "http://localhost:%d/auth/search", manager->rest_port());
+    snprintf(url, 256, "http://localhost:9090/auth/search");
+
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     client.init(opts);
 
@@ -84,7 +86,7 @@ TEST_F(HVSAuthTest, auth_search) {
                     cout << *iter << endl;
                     cout << myauth.read[*iter] << endl;
                     cout << myauth.write[*iter] << endl;
-                    cout << myauth.exe[*iter] << endl;
+                    cout << myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
                 }
                 //====================
             }

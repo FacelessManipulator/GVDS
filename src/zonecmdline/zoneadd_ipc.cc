@@ -4,19 +4,20 @@
 //
 
 #include <iostream>
-#include "manager/space/Space.h"
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
+// TODO: 添加的新头文件
+#include "client/ipc_struct.h"
+#include "ipc/IPCClient.h"
 
-using namespace Pistache;
 using namespace hvs;
-bool GetZoneInfo(std::string ip, int port, std::string clientID);
+
 /*
  * zoneadd 命令行客户端
  */
-std::unordered_map<std::string, std::string> zonemap;
+
 
 
 int main(int argc, char* argv[]){
@@ -36,7 +37,7 @@ int main(int argc, char* argv[]){
     //std::string zoneuuid;
     std::string ownID;// = "202"; 
     std::vector<std::string> memID;// memberID
-    SpaceMetaData spaceurl;
+    Space spaceurl;
 
 
 
@@ -97,34 +98,50 @@ int main(int argc, char* argv[]){
     };
     commandline.start(); //开始解析命令行参数
 
+    //TODO :判断是否有参数，如果没有，则报错
+    if (commandline.argc <= 1 || ip.empty() ) {
+        std::cerr << "请输入命令参数！" << std::endl;
+        commandline.print_options();
+        exit(-1);
+    }
 
-    // TODO: 构造请求
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/add",ip.c_str(), port);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
+    try{
+        // TODO:  调用IPC 客户端 进行同行，并获取返回结果
+        IPCClient ipcClient("127.0.0.1", 6666);
+        ipcClient.set_callback_func([&](IPCMessage msg)->void {
+            // 客户端输出服务端发送来的消息
+//            char tmp[IPCMessage::max_body_length] = {0};
+//            std::memcpy(tmp, msg.body(), msg.body_length());
+            std::string ipcresult (msg.body(), msg.body_length());
+            if (ipcresult != "success"){
+                //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
+                std::cerr << ipcresult << std::endl; // 执行结果
+            } else {
+                std::cout << "执行结果：" << ipcresult << std::endl;
+            }
+        });
+        ipcClient.run(); // 停止的时候调用stop 函数
+        std::cout << "正在执行命令..." << std::endl;
 
-    ZoneRegisterReq req;
-    req.zoneName = zonename;
-    req.ownerID = ownID;
-    req.memberID = memID;
-    req.spacePathInfo = spaceurl.serialize();
+        // TODO: 构造请求结构体，并发送；
+        IPCreq ipcreq;
+        ipcreq.cmdname = "zoneadd";
+        ipcreq.ip = ip ; // ip
+        ipcreq.port = port;  // 端口号
+        ipcreq.zonename = zonename; // 空间名称
+        ipcreq.ownID = ownID; // 用户ID
+        ipcreq.memID = memID;
+        ipcreq.spaceurl = spaceurl.serialize();
 
 
-    std::string value = req.serialize();
+        // TODO: 发送
+        auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
+        ipcClient.write(*msg); // 传递一个消息；
+        sleep(1); // TODO: 等待客户端返回结果
+        ipcClient.stop();
 
-    // TODO: 发送请求，并输出结果
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Http::Response res) {
-                std::cout << res.body() << std::endl; //结果
-                prom.set_value(true);
-            },Async::IgnoreException);
-    fu.get();
-    client.shutdown();
+    } catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
+    }
     return 0;
 }
-

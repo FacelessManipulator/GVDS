@@ -25,6 +25,7 @@ class ClientRpc : public ClientModule {
   std::shared_ptr<RpcClient> rpc_channel(std::shared_ptr<IOProxyNode> node);
   std::shared_ptr<ClientSession> udt_channel(std::shared_ptr<IOProxyNode> node);
   std::shared_ptr<Pistache::Http::Client> rest_channel(std::string endpoint);
+  std::unordered_map<std::string, Pistache::Http::CookieJar> rest_cookies;
 
  public:
   ClientRpc(const char* name, Client* cli) : ClientModule(name, cli) {
@@ -48,6 +49,7 @@ class ClientRpc : public ClientModule {
   std::string post_request(const std::string& endpoint, const std::string& url,
                            const std::string& data = "");
   std::string get_request(const std::string& endpoint, const std::string& url);
+  std::string delete_request(const std::string& endpoint, const std::string& url);
 
   friend class Client;
 };

@@ -1,7 +1,6 @@
 
 #include <iostream>
-#include "manager/space/Space.h"
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
@@ -21,8 +20,8 @@ int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
     // 1、用户登录
     char* demo1[17] = {const_cast<char *>("usermodify"), 
-                       const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("44769"), 
+                       const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
+                       const_cast<char *>("-p"), const_cast<char *>("9090"), 
                        const_cast<char *>("--user"), const_cast<char *>("lbq-7"),
                        const_cast<char *>("--pass"), const_cast<char *>("123456"),
                        const_cast<char *>("-e"), const_cast<char *>("XXXXXX@163.com"),

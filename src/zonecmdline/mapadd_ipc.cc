@@ -4,19 +4,21 @@
 //
 
 #include <iostream>
-#include "manager/space/Space.h"
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
 
-using namespace Pistache;
+// TODO: 添加的新头文件
+#include "client/ipc_struct.h"
+#include "ipc/IPCClient.h"
+
 using namespace hvs;
-bool GetZoneInfo(std::string ip, int port, std::string clientID);
+
 /*
  * mapadd 命令行客户端
  */
-std::unordered_map<std::string, std::string> zonemap;
+
 
 
 int main(int argc, char* argv[]){
@@ -36,7 +38,7 @@ int main(int argc, char* argv[]){
     std::string ownID;// = "202"; // 用户ID
     std::string spacename ;//= "syremotezone"; // 空间名称
     int64_t spacesize;//空间大小
-    std::string centername;// 期望的超算位置
+    Space spaceurl;// 期望的超算位置
 
 
     // TODO: 获取命令行信息
@@ -85,93 +87,56 @@ int main(int argc, char* argv[]){
         }
         if (sp_variables_map->count("center"))
         {
-            centername = (*sp_variables_map)["center"].as<std::string>();
+            spaceurl.hostCenterName = (*sp_variables_map)["center"].as<std::string>();
         }
     };
     commandline.start(); //开始解析命令行参数
 
-    // TODO: 获取区域信息
-    int ret = GetZoneInfo(ip, port, ownID);
-    if(!ret){
-        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+    //TODO :判断是否有参数，如果没有，则报错
+    if (commandline.argc <= 1 || ip.empty() ) {
+        std::cerr << "请输入命令参数！" << std::endl;
+        commandline.print_options();
         exit(-1);
     }
 
-    auto mapping = zonemap.find(zonename);
-    if(mapping !=  zonemap.end()) {
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(mapping->second);
-        zoneuuid = zoneinfo.zoneID;
-    } else{
-        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
-        exit(-1);
-    }
-    if(spacename == "" || spacesize == 0){
-        std::cerr << "信息不全，无法创建映射" << std::endl;
-    }
-    else{
-        // TODO: 构造映射增加请求
-        Http::Client client;
-        char url[256];
-        snprintf(url, 256, "http://%s:%d/zone/mapadd",ip.c_str(), port);
-        auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-        client.init(opts);
+    try{
+        // TODO:  调用IPC 客户端 进行同行，并获取返回结果
+        IPCClient ipcClient("127.0.0.1", 6666);
+        ipcClient.set_callback_func([&](IPCMessage msg)->void {
+            // 客户端输出服务端发送来的消息
+//            char tmp[IPCMessage::max_body_length] = {0};
+//            std::memcpy(tmp, msg.body(), msg.body_length());
+            std::string ipcresult (msg.body(), msg.body_length());
+            if (ipcresult != "success"){
+                //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
+                std::cerr << ipcresult << std::endl; // 执行结果
+            } else {
+                std::cout << "执行结果：" << ipcresult << std::endl;
+            }
+        });
+        ipcClient.run(); // 停止的时候调用stop 函数
+        std::cout << "正在执行命令..." << std::endl;
 
+        // TODO: 构造请求结构体，并发送；
+        IPCreq ipcreq;
+        ipcreq.cmdname = "mapadd";
+        ipcreq.ip = ip ; // ip
+        ipcreq.port = port;  // 端口号
+        ipcreq.zonename = zonename; // 空间名称
+        ipcreq.ownID = ownID; // 用户ID
+        ipcreq.spacename = spacename; // 
+        ipcreq.spacesize = spacesize; // 
+        ipcreq.spaceurl = spaceurl.serialize();
+        ipcreq.zoneuuid = zoneuuid;
 
-        MapAddReq req;
-        req.zoneID = zoneuuid;
-        req.ownerID = ownID;
-        req.spaceName = spacename;
-        req.spaceSize = spacesize;
-        SpaceMetaData tmpm;
-        tmpm.hostCenterName = centername;
-        req.spacePathInfo = tmpm.serialize();
-        std::string value = req.serialize();
+        // TODO: 发送
+        auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
+        ipcClient.write(*msg); // 传递一个消息；
+        sleep(1); // TODO: 等待客户端返回结果
+        ipcClient.stop();
 
-        // TODO: 发送间重命名请求，并输出结果
-        auto response = client.post(url).body(value).send();
-        std::promise<bool> prom;
-        auto fu = prom.get_future();
-        response.then(
-                [&](Http::Response res) {
-                    std::cout << res.body() << std::endl; //结果
-                    prom.set_value(true);
-                },Async::IgnoreException);
-        fu.get();
-        client.shutdown();
-        return 0;
+    } catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
     }
-}
-
-// 调用获取区域信息；
-bool GetZoneInfo(std::string ip, int port, std::string clientID) {
-    Pistache::Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/info", ip.c_str(), port);
-    auto opts = Pistache::Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
-    std::string value = std::move(clientID);
-    //std::cerr<< "Client Info: post request " << url << std::endl;
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    std::string inforesult;
-    auto fu = prom.get_future();
-    response.then(
-    [&](Pistache::Http::Response res) {
-        inforesult = res.body();
-        prom.set_value(true);
-    },Pistache::Async::IgnoreException);
-    fu.get();
-    client.shutdown();
-    GetZoneInfoRes zoneinfores;
-    zoneinfores.deserialize(inforesult); //获取返回的结果
-    if(zoneinfores.zoneInfoResult.empty()){
-        return false;
-    }
-    for(const auto &it : zoneinfores.zoneInfoResult){
-        ZoneInfo zoneinfo;
-        zoneinfo.deserialize(it);
-        zonemap[zoneinfo.zoneName] = it;
-    }
-    return true;
+    return 0;
 }

@@ -27,12 +27,15 @@ class __JSON_DENC : public JsonSerializer {
   template <class T>
   std::string json_encode__nolock(T& value) {
     // clear buffer first
-    clear();
+    _buffer = new rapidjson::StringBuffer();
+    _writer = new rapidjson::Writer<rapidjson::StringBuffer>(*_buffer);
     encode(value);
     // _buffer.GetString return an const char* buf pointer with zero copy
     // we need to copy it to string explicitly in case of the destroy of buf
     // area
-    return std::string(_buffer->GetString());
+    std::string res = _buffer->GetString();
+    clear();
+    return res;
   }
 
   template <class T>

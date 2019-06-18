@@ -17,8 +17,7 @@ date:2019.03.21
 #include "datastore/couchbase_helper.h"
 #include "manager/usermodel/Account.h"
 #include "manager/manager.h"
-
-#include "manager/zone/Zone.h"
+#include "hvs_struct.h"
 
 class Account;
 class SCAccount;
@@ -41,7 +40,7 @@ public:
     std::string UserRegister(Account &person);
     
     void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool UserLogin(std::string account, std::string pass);
+    bool UserLogin(std::string account, std::string pass, std::string &userID);
 
     void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string getUserinfo(std::string uuid , bool &is_get_success);

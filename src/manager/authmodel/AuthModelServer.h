@@ -19,7 +19,6 @@ date:2019.03.21
 #include "datastore/couchbase_helper.h"
 #include "manager/authmodel/Auth.h"
 #include "manager/manager.h"
-#include "manager/zone/Zone.h"
 #include "manager/zone/ZoneServer.h"
 
 #include <iostream>
@@ -52,6 +51,8 @@ public:
     void self_AuthmemberdelRest(const Rest::Request& request, Http::ResponseWriter response);
     int self_Authmemberdel(SelfAuthSpaceInfo &auth_space);
 
+    void self_AuthgroupmodifyRest(const Rest::Request& request, Http::ResponseWriter response);
+    int self_Authgroupmodify(AuthModifygroupinfo &groupinfo);
 
     //1、权限增加模块
     //区域初始权限记录接口
@@ -78,12 +79,12 @@ public:
 
     //3、权限修改模块
     void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response);
-    int AuthModify();
+    int AuthModify(std::string hvsID, std::string zonename, std::string modify_groupauth);
 
     //4、权限查询模块
     void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string AuthSearchModel(std::string &hvsID);
-    int subAuthSearchModel(ZoneInfo &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x);
+    int subAuthSearchModel(Zone &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x);
     /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);

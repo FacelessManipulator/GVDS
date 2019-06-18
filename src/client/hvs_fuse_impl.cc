@@ -22,7 +22,7 @@
 #include "client/graph_mod.h"
 #include "client/msg_mod.h"
 #include "client/zone_mod.h"
-#include "client/zone_struct.h"
+#include "hvs_struct.h"
 #include "context.h"
 #include "io_proxy/rpc_types.h"
 
@@ -165,7 +165,7 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   if (strcmp(path, "/") == 0) {
     auto zones = HVS_FUSE_DATA->client->graph->list_zone();
     for (const auto &zone : zones) {
-      if (filler(buf, zone.name.c_str(), nullptr, 0,
+      if (filler(buf, zone.c_str(), nullptr, 0,
                  static_cast<fuse_fill_dir_flags>(0)) != 0) {
         return -ENOMEM;
       }
@@ -176,7 +176,7 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   if(nvsize == 2 && !namev[1].empty()){
       auto spaces = HVS_FUSE_DATA->client->graph->list_space(namev[1]);
       for (const auto &space : spaces) {
-        if (filler(buf, space.name.c_str(), nullptr, 0,
+        if (filler(buf, space.c_str(), nullptr, 0,
                    static_cast<fuse_fill_dir_flags>(0)) != 0) {
           return -ENOMEM;
         }

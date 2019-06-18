@@ -126,3 +126,7 @@ void CmdLineProxy::test() {
         }
     };
 }
+
+void CmdLineProxy::print_options() {
+    std::cout << *cmdline_options << std::endl;
+}

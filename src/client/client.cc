@@ -4,6 +4,10 @@
 #include "client/graph_mod.h"
 #include "client/msg_mod.h"
 #include "client/zone_mod.h"
+#include "client/ipc_mod.h"
+#include "client/OPTNode/opt_node.h"
+#include "client/clientuser/ClientUser.h"
+#include "client/OPTNode/opt_node.h"
 
 using namespace hvs;
 using namespace std;
@@ -60,10 +64,16 @@ void Client::registe_module(std::shared_ptr<ClientModule> mod) {
 }
 
 string Client::get_manager() {
-  if(manager_endpoints->size() > 0) {
-    return manager_endpoints->at(0);
+  auto centers = optNode->getNode(1);
+
+  if(centers.size() > 0) {
+    auto center = centers[0];
+    char url[256];
+    snprintf(url, 256, "http://%s:%s", center.ip_addr.c_str(), center.port.c_str());
+    return string(url);
   } else {
     dout(-1) << "ERROR: Connot get manager endpoint from config file." << dendl;
+    return "";
   }
 }
 
@@ -83,10 +93,16 @@ hvs::Client* init_client() {
   client->rpc = std::make_shared<ClientRpc>("rpc", client);
   client->zone = std::make_shared<ClientZone>("zone", client); // 空间客户端模块
   client->graph = std::make_shared<ClientGraph>("graph", client);
+   client->optNode = std::make_shared<SelectNode>("optNode", client);
+  client->user = std::make_shared<ClientUser>("user", client);
+
   client->registe_module(client->fuse);
   client->registe_module(client->rpc);
   client->registe_module(client->zone); // 注册空间客户端模块
+  client->registe_module(std::make_shared<ClientIPC>("ipc", client));
   client->registe_module(client->graph);
+  client->registe_module(client->user);
+  client->registe_module(client->optNode);
 
   client->start();
   return client;

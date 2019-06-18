@@ -154,7 +154,8 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
     AccountPass acc_pass;
     acc_pass.deserialize(info);
 
-    bool is_success = UserLogin(acc_pass.accountName, acc_pass.Password);
+    string userID;
+    bool is_success = UserLogin(acc_pass.accountName, acc_pass.Password, userID);
 
     if (is_success){
         //md5
@@ -170,11 +171,11 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
         }
         else{
             response.cookies().add(Http::Cookie("token", mtoken));
-            response.send(Http::Code::Ok, "login success!"); //point
+            response.send(Http::Code::Ok, userID); //point
         }
     }
     else{
-        response.send(Http::Code::Ok, "login fail!");
+        response.send(Http::Code::Unauthorized, "login fail!");
     }
 
     //auto pmtoken = response.headers().get("Token");
@@ -185,7 +186,7 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
     cout<<"====== end UserModelServer function: UserLoginRest ======"<<endl;    
 }
 
-bool UserModelServer::UserLogin(std::string account, std::string pass){
+bool UserModelServer::UserLogin(std::string account, std::string pass, std::string &userID){
     cout << "enter UserLogin"<< endl;
     //AccountPair中实现新类，只存账户名，和id，这两个信息
     //查询账户名对应的id，作为数据库查询的key
@@ -228,6 +229,7 @@ bool UserModelServer::UserLogin(std::string account, std::string pass){
     //pass == *pPass 密码一致
     if (!pass.compare(tmp.Password)) {
         string result = "login success";
+        userID = key; //返回给客户端uuid
         return true;
     } 
 

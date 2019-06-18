@@ -49,8 +49,10 @@ namespace hvs{
         bool GetZoneInfo(std::string ip, int port, std::string clientID);
 
 
+        //资源聚合相关函数
         std::string doresourceregister(IPCreq &ipcreq);  //资源注册
-        std::string doresourcedelete(IPCreq &ipcreq);  //资源注册
+        std::string doresourcedelete(IPCreq &ipcreq);  //资源删除
+        std::string doresourcequery(IPCreq &ipcreq);  //资源删除
 
         //user
         std::string douserlogin(IPCreq &ipcreq);

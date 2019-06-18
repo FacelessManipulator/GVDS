@@ -6,6 +6,7 @@
 #include "ipc_mod.h"
 #include "client/msg_mod.h"
 #include "client/clientuser/ClientUser.h"
+#include "client/OPTNode/opt_node.h"
 #include "manager/manager.h"
 #include "aggregation_struct.h"
 
@@ -614,10 +615,10 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     string password = ipcreq.Password;
 
     //客户端处理流程
-    cout << "start endpoint: " << endl;
+
     string endpoint = client->get_manager();
-    cout << endpoint << endl;
-    cout << "end endpoint: " << endl;
+
+   
     //string res = client->rpc->post_request(endpoint, "/resource/register", newRes.serialize());
 
     //账户登录
@@ -666,10 +667,22 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
                 client->user->setToken(mtoken);
                 client->user->setAccountName(myaccount.accountName);
                 client->user->setAccountID(body);
+                
                 cout << "getToken(): " << client->user->getToken() << endl;
                 cout << "getAccountName(): " << client->user->getAccountName() << endl;
                 cout << "getAccountID(): " << client->user->getAccountID() << endl;
-                
+                cout << "centerName= Beijing   id= " << client->optNode->getmapIdName("Beijing") << endl;
+
+                std::vector<std::string> memberName; 
+                memberName.push_back("lbq-7");
+                memberName.push_back("lbq-8");
+                std::vector<std::string> memberID;
+                bool tm = client->user->getMemberID(memberName, memberID);
+                if(tm){
+                    for(int j=0; j<memberID.size(); j++){
+                        cout << "memID: " << memberID[j] << endl;
+                    }
+                }
                 //client->zone->GetZoneInfo("202");
                 return_value = "login success";
             }//if

@@ -52,8 +52,56 @@ void UserModelServer::router(Router& router){
     Routes::Get(router, "/users/exit/:id", Routes::bind(&UserModelServer::exitUserAccountRest, this));
     Routes::Get(router, "/users/cancel/:id", Routes::bind(&UserModelServer::cancellationUserAccountRest, this));
 
+    Routes::Post(router, "/users/memberID", Routes::bind(&UserModelServer::getMemberIDRest, this));
 }
 
+void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::ResponseWriter response){
+     cout << "====== start UserModelServer function: getMemberIDRest ======"<< endl;
+    auto info = request.body();
+    cout << info << endl;
+
+    //反序列化
+    vector<string> memberName;
+    json_decode(info, memberName);
+
+
+    vector<string> memberID;
+    bool flag = getMemberID(memberName, memberID);
+    if(flag){
+        cout << "get getMemberIDRest success" << endl;
+        string json_str = json_encode(memberID); //序列号 返回
+        response.send(Http::Code::Ok, json_str);
+    }
+    else{
+        cout << "get getMemberIDRest fail" << endl;
+        response.send(Http::Code::Not_Found, "fail");
+    }
+    cout << "====== end UserModelServer function: getMemberIDRest ======"<< endl;
+}
+
+bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &memberID){
+    cout << " enter getMemberID "<< endl;
+    
+    //获取每一个membername 对应的 hvsid
+     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info"));
+    f0_dbPtr->init();
+
+    
+    for(int i=0; i<memberName.size(); i++){
+        //cout << "memberName[i]: " << memberName[i] << endl;
+        auto [pvalue, error_0] = f0_dbPtr->get(memberName[i]);
+        if(error_0 != 0){  
+            return false;
+        }
+
+        AccountPair acc_pair;
+        acc_pair.deserialize(*pvalue);
+
+        memberID.push_back(acc_pair.accountID);
+    }
+    return true;
+}
 
 //账户注册
 void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response){

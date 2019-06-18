@@ -290,6 +290,19 @@ void SelectNode::getCenterInformation(){
 }
 
 
+std::string SelectNode::getmapIdName(std::string centerName){
+    //输入一个centername，返回一个centerid
+    CenterInfo mycenter;
+    mycenter.deserialize(center_Information); 
+    vector<string>::iterator iter;
+    for( iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
+        if (mycenter.centerName[*iter] == centerName){
+            return *iter;
+        }
+    }
+    return "fail";
+}
+
 
 /*
 

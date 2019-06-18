@@ -45,6 +45,11 @@ public:
 
     //2、获取最优节点选择策略结果
     std::vector<struct_Node> getNode(int choice);
+
+    //3、获取centerName 对应的 centerid
+    std::string getmapIdName(std::string centerName);
+
+
     void mutex_lock(); //因为mtx是私有，只能定义成员函数来操作
     void mutex_unlock();
 

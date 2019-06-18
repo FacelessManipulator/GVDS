@@ -56,7 +56,11 @@ public:
  //--------------------------------------------
 
     //获取映射的本地账户接口
-    string getLocalAccountinfo(string ownerID, string hostCenterName);
+    string getLocalAccountinfo(std::string ownerID, std::string hostCenterName);
+
+    //获取一组name 对应的 id
+    void getMemberIDRest(const Rest::Request& request, Http::ResponseWriter response);
+    bool getMemberID(std::vector<std::string> &memberName, std::vector<std::string> &memberID);
 
 public:
     UserModelServer() : ManagerModule("user") {};

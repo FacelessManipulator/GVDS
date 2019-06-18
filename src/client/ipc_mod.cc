@@ -86,13 +86,18 @@ void ClientIPC::init() {
                 return dousersignup(ipcreq);
             }
             if(ipcreq.cmdname == "usermodify"){
-                cout << "can get here3" <<endl;
+                cout << "can get here4" <<endl;
                 return dousermodify(ipcreq);
             }
             if(ipcreq.cmdname == "userexit"){
-                cout << "can get here3" <<endl;
+                cout << "can get here5" <<endl;
                 return douserexit(ipcreq);
             }
+            // if(ipcreq.cmdname == "authsearch"){
+            //     cout << "can get here1" <<endl;
+            //     return doauthsearch(ipcreq);
+            // }
+
             
             //resource register
             if(ipcreq.cmdname == "resourceregister"){
@@ -157,7 +162,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     std::string spaceuuid = ipcreq.spaceuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
         return "未获得对应区域信息，请确认账户信息正确！";
@@ -219,7 +224,7 @@ std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {
     std::string spaceuuid = ipcreq.spaceuuid;
     
     // TODO: 获取区域信息，并根据空间名获取空间UUID
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
        return "未获得对应区域信息，请确认账户信息正确！";
@@ -283,7 +288,7 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq) {
 
 
     // TODO: 获取区域信息
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
         return "未获得对应区域信息，请确认账户信息正确！";
@@ -343,7 +348,7 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
     std::string zoneuuid = ipcreq.zoneuuid;
 
     //获取区域信息
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
         return "未获得对应区域信息，请确认账户信息正确！";
@@ -442,14 +447,12 @@ std::string ClientIPC::dozoneadd(IPCreq &ipcreq) {
 
 std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
-    std::string ip = ipcreq.ip;
-    int port = ipcreq.port;
     std::string zonename = ipcreq.zonename;
     std::string ownID = ipcreq.ownID;
     std::string zoneuuid = ipcreq.zoneuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
         return "未获得对应区域信息，请确认账户信息正确！";
@@ -462,32 +465,12 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
     }
-    // TODO: 构造间重命名请求
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/cancel",ip.c_str(), port);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
 
     ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
-
-
-    std::string value = req.serialize();
-
-    // TODO: 发送间重命名请求，并输出结果
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Http::Response res) {
-                std::cout << res.body() << std::endl; //结果
-                prom.set_value(true);
-            },Async::IgnoreException);
-    fu.get();
-    client.shutdown();
-    return "success";
+    string response = client->rpc->post_request(client->get_manager(), "/zone/cancel", req.serialize());//TODO：修改按需选择管理节点
+    return response;
 }
 
 std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
@@ -506,21 +489,19 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
     req.spaceName = spacename;
     req.spaceSize = spacesize;
     req.spacePathInfo = spaceurl;
-    string response = client->rpc->post_request(client->get_manager(), "/zone/register", req.serialize());
+    string response = client->rpc->post_request(client->get_manager(), "/zone/register", req.serialize());//TODO：修改按需选择管理节点
     return response;
 }
 
 std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
-    std::string ip = ipcreq.ip;
-    int port = ipcreq.port;
     std::string zonename = ipcreq.zonename;
     std::string ownID = ipcreq.ownID;
     std::string newzonename = ipcreq.newzonename;
     std::string zoneuuid = ipcreq.zoneuuid;
 
         // TODO: 获取区域信息，并根据空间名获取空间UUID
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
         return "未获得对应区域信息，请确认账户信息正确！";
@@ -534,45 +515,24 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
         return "区域名不存在，请确认区域名称正确！";
     }
     // TODO: 构造间重命名请求
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/rename",ip.c_str(), port);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
-
-
 
     ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     req.newZoneName = newzonename;
-    std::string value = req.serialize();
-
-    // TODO: 发送间重命名请求，并输出结果
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Http::Response res) {
-                std::cout << res.body() << std::endl; //结果
-                prom.set_value(true);
-            },Async::IgnoreException);
-    fu.get();
-    client.shutdown();
-    return "success";
+    string response = client->rpc->post_request(client->get_manager(), "/zone/rename", req.serialize());
+    return response;    
 }
 
 std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
-    std::string ip = ipcreq.ip;
-    int port = ipcreq.port;
     std::string zonename = ipcreq.zonename;
     std::string ownID = ipcreq.ownID;
     std::vector<std::string> memID = ipcreq.memID;
     std::string zoneuuid = ipcreq.zoneuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
         return "未获得对应区域信息，请确认账户信息正确！";
@@ -585,46 +545,24 @@ std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
     }
-    // TODO: 构造间重命名请求
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/share",ip.c_str(), port);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
-
 
     ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     req.memberID = memID;
-
-    std::string value = req.serialize();
-
-    // TODO: 发送间重命名请求，并输出结果
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Http::Response res) {
-                std::cout << res.body() << std::endl; //结果
-                prom.set_value(true);
-            },Async::IgnoreException);
-    fu.get();
-    client.shutdown();
-    return "success";
+    string response = client->rpc->post_request(client->get_manager(), "/zone/share", req.serialize());
+    return response;  
 }
 
 std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
-    std::string ip = ipcreq.ip;
-    int port = ipcreq.port;
     std::string zonename = ipcreq.zonename;
     std::string ownID = ipcreq.ownID;
     std::vector<std::string> memID = ipcreq.memID;
     std::string zoneuuid = ipcreq.zoneuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID
-    int ret = GetZoneInfo(ip, port, ownID);
+    int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
         return "未获得对应区域信息，请确认账户信息正确！";
@@ -637,57 +575,23 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
     }
-    // TODO: 构造间重命名请求
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/sharecancel",ip.c_str(), port);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
-
 
     ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     req.memberID = memID;
-
-    std::string value = req.serialize();
-
-    // TODO: 发送间重命名请求，并输出结果
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Http::Response res) {
-                std::cout << res.body() << std::endl; //结果
-                prom.set_value(true);
-            },Async::IgnoreException);
-    fu.get();
-    client.shutdown();
-    return "success";
+    string response = client->rpc->post_request(client->get_manager(), "/zone/sharecancel", req.serialize());
+    return response;  
 }
 
 // 调用获取区域信息；
-bool ClientIPC::GetZoneInfo(std::string ip, int port, std::string clientID) {
-    Pistache::Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/zone/info", ip.c_str(), port);
-    auto opts = Pistache::Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
-    std::string value = std::move(clientID);
-    //std::cerr<< "Client Info: post request " << url << std::endl;
-    auto response = client.post(url).body(value).send();
-    std::promise<bool> prom;
-    std::string inforesult;
-    auto fu = prom.get_future();
-    response.then(
-            [&](Pistache::Http::Response res) {
-                inforesult = res.body();
-                prom.set_value(true);
-            },Pistache::Async::IgnoreException);
-    fu.get();
-    client.shutdown();
-    std::vector<Zone> zoneinfores;
-    json_decode(inforesult, zoneinfores); //获取返回的结果
+bool ClientIPC::GetZoneInfo(std::string clientID) {
+    vector<Zone> zoneinfores;
+    string endpoint = client->get_manager();
+    string inforesult = client->rpc->post_request(endpoint, "/zone/info", clientID);
+    if (!inforesult.empty()) {
+        json_decode(inforesult, zoneinfores); //获取返回的结果
+    }
     if(zoneinfores.empty()){
         return false;
     }
@@ -706,11 +610,16 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     string password = ipcreq.Password;
 
     //客户端处理流程
-
+    cout << "start endpoint: " << endl;
+    string endpoint = client->get_manager();
+    cout << endpoint << endl;
+    cout << "end endpoint: " << endl;
+    //string res = client->rpc->post_request(endpoint, "/resource/register", newRes.serialize());
 
     //账户登录
     Http::Client Pclient;
     char url[256];
+    //snprintf(url, 256, "http://%s:%d/users/login", ip.c_str(), port);
     snprintf(url, 256, "http://%s:%d/users/login", ip.c_str(), port);
     auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     Pclient.init(opts);
@@ -830,8 +739,6 @@ std::string ClientIPC::dousersignup(IPCreq &ipcreq){
     string ip = ipcreq.ip;
     int port = ipcreq.port;
 
-
-
         
     string username = ipcreq.accountName; //账户名
     string hvsID = ipcreq.hvsID; //在服务端产生
@@ -851,7 +758,7 @@ std::string ClientIPC::dousersignup(IPCreq &ipcreq){
 
     // Account person("lbq-9", "123456", "129", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang");
     // std::string value = person.serialize();
-    Account person(username, pass, hvsID, email, phone, ad,  de);   //以后在服务端产生uuid，客户端这块传个空
+    Account person(username, pass, hvsID, email, phone, ad,  de);   //以后在服务端产生uuid，客户端这块传值不影响
     std::string value = person.serialize();
     std::cout << value << std::endl;
 
@@ -892,8 +799,10 @@ std::string ClientIPC::dousermodify(IPCreq &ipcreq){
     string ip = ipcreq.ip;
     int port = ipcreq.port;
 
+    
+
     string username = ipcreq.accountName; //账户名
-    string hvsID = ipcreq.hvsID; //在服务端产生     //TODO 账户修改这块，调用函数获取
+    string hvsID = client->user->getAccountID(); //在服务端产生     //TODO 账户修改这块，调用函数获取
     string pass = ipcreq.Password;
     string email = ipcreq.email;
     string phone = ipcreq.phone;
@@ -983,6 +892,12 @@ std::string ClientIPC::douserexit(IPCreq &ipcreq){
     Pclient.shutdown();
     return return_value;
 }
+
+
+//auth
+ std::string ClientIPC::doauthsearch(IPCreq &ipcreq){
+
+ }
 
 
 }//namespace

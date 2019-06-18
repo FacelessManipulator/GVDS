@@ -32,6 +32,7 @@ namespace hvs{
         friend class Client;
         std::shared_ptr<IPCServer> sp_ipcserver;
         std::unordered_map<std::string, Zone> zonemap; // 区域重命名使用
+    
 
     private:
         // TODO: 客户端具体处理函数
@@ -45,7 +46,7 @@ namespace hvs{
         std::string dozonerename(IPCreq &ipcreq);
         std::string dozoneshare(IPCreq &ipcreq);
         std::string dozonesharecancel(IPCreq &ipcreq);
-        bool GetZoneInfo(std::string ip, int port, std::string clientID);
+        bool GetZoneInfo(std::string clientID);
 
 
         std::string doresourceregister(IPCreq &ipcreq);  //资源注册
@@ -57,6 +58,8 @@ namespace hvs{
         std::string dousersignup(IPCreq &ipcreq);
         std::string dousermodify(IPCreq &ipcreq);
         std::string douserexit(IPCreq &ipcreq);
+
+        std::string doauthsearch(IPCreq &ipcreq);
     };
 }
 

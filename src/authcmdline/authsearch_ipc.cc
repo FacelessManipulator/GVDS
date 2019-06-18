@@ -4,7 +4,7 @@
 #include "cmdline/CmdLineProxy.h"
 
 // TODO: 添加的新头文件
-#include "client/clientuser/ClientUser_struct.h"
+// #include "client/clientuser/ClientUser_struct.h"
 #include "ipc/IPCClient.h"
 #include "client/ipc_struct.h"
 
@@ -20,29 +20,18 @@ using namespace hvs;
 
 
 int main(int argc, char* argv[]){
-    // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    // 1、用户登录
-    char* demo1[17] = {const_cast<char *>("usermodify_ipc"), 
+
+    //权限查询
+    char* demo1[7] = {const_cast<char *>("authsearch_ipc"), 
                        const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
                        const_cast<char *>("-p"), const_cast<char *>("9090"), 
-                       const_cast<char *>("--user"), const_cast<char *>("lbq-7"),
-                       const_cast<char *>("--pass"), const_cast<char *>("123456"),
-                       const_cast<char *>("-e"), const_cast<char *>("XXXXXX@163.com"),
-                       const_cast<char *>("--phone"), const_cast<char *>("15012349876"),
-                       const_cast<char *>("--ad"), const_cast<char *>("xueyuanlu_xinzhulou"),
-                       const_cast<char *>("--de"), const_cast<char *>("Beihang")};
-    char* demo2[2] = {const_cast<char *>("usermodify_ipc"), const_cast<char *>("--help")};
+                       const_cast<char *>("--user"), const_cast<char *>("lbq-7")};
+    char* demo2[2] = {const_cast<char *>("authsearch_ipc"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
     std::string ip ;//= "127.0.0.1";
     int port ;//= 55107;
     std::string username;//= "lbq-7";
-    std::string ownerid; // = "123456"; // 用户ID
-    std::string pass;
-    std::string email;
-    std::string phone;
-    std::string ad;
-    std::string de;
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
@@ -55,11 +44,6 @@ int main(int argc, char* argv[]){
                 ("ip", po::value<std::string>(), "管理节点IP")
                 ("port,p", po::value<int>(), "管理节点端口号")
                 ("user,u", po::value<std::string>(), "账户名")
-                ("pass", po::value<std::string>(), "密码")
-                ("email,e", po::value<std::string>(), "邮箱")
-                ("phone", po::value<std::string>(), "电话")
-                ("ad", po::value<std::string>(), "地址")
-                ("de", po::value<std::string>(), "部门")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -77,32 +61,12 @@ int main(int argc, char* argv[]){
         {
             username = (*sp_variables_map)["user"].as<std::string>();
         }
-        if (sp_variables_map->count("pass"))
-        {
-            pass = (*sp_variables_map)["pass"].as<std::string>();
-        }
-        if (sp_variables_map->count("email"))
-        {
-            email = (*sp_variables_map)["email"].as<std::string>();
-        }
-        if (sp_variables_map->count("phone"))
-        {
-            phone = (*sp_variables_map)["phone"].as<std::string>();
-        }
-        if (sp_variables_map->count("ad"))
-        {
-            ad = (*sp_variables_map)["ad"].as<std::string>();
-        }
-        if (sp_variables_map->count("de"))
-        {
-            de = (*sp_variables_map)["de"].as<std::string>();
-        }
         
     };
     commandline.start(); //开始解析命令行参数
 
     //TODO :判断是否有参数，如果没有，则报错
-    if (commandline.argc <= 1 || ip.empty() ) {
+    if (commandline.argc <= 1 ) {
         std::cerr << "请输入命令参数！" << std::endl;
         commandline.print_options();
         exit(-1);
@@ -129,17 +93,11 @@ int main(int argc, char* argv[]){
 
          // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "usermodify"; //这里每个不一样
+        ipcreq.cmdname = "authsearch"; //这里每个不一样
         ipcreq.ip = ip ; // ip
         ipcreq.port = port;  // 端口号
        
         ipcreq.accountName = username; //账户名
-        ipcreq.hvsID = " "; //在服务端产生   //TODO 获取登录用户的UUID
-        ipcreq.Password = pass;
-        ipcreq.email = email;
-        ipcreq.phone = phone;
-        ipcreq.address = ad;
-        ipcreq.department = de;
         
 
         // TODO: 发送
@@ -151,4 +109,7 @@ int main(int argc, char* argv[]){
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;
     }
+
+
+
 }

@@ -85,7 +85,7 @@ void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::Respo
 string UserModelServer::UserRegister(Account &person){
     cout << "enter UserRegister ======"<< endl;
 
-    std::string person_key = person.accountID;
+    //std::string person_key = person.accountID;
     //检查是否存在key，不存在，则进行下面代码开始注册，存在则返回注册失败
     
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -98,7 +98,17 @@ string UserModelServer::UserRegister(Account &person){
     }
 
     //不存在此key，开始注册
-    //写入account_map_info表
+    //1、生成uuid
+    boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+    const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+
+    std::string person_key = tmp_uuid;
+
+    //赋值
+    person.accountID = tmp_uuid;
+
+
+    //2、写入account_map_info表
     AccountPair acc_pair(person.accountName, person.accountID);
     string pari_key = person.accountName;
     string pair_value = acc_pair.serialize();

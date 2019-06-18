@@ -137,7 +137,7 @@ int main(int argc, char* argv[]){
         ipcreq.port = port;  // 端口号
 
         ipcreq.accountName = username; //账户名
-        ipcreq.hvsID = "333333"; //在服务端产生
+        ipcreq.hvsID = "1"; //在服务端产生，并覆盖此值;
         ipcreq.Password = pass;
         ipcreq.email = email;
         ipcreq.phone = phone;

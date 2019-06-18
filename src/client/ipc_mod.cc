@@ -501,7 +501,7 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
 std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
-    std::string ownID = ipcreq.ownID;
+    std::string ownID = client->user->getAccountID();
     std::string newzonename = ipcreq.newzonename;
     std::string zoneuuid = ipcreq.zoneuuid;
 

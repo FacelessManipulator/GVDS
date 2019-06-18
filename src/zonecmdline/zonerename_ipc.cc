@@ -46,7 +46,6 @@ int main(int argc, char* argv[]){
         po::options_description command("区域重命名模块");
         command.add_options()
                 ("zonename", po::value<std::string>(), "区域名称")
-                ("id", po::value<std::string>(), "主人ID")
                 ("newname,n", po::value<std::string>(), "区域新名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
@@ -56,10 +55,6 @@ int main(int argc, char* argv[]){
         if (sp_variables_map->count("zonename"))
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
-        }
-        if (sp_variables_map->count("id"))
-        {
-            ownID = (*sp_variables_map)["id"].as<std::string>();
         }
         if (sp_variables_map->count("newname"))
         {
@@ -97,7 +92,6 @@ int main(int argc, char* argv[]){
         IPCreq ipcreq;
         ipcreq.cmdname = "zonerename";
         ipcreq.zonename = zonename; // 空间名称
-        ipcreq.ownID = ownID; // 用户ID
         ipcreq.newzonename = newzonename; // 
         ipcreq.zoneuuid = zoneuuid;
 

@@ -663,13 +663,8 @@ namespace hvs{
     ZoneRequest req;
     req.deserialize(info);
 
-    int result_i = MapDeduct(req.zoneID, req.ownerID, req.spaceID);
-    std::string result;
-    if (result_i == 0)
-    result = "success";
-    else result = "fail";
-
-    response.send(Http::Code::Ok, result);
+    int result = MapDeduct(req.zoneID, req.ownerID, req.spaceID);
+    response.send(Http::Code::Ok, json_encode(result));
     std::cout << "====== end ZoneServer function: MapDeductRest ======"<< std::endl;
   }
 
@@ -722,11 +717,11 @@ namespace hvs{
           zonePtr->set(zoneID, tmp.serialize());
           return 0;
         }
-        else return -1;
+        else return errno = EAGAIN;
       }
-      else return -1;
+      else return errno = EINVAL;
     }
-    else return -1;
+    else return errno = EACCES;
   }
 
 }//namespace hvs

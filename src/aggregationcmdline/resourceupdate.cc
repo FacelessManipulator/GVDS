@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
     CmdLineProxy commandline(argc, argv);
     std::string cmdname = argv[0];
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> res_cmdline_options)->void {
-        po::options_description command("资源注册模块");
+        po::options_description command("资源更新模块");
         command.add_options()
         ("ri", po::value<std::string>(), "存储资源UUID")
         ("rn", po::value<std::string>(), "存储资源名称")

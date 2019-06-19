@@ -182,7 +182,7 @@ std::string ClientIPC::doresourceupdate(IPCreq &ipcreq) {
     {
         StorageResource qres; 
         qres.deserialize(res); 
-        if(qres.storage_src_id == newRes.storage_src_id) 
+        if(qres.storage_src_id == StorageResource::prefix() + newRes.storage_src_id) 
         {
             flag = true;
             break;
@@ -249,7 +249,7 @@ std::string ClientIPC::doresourceregister(IPCreq &ipcreq) {
     {
         StorageResource qres; 
         qres.deserialize(res); 
-        if(qres.storage_src_id == newRes.storage_src_id) 
+        if(qres.storage_src_id == StorageResource::prefix() + newRes.storage_src_id) 
         return "the resource already exit";
     }
     }

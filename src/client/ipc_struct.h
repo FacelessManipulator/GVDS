@@ -73,6 +73,7 @@ namespace hvs{
         std::string host_center_id;     // 存储资源所在超算中心UUID
         std::string host_center_name;   // 存储资源所在超算中心名称
         int64_t total_capacity;         // 存储资源空间容量大小
+        int64_t assign_capacity;        // 已经分配容量
         std::string mgs_address;        // 存储资源MGS地址
         int state;                      // 存储资源状态
 

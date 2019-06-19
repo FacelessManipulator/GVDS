@@ -55,6 +55,7 @@ namespace hvs{
         std::string doresourcedelete(IPCreq &ipcreq);    //资源删除
         std::string doresourcequery(IPCreq &ipcreq);     //资源查询
         std::string doresourceupdate(IPCreq &ipcreq);    //资源更新
+        std::string doregisterupdate(IPCreq &ipcreq,std::string url);
 
 
         //user

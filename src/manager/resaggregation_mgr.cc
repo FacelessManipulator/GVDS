@@ -61,11 +61,14 @@ bool ResAggregation_MGR::del(const Rest::Request& req, Http::ResponseWriter res)
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
       bucket, hvs::DatastoreType::couchbase, true);
   auto uuid = req.param(":id").as<std::string>();
+  if(uuid.find(StorageResource::prefix())<0)
+  uuid = StorageResource::prefix() + uuid;
+
   auto err = dbPtr->remove(uuid);
   if (!err)
-    res.send(Code::Ok, uuid);
+    res.send(Code::Ok, "ok");
   else
-    res.send(Code::Bad_Request, uuid);
+    res.send(Code::Bad_Request, "fail");
   return true;
 }
 

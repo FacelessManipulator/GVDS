@@ -5,11 +5,14 @@
 
 #include <context.h>
 #include "sync_io.h"
+#include "io_proxy/io_proxy.h"
+#include "io_proxy/fd_mgr.h"
+
 using namespace hvs;
 
-sync_io::sync_io() = default;
+sync_io::sync_io(IOProxy* ioProxy): iop(ioProxy) {}
 
-sync_io::~sync_io() = default;
+sync_io::~sync_io() {}
 
 int sync_io::sopen(const char *pathname, int flags, mode_t mode, OP* op) {
     int fd = open(pathname, flags, mode);
@@ -41,8 +44,8 @@ ssize_t sync_io::sread(int fd, void *buf, size_t count, off_t offset, OP* op) {
     return ret ;
 }
 
-ssize_t sync_io::sread(const char *path, void *buf, size_t count, off_t offset, OP* op) {
-    int fd = open(path, O_RDONLY|O_SYNC);
+ssize_t sync_io::sread(const std::string& path, void *buf, size_t count, off_t offset, OP* op) {
+    int fd = iop->fdm.open(path, O_RDWR|O_CREAT|op->open_flags, op->open_mode);
     op->error_code = 0;
     if(fd == -1){
         perror("sync_io sread open");
@@ -63,8 +66,9 @@ ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, str
     return ret;
 }
 
-ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t offset, struct OP* op) {
-    int fd = open(path, O_WRONLY|O_CREAT, 0655);
+ssize_t sync_io::swrite(const std::string& path, const void *buf, size_t count, off_t offset, struct OP* op) {
+    // TODO: there shouldn't have default flags and mode
+    int fd = iop->fdm.open(path, O_RDWR|O_CREAT|op->open_flags, op->open_mode);
     op->error_code = 0;
     if (fd == -1){
         dout(-1) << "sync_io swrite open "<< path << dendl;
@@ -72,7 +76,6 @@ ssize_t sync_io::swrite(const char *path, const void *buf, size_t count, off_t o
         return -errno;
     } else {
         ssize_t ret = swrite(fd, buf, count, offset, op);
-        close(fd);
         return ret; // 调用上面针对 fd 的写接口
     }
 }

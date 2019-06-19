@@ -56,6 +56,7 @@ class Client : public Thread, public Node, public JsonSerializer {
 
 public:
   std::unordered_map<std::string, std::shared_ptr<ClientModule>> modules;
+  std::vector<std::shared_ptr<ClientModule>> uninit_modules;
   std::shared_ptr<ClientGraph> graph;
   std::shared_ptr<ClientFuse> fuse;
   std::shared_ptr<ClientRpc> rpc;

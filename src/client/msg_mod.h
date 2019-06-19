@@ -37,6 +37,11 @@ class ClientRpc : public ClientModule {
       std::shared_ptr<IOProxyNode> node, std::string const& func_name,
       Args... args);
 
+  template <typename... Args>
+  std::future<RPCLIB_MSGPACK::object_handle> async_call(
+      std::shared_ptr<IOProxyNode> node, std::string const& func_name,
+      Args... args);
+
   int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
   std::unique_ptr<ioproxy_rpc_buffer> read_data(
       std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);

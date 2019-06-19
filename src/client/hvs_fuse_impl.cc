@@ -3,7 +3,9 @@
 // 北航系统结构所-存储组
 //
 
+#ifndef FUSE_USE_VERSION
 #define FUSE_USE_VERSION 31
+#endif
 #include <dirent.h>
 #include <error.h>
 #include <fuse3/fuse.h>
@@ -22,8 +24,8 @@
 #include "client/graph_mod.h"
 #include "client/msg_mod.h"
 #include "client/zone_mod.h"
-#include "hvs_struct.h"
 #include "context.h"
+#include "hvs_struct.h"
 #include "io_proxy/rpc_types.h"
 
 extern bool zonechecker_run;
@@ -34,30 +36,28 @@ extern bool zonechecker_run;
 using namespace std;
 
 namespace hvs {
-    // TODO: 工具函数，分割字符串
-    std::vector<std::string> splitWithStl(const std::string str,const std::string pattern)
-    {
-      std::vector<std::string> resVec;
+// TODO: 工具函数，分割字符串
+std::vector<std::string> splitWithStl(const std::string str,
+                                      const std::string pattern) {
+  std::vector<std::string> resVec;
 
-      if ("" == str)
-      {
-        return resVec;
-      }
-      //方便截取最后一段数据
-      std::string strs = str + pattern;
+  if ("" == str) {
+    return resVec;
+  }
+  //方便截取最后一段数据
+  std::string strs = str + pattern;
 
-      size_t pos = strs.find(pattern);
-      size_t size = strs.size();
+  size_t pos = strs.find(pattern);
+  size_t size = strs.size();
 
-      while (pos != std::string::npos)
-      {
-        std::string x = strs.substr(0,pos);
-        resVec.push_back(x);
-        strs = strs.substr(pos+1,size);
-        pos = strs.find(pattern);
-      }
-      return resVec;
-    }
+  while (pos != std::string::npos) {
+    std::string x = strs.substr(0, pos);
+    resVec.push_back(x);
+    strs = strs.substr(pos + 1, size);
+    pos = strs.find(pattern);
+  }
+  return resVec;
+}
 
 void *hvsfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
   return HVS_FUSE_DATA;
@@ -66,67 +66,21 @@ void *hvsfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
 // stat
 int hvsfs_getattr(const char *path, struct stat *stbuf,
                   struct fuse_file_info *fi) {
-  std::vector<std::string> namev = splitWithStl(path, "/");
-  int nvsize = static_cast<int>(namev.size());
-  // root handle
-  if (strcmp(path, "/") == 0) {
-    auto t = time(nullptr);
-    memset(stbuf, 0, sizeof(struct stat));
-    stbuf->st_dev = 0;      // ignored
-    stbuf->st_ino = 0;      // ignored
-    stbuf->st_blksize = 0;  // ignored
-    stbuf->st_mode = S_IFDIR | 0755;
-    stbuf->st_nlink = 1;
-    stbuf->st_uid = 0;
-    stbuf->st_gid = 0;
-    stbuf->st_size = 4096;
-    stbuf->st_blocks = 8;
-    stbuf->st_atim.tv_sec = t;
-    stbuf->st_mtim.tv_sec = t;
-    stbuf->st_ctim.tv_sec = t;
-    return 0;
+  auto zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+  // if path is not remote file
+  if (zs_res < 0) {
+    return zs_res;
+  } else if (zs_res < 2) {
+    return HVS_FUSE_DATA->client->zone->getattr(path, stbuf);
   }
 
-  if (nvsize==2 && !namev[1].empty()){
-      auto mapping = HVS_FUSE_DATA->client->zone->zonemap.find(namev[1]);
-      if(mapping != HVS_FUSE_DATA->client->zone->zonemap.end()){
-          auto t = time(nullptr);
-          memset(stbuf, 0, sizeof(struct stat));
-          stbuf->st_dev = 0;      // ignored
-          stbuf->st_ino = 0;      // ignored
-          stbuf->st_blksize = 0;  // ignored
-          stbuf->st_mode = S_IFDIR | 0755;
-          stbuf->st_nlink = 1;
-          stbuf->st_uid = 1000 /*1000*/; // TODO: 权限模块修改
-          stbuf->st_gid = 1000 /*1000*/; // TODO: 权限模块修改
-          stbuf->st_size = 4096;
-          stbuf->st_blocks = 8;
-          stbuf->st_atim.tv_sec = t;
-          stbuf->st_mtim.tv_sec = t;
-          stbuf->st_ctim.tv_sec = t;
-          return 0;
-      }
-  }
-
-  if(nvsize < 3){
-      return -ENOENT;
-  }
-
-  auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-  if(spaceuuid.empty()){
-      return -ENOENT;
-  }
-
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  // dout(-1) << "INFO: fuse_client.getattr [" << (rpath + lpath).c_str() << "]"
-  //          << dendl;
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat",
-                                              (rpath + lpath).c_str());
+  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat", rpath);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -159,53 +113,29 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
 int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                   off_t offset, struct fuse_file_info *fi,
                   enum fuse_readdir_flags flags) {
-  std::vector<std::string> namev = splitWithStl(path, "/");
-  int nvsize = static_cast<int>(namev.size());
-  // access space level
-  if (strcmp(path, "/") == 0) {
-    auto zones = HVS_FUSE_DATA->client->graph->list_zone();
-    for (const auto &zone : zones) {
-      if (filler(buf, zone.c_str(), nullptr, 0,
-                 static_cast<fuse_fill_dir_flags>(0)) != 0) {
-        return -ENOMEM;
-      }
-    }
-    return 0;
+  auto zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+  if (zs_res < 0) {
+    return zs_res;
+  } else if (zs_res < 2) {
+    return HVS_FUSE_DATA->client->zone->readdir(path, buf, filler);
   }
 
-  if(nvsize == 2 && !namev[1].empty()){
-      auto spaces = HVS_FUSE_DATA->client->graph->list_space(namev[1]);
-      for (const auto &space : spaces) {
-        if (filler(buf, space.c_str(), nullptr, 0,
-                   static_cast<fuse_fill_dir_flags>(0)) != 0) {
-          return -ENOMEM;
-        }
-      }
-      return 0;
-  }
-
-    if(nvsize < 3){
-        return -ENOENT;
-    }
-
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
 
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readdir",
-                                              (rpath + lpath).c_str());
+  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readdir", rpath);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
   }
 
   int retstat = 0;
-  for (const ioproxy_rpc_dirent &ent :
-       res->as<std::vector<ioproxy_rpc_dirent>>()) {
+  auto ents = res->as<std::vector<ioproxy_rpc_dirent>>();
+  for (const ioproxy_rpc_dirent &ent : ents) {
     if (filler(buf, ent.d_name.c_str(), nullptr, 0,
                static_cast<fuse_fill_dir_flags>(0)) != 0) {
       return -ENOMEM;
@@ -218,19 +148,40 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 int hvsfs_open(const char *path, struct fuse_file_info *fi) {
   int retstat = 0;
+  int zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+  if (zs_res < 0) {
+    return zs_res;
+  } else if (zs_res < 2) {
+    // zs_res < 0 or zs_res >0 both means zone mod handle this operation
+    return -ENOTSUP;
+  }
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  // not exists
+  if (!iop) {
+    return -ENOENT;
+  }
+  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_open",
+                                              rpath.c_str(), fi->flags);
+  if (!res.get()) {
+    // timeout exception raised
+    return -ENOENT;
+  }
+  retstat = res->as<int>();
+  if (retstat > 0) {
+    fi->fh = retstat;
+  }
   return retstat;
 }
 
 int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
                struct fuse_file_info *fi) {
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  ioproxy_rpc_buffer _buffer((rpath + lpath).c_str(), offset, size);
+  ioproxy_rpc_buffer _buffer(rpath.c_str(), offset, size);
 
   if (HVS_FUSE_DATA->fuse_client->use_udt) {
     // UDT version
@@ -245,8 +196,8 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
     memcpy(buf, res->buf.ptr, res->buf.size);
     return res->buf.size;
   } else {
-    auto res = HVS_FUSE_DATA->client->rpc->call(
-        iop, "ioproxy_read", (rpath + lpath).c_str(), size, offset);
+    auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_read", rpath,
+                                                size, offset);
     if (!res.get()) {
       // timeout exception raised
       return -ENOENT;
@@ -263,14 +214,13 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
 
 int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
                 struct fuse_file_info *fi) {
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  ioproxy_rpc_buffer _buffer((rpath + lpath).c_str(), buf, offset, size);
+  ioproxy_rpc_buffer _buffer(rpath.c_str(), buf, offset, size);
   _buffer.is_read = false;
 
   if (HVS_FUSE_DATA->fuse_client->use_udt) {
@@ -279,9 +229,8 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
     return res;
   } else {
     // tcp version
-    auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_write",
-                                                (rpath + lpath).c_str(),
-                                                _buffer, size, offset);
+    auto res = HVS_FUSE_DATA->client->rpc->call(
+        iop, "ioproxy_write", rpath.c_str(), _buffer, size, offset);
     if (!res.get()) {
       // timeout exception raised
       return -ENOENT;
@@ -293,30 +242,19 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
 }
 
 int hvsfs_access(const char *path, int mode) {
-    //TODO: 目前是通过路径判断当前是空间还是区域状态
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
-  // access space level
-  if (strcmp(path, "/") == 0) {
+  int zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+  if (zs_res < 0) {
+    return zs_res;
+  } else if (zs_res < 2) {
     return 0;
   }
-    if (nvsize==2 && !namev[1].empty()){
-        auto mapping = HVS_FUSE_DATA->client->zone->zonemap.find(namev[1]);
-        if(mapping != HVS_FUSE_DATA->client->zone->zonemap.end()){
-            return 0;
-        }
-    }
-    if(nvsize < 3){
-        return -ENOENT;
-    }
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_access",
-                                              (rpath + lpath).c_str(), mode);
+                                              rpath.c_str(), mode);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -331,20 +269,17 @@ int hvsfs_opendir(const char *path, struct fuse_file_info *fi) {
   return retstat;
 }
 
-void hvsfs_destroy(void *private_data) {
-    zonechecker_run = false;
-    }
+void hvsfs_destroy(void *private_data) { HVS_FUSE_DATA->client->stop(); }
 
 int hvsfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_truncate",
-                                              (rpath + lpath).c_str(), offset);
+                                              rpath.c_str(), offset);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -354,15 +289,14 @@ int hvsfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {
 }
 
 int hvsfs_readlink(const char *path, char *link, size_t size) {
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readlink",
-                                              (rpath + lpath).c_str(), size);
+  auto res =
+      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readlink", rpath, size);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -379,22 +313,19 @@ int hvsfs_mknod(const char *path, mode_t mode, dev_t dev) {
   return retstat;
 }
 int hvsfs_mkdir(const char *path, mode_t mode) {
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
   if (namev.size() <= 3) {
     return -EPERM;
   }
-
-  // access content level
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_mkdir",
-                                              (rpath + lpath).c_str(), mode);
+                                              rpath.c_str(), mode);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -404,15 +335,13 @@ int hvsfs_mkdir(const char *path, mode_t mode) {
 }
 
 int hvsfs_unlink(const char *path) {
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_unlink",
-                                              (rpath + lpath).c_str());
+  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_unlink", rpath);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -422,22 +351,20 @@ int hvsfs_unlink(const char *path) {
 }
 
 int hvsfs_rmdir(const char *path) {
-        //跳过本地
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
-    if (namev.size() <= 3) {
-        return -EPERM;
-    }
-    // 删除远程
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  //跳过本地
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  if (namev.size() <= 3) {
+    return -EPERM;
+  }
+  // 删除远程
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_rmdir",
-                                              (rpath + lpath).c_str());
+  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_rmdir", rpath);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -462,29 +389,26 @@ int hvsfs_symlink(const char *path, const char *newpath) {
 }
 
 int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
-    //跳过本地
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
-    if (namev.size() <= 3) {
-        return -EPERM;
-    }
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [nzonename, nspacename, nspaceuuid, nlpath] = HVS_FUSE_DATA->client->zone->locatePosition(newpath);
+  //跳过本地
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  if (namev.size() <= 3) {
+    return -EPERM;
+  }
 
   // access content level
-    auto [siop, srpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
-    auto [diop, drpath] = HVS_FUSE_DATA->client->graph->get_mapping(nspaceuuid);
+  auto [siop, srpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [diop, drpath] = HVS_FUSE_DATA->client->graph->get_mapping(newpath);
   // not exists
   if (!siop || !diop) {
     return -ENOENT;
   } else if (siop->uuid != diop->uuid) {
-      // over ioproxy move is not support yet
-      return -ENOTSUP;
+    // over ioproxy move is not support yet
+    return -ENOTSUP;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename",
-                                              (srpath + lpath).c_str(),
-                                              (drpath + nlpath).c_str());
+  auto res =
+      HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename", srpath, drpath);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -506,21 +430,20 @@ int hvsfs_link(const char *path, const char *newpath) {
 }
 
 int hvsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
-    if (namev.size() <= 3) {
-        return -EPERM;
-    }
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  if (namev.size() <= 3) {
+    return -EPERM;
+  }
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
 
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chmod",
-                                              (rpath + lpath).c_str(), mode);
+  auto res =
+      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chmod", rpath, mode);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -531,20 +454,19 @@ int hvsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
 
 int hvsfs_chown(const char *path, uid_t uid, gid_t gid,
                 struct fuse_file_info *fi) {
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
-    if (namev.size() <= 3) {
-        return -EPERM;
-    }
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  if (namev.size() <= 3) {
+    return -EPERM;
+  }
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(
-      iop, "ioproxy_chown", (rpath + lpath).c_str(), uid, gid);
+  auto res =
+      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chown", rpath, uid, gid);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -584,20 +506,19 @@ int hvsfs_releasedir(const char *, struct fuse_file_info *) {
 }
 
 int hvsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
-    if (namev.size() <= 3) {
-        return -EPERM;
-    }
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  if (namev.size() <= 3) {
+    return -EPERM;
+  }
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create",
-                                              (rpath + lpath).c_str(), mode);
+  auto res =
+      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
@@ -608,13 +529,12 @@ int hvsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
 
 int hvsfs_utimens(const char *path, const struct timespec tv[2],
                   struct fuse_file_info *fi) {
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    int nvsize = static_cast<int>(namev.size());
-    if (namev.size() <= 3) {
-        return -EPERM;
-    }
-    auto [zonename, spacename, spaceuuid, lpath] = HVS_FUSE_DATA->client->zone->locatePosition(path);
-    auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(spaceuuid);
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  if (namev.size() <= 3) {
+    return -EPERM;
+  }
+  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // access content level
   long int sec0n = tv[0].tv_nsec;
   long int sec0s = tv[0].tv_sec;
@@ -625,9 +545,8 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
     return -ENOENT;
   }
 
-  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_utimes",
-                                              (rpath + lpath).c_str(), sec0n,
-                                              sec0s, sec1n, sec1s);
+  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_utimes", rpath,
+                                              sec0n, sec0s, sec1n, sec1s);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;

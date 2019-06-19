@@ -141,9 +141,8 @@ void* SelectNode::entry() {
             sort(myvec.begin(), myvec.end(), CmpByValue()); //排序
             write_rtt(myvec);  //加锁，写入
         }
-        cout << "opt_node sleep 100" << endl;
-        // cout << "****"<<getCenterInfo() << endl;
         std::this_thread::sleep_for(std::chrono::seconds(100));
+        getCenterInformation();
     }
 }
 
@@ -283,10 +282,8 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
 
 
 void SelectNode::getCenterInformation(){
-  cout << "enter: getCenterInformation" << endl;
   string response = client->rpc->get_request("http://localhost:9090", "/mconf/searchCenter");
   center_Information = response;
-  cout << "end: getCenterInformation" << endl;
 }
 
 

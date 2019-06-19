@@ -9,140 +9,212 @@
 // 北航系统结构所-存储组
 //
 
-#include "zone_mod.h"
+#include "client/graph_mod.h"
 #include "client/msg_mod.h"
+#include "zone_mod.h"
 
 using namespace std;
 using namespace hvs;
 
-void hvs::ClientZone::start(){
-    m_stop = false;
-    create("client-zone-mod");
+void hvs::ClientZone::start() {
+  m_stop = false;
+  create("client-zone-mod");
 }
 
-void hvs::ClientZone::stop(){
-    m_stop = true;
-}
+void hvs::ClientZone::stop() { m_stop = true; }
 
-void* ClientZone::entry() {
-    while(!m_stop) {
-        client->zone->GetZoneInfo("202");
-        std::this_thread::sleep_for(std::chrono::seconds(10));
-    }
+void *ClientZone::entry() {
+  while (!m_stop) {
+    client->zone->GetZoneInfo("202");
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+  }
 }
 
 bool hvs::ClientZone::GetZoneInfo(std::string clientID) {
-    vector<Zone> zoneinfores;
-    string endpoint = client->get_manager();
-    string inforesult = client->rpc->post_request(endpoint, "/zone/info", clientID);
-    if (!inforesult.empty()) {
-        json_decode(inforesult, zoneinfores); //获取返回的结果
-    }
-    if(zoneinfores.empty()){
-        return false;
-    }
-    spacemap_mutex.lock_shared();
-    spaceuuid_to_metadatamap.clear(); // 进行清空map
-    spacemap_mutex.unlock_shared();
-    zonemap_mutex.lock_shared();
-    zonemap.clear();
-    for(auto &it : zoneinfores){
-        // TODO: 获取空间信息对每个空间，并更新到内存中；
-//        GetLocateInfo(clientID, it.zoneID, it.spaceBicInfo);
-        zonemap[it.zoneName] = it;
-        spacemap_mutex.lock_shared();
-        for(auto &sp : it.spaceBicInfo) {
-            spaceuuid_to_metadatamap[sp.spaceID] = sp;
-        }
-        spacemap_mutex.unlock_shared();
-    }
-    zonemap_mutex.unlock_shared();
-    return true;
-}
-
-bool ClientZone::GetLocateInfo(std::string clientID, std::string zoneID, std::vector<Space> &spaces) {
-    ZoneRequest req;
-    req.clientID = std::move(clientID);
-    req.zoneID = std::move(zoneID);
-    for(auto &it:spaces)
-        req.spaceID.push_back(it.spaceID);
-    std::string req_value = req.serialize();
-    std::vector<Space> zonelocateresult;
-    string endpoint = client->get_manager();
-    string inforesult = client->rpc->post_request(endpoint, "/zone/locate", req_value);
-    if (!inforesult.empty()) {
-        json_decode(inforesult, zonelocateresult); //获取返回的结果
-    }
-    spacemap_mutex.lock_shared(); // 锁定 spaceuuid_to_metadatamap 保证线程安全
-    for(const auto &it : zonelocateresult){
-        // TODO: 目前暂时存储在内存中的 spaceuuid_to_metadatamap 之中
-        spaceuuid_to_metadatamap[it.spaceID] = it;
-    }
-    spacemap_mutex.unlock_shared();
+  vector<shared_ptr<Zone>> zoneinfores;
+  string endpoint = client->get_manager();
+  string inforesult =
+      client->rpc->post_request(endpoint, "/zone/info", clientID);
+  if (!inforesult.empty()) {
+    json_decode(inforesult, zoneinfores);  //获取返回的结果
+  }
+  if (zoneinfores.empty()) {
     return false;
+  }
+  spacemap_mutex.lock_shared();
+  spaceuuid_to_metadatamap.clear();  // 进行清空map
+  spacemap_mutex.unlock_shared();
+  zonemap_mutex.lock_shared();
+  zonemap.clear();
+  for (auto it : zoneinfores) {
+    // TODO: 获取空间信息对每个空间，并更新到内存中；
+    //        GetLocateInfo(clientID, it.zoneID, it.spaceBicInfo);
+    zonemap[it->zoneName] = it;
+    spacemap_mutex.lock_shared();
+    for (auto sp : it->spaceBicInfo) {
+      spaceuuid_to_metadatamap[sp->spaceID] = sp;
+    }
+    spacemap_mutex.unlock_shared();
+  }
+  zonemap_mutex.unlock_shared();
+  return true;
 }
 
 // TODO: 工具函数，分割字符串
-std::vector<std::string> splitWithStl(const std::string str,const std::string pattern)
-{
-    std::vector<std::string> resVec;
+std::vector<std::string> splitWithStl(const std::string str,
+                                      const std::string pattern) {
+  std::vector<std::string> resVec;
 
-    if ("" == str)
-    {
-        return resVec;
-    }
-    //方便截取最后一段数据
-    std::string strs = str + pattern;
-
-    size_t pos = strs.find(pattern);
-    size_t size = strs.size();
-
-    while (pos != std::string::npos)
-    {
-        std::string x = strs.substr(0,pos);
-        resVec.push_back(x);
-        strs = strs.substr(pos+1,size);
-        pos = strs.find(pattern);
-    }
-
+  if ("" == str) {
     return resVec;
+  }
+  //方便截取最后一段数据
+  std::string strs = str + pattern;
+
+  size_t pos = strs.find(pattern);
+  size_t size = strs.size();
+
+  while (pos != std::string::npos) {
+    std::string x = strs.substr(0, pos);
+    resVec.push_back(x);
+    strs = strs.substr(pos + 1, size);
+    pos = strs.find(pattern);
+  }
+
+  return resVec;
 }
 
-std::tuple<std::string, std::string, std::string, std::string> hvs::ClientZone::locatePosition(const std::string path){
-    std::vector<std::string> namev = splitWithStl(path, "/");
-    auto pos = path.find('/', 1);
-    pos = path.find('/', pos+1);
-    std::string zonename = namev[1];
-    std::string spacename = namev[2];
-    std::string remotepath;
-    std::string spaceuuid;
-    if(pos == -1){
-        remotepath = "/";
-    } else {
-        remotepath = path.substr(pos);
+std::tuple<std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> hvs::ClientZone::locatePosition(
+    const std::string& path) {
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  auto pos = path.find('/', 1);
+  pos = path.find('/', pos + 1);
+  std::string zonename = namev[1];
+  std::string spacename = namev[2];
+  std::string remotepath;
+  std::string spaceuuid;
+  if (pos == -1) {
+    remotepath = "/";
+  } else {
+    remotepath = path.substr(pos);
+  }
+  auto mapping = zonemap.find(zonename);
+  if (mapping != zonemap.end()) {
+    auto zone = mapping->second;
+    shared_ptr<Space> space;
+    for (auto it : zone->spaceBicInfo) {
+      if (it->spaceName == namev[2]) {
+        space = it;
+      }
     }
-    auto mapping = zonemap.find(zonename);
-    if(mapping !=  zonemap.end()) {
-        Zone zoneinfo = mapping->second;
-        for(auto it : zoneinfo.spaceBicInfo){
-            if (it.spaceName == namev[2]){
-                spaceuuid = it.spaceID;
-
-            }
-        }
-    }
-    return {zonename, spacename, spaceuuid, remotepath};
+    return {zone, space, remotepath};
+  } else {
+    return {nullptr, nullptr, remotepath};
+  }
 }
 
 std::string ClientZone::spaceuuid_to_spacerpath(std::string uuid) {
-    std::string rpath;
-    rpath = spaceuuid_to_metadatamap[uuid].spacePath;
-    return rpath; // 返回存储集群路径
+  std::string rpath;
+  rpath = spaceuuid_to_metadatamap[uuid]->spacePath;
+  return rpath;  // 返回存储集群路径
 }
 
 std::string ClientZone::spaceuuid_to_hostcenterID(std::string uuid) {
-    std::string centerID;
-    centerID = spaceuuid_to_metadatamap[uuid].hostCenterID;
-    return centerID;
+  std::string centerID;
+  centerID = spaceuuid_to_metadatamap[uuid]->hostCenterID;
+  return centerID;
+}
 
+int ClientZone::isZoneSpacePath(const string &path) {
+  // TODO: 目前是通过路径判断当前是空间还是区域状态
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  // access space level
+  if (strcmp(path.c_str(), "/") == 0) {
+    return 0;
+  }
+  if (nvsize >= 2) {
+    auto mapping = zonemap.find(namev[1]);
+    if (mapping == zonemap.end()) {
+      return -ENOENT;
+    } else {
+      if (nvsize == 2)
+        return 1;  // is zone
+      else if (nvsize == 3)
+        return 2;  // is space
+      else
+        return 3;  // is remote node
+    }
+  }
+}
+
+int ClientZone::getattr(const char *path, struct stat *stbuf) {
+  // init stat first
+  auto t = time(nullptr);
+  memset(stbuf, 0, sizeof(struct stat));
+  stbuf->st_dev = 0;      // ignored
+  stbuf->st_ino = 0;      // ignored
+  stbuf->st_blksize = 0;  // ignored
+  stbuf->st_mode = S_IFDIR | 0755;
+  stbuf->st_nlink = 1;
+  stbuf->st_size = 4096;
+  stbuf->st_blocks = 8;
+  stbuf->st_atim.tv_sec = t;
+  stbuf->st_mtim.tv_sec = t;
+  stbuf->st_ctim.tv_sec = t;
+
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  // root handle
+  if (strcmp(path, "/") == 0) {
+    stbuf->st_uid = 0;
+    stbuf->st_gid = 0;
+    return 0;
+  }
+
+  if (nvsize == 2 && !namev[1].empty()) {
+    auto mapping = zonemap.find(namev[1]);
+    if (mapping != zonemap.end()) {
+      stbuf->st_mode = S_IFDIR | 0755;
+      stbuf->st_uid = 1000 /*1000*/;  // TODO: 权限模块修改
+      stbuf->st_gid = 1000 /*1000*/;  // TODO: 权限模块修改
+      return 0;
+    }
+  }
+
+  if (nvsize < 3) {
+    return -ENOENT;
+  }
+}
+
+int ClientZone::readdir(const char *path, void *buf, fuse_fill_dir_t filler) {
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  int nvsize = static_cast<int>(namev.size());
+  // access space level
+  if (strcmp(path, "/") == 0) {
+    auto zones = client->graph->list_zone();
+    for (const auto &zone : zones) {
+      if (filler(buf, zone.c_str(), nullptr, 0,
+                 static_cast<fuse_fill_dir_flags>(0)) != 0) {
+        return -ENOMEM;
+      }
+    }
+    return 0;
+  }
+
+  if (nvsize == 2 && !namev[1].empty()) {
+    auto spaces = client->graph->list_space(namev[1]);
+    for (const auto &space : spaces) {
+      if (filler(buf, space.c_str(), nullptr, 0,
+                 static_cast<fuse_fill_dir_flags>(0)) != 0) {
+        return -ENOMEM;
+      }
+    }
+    return 0;
+  }
+
+  if (nvsize < 3) {
+    return -ENOENT;
+  }
+  return 0;
 }

@@ -135,6 +135,7 @@ bool IOProxy::start() {
   Node::addr =  boost::asio::ip::make_address(ip.value_or("0.0.0.0"));
   auto scher_o = _config->get<int>("ioproxy.scher");
   data_path = _config->get<string>("ioproxy.data_path").value_or("/tmp/data");
+  center_id = _config->get<std::string>("center_id").value_or("unknown");
   if (!boost::filesystem::exists(data_path) ||
       !boost::filesystem::is_directory(data_path)) {
     dout(-1) << "ERROR: IOProxy data path not exists or is not directory."
@@ -220,6 +221,7 @@ void IOProxy::fresh_stat() {
   node.ip = Node::addr.to_string();
   node.rpc_port = _rpc->port;
   node.data_port = _udt->port;
+  node.cid = center_id;
   auto response = client.post(url).body(node.serialize()).send();
   dout(-1) << "DEBUG: Connecting to manager server [" << url << "]" << dendl;
 

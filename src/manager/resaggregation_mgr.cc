@@ -57,7 +57,7 @@ bool ResAggregation_MGR::list(const Rest::Request& req, Http::ResponseWriter res
   string reluuid = StorageResource::prefix() + uuid;
   char query[256];
   
-  if(uuid == "*")  //查询所有
+  if(uuid == "all")  //查询所有
   {
   snprintf(query, 256,
            "select * from `%s` where SUBSTR(META().id,0,%d) == '%s' order by "
@@ -69,11 +69,11 @@ bool ResAggregation_MGR::list(const Rest::Request& req, Http::ResponseWriter res
   {
   snprintf(query, 256, "select * from `%s` where META().id == '%s'", bucket.c_str(), reluuid.c_str());
   }
-
   auto [iop_infos, err] = cbd->n1ql(string(query));
   if (!err) {
     res.send(Code::Ok, json_encode(*iop_infos));
   } else {
+    cout << "here" << endl;
     res.send(Code::Bad_Request, "");
   }
 
@@ -110,9 +110,10 @@ bool ResAggregation_MGR::update(const Rest::Request& req, Http::ResponseWriter r
     res.send(Code::Bad_Request, "fail, resource dose not exist");
     return false;
   }
-  err = cbd->insert(storage_res->key(), storage_res->json_value());
+  //dbPtr->set(storage_res->key(), storage_res->json_value());
+  //err = cbd->insert(storage_res->key(), storage_res->json_value());
   usleep(100000); // may take 100ms to be effective
-  if(!err)
+  if(!(dbPtr->set(storage_res->key(), storage_res->json_value())))
   res.send(Code::Accepted, "ok");
   else 
   res.send(Code::Bad_Request, "fail");

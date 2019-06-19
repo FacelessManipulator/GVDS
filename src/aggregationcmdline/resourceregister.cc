@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         if (res_variables_map->count("tc"))
             total_capacity = (*res_variables_map)["tc"].as<int64_t>();
         if (res_variables_map->count("ac"))
-            total_capacity = (*res_variables_map)["ac"].as<int64_t>();
+            assign_capacity = (*res_variables_map)["ac"].as<int64_t>();
         if (res_variables_map->count("mgs"))
             mgs_address = (*res_variables_map)["mgs"].as<string>();
         if (res_variables_map->count("st"))
@@ -108,7 +108,6 @@ int main(int argc, char *argv[])
         ipcreq.assign_capacity = assign_capacity;
         ipcreq.mgs_address = mgs_address;
         ipcreq.state = state;
-
         //发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); //传递一个消息

@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
         if (res_variables_map->count("ci"))host_center_id = (*res_variables_map)["ci"].as<string>();
         if (res_variables_map->count("cn"))host_center_name = (*res_variables_map)["cn"].as<string>();
         if (res_variables_map->count("tc"))total_capacity = (*res_variables_map)["tc"].as<int64_t>();
-        if (res_variables_map->count("ac"))total_capacity = (*res_variables_map)["ac"].as<int64_t>();
+        if (res_variables_map->count("ac"))assign_capacity = (*res_variables_map)["ac"].as<int64_t>();
         if (res_variables_map->count("mgs"))mgs_address = (*res_variables_map)["mgs"].as<string>();
         if (res_variables_map->count("st"))state = (*res_variables_map)["st"].as<int>();
     };

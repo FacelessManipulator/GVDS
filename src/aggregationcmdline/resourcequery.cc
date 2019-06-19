@@ -37,9 +37,9 @@ int main(int argc, char *argv[])
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] = [&](shared_ptr<po::variables_map> res_variables_map) -> void {
-    if (res_variables_map->count("resourceid"))
+    if (res_variables_map->count("ri"))
     {
-        storage_src_id = (*res_variables_map)["resourceid"].as<string>();
+        storage_src_id = (*res_variables_map)["ri"].as<string>();
     } };
     commandline.start(); //开始解析命令行参数
 
@@ -70,7 +70,8 @@ int main(int argc, char *argv[])
                 for (auto res : lists)
                 {
                     StorageResource qres;
-                    qres.deserialize(res);
+                    std::string value = res.substr(8, res.length() - 9);
+                    qres.deserialize(value);
                     int srcidlen = qres.storage_src_id.length();
                     int prefixlen = StorageResource::prefix().length();
                     string realsrcid = qres.storage_src_id.substr(prefixlen,srcidlen - prefixlen);

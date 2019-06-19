@@ -35,7 +35,10 @@ bool ResAggregation_MGR::add(const Rest::Request& req, Http::ResponseWriter res)
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
   auto err = cbd->insert(storage_res->key(), storage_res->json_value());
   usleep(100000); // may take 100ms to be effective
-  res.send(Code::Accepted, storage_res->key());
+  if(!err)
+  res.send(Code::Accepted, "ok");
+  else 
+  res.send(Code::Bad_Request, "fail");
   return true;
 }
 
@@ -53,7 +56,7 @@ bool ResAggregation_MGR::list(const Rest::Request& req, Http::ResponseWriter res
   if (!err) {
     res.send(Code::Ok, json_encode(*iop_infos));
   } else {
-    res.send(Code::Service_Unavailable);
+    res.send(Code::Bad_Request, "");
   }
 }
 
@@ -61,10 +64,8 @@ bool ResAggregation_MGR::del(const Rest::Request& req, Http::ResponseWriter res)
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
       bucket, hvs::DatastoreType::couchbase, true);
   auto uuid = req.param(":id").as<std::string>();
-  if(uuid.find(StorageResource::prefix())<0)
-  uuid = StorageResource::prefix() + uuid;
-
-  auto err = dbPtr->remove(uuid);
+  string reluuid = StorageResource::prefix() + uuid;
+  auto err = dbPtr->remove(reluuid);
   if (!err)
     res.send(Code::Ok, "ok");
   else

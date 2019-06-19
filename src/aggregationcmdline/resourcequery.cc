@@ -68,6 +68,7 @@ int main(int argc, char* argv[]){
         if(storage_src_id == "*")
         for(auto res : lists) 
         {
+         
          std::string realres = res.substr(StorageResource::prefix().length(),res.length() - StorageResource::prefix().length());
          std::cout<< realres << std::endl;
         }

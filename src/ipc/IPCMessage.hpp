@@ -17,7 +17,7 @@ namespace hvs{
     class IPCMessage{
     public:
         enum { header_length = 4 };
-        enum { max_body_length = 1024 }; // 最大的消息长度为 512Byte, 可封装结构体；
+        enum { max_body_length = 1048576 }; // 最大的消息长度为 512Byte, 可封装结构体；
         IPCMessage():body_length_(0){
         }
 

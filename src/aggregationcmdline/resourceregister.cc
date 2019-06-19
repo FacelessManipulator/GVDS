@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
                        const_cast<char *>("--ci"), const_cast<char *>("centerid_0001"),
                        const_cast<char *>("--cn"), const_cast<char *>("zhongkeyuan"),
                        const_cast<char *>("--tc"), const_cast<char *>("1000"),
-                       const_cast<char *>("--mgs"), const_cast<char *>("http://192.168.5.119")}; //BIGBOSSSY
+                       const_cast<char *>("--mgs"), const_cast<char *>("192.168.5.119")}; //BIGBOSSSY
 
     char* demo2[2] = {const_cast<char *>("resourceregister"), const_cast<char *>("--help")};
 

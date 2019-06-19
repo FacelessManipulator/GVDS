@@ -231,10 +231,10 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
 
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
-        Zone zoneinfo = mapping->second;
-        for(const auto &it : zoneinfo.spaceBicInfo){
-            if (it.spaceName == spacename){
-                spaceuuid = it.spaceID;
+        auto zoneinfo = mapping->second;
+        for(auto it : zoneinfo.spaceBicInfo){
+            if (it->spaceName == spacename){
+                spaceuuid = it->spaceID;
                 break;
             }
         }
@@ -294,9 +294,9 @@ std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
         Zone zoneinfo = mapping->second;
-        for(const auto &it : zoneinfo.spaceBicInfo){
-            if (it.spaceName == spacename){
-                spaceuuid = it.spaceID;
+        for(const auto it : zoneinfo.spaceBicInfo){
+            if (it->spaceName == spacename){
+                spaceuuid = it->spaceID;
                 break;
             }
         }
@@ -421,9 +421,9 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
         zoneuuid = zoneinfo.zoneID;
         for(const auto &m : spacenames){
             bool found = false;
-            for(const auto &it : zoneinfo.spaceBicInfo){
-                if (it.spaceName == m){
-                    spaceuuids.push_back(it.spaceID);
+            for(const auto it : zoneinfo.spaceBicInfo){
+                if (it->spaceName == m){
+                    spaceuuids.push_back(it->spaceID);
                     found = true;
                     break;
                 }

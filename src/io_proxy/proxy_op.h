@@ -5,10 +5,21 @@
 #include "sync_io.h"
 
 namespace hvs {
-void prepare_op(std::shared_ptr<OP> op);
-void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback);
-void do_op(std::shared_ptr<OP> op, boost::function0<void> callback);
+    class IOProxy;
+    class ProxyOP {
+    public:
+        ProxyOP(IOProxy* ioproxy) :iop(ioproxy), func_sync_io(ioproxy) {}
+        void prepare_op(std::shared_ptr<OP> op);
+        void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback);
+        void do_op(std::shared_ptr<OP> op, boost::function0<void> callback);
 
-int ioproxy_do_metadata_op(IOProxyMetadataOP* op);
-int ioproxy_do_data_op(IOProxyDataOP* op);
+        int ioproxy_do_metadata_op(IOProxyMetadataOP* op);
+        int ioproxy_do_data_op(IOProxyDataOP* op);
+
+    public:
+        IOProxy* iop;
+
+    public:
+        sync_io func_sync_io;
+    };
 }

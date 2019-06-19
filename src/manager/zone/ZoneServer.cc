@@ -208,9 +208,10 @@ namespace hvs{
         std::vector<Space> result_s;
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
         tmp_server->GetSpaceInfo(result_s, tmp.spaceID);
-        tmp_zi.spaceBicInfo.swap(result_s);
+        for(auto& result: result_s)
+          tmp_zi.spaceBicInfo.push_back(make_shared<Space>(result));
         for(auto& sp: tmp_zi.spaceBicInfo) {
-          tmp_zi.spaceID.push_back(sp.spaceID);
+          tmp_zi.spaceID.push_back(sp->spaceID);
         }
         result_z.push_back(tmp_zi);
       }
@@ -230,9 +231,10 @@ namespace hvs{
         std::vector<Space> result_s2;
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
         tmp_server->GetSpaceInfo(result_s2, tmp2.spaceID);
-        tmp_zi2.spaceBicInfo.swap(result_s2);
+        for(auto& result: result_s2)
+          tmp_zi2.spaceBicInfo.push_back(make_shared<Space>(result));
         for(auto& sp: tmp_zi2.spaceBicInfo) {
-          tmp_zi2.spaceID.push_back(sp.spaceID);
+          tmp_zi2.spaceID.push_back(sp->spaceID);
         }
         result_z.push_back(tmp_zi2);
       }

@@ -16,4 +16,4 @@ if [[ ! -d /opt/hvs/var/data ]]; then
 fi
 
 cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/tmp/hvs
-cmake --build build -j
+cmake --build build -j 3

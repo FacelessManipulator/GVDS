@@ -14,10 +14,13 @@
 #include <dirent.h>
 #include "msg/op.h"
 namespace  hvs{
+    class IOProxy;
     class sync_io {
     public:
-        sync_io();
+        sync_io(IOProxy* ioProxy);
         ~sync_io();
+    public:
+        IOProxy* iop;
     public:
         void mknod(){}; // 创建一个文件节点
         void statfs(){};
@@ -43,9 +46,9 @@ namespace  hvs{
 
         int sopen(const char* pathname, int flags, mode_t mode, OP*); // 打开文件
         ssize_t  sread(int fd, void*buf, size_t count, off_t offset, OP*); // 读数据 fd, offset
-        ssize_t  sread(const char* path, void*buf, size_t count, off_t offset, OP*); // 读数据 path, offset
+        ssize_t  sread(const std::string& path, void*buf, size_t count, off_t offset, OP*); // 读数据 path, offset
         ssize_t swrite(int fd, const void*buf, size_t count, off_t offset, OP*); // 写数据
-        ssize_t swrite(const char* path, const void*buf, size_t count, off_t offset, OP*); // 写数据
+        ssize_t swrite(const std::string& path, const void*buf, size_t count, off_t offset, OP*); // 写数据
         int sclose(int fd, struct OP*); // 关闭文件
         int struncate(const char* path, off_t length); // 更改文件大小
 

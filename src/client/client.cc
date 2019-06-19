@@ -26,12 +26,12 @@ void Client::start() {
   } else if (!ip) {
     std::cerr << "restserver warning: invalid ip, turning to use 0.0.0.0"
               << std::endl;
-    ip = "127.0.0.1";
+    ip = "0.0.0.0";
   }
 
   // init modules
-  for (auto mod : modules) {
-    mod.second->start();
+  for (auto mod : uninit_modules) {
+    mod->start();
   }
   m_stop = false;
   create("Client");
@@ -61,6 +61,7 @@ void Client::serialize_impl() { put("name", Node::name); }
 
 void Client::registe_module(std::shared_ptr<ClientModule> mod) {
   modules[mod->module_name] = mod;
+  uninit_modules.push_back(mod);
 }
 
 string Client::get_manager() {
@@ -96,13 +97,13 @@ hvs::Client* init_client() {
    client->optNode = std::make_shared<SelectNode>("optNode", client);
   client->user = std::make_shared<ClientUser>("user", client);
 
-  client->registe_module(client->fuse);
   client->registe_module(client->rpc);
+  client->registe_module(client->optNode);
   client->registe_module(client->zone); // 注册空间客户端模块
   client->registe_module(std::make_shared<ClientIPC>("ipc", client));
   client->registe_module(client->graph);
   client->registe_module(client->user);
-  client->registe_module(client->optNode);
+  client->registe_module(client->fuse);
 
   client->start();
   return client;

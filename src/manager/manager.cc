@@ -18,6 +18,7 @@ bool Manager::start() {
   auto rest_thread = _config->get<int>("manager.thread_num");
   auto ip = _config->get<std::string>("ip");
   auto _uuid = _config->get<std::string>("manager.uuid");
+  auto cid = _config->get<std::string>("center_id");
   if (!_uuid.has_value()) {
     dout(-1) << "ERROR: Manager UUID not found! Please use linux command UUID "
                 "to generate IO proxy's UUID and insert it into config file."
@@ -27,13 +28,21 @@ bool Manager::start() {
   uuid = _uuid.value();
   if (!rest_port) {
     std::cerr << "restserver error: invalid port." << std::endl;
-  } else if (!rest_thread) {
+  }
+  if (!rest_thread) {
     std::cerr << "restserver error: invalid thread num." << std::endl;
-  } else if (!ip) {
+  }
+  if (!ip) {
     std::cerr << "restserver warning: invalid ip, turning to use 0.0.0.0"
               << std::endl;
     ip = "0.0.0.0";
   }
+  if (!cid) {
+    std::cerr << "ERROR: cannot found center_id in config file."
+              << std::endl;
+    return false;
+  }
+  center_id = cid.value();
 
   Port port(*rest_port);
   Address addr(*ip, port);

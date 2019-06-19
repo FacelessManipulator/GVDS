@@ -205,9 +205,9 @@ std::string ClientIPC::doresourcequery(IPCreq &ipcreq) {
 }
 
 std::string ClientIPC::doresourcedelete(IPCreq &ipcreq) {
-    string url = "/resource/delete" + ipcreq.storage_src_id;
+    string url = "/resource/delete/" + ipcreq.storage_src_id;
     string endpoint = client->get_manager();
-    string res = client->rpc->get_request(endpoint, url);
+    string res = client->rpc->delete_request(endpoint, url);
     return res;
 }
 

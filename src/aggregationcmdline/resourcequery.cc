@@ -21,7 +21,7 @@ using namespace hvs;
 
 int main(int argc, char* argv[]){
     
-    char* demo1[2] = {const_cast<char *>("resourcequery"), const_cast<char *>("-ri")}; //BIGBOSSSY
+    char* demo1[2] = {const_cast<char *>("resourcequery"), const_cast<char *>("--ri")}; //BIGBOSSSY
     char* demo2[2] = {const_cast<char *>("resourcequery"), const_cast<char *>("--help")};
 
     std::string storage_src_id = ""; // 存储资源UUID
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> res_cmdline_options)->void {
     po::options_description command("资源查询模块");
     command.add_options()
-    ("resourceid,ri", po::value<std::string>(), "存储资源UUID");
+    ("ri", po::value<std::string>(), "存储资源UUID");
     res_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值

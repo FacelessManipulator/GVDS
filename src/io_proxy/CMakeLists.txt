@@ -1,6 +1,6 @@
 GET_PROPERTY(HVSCOMMOM_DEPENDS_ON GLOBAL PROPERTY "HVSCOMMOM_DEPENDS_ON")
 
-ADD_LIBRARY(io_proxy STATIC proxy_op.cc io_proxy.cc io_worker.cc sync_io.cc ../msg/udt_server.cc ../msg/server_session.cc)
+ADD_LIBRARY(io_proxy STATIC proxy_op.cc io_proxy.cc io_worker.cc sync_io.cc ../msg/udt_server.cc ../msg/server_session.cc fd_mgr.cc fd_mgr.h)
 
 ADD_EXECUTABLE(hvs_ioproxy hvs_ioproxy_main.cc)
 

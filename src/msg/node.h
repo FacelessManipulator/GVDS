@@ -16,6 +16,7 @@ class Node {
   std::string uuid;
   HVSNodeType type;
   boost::asio::ip::address addr;
+  std::string center_id;
   Node(const std::string& _name, HVSNodeType _type, const std::string& ip)
       : name(_name), type(_type) {
     addr = boost::asio::ip::make_address(ip);

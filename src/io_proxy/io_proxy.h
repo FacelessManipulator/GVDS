@@ -10,15 +10,16 @@
 #include <boost/thread/thread.hpp>
 #include "common/Thread.h"
 #include "io_proxy/io_worker.h"
+#include "io_proxy/proxy_op.h"
+#include "io_proxy/fd_mgr.h"
 #include "msg/op.h"
 #include "msg/node.h"
 #include "msg/udt_server.h"
 
 namespace hvs {
-class IOProxyRpcImpl;
 class IOProxy : public Thread, public Node {
  public:
-  IOProxy() : m_stop(false), Node(IO_PROXY_NODE), _rpc(nullptr) {
+  IOProxy() : m_stop(false), Node(IO_PROXY_NODE), _rpc(nullptr), proxy_op(this), fdm(this) {
     // TODO: should read from config file
     m_max_op = 1000;
     m_max_worker = 1024;
@@ -69,7 +70,10 @@ class IOProxy : public Thread, public Node {
   public:
   RpcServer* _rpc;
   UDTServer* _udt;
+  ProxyOP proxy_op;
+  FdManager fdm;
   virtual void rpc_bind(RpcServer* server) override;
+  friend class IOProxyWorker;
 };
 extern hvs::IOProxy* init_ioproxy();
 extern void destroy_ioproxy(hvs::IOProxy* iop);

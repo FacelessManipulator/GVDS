@@ -23,6 +23,9 @@ enum OPType {
 struct OP {
   OPType type;
   uint64_t id; // not global unique
+  int fid;
+  int open_flags;
+  int open_mode;
   int error_code;
   bool should_prepare;
 
@@ -41,6 +44,8 @@ struct IOProxyMetadataOP : public OP {
   enum Operation {
     stat,
     open,
+    close,
+    flush,
     readdir,
     rename,
     access,

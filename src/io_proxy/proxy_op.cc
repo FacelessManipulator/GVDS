@@ -1,12 +1,14 @@
 #include "io_proxy/proxy_op.h"
 #include "context.h"
 #include "msg/stat_demo.h"
+#include "io_proxy/io_proxy.h"
+#include "io_proxy/fd_mgr.h"
 
 using namespace hvs;
 
 namespace hvs {
 
-void prepare_op(std::shared_ptr<OP> op) {
+void ProxyOP::prepare_op(std::shared_ptr<OP> op) {
   if (!op->should_prepare) return;
   switch (op->type) {
     case IO_PROXY_METADATA: {
@@ -27,7 +29,7 @@ void prepare_op(std::shared_ptr<OP> op) {
 }
 
 // TODO: this is an sync example. we should transfer it to aync
-void do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
+void ProxyOP::do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
   switch (op->type) {
     case IO_PROXY_METADATA: {
       IOProxyMetadataOP* metaop = static_cast<IOProxyMetadataOP*>(op.get());
@@ -45,20 +47,27 @@ void do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
   callback();
 }
 
-void async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
+void ProxyOP::async_do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
   // not implemented yet!
   callback();
 }
 
-int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
-  sync_io func_sync_io;
+int ProxyOP::ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
   switch (op->operation) {
     case IOProxyMetadataOP::stat: {
-      dout(20) << "IOProxy: handle stat ["<<op->path<<"]" <<dendl;
       func_sync_io.sstat(op->path, op);
       break;
     }
     case IOProxyMetadataOP::open: {
+      op->error_code = iop->fdm.open(op->path, O_CREAT|O_RDWR, 0655);
+      break;
+    }
+    case IOProxyMetadataOP::close: {
+      op->error_code = iop->fdm.close(op->path);
+      break;
+    }
+    case IOProxyMetadataOP::flush: {
+      op->error_code = iop->fdm.flush(op->path);
       break;
     }
     case IOProxyMetadataOP::readdir: {
@@ -94,8 +103,7 @@ int ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
   return op->error_code;
 }
 
-int ioproxy_do_data_op(IOProxyDataOP* op) {
-  sync_io func_sync_io;
+int ProxyOP::ioproxy_do_data_op(IOProxyDataOP* op) {
   switch (op->operation) {
     case IOProxyDataOP::read: {
       func_sync_io.sread(op->path.c_str(), op->obuf, op->size, op->offset, op);

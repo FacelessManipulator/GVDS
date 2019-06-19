@@ -32,8 +32,8 @@ Processing::Processing(my_context ctx) : my_base(ctx) {
                   worker.my_handle(), callback_event);
   worker.cur_op->op_submit = std::chrono::steady_clock::now();
   ///> call **async** op processing function
-  prepare_op(worker.cur_op);
-  do_op(worker.cur_op, callback);
+  node->proxy_op.prepare_op(worker.cur_op);
+  node->proxy_op.do_op(worker.cur_op, callback);
 }
 
 

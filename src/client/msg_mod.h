@@ -68,14 +68,4 @@ std::shared_ptr<RPCLIB_MSGPACK::object_handle> ClientRpc::call(
     ;
   }
 }
-
-template <typename... Args>
-std::future<RPCLIB_MSGPACK::object_handle> ClientRpc::async_call(
-    std::shared_ptr<IOProxyNode> node, std::string const& func_name,
-    Args... args) {
-  // TODO: We assume RpcClient can concurently call
-  auto rpcc = rpc_channel(node);
-  auto ft = rpcc->async_call(func_name, args...);
-  return ft;
-}
 }  // namespace hvs

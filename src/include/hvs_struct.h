@@ -23,6 +23,7 @@ struct IOProxyNode : public hvs::JsonSerializer {
   std::string name;
   Status status;
   std::string uuid;
+  std::string cid;
   static const std::string& prefix() {
     static std::string _prefix("IOPN-");
     return _prefix;
@@ -51,6 +52,7 @@ struct IOProxyNode : public hvs::JsonSerializer {
     put("data_port", data_port);
     int s = status;
     put("status", s);
+    put("cid", cid);
   };
   virtual void deserialize_impl() override {
     get("uuid", uuid);
@@ -61,6 +63,7 @@ struct IOProxyNode : public hvs::JsonSerializer {
     int s;
     get("status", s);
     status = static_cast<Status>(s);
+    get("cid", cid);
   };
   void key(const char* key) {
     boost::uuids::uuid tag;
@@ -159,7 +162,7 @@ struct Zone : public hvs::JsonSerializer {
   std::string ownerID;                //区域主人ID，UUID
   std::vector<std::string> memberID;  //区域成员ID，UUID
   std::vector<std::string> spaceID;   //区域映射空间ID，UUID
-  std::vector<Space> spaceBicInfo;    //空间基本信息
+  std::vector<std::shared_ptr<Space>> spaceBicInfo;    //空间基本信息
   bool contains_spaceinfo;
 
  public:

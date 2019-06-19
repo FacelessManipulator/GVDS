@@ -47,11 +47,11 @@ class LRU {
 
   size_t size() { return lrulist.size(); }
 
-  std::optional<LRUObject<K, V>> find(const K& key) {
+  LruIter find(const K& key) {
     auto index_it = lruindex.find(key);
-    if (index_it == lruindex.end()) return std::nullopt;
+    if (index_it == lruindex.end()) return lrulist.end();
     // LRUObject may destroyed by lru, so we copy rather than referrence
-    return *index_it;
+    return index_it->second;
   }
 
   bool empty() { return lruindex.empty(); }
@@ -66,7 +66,7 @@ class LRU {
     }
   }
 
-  LRUObject<K, V> touch(K key) {
+  LRUObject<K, V>& touch(K key) {
     auto indexIter = lruindex.find(key);
     // not exists
     if (indexIter == lruindex.end()) {
@@ -83,7 +83,7 @@ class LRU {
       lrulist.erase(indexIter->second);
       auto lruit = lrulist.emplace(lrulist.begin(), tmp);
       indexIter->second = lruit;
-      return tmp;
+      return *lruit;
     }
   }
 
@@ -117,9 +117,12 @@ class LRU {
     std::cout << ">>>> done observing lru status." << std::endl;
   }
 
+  // iterate from new to old
+  LruIter begin() { return lrulist.begin(); }
+  LruIter end() { return lrulist.end(); }
   // iterate from old to new
-  rLruIter begin() { return lrulist.rbegin(); }
-  rLruIter end() { return lrulist.rend(); }
+  rLruIter rbegin() { return lrulist.rbegin(); }
+  rLruIter rend() { return lrulist.rend(); }
 
  private:
   LruList lrulist;

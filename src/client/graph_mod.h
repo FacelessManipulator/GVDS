@@ -27,7 +27,7 @@ class ClientGraph : public ClientModule {
   }
 
   // get global path of path
-  std::tuple<std::shared_ptr<IOProxyNode>, std::string> get_mapping(const std::string& space_uuid);
+  std::tuple<std::shared_ptr<IOProxyNode>, std::string> get_mapping(const std::string& path);
   std::vector<std::string> list_space(std::string zonename);
   std::vector<std::string> list_zone();
   void fresh_ioproxy();

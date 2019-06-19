@@ -1,4 +1,5 @@
 ip = "127.0.0.1";
+center_id = "20001";
 log = {
     path = "/opt/hvs/var/log/hvs.log";
     level = 10;
@@ -19,7 +20,7 @@ ioproxy = {
     uuid = "a8a8eb78-8536-4bb5-a22a-c83483eff378";
     manager_addr = "127.0.0.1:9090";
     scher = 6;
-    data_path = "/opt/hvs/var/data";
+    data_path = "/opt/hvs/var/data/";
     data_port = 9095;
     data_buffer = 1024000;
     data_conn = 50;

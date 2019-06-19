@@ -4,81 +4,36 @@
 using namespace hvs;
 using namespace std;
 
-void ClientGraph::start() {
-  fresh_ioproxy();
-  // TODO: 当前空间对应的IO代理是固定的，之后会重新建造一个映射表
-//  auto ion1 = make_shared<IOProxyNode>();
-//  ion1->ip = "127.0.0.1";
-//  ion1->rpc_port = 9092;
-//  ion1->data_port = 9095;
-//  set_mapping("306a36a6-0b69-40c5-b8e7-8eac7ad2bf7b", ion1, "/306a36a6-0b69-40c5-b8e7-8eac7ad2bf7b");
-//  set_mapping("9221b15c-2b99-4edd-953b-4aaf629aa3b0", ion1, "/9221b15c-2b99-4edd-953b-4aaf629aa3b0");
-//  set_mapping("f0a15be3-3196-4145-9b90-0f46b94d2eca", ion1, "/f0a15be3-3196-4145-9b90-0f46b94d2eca");
-//  set_mapping("ff035007-0134-4c88-89db-bb520e572f90", ion1, "/ff035007-0134-4c88-89db-bb520e572f90");
-//  set_mapping("1351d46e-5c77-4d89-b5da-1be57a079bbd", ion1, "/1351d46e-5c77-4d89-b5da-1be57a079bbd");
-//
-//  auto ion2 = make_shared<IOProxyNode>();
-//  ion2->ip = "192.168.5.224";
-//  ion2->rpc_port = 9092;
-//  ion2->data_port = 9095;
-//  set_mapping("152a15b5-06f0-4a7b-91d9-21884a41b234", ion2, "/152a15b5-06f0-4a7b-91d9-21884a41b234");
-//  set_mapping("ae05b3c2-3689-4fe3-80c2-f82c8f7d3b49", ion2, "/ae05b3c2-3689-4fe3-80c2-f82c8f7d3b49");
-//  set_mapping("c84e6857-d34d-4e80-a2cc-a77972dbd35c", ion2, "/c84e6857-d34d-4e80-a2cc-a77972dbd35c");
-}
+void ClientGraph::start() { fresh_ioproxy(); }
 
 void ClientGraph::stop() {}
 
 std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
-    const std::string& space_uuid) {
-//  graph_mutex.lock_shared();
-//  auto mapping = mappings.find(space_uuid);
-//  graph_mutex.unlock_shared();
-//  if (mapping != mappings.end()) {
-//    return mapping->second;
-//  } else {
-//    // mapping not found, maybe deleted
-//    return {nullptr, ""};
-//  }
-    // TODO: best node selection mod handle this
-    // TODO: 选择对应中心的IO代理
-    std::shared_ptr<IOProxyNode> iop;
-    std::string centerID;
-    for(auto iop_it : ioproxy_list) {
-        // TODO： 根据空间元数据信息，定位到空间位于哪个存储集群
-        centerID = client->zone->spaceuuid_to_hostcenterID(space_uuid);
-//        if(iop_it.second->ip == "127.0.0.1" && centerID == "10001"){
-//            iop = iop_it.second;
-//            break;
-//        }
-//        if(centerID == "20001" && iop_it.second->ip != "127.0.0.1"){
-//            iop = iop_it.second;
-//            iop->ip = "192.168.5.224";
-//            break;
-//        }
-         iop = iop_it.second;
-        iop->ip = "127.0.0.1";
-      break;
-    }
-//    std::cout << "IOPROXY: " << space_uuid << " " << centerID << " " << iop->ip << std::endl;
-
-    if(ioproxy_list.size() > 0) {
-        string forward_path("/");
-//        forward_path.append(space_uuid);
-        forward_path.append(client->zone->spaceuuid_to_spacerpath(space_uuid));  // TODO:获取远程路径，并拼接路径
-//        std::cout << "Mapping: " << client->zone->spaceuuid_to_spacerpath(space_uuid)<< std::endl;
-        return make_tuple(iop, forward_path);
-    } else {
-        return make_tuple(nullptr, "");
-    }
+    const std::string& path) {
+  auto [zone, space, rpath] = client->zone->locatePosition(path);
+  if(!zone || !space) {
+      return {nullptr, rpath};
+  }
+  // TODO: best node selection mod handle this
+  // TODO: 选择对应中心的IO代理
+  std::shared_ptr<IOProxyNode> iop;
+  std::string centerID = space->hostCenterID;
+  for (auto ioproxy : ioproxy_list) {
+    if(ioproxy.second->cid == centerID)
+      iop = ioproxy.second;
+  }
+  auto lpath = space->spacePath;
+  lpath.append(rpath);
+  return make_tuple(iop, lpath);
 }
 
 std::vector<string> ClientGraph::list_space(std::string zonename) {
   vector<string> spaces;
   auto mapping = client->zone->zonemap.find(zonename);
-  if(mapping !=  client->zone->zonemap.end()) {
-    Zone zoneinfo = mapping->second;
-    for(auto it : zoneinfo.spaceBicInfo){
-        spaces.push_back(it.spaceName); // 寻找空间
+  if (mapping != client->zone->zonemap.end()) {
+    auto zone = mapping->second;
+    for (auto it : zone->spaceBicInfo) {
+      spaces.push_back(it->spaceName);  // 寻找空间
     }
   }
   return spaces;
@@ -86,8 +41,7 @@ std::vector<string> ClientGraph::list_space(std::string zonename) {
 
 std::vector<std::string> ClientGraph::list_zone() {
   vector<string> zones;
-//  client->zone->GetZoneInfo("127.0.0.1", 54485, "101");
-  for(const auto &zo : client->zone->zonemap){
+  for (const auto& zo : client->zone->zonemap) {
     zones.push_back(zo.first);
   }
   return zones;
@@ -96,8 +50,9 @@ std::vector<std::string> ClientGraph::list_zone() {
 void ClientGraph::fresh_ioproxy() {
   string endpoint = client->get_manager();
   string res = client->rpc->get_request(endpoint, "/ioproxy");
-  if(res.size()) {
+  if (res.size()) {
     json_decode(res, ioproxy_list);
-    dout(10) << "INFO: get " << ioproxy_list.size() << " ioproxy from manager." << dendl;
+    dout(10) << "INFO: get " << ioproxy_list.size() << " ioproxy from manager."
+             << dendl;
   }
 }

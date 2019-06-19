@@ -12,6 +12,7 @@
 // TODO: 添加的新头文件
 #include "client/ipc_struct.h"
 #include "ipc/IPCClient.h"
+#include <errno.h>
 
 using namespace hvs;
 
@@ -34,6 +35,7 @@ int main(int argc, char* argv[]){
     int port ;//= 55107;
     std::string zonename ;//= "syremotezone"; // 空间名称
     std::string newzonename;// = "BUAABUAA";
+
 
 
     // TODO: 获取命令行信息

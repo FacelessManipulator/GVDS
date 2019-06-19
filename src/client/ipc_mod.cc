@@ -10,6 +10,8 @@
 #include "manager/manager.h"
 #include "aggregation_struct.h"
 
+#include <errno.h>
+
 
 using namespace hvs;
 using namespace Pistache;
@@ -577,7 +579,10 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
     string response = client->rpc->post_request(client->get_manager(), "/zone/cancel", req.serialize());//TODO：修改按需选择管理节点
-    return response;
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);
 }
 
 std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
@@ -628,7 +633,10 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
     req.ownerID = ownID;
     req.newZoneName = newzonename;
     string response = client->rpc->post_request(client->get_manager(), "/zone/rename", req.serialize());
-    return response;    
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);    
 }
 
 std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
@@ -663,7 +671,10 @@ std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
     req.ownerID = ownID;
     req.memberID = memID;
     string response = client->rpc->post_request(client->get_manager(), "/zone/share", req.serialize());
-    return response;  
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);   
 }
 
 std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
@@ -698,7 +709,10 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     req.ownerID = ownID;
     req.memberID = memID;
     string response = client->rpc->post_request(client->get_manager(), "/zone/sharecancel", req.serialize());
-    return response;  
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);   
 }
 
 // 调用获取区域信息；

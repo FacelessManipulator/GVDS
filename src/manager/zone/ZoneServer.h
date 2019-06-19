@@ -31,7 +31,7 @@ public:
     
     //区域重命名模块：区域重命名接口 复查
     void ZoneRenameRest(const Rest::Request& request, Http::ResponseWriter response);
-    int ZoneRename(std::string zoneID, std::string ownerID, std::string newZoneName);
+    std::string ZoneRename(std::string zoneID, std::string ownerID, std::string newZoneName);
 
     //区域定位模块：区域定位接口 并获取到空间元数据信息 复查
     void GetZoneLocateInfoRest(const Rest::Request& request, Http::ResponseWriter response);
@@ -43,11 +43,11 @@ public:
 
     //区域共享模块：区域共享接口 复查
     void ZoneShareRest(const Rest::Request& request, Http::ResponseWriter response);
-    int ZoneShare(std::string zoneID, std::string ownerID, std::vector<std::string> memberID);
+    std::string ZoneShare(std::string zoneID, std::string ownerID, std::vector<std::string> memberID);
 
     //区域共享模块：区域共享取消接口 复查
     void ZoneShareCancelRest(const Rest::Request& request, Http::ResponseWriter response);
-    int ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID);
+    std::string ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID);
 
     //区域注册模块：区域注册接口 复查
     void ZoneRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
@@ -61,7 +61,7 @@ public:
 
     //区域注销模块：区域注销接口 复查
     void ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response);
-    int ZoneCancel(std::string zoneID, std::string ownerID);
+    std::string ZoneCancel(std::string zoneID, std::string ownerID);
 
     //映射编辑模块：区域映射增加接口 复查
     void MapAddRest(const Rest::Request& request, Http::ResponseWriter response);

@@ -33,9 +33,8 @@ int main(int argc, char* argv[]){
     std::string ip ;//= "127.0.0.1";
     int port ;//= 55107;
     std::string zonename ;//= "syremotezone"; // 空间名称
-    std::string ownID;// = "202"; // 用户ID
     std::string newzonename;// = "BUAABUAA";
-    std::string zoneuuid;
+
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
@@ -71,6 +70,8 @@ int main(int argc, char* argv[]){
     }
 
     try{
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
@@ -78,12 +79,8 @@ int main(int argc, char* argv[]){
 //            char tmp[IPCMessage::max_body_length] = {0};
 //            std::memcpy(tmp, msg.body(), msg.body_length());
             std::string ipcresult (msg.body(), msg.body_length());
-            if (ipcresult != "success"){
-                //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
-                std::cerr << ipcresult << std::endl; // 执行结果
-            } else {
-                std::cout << "执行结果：" << ipcresult << std::endl;
-            }
+            std::cout << ipcresult << std::endl;
+            prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
@@ -93,7 +90,7 @@ int main(int argc, char* argv[]){
         ipcreq.cmdname = "zonerename";
         ipcreq.zonename = zonename; // 空间名称
         ipcreq.newzonename = newzonename; // 
-        ipcreq.zoneuuid = zoneuuid;
+
 
 
 
@@ -101,7 +98,7 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        sleep(1); // TODO: 等待客户端返回结果
+        fu.get();// TODO: 等待客户端返回结果
         ipcClient.stop();
 
     } catch (std::exception &e) {

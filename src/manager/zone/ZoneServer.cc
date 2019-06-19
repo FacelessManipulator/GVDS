@@ -79,18 +79,12 @@ namespace hvs{
       std::string ownerID = req.ownerID;
       std::string newZoneName = req.newZoneName;
 
-      int result_i = ZoneRename(zoneID, ownerID, newZoneName);
-      std::string result;
-      if (result_i == 0)
-          result = "success";
-      else
-          result = "fail";
-
+      std::string result = ZoneRename(zoneID, ownerID, newZoneName);
       response.send(Http::Code::Ok, result);
       std::cout << "====== end ZoneServer function: ZoneRenameRest ======"<< std::endl;
   }
 
-  int ZoneServer::ZoneRename(std::string zoneID, std::string ownerID, std::string newZoneName)
+  std::string ZoneServer::ZoneRename(std::string zoneID, std::string ownerID, std::string newZoneName)
   {
       Zone tmp;
       std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -103,10 +97,10 @@ namespace hvs{
       {
         tmp.zoneName = std::move(newZoneName);
         tmp.contains_spaceinfo = false;
-        if(zonePtr->set(zoneID, tmp.serialize()) != 0) return -1;//插入报错
-        else return 0;
+        if(zonePtr->set(zoneID, tmp.serialize()) != 0) return "fail";//插入报错
+        else return "success";
       }
-      else return -1;
+      else return "非区域主人不可重命名";
    }
 
   //区域定位
@@ -254,17 +248,12 @@ namespace hvs{
     ZoneRequest req;
     req.deserialize(info);
 
-    int result_i = ZoneShare( req.zoneID,  req.ownerID,  req.memberID);
-    std::string result;
-    if (result_i == 0)
-    result = "success";
-    else result = "fail";
-
+    std::string result = ZoneShare( req.zoneID,  req.ownerID,  req.memberID);
     response.send(Http::Code::Ok, result);
     std::cout << "====== end ZoneServer function: ZoneShareRest ======"<< std::endl;
   }
 
-  int ZoneServer::ZoneShare(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
+  std::string ZoneServer::ZoneShare(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
   {
     Zone tmp;
     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -292,10 +281,10 @@ namespace hvs{
         zonePtr->set(zoneID, tmp_value);
         return 0;
       }
-      else return -1;
+      else return "添加区域成员失败，请重试";
     }
     else
-      return -1;
+      return "非区域主人无法进行共享操作";
   }
 
   void ZoneServer::ZoneShareCancelRest(const Rest::Request& request, Http::ResponseWriter response){
@@ -304,17 +293,12 @@ namespace hvs{
     ZoneRequest req;
     req.deserialize(info);
 
-    int result_i = ZoneShareCancel(req.zoneID, req.ownerID, req.memberID);
-    std::string result;
-    if (result_i == 0)
-    result = "success";
-    else result = "fail";
-
+    std::string result = ZoneShareCancel(req.zoneID, req.ownerID, req.memberID);
     response.send(Http::Code::Ok, result);
     std::cout << "====== end ZoneServer function: ZoneShareCancelRest ======"<< std::endl;
   }
 
-  int ZoneServer::ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
+  std::string ZoneServer::ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
   {
     Zone tmp;
     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -322,13 +306,13 @@ namespace hvs{
     zonePtr->init();
     auto [vp, err] = zonePtr->get(zoneID);
     if(err != 0){
-        std::cerr << "ZoneShareCancel:未找到对应的空间！" << std::endl;
-        return -1;
+        std::cerr << "未找到对应的区域" << std::endl;
+        return "未找到对应的区域";
     }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
     if(!isSubset(tmp.memberID, memberID)){
-        return -1;
+        return "所给的用户名中包含非组成员，请核实后重试";
     }
     if(tmp.ownerID == ownerID)
     {
@@ -356,12 +340,12 @@ namespace hvs{
         tmp_value = tmp.serialize();
         tmp.contains_spaceinfo = false;
         zonePtr->set(zoneID, tmp_value);
-        return 0;
+        return "success";
       }
-      else return -1;
+      else return "取消区域共享失败，请重试";
     }
     else
-        return -1;
+        return "非区域主人无法进行共享取消操作";
   }
 
   //区域注册
@@ -582,24 +566,18 @@ namespace hvs{
     ZoneRequest req;
     req.deserialize(info);
 
-    int result_i = ZoneCancel(req.zoneID, req.ownerID);
-    std::string result;
-    if (result_i == 0)
-      result = "success";
-    else
-      result = "fail";
-
+    std::string result = ZoneCancel(req.zoneID, req.ownerID);
     response.send(Http::Code::Ok, result);
     std::cout << "====== end ZoneServer function: ZoneCancelRest ======"<< std::endl;
   }
 
-  int ZoneServer::ZoneCancel(std::string zoneID, std::string ownerID)
+  std::string ZoneServer::ZoneCancel(std::string zoneID, std::string ownerID)
   {
     Zone tmp;
     std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
     auto [vp, err] = zonePtr->get(zoneID);
     if( err != 0 ){
-      return -1;
+      return "未找到对应的区域";
     }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
@@ -614,13 +592,13 @@ namespace hvs{
         if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
         {
           zonePtr->remove(zoneID);
-          return 0;
+          return "success";
         }
-        else return -1;
+        else return "区域注销失败，请重试";
       }
-      else return -1;
+      else return "区域注销失败，请重试";
     }
-    else return -1;
+    else return "非区域主人无法进行区域注销操作";
   }
 
   //区域映射编辑

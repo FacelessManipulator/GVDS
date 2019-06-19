@@ -555,8 +555,8 @@ std::string ClientIPC::dozoneadd(IPCreq &ipcreq) {
 std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
-    std::string ownID = ipcreq.ownID;
-    std::string zoneuuid = ipcreq.zoneuuid;
+    std::string ownID = client->user->getAccountID();
+    std::string zoneuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID
     int ret = GetZoneInfo(ownID);
@@ -634,8 +634,13 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
 std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
-    std::string ownID = ipcreq.ownID;
-    std::vector<std::string> memID = ipcreq.memID;
+    std::string ownID = client->user->getAccountID();
+    std::vector<std::string> memID;
+    bool tm = client->user->getMemberID(ipcreq.memName, memID);
+    if(!tm){
+        std::cerr << "未获得对应成员信息，请确认信息正确！" << std::endl;
+        return "未获得对应成员信息，请确认信息正确！";
+    }
     std::string zoneuuid = ipcreq.zoneuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID
@@ -664,8 +669,13 @@ std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
 std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
-    std::string ownID = ipcreq.ownID;
-    std::vector<std::string> memID = ipcreq.memID;
+    std::string ownID = client->user->getAccountID();
+    std::vector<std::string> memID;
+    bool tm = client->user->getMemberID(ipcreq.memName, memID);
+    if(!tm){
+        std::cerr << "未获得对应成员信息，请确认信息正确！" << std::endl;
+        return "未获得对应成员信息，请确认信息正确！";
+    }
     std::string zoneuuid = ipcreq.zoneuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID

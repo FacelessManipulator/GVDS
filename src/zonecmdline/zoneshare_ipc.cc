@@ -31,9 +31,7 @@ int main(int argc, char* argv[]){
 
     // TODO: 提前准备的数据
     std::string zonename ;//= "syremotezone"; // 空间名称
-    std::string ownID;// = "202"; // 用户ID
-    std::string zoneuuid;
-    std::vector<std::string> memID;
+    std::vector<std::string> memName;
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
@@ -44,7 +42,6 @@ int main(int argc, char* argv[]){
         po::options_description command("区域共享模块");
         command.add_options()
                 ("zonename", po::value<std::string>(), "区域名称")
-                ("id", po::value<std::string>(), "主人ID")
                 ("member", po::value<std::vector<std::string>>(), "区域新成员")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
@@ -55,13 +52,9 @@ int main(int argc, char* argv[]){
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
         }
-        if (sp_variables_map->count("id"))
-        {
-            ownID = (*sp_variables_map)["id"].as<std::string>();
-        }
         if (sp_variables_map->count("member"))
         {
-            memID = (*sp_variables_map)["member"].as<std::vector<std::string>>();
+            memName = (*sp_variables_map)["member"].as<std::vector<std::string>>();
         }
     };
     commandline.start(); //开始解析命令行参数
@@ -74,6 +67,8 @@ int main(int argc, char* argv[]){
     }
 
     try{
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
@@ -81,12 +76,8 @@ int main(int argc, char* argv[]){
 //            char tmp[IPCMessage::max_body_length] = {0};
 //            std::memcpy(tmp, msg.body(), msg.body_length());
             std::string ipcresult (msg.body(), msg.body_length());
-            if (ipcresult != "success"){
-                //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
-                std::cerr << ipcresult << std::endl; // 执行结果
-            } else {
-                std::cout << "执行结果：" << ipcresult << std::endl;
-            }
+            std::cout << ipcresult << std::endl;
+            prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
@@ -95,14 +86,12 @@ int main(int argc, char* argv[]){
         IPCreq ipcreq;
         ipcreq.cmdname = "zoneshare";
         ipcreq.zonename = zonename; // 空间名称
-        ipcreq.ownID = ownID; // 用户ID
-        ipcreq.memID = memID;
-        ipcreq.zoneuuid = zoneuuid;
+        ipcreq.memName = memName;
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        sleep(1); // TODO: 等待客户端返回结果
+        fu.get(); // TODO: 等待客户端返回结果
         ipcClient.stop();
 
     } catch (std::exception &e) {

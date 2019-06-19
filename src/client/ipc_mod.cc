@@ -142,16 +142,15 @@ void ClientIPC::init() {
     }
 }
 
-
-std::string ClientIPC::doresourceupdate(IPCreq &ipcreq) {
-
+std::string ClientIPC::doregisterupdate(IPCreq &ipcreq,std::string url)
+{
     StorageResource newRes; 
     newRes.storage_src_id = ipcreq.storage_src_id;        // 存储资源UUID
     newRes.storage_src_name = ipcreq.storage_src_name;    // 存储资源名称
     newRes.host_center_id = ipcreq.host_center_id;        // 存储资源所在超算中心UUID
     newRes.host_center_name = ipcreq.host_center_name;    // 存储资源所在超算中心名称
     newRes.total_capacity = ipcreq.total_capacity;        // 存储资源空间容量大小
-    newRes.assign_capacity = 0;                           // 已经分配空间容量大小
+    newRes.assign_capacity = ipcreq.assign_capacity;      // 已经分配空间容量大小
     newRes.mgs_address = ipcreq.mgs_address;              // 存储资源MGS地址
     newRes.state = (StorageResState)ipcreq.state;         // 存储资源状态
 
@@ -170,38 +169,21 @@ std::string ClientIPC::doresourceupdate(IPCreq &ipcreq) {
     }
 
     if(!flag) return "input center id or center name is wrong";
-
-    ipcreq.cmdname = "resourcequery";
-    string qrst = doresourcequery(ipcreq);
-    std::vector <std::string> lists;
-    json_decode(qrst, lists);
-    flag = false;
-    if(qrst != "")
-    {
-    for(auto res : lists) 
-    {
-        StorageResource qres; 
-        qres.deserialize(res); 
-        if(qres.storage_src_id == StorageResource::prefix() + newRes.storage_src_id) 
-        {
-            flag = true;
-            break;
-        }
-    }
-    }
-
-    if(!flag) return "the resource does not exit";
-
     string endpoint = client->get_manager();
-    string res = client->rpc->post_request(endpoint, "/resource/register", newRes.serialize());
+    string res = client->rpc->post_request(endpoint, url, newRes.serialize());
     return res;
 }
 
-std::string ClientIPC::doresourcequery(IPCreq &ipcreq) {
-    string endpoint = client->get_manager();
-    string res = client->rpc->get_request(endpoint, "/resource/query");
-    return res;
+std::string ClientIPC::doresourceupdate(IPCreq &ipcreq) {
 
+   return doregisterupdate(ipcreq,"/resource/update");
+}
+
+std::string ClientIPC::doresourcequery(IPCreq &ipcreq) {
+    string url = "/resource/query/" + ipcreq.storage_src_id;
+    string endpoint = client->get_manager();
+    string res = client->rpc->get_request(endpoint, url);
+    return res;
 }
 
 std::string ClientIPC::doresourcedelete(IPCreq &ipcreq) {
@@ -213,49 +195,21 @@ std::string ClientIPC::doresourcedelete(IPCreq &ipcreq) {
 
 std::string ClientIPC::doresourceregister(IPCreq &ipcreq) {
 
-    StorageResource newRes; 
-    newRes.storage_src_id = ipcreq.storage_src_id;        // 存储资源UUID
-    newRes.storage_src_name = ipcreq.storage_src_name;    // 存储资源名称
-    newRes.host_center_id = ipcreq.host_center_id;        // 存储资源所在超算中心UUID
-    newRes.host_center_name = ipcreq.host_center_name;    // 存储资源所在超算中心名称
-    newRes.total_capacity = ipcreq.total_capacity;        // 存储资源空间容量大小
-    newRes.assign_capacity = 0;                           // 已经分配空间容量大小
-    newRes.mgs_address = ipcreq.mgs_address;              // 存储资源MGS地址
-    newRes.state = (StorageResState)ipcreq.state;                          // 存储资源状态
-
-    std::string cinfor = client->optNode->getCenterInfo();
-    CenterInfo mycenter;
-    mycenter.deserialize(cinfor); 
-    bool flag = false;
-    for(vector<string>::iterator iter = mycenter.centerID.begin(); iter!=mycenter.centerID.end(); iter++){
-        string centername = mycenter.centerName[*iter];
-        string centerid =  *iter;
-        if(centername == newRes.host_center_name && centerid == newRes.host_center_id )
-        {
-            flag = true;
-            break;
-        }
-    }
-
-    if(!flag) return "input center id or center name is wrong";
-
-    ipcreq.cmdname = "resourcequery";
-    string qrst = doresourcequery(ipcreq);
-    std::vector <std::string> lists;
-    json_decode(qrst, lists);
-    if(qrst != "")
-    {
-    for(auto res : lists) 
-    {
-        StorageResource qres; 
-        qres.deserialize(res); 
-        if(qres.storage_src_id == StorageResource::prefix() + newRes.storage_src_id) 
-        return "the resource already exit";
-    }
-    }
-    string endpoint = client->get_manager();
-    string res = client->rpc->post_request(endpoint, "/resource/register", newRes.serialize());
-    return res;
+    return doregisterupdate(ipcreq,"/resource/register");
+    // ipcreq.cmdname = "resourcequery";
+    // string qrst = doresourcequery(ipcreq);
+    // std::vector <std::string> lists;
+    // json_decode(qrst, lists);
+    // if(qrst != "")
+    // {
+    // for(auto res : lists) 
+    // {
+    //     StorageResource qres; 
+    //     qres.deserialize(res); 
+    //     if(qres.storage_src_id == StorageResource::prefix() + newRes.storage_src_id) 
+    //     return "the resource already exit";
+    // }
+    // }
 }
 
 std::string ClientIPC::dospacerename(IPCreq &ipcreq) {

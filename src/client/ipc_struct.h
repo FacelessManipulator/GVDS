@@ -73,6 +73,7 @@ namespace hvs{
         std::string host_center_name;   // 存储资源所在超算中心名称
         int64_t total_capacity;         // 存储资源空间容量大小
         std::string mgs_address;        // 存储资源MGS地址
+        int state;                      // 存储资源状态
 
     public:
         void serialize_impl() override {
@@ -108,6 +109,7 @@ namespace hvs{
             put("host_center_name", host_center_name);
             put("total_capacity", total_capacity);
             put("mgs_address", mgs_address);
+            put("state", state);
         };
 
         void deserialize_impl() override {
@@ -142,7 +144,8 @@ namespace hvs{
             get("host_center_id", host_center_id);
             get("host_center_name", host_center_name);
             get("total_capacity", total_capacity);
-            get("mgs_address", mgs_address);               
+            get("mgs_address", mgs_address);   
+            get("state", state);            
         };
     };
 }

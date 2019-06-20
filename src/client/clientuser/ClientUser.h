@@ -42,7 +42,7 @@ public:
 private:
     bool m_stop;
 
-    std::string mtoken;
+    std::string mtoken = "1";
     std::string accountName;
     std::string accountID;
 

@@ -164,14 +164,15 @@ string UserModelServer::UserRegister(Account &person){
     
     int f1_flag = f0_dbPtr->set(pari_key, pair_value);
     if (f1_flag != 0){
-        string result_0 = "Registration fail: DB[account_map_id] write fail;";
-        return result_0;
+        cout << "Registration fail: DB[account_map_id] write fail;" << endl;
+        return "Registration fail";
     }
 
     //sc_accounut_pool取出并调整,   sc_account_info写入
     bool buildmap = BuildAccountMapping(person.accountID);
     if(!buildmap){
-        return "buildmap fail";
+        cout << "buildmap fail" << endl;
+        return "Registration fail";
     }
 
     //写入account_info表
@@ -186,8 +187,8 @@ string UserModelServer::UserRegister(Account &person){
     
     int flag = f0_dbPtr->set(person_key, person_value);
     if (flag != 0){
-        string result_0 = "Registration fail: DB[account_info] write fail;";
-        return result_0;
+        cout << "Registration fail: DB[account_info] write fail;" << endl;
+        return "Registration fail";
     }
     else{
         string result_1 = "Dear:" + person.accountName + ", registration success";
@@ -306,11 +307,11 @@ bool UserModelServer::UserLogin(std::string account, std::string pass, std::stri
 void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: getUserinfoRest ======"<< endl;
 
-    // bool valid = auth_token(request);
-    // if (!valid){
-    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-    //     return;
-    // }
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+        return;
+    }
     
     
     auto uuid = request.param(":name").as<std::string>();
@@ -322,7 +323,7 @@ void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::Respon
         response.send(Http::Code::Ok, data);
     }
     else{
-        response.send(Http::Code::Not_Found, data); //point
+        response.send(Http::Code::Not_Found, "-1"); //point
     }
     
     cout << "====== end UserModelServer function: getUserinfoRest ======"<< endl;
@@ -355,7 +356,7 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
     auto [pvalue, error] = f0_dbPtr->get(key);
     if (error){
         is_get_success = false;
-        return "Search fail, try again.";
+        return "SearchFail";
     }
 
     cout<<"pvalue:"<< *pvalue <<endl;

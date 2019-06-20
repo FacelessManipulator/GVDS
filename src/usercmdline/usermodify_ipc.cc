@@ -102,7 +102,7 @@ int main(int argc, char* argv[]){
     commandline.start(); //开始解析命令行参数
 
     //TODO :判断是否有参数，如果没有，则报错
-    if (commandline.argc <= 1 || ip.empty() ) {
+    if (commandline.argc <= 1) {
         std::cerr << "请输入命令参数！" << std::endl;
         commandline.print_options();
         exit(-1);

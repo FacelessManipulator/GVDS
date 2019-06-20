@@ -28,15 +28,11 @@ int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
     // 1、用户登录
     char* demo1[9] = {const_cast<char *>("userlogin_ipc"),
-                       const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
-                       const_cast<char *>("-p"), const_cast<char *>("9090"), 
                        const_cast<char *>("--user"), const_cast<char *>("lbq-7"), 
                        const_cast<char *>("--pass"), const_cast<char *>("123456")};
     char* demo2[2] = {const_cast<char *>("userlogin_ipc"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
-    std::string ip ;//= "127.0.0.1";
-    int port ;//= 55107;
     std::string username;//= "lbq-7";
     std::string password; // = "123456"; // 用户ID
 
@@ -56,8 +52,6 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("账户登录");
         command.add_options()
-                ("ip", po::value<std::string>(), "管理节点IP")
-                ("port,p", po::value<int>(), "管理节点端口号")
                 ("user,u", po::value<std::string>(), "账户名")
                 ("pass", po::value<std::string>(), "账户密码")
                 ;
@@ -65,14 +59,6 @@ int main(int argc, char* argv[]){
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
-        if (sp_variables_map->count("ip"))
-        {
-            ip = (*sp_variables_map)["ip"].as<std::string>();
-        }
-        if (sp_variables_map->count("port"))
-        {
-            port = (*sp_variables_map)["port"].as<int>();
-        }
         if (sp_variables_map->count("user"))
         {
             username = (*sp_variables_map)["user"].as<std::string>();
@@ -85,12 +71,13 @@ int main(int argc, char* argv[]){
     commandline.start(); //开始解析命令行参数
 
     //TODO :判断是否有参数，如果没有，则报错
-    if (commandline.argc <= 1 || ip.empty() ) {
+    if (commandline.argc <= 1) {
         std::cerr << "请输入命令参数！" << std::endl;
         commandline.print_options();
         exit(-1);
     }
-
+    
+    std::cout << "1: " << username << std::endl; //账户名
      try{
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
         IPCClient ipcClient("127.0.0.1", 6666);
@@ -113,8 +100,7 @@ int main(int argc, char* argv[]){
          // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
         ipcreq.cmdname = "userlogin";
-        ipcreq.ip = ip ; // ip
-        ipcreq.port = port;  // 端口号
+       
         ipcreq.accountName = username; //账户名
         ipcreq.Password = password; //密码
         

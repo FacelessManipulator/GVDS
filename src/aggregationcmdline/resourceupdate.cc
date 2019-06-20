@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
                        const_cast<char *>("--cn"), const_cast<char *>("zhongkeyuan"),
                        const_cast<char *>("--tc"), const_cast<char *>("1000"),
                        const_cast<char *>("--ac"), const_cast<char *>("0"),
-                       const_cast<char *>("--mgs"), const_cast<char *>("http://192.168.5.119"),
+                       const_cast<char *>("--mgs"), const_cast<char *>("192.168.5.119"),
                        const_cast<char *>("--st"), const_cast<char *>("1")}; //BIGBOSSSY
 
     char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};

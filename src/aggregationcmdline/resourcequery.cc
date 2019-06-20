@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
                     cout << "存储资源名称:" << qres.storage_src_name << endl;
                     cout << "存储资源所在超算中心UUID:" << qres.host_center_id << endl;
                     cout << "存储资源所在超算中心名称:" << qres.host_center_name << endl;
-                    cout << "存储资源空间容量大小:" << qres.total_capacity << endl;
-                    cout << "存储资源已分配空间容量大小:" << qres.assign_capacity << endl;
+                    cout << "存储资源空间容量大小(MB):" << qres.total_capacity << endl;
+                    cout << "存储资源已分配空间容量大小(MB):" << qres.assign_capacity << endl;
                     cout << "存储资源MGS地址:" << qres.mgs_address << endl;
                     cout << "存储资源状态:" << resstate << endl;
                     cout << endl;

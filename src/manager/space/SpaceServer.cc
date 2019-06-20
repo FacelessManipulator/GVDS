@@ -107,7 +107,9 @@ namespace hvs{
         new_space.spaceName = spaceName;
         new_space.spaceSize = spaceSize;
         new_space.hostCenterID = tmpm.hostCenterID;
+        new_space.hostCenterName = tmpm.hostCenterName;
         new_space.storageSrcID = tmpm.storageSrcID;
+        new_space.storageSrcName = tmpm.storageSrcName;
         new_space.status = true;
         if (new_space.spaceName == "" || new_space.spaceSize == 0) return "-2";
         std::string tmps_key = new_space.spaceID;
@@ -116,7 +118,7 @@ namespace hvs{
         return new_space.spaceID;
     }
 
-    std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string hostCenterName, std::string storageSrcName) {
+    std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string& hostCenterName, std::string& storageSrcName) {
         std::shared_ptr<hvs::CouchbaseDatastore> storagePtr = std::make_shared<hvs::CouchbaseDatastore>(
                 hvs::CouchbaseDatastore(storagebucket));
         storagePtr->init();
@@ -147,6 +149,8 @@ namespace hvs{
         std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
         StorageResource storage;
         storage.deserialize(tmp_value);
+        hostCenterName = storage.host_center_name;
+        storageSrcName = storage.storage_src_name;
         // std::cerr << "SpaceCreatePath: " << tmp_value << std::endl;
         // TODO: STOR- 这个标识后期需要修改，UUID格式要进行统一；
         return {"STOR-"+storage.storage_src_id, storage.host_center_id};

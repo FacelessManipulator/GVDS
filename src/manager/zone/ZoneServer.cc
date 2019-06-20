@@ -153,7 +153,6 @@ namespace hvs{
   void ZoneServer::GetZoneInfoRest(const Rest::Request& request, Http::ResponseWriter response){
     dout(15) << "INFO: ZoneServer: GetZoneInfoRest request."<< dendl;
     auto info = request.body();
-
     std::string clientID = info;
     std::vector<Zone> result_z;
 
@@ -214,6 +213,7 @@ namespace hvs{
           tmp_zi.spaceID.push_back(sp->spaceID);
         }
         result_z.push_back(tmp_zi);
+        cout << tmp_zi.serialize() << endl;
       }
 
       for (std::vector<std::string>::iterator it2 = vp2->begin(); it2 != vp2->end(); it2++)
@@ -420,6 +420,9 @@ namespace hvs{
         int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
         if(res_za == 0)
         {
+          cout << "heresy" << endl;
+          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, tmp.ownerID);//shanchu
+          cout << "notheresy" << endl;
           if(tmp.memberID.empty())
           {
             return 0;

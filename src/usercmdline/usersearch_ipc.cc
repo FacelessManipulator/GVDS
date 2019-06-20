@@ -69,16 +69,20 @@ int main(int argc, char* argv[]){
     }
 
      try{
-        promise<bool> prom;
+        std::promise<bool> prom;
         auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             std::string ipcresult (msg.body(), msg.body_length());
-            if (ipcresult == "fail"){
+            if (ipcresult == "-1"){
                 //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
                 std::cerr << "search fail" << std::endl; // 执行结果
-            } else {
+            } 
+            else if(ipcresult == "33"){
+                std::cout << "Verification failed, access denied" << std::endl;
+            }
+            else {
                 Account person;
                 person.deserialize(ipcresult);
                 std::cout << "账户名： " << person.accountName << std::endl;
@@ -88,6 +92,7 @@ int main(int argc, char* argv[]){
                 std::cout << "地址： " << person.accountAddress << std::endl;
                 std::cout << "单位： " << person.Department << std::endl;
             }
+            prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
@@ -101,7 +106,8 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        sleep(1); // TODO: 等待客户端返回结果
+        fu.get();              // 等待客户端返回结果
+        // sleep(1); // TODO: 等待客户端返回结果
         ipcClient.stop();
 
     } catch (std::exception &e) {

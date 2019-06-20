@@ -10,7 +10,7 @@
 #include "manager/manager.h"
 #include "aggregation_struct.h"
 #include "hvs_struct.h"
-#include "zone_mod.h"
+
 
 #include <errno.h>
 
@@ -389,6 +389,7 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
     std::string zoneuuid;
 
     //获取区域信息
+    cout << ownID << endl;
     int ret = GetZoneInfo(ownID);
     if(!ret){
         std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
@@ -793,47 +794,9 @@ std::string ClientIPC::dousersearch(IPCreq &ipcreq) {
     string endpoint = client->get_manager();   
     string routepath = "/users/search/" + client->user->getAccountID();    ///users/search/用戶id
     string res = client->rpc->get_request(endpoint, routepath);
-    if (res == "-1"){
-        return return_value;
-    }
+
     cout << "response: " << res <<endl;
     return res;
-
-   
-   
-    // Http::Client Pclient;
-    // char url[256];
-    // snprintf(url, 256, "http://%s:%d/users/search/%s", ip.c_str(), port, client->user->getAccountID().c_str());
-    // auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    // Pclient.init(opts);
-
-    //  auto response_1 = Pclient.get(url).cookie(Http::Cookie("token", "mtoken")).send();
-    //     //dout(-1) << "Client Info: get request " << url << dendl;
-    // cout << "Client Info: get request " << url << endl;
-    // std::promise<bool> prom_1;
-    // auto fu_1 = prom_1.get_future();
-    // response_1.then(
-    //     [&](Http::Response res) {
-    //         //dout(-1) << "Manager Info: " << res.body() << dendl;
-    //         std::cout << "Response code = " << res.code() << std::endl;
-    //         //if code== 
-    //         return_value = "search success";
-    //         auto body = res.body();
-    //         if (!body.empty()){
-    //             std::cout << "Response body = " << body << std::endl;
-    //             //====================
-    //             //your code write here
-
-    //             //====================
-    //         }
-    //         prom_1.set_value(true);
-    //     },
-    //     Async::IgnoreException);
-    // fu_1.get();
-
-    // Pclient.shutdown();
-    // std::cout << "end: dousersearch" << std::endl;
-    // return return_value;
 }
 
 
@@ -862,58 +825,12 @@ std::string ClientIPC::dousersignup(IPCreq &ipcreq){
 
     cout << "response: " << res <<endl;
     return res;
-
-    // std::string return_value = "signup fail";
-    // Http::Client client;
-    // char url[256];
-    // snprintf(url, 256, "http://%s:%d/users/registration", ip.c_str(), port);
-    // auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    // client.init(opts);
-
-    // // Account person("lbq-9", "123456", "129", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang");
-    // // std::string value = person.serialize();
-    // Account person(username, pass, hvsID, email, phone, ad,  de);   //以后在服务端产生uuid，客户端这块传值不影响
-    // std::string value = person.serialize();
-    // std::cout << value << std::endl;
-
-    // auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-    //     //dout(-1) << "Client Info: post request " << url << dendl;
-    // std::cout <<  "Client Info: post request " << url << std::endl;
-
-    // std::promise<bool> prom;
-    // auto fu = prom.get_future();
-    // response.then(
-    //     [&](Http::Response res) {
-    //       //dout(-1) << "Manager Info: " << res.body() << dendl;
-    //       std::cout << "Response code = " << res.code() << std::endl;
-    //       // code==  
-    //       return_value ="signup success";
-    //       auto body = res.body();
-    //       if (!body.empty()){
-    //           std::cout << "Response body = " << body << std::endl;
-    //           //====================
-    //           //your code write here
-
-    //           //====================
-    //       }
-    //       prom.set_value(true);
-    //     },
-    //     Async::IgnoreException);
-    // fu.get();
-
-    // client.shutdown();
-
-    // return return_value;
-
 }
 
 
 std::string ClientIPC::dousermodify(IPCreq &ipcreq){
  // TODO: 提前准备的数据
-    string ip = ipcreq.ip;
-    int port = ipcreq.port;
 
-    
 
     string username = ipcreq.accountName; //账户名
     string hvsID = client->user->getAccountID(); //在服务端产生     //TODO 账户修改这块，调用函数获取
@@ -924,99 +841,37 @@ std::string ClientIPC::dousermodify(IPCreq &ipcreq){
     string de = ipcreq.department;
 
   //账户修改
-
-
-
-    std::string return_value = "modify fail";
     Account person(username, pass, hvsID, email, phone, ad, de);
     std::string person_value = person.serialize();
     std::cout << person_value << std::endl;
 
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/users/modify", ip.c_str(), port);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
+    string endpoint = client->get_manager();   
+    string routepath = "/users/modify";    
+    string res = client->rpc->post_request(endpoint, routepath, person_value);
 
-
-    auto response_1 = client.post(url).cookie(Http::Cookie("token", "mtoken")).body(person_value).send();
-            //dout(-1) << "Client Info: post request " << url << dendl;
-            std::cout << "Client Info: post request " << url << std::endl;
-
-    std::promise<bool> prom_1;
-    auto fu_1 = prom_1.get_future();
-    response_1.then(
-        [&](Http::Response res) {
-            //dout(-1) << "Manager Info: " << res.body() << dendl;
-            std::cout << "Response code = " << res.code() << std::endl;
-            auto body = res.body();
-            //if code ==  
-            return_value = "modify success";
-            if (!body.empty()){
-                std::cout << "Response body = " << body << std::endl;
-                //====================
-                //your code write here
-
-                //====================
-            }
-            prom_1.set_value(true);
-        },
-        Async::IgnoreException);
-    fu_1.get();
-
-    client.shutdown();
-
-    return return_value;
+    cout << "response: " << res <<endl;
+    return res;
 }
 
 std::string ClientIPC::douserexit(IPCreq &ipcreq){
     // TODO: 提前准备的数据
-    string ip = ipcreq.ip;
-    int port = ipcreq.port;
+    string endpoint = client->get_manager();   
+    string routepath = "/users/exit/" + client->user->getAccountID();    ///users/search/用戶id
+    string res = client->rpc->get_request(endpoint, routepath);
 
-    //账户退出
-    std::string return_value = "exit fail";
-      Http::Client Pclient;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/users/exit/%s", ip.c_str(), port, client->user->getAccountID().c_str());
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    Pclient.init(opts);
-
-    
-    auto response_1 = Pclient.get(url).cookie(Http::Cookie("token", "mtoken")).send();
-            //dout(-1) << "Client Info: get request " << url << dendl;
-    std::cout << "Client Info: get request " << url << std::endl;
-    std::promise<bool> prom_1;
-    auto fu_1 = prom_1.get_future();
-    response_1.then(
-        [&](Http::Response res) {
-            //dout(-1) << "Manager Info: " << res.body() << dendl;
-            std::cout << "Response code = " << res.code() << std::endl;
-            return_value = "exit success";
-            auto body = res.body();
-            if (!body.empty()){
-                std::cout << "Response body = " << body << std::endl;
-                //====================
-                //your code write here
-
-                //====================
-            }
-            prom_1.set_value(true);
-        },
-        Async::IgnoreException);
-    fu_1.get();
-
-    Pclient.shutdown();
-    return return_value;
+    return res;
 }
+std::string ClientIPC::dousercancel(IPCreq &ipcreq){
+     // TODO: 提前准备的数据
+    string endpoint = client->get_manager();   
+    string routepath = "/users/cancel/" + client->user->getAccountID();    ///users/search/用戶id
+    string res = client->rpc->get_request(endpoint, routepath);
 
-
+    return res;
+}
 //auth
  std::string ClientIPC::doauthsearch(IPCreq &ipcreq){
      // TODO: 提前准备的数据
-    string ip = ipcreq.ip;
-    int port = ipcreq.port;
-
     std::string hvsID = client->user->getAccountID(); //在服务端产生 
 
     //权限查询
@@ -1024,34 +879,46 @@ std::string ClientIPC::douserexit(IPCreq &ipcreq){
     string endpoint = client->get_manager();
     string routepath = "/auth/search";
     string res = client->rpc->post_request(endpoint, routepath, hvsID);
-    cout << "respones:" << res << endl;
+  
+    return res;
+ }
 
-    //if()
-    AuthSearch myauth;
-    myauth.deserialize(res);
+ std::string ClientIPC::doauthmodify(IPCreq &ipcreq){
+         // TODO: 提前准备的数据
 
-    cout << myauth.hvsID << endl;
-    vector<string>::iterator iter;
-    for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
-        cout << *iter << endl;
-        cout << myauth.read[*iter] << endl;
-        cout << myauth.write[*iter] << endl;
-        cout << myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
+    FEAuthModifygroupinfo FEgroup;
+    FEgroup.hvsID = client->user->getAccountID(); //在服务端产生 
+    FEgroup.zonename = ipcreq.zonename;
+    FEgroup.modify_groupauth = ipcreq.changeauth;
+
+    string value = FEgroup.serialize();
+
+    string endpoint = client->get_manager();
+    string routepath = "/auth/modify";
+    string res = client->rpc->post_request(endpoint, routepath, value);
+    if(res == "-1"){
+        return "modify auth fail";
+    }
+    else if(res == "33"){
+        return "Verification failed, access denied";
+    }
+    else{ //返回9
+        return "modify auth success";
     }
 
-    return return_value;
 
-    // std::string return_value = "authsearch fail";
-    //  Http::Client client;
+    //权限修改
+    // std::string return_value = "authmodify fail";
+    // Http::Client client;
     // char url[256];
-    // //snprintf(url, 256, "http://localhost:%d/auth/search", manager->rest_port());
-    // snprintf(url, 256, "http://localhost:9090/auth/search");
-
+    // //snprintf(url, 256, "http://localhost:%d/auth/modify", manager->rest_port());
+    // snprintf(url, 256, "http://localhost:9090/auth/modify");
     // auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
     // client.init(opts);
 
+
     // std::cout << "before" << endl;
-    // auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(hvsID).send();
+    // auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();
     //         dout(-1) << "Client Info: post request " << url << dendl;
 
     // std::cout << "after" << endl;
@@ -1061,23 +928,13 @@ std::string ClientIPC::douserexit(IPCreq &ipcreq){
     //     [&](Http::Response res) {
     //         //dout(-1) << "Manager Info: " << res.body() << dendl;
     //         std::cout << "Response code = " << res.code() << std::endl;
-    //         return_value = "authsearch success";
+    //         return_value = "authmodify success";
     //         auto body = res.body();
     //         if (!body.empty()){
     //             std::cout << "Response body = " << body << std::endl;
     //             //====================
     //             //your code write here
-    //             AuthSearch myauth;
-    //             myauth.deserialize(body);
-
-    //             cout << myauth.hvsID << endl;
-    //             vector<string>::iterator iter;
-    //             for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
-    //                 cout << *iter << endl;
-    //                 cout << myauth.read[*iter] << endl;
-    //                 cout << myauth.write[*iter] << endl;
-    //                 cout << myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
-    //             }
+            
     //             //====================
     //         }
     //         prom.set_value(true);
@@ -1086,102 +943,10 @@ std::string ClientIPC::douserexit(IPCreq &ipcreq){
     // fu.get();
 
     // client.shutdown();
-
     // return return_value;
  }
 
- std::string ClientIPC::doauthmodify(IPCreq &ipcreq){
-         // TODO: 提前准备的数据
-    string ip = ipcreq.ip;
-    int port = ipcreq.port;
-
-    FEAuthModifygroupinfo FEgroup;
-    FEgroup.hvsID = client->user->getAccountID(); //在服务端产生 
-    FEgroup.zonename = ipcreq.zonename;
-    FEgroup.modify_groupauth = ipcreq.changeauth;
-
-    string value = FEgroup.serialize();
-
-    //权限修改
-    std::string return_value = "authmodify fail";
-    Http::Client client;
-    char url[256];
-    //snprintf(url, 256, "http://localhost:%d/auth/modify", manager->rest_port());
-    snprintf(url, 256, "http://localhost:9090/auth/modify");
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
 
 
-    std::cout << "before" << endl;
-    auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-            dout(-1) << "Client Info: post request " << url << dendl;
-
-    std::cout << "after" << endl;
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-        [&](Http::Response res) {
-            //dout(-1) << "Manager Info: " << res.body() << dendl;
-            std::cout << "Response code = " << res.code() << std::endl;
-            return_value = "authmodify success";
-            auto body = res.body();
-            if (!body.empty()){
-                std::cout << "Response body = " << body << std::endl;
-                //====================
-                //your code write here
-            
-                //====================
-            }
-            prom.set_value(true);
-        },
-        Async::IgnoreException);
-    fu.get();
-
-    client.shutdown();
-    return return_value;
- }
-
-
-std::string ClientIPC::dousercancel(IPCreq &ipcreq){
-     // TODO: 提前准备的数据
-    string ip = ipcreq.ip;
-    int port = ipcreq.port;
-
-    //用户注销
-    std::string return_value = "usercancel fail";
-    Http::Client Pclient;
-    char url[256];
-    snprintf(url, 256, "http://%s:%d/users/cancel/%s", ip.c_str(), port, client->user->getAccountID().c_str());
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    Pclient.init(opts);
-
-    auto response_1 = Pclient.get(url).cookie(Http::Cookie("token", "mtoken")).send();
-            //dout(-1) << "Client Info: get request " << url << dendl;
-
-    std::cout << "Client Info: get request " << url << std::endl;
-
-    std::promise<bool> prom_1;
-    auto fu_1 = prom_1.get_future();
-    response_1.then(
-        [&](Http::Response res) {
-            //dout(-1) << "Manager Info: " << res.body() << dendl;
-            std::cout << "Response code = " << res.code() << std::endl;
-            return_value = "usercancel success";
-            auto body = res.body();
-            if (!body.empty()){
-                std::cout << "Response body = " << body << std::endl;
-                //====================
-                //your code write here
-
-                //====================
-            }
-            prom_1.set_value(true);
-        },
-        Async::IgnoreException);
-    fu_1.get();
-
-    Pclient.shutdown();
-    return return_value;
-}
 
 }//namespace

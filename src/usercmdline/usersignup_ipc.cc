@@ -100,6 +100,8 @@ int main(int argc, char* argv[]){
     }
 
     try{
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
@@ -110,6 +112,7 @@ int main(int argc, char* argv[]){
             } else {
                 std::cout << "执行结果：" << ipcresult << std::endl;
             }
+            prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
@@ -129,7 +132,8 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        sleep(1); // TODO: 等待客户端返回结果
+        fu.get();              // 等待客户端返回结果
+        // sleep(1); // TODO: 等待客户端返回结果
         ipcClient.stop();
 
     } catch (std::exception &e) {

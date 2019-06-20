@@ -678,9 +678,15 @@ int AuthModelServer::SpacePermissionDelete(string spaceID){
 
 
 //3、权限修改模块，提供一个rest api，让前端调用  //TODO  这个等其他的测试都通过再写吧，否则没意义【流程参考A4纸上的】
+// 返回33权限， 0成功，-1失败
 void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start AuthModelServer function: AuthModifyRest ======"<< endl;
-    
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "33");
+        return;
+    }
+
     auto info = request.body();
     cout << info << endl;
 
@@ -874,15 +880,23 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
 
 
 //4、权限查询模块  
+//失败返回 33, fail 正常值；
 void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start AuthModelServer function: AuthSearchModelRest ======"<< endl;
+    bool valid = auth_token(request);
+    if (!valid){
+        cout << "aaa here?" << endl;
+        response.send(Http::Code::Unauthorized, "33");
+        return;
+    }
+
     auto info = request.body();
     cout << "info: " <<info << endl;  //hvsid
 
     string m_info = info;
     string data = AuthSearchModel(m_info);
     if (data.compare("fail") == 0){
-        response.send(Http::Code::Not_Found, "notfound"); 
+        response.send(Http::Code::Not_Found, "fail"); 
     }
     else{
         response.send(Http::Code::Ok, data); // data 在C++客户端使用AuthSearch 返序列化
@@ -897,9 +911,10 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     //1、查询hvsid对应的所有区域ID
     vector<Zone> result_z;
     ZoneServer *p_zone = static_cast<ZoneServer*>(mgr->get_module("zone").get());
-    cout << "123" << hvsID << endl;
+        cout << "start: p_zone->GetZoneInfo" << endl;
     bool result_b = p_zone->GetZoneInfo(result_z, hvsID);//sy函数
-    string result;
+        cout << "end: p_zone->GetZoneInfo" << endl;
+    //string result;
     if( !result_b ){
         cout << "get zoneID info fail" <<endl;
         return "fail";

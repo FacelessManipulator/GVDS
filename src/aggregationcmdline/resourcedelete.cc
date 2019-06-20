@@ -23,7 +23,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     string cmdtitle = "resourcedelete";
-    char *demo1[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("-ri")};
+    char *demo1[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--ri")};
     char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
     string storage_src_id = ""; // 存储资源UUID
 
@@ -32,14 +32,14 @@ int main(int argc, char *argv[])
     string cmdname = argv[0];
     commandline.cmd_desc_func_map[cmdname] = [](shared_ptr<po::options_description> res_cmdline_options) -> void {
         po::options_description command("资源删除模块");
-        command.add_options()("resourceid,ri", po::value<string>(), "存储资源UUID");
+        command.add_options()("ri", po::value<string>(), "存储资源UUID");
         res_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] = [&](shared_ptr<po::variables_map> res_variables_map) -> void {
-    if (res_variables_map->count("resourceid"))
+    if (res_variables_map->count("ri"))
     {
-        storage_src_id = (*res_variables_map)["resourceid"].as<string>();
+        storage_src_id = (*res_variables_map)["ri"].as<string>();
     } };
     commandline.start(); //开始解析命令行参数
     //TODO :判断是否有参数，如果没有，则报错

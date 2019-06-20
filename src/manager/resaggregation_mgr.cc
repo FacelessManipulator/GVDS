@@ -102,8 +102,7 @@ bool ResAggregation_MGR::del(const Rest::Request &req, Http::ResponseWriter res)
     snprintf(query, 256,
              "select storage_src_id,storage_src_name,host_center_id,host_center_name,"
              "total_capacity,assign_capacity,mgs_address,state"
-             "from `%s` where SUBSTR(META().id,0,%d) == '%s' order by "
-             "META().id",
+             "from `%s` where SUBSTR(META().id,0,%d) == '%s'",
              bucket.c_str(), StorageResource::prefix().length(),
              StorageResource::prefix().c_str());
   }

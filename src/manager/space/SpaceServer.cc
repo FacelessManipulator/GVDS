@@ -56,9 +56,12 @@ namespace hvs{
         {
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
-            std::string tmps_value = *vs;
-            tmps.deserialize(tmps_value);
-            tmp_si.push_back(tmps);
+            if(!err)
+            {
+                std::string tmps_value = *vs;
+                tmps.deserialize(tmps_value);
+                tmp_si.push_back(tmps);
+            }
         }
         result_s.swap(tmp_si);
     }
@@ -73,11 +76,16 @@ namespace hvs{
         // TODO: 空间位置选择接口
         auto [storid, hostid] = GetSpaceCreatePath(spaceSize, tmpm.hostCenterName, tmpm.storageSrcName);
         if(storid.empty() && hostid.empty()){
-            std::cerr << "SpaceCreate：空间位置选择失败！" << std::endl;
-            return "false";
+            std::cerr << "SpaceCreate：存储资源选择失败！" << std::endl;
+            return "-3";
         }
         tmpm.storageSrcID = storid;// 资源聚合模块查找 TODO: 用户可能指定存储位置
         tmpm.hostCenterID = hostid; // 通过制定的ID返回
+        int addret = SpaceSizeAdd(tmpm.storageSrcID, spaceSize); // 把新修改的空间用量记录到聚合模块中
+
+        if(addret != 0){
+            return "-1"; // 聚合模块修改失败，返回false字符串，用于之后的判断；
+        }
         //2、获取账户映射信息，创建空间目录,返回spacePath
         // TODO： 把空间组和用户使用 chown 修改； owner; ownerID, hostCenterID bool (&string &string, owner, hostcenterid) || string (owner, hostcenterid);
         //创建新建空间对应的空间文件夹，默认权限为0777,默认权限和用户有关
@@ -89,21 +97,19 @@ namespace hvs{
         int mkret = mkdir(rootdir.c_str(), 0770);
         if (mkret != 0 ) {
             perror("SpaceCreate");
-            return "false"; // 文件夹创建失败后，返回false字符串，用于之后的判断
+            return "-2"; // 文件夹创建失败后，返回false字符串，用于之后的判断
         }
         new_space.spacePath = tmp_uuid; // TODO: 默认当前 spacepath 在存储集群顶层，且空间的名字为相对lustre挂载点的路径，并且使用UUID作为文件夹的名字
         //3、权限增加模块 ： 不需要
         //4、空间分配容量记录到聚合模块中
-        int addret = SpaceSizeAdd(tmpm.storageSrcID, spaceSize); // 把新修改的空间用量记录到聚合模块中
 
-        if(addret != 0){
-            return "false"; // 聚合模块修改失败，返回false字符串，用于之后的判断；
-        }
         //5、写入数据库空间记录表中
         new_space.spaceName = spaceName;
         new_space.spaceSize = spaceSize;
         new_space.hostCenterID = tmpm.hostCenterID;
         new_space.storageSrcID = tmpm.storageSrcID;
+        new_space.status = true;
+        if (new_space.spaceName == "" || new_space.spaceSize == 0) return "-2";
         std::string tmps_key = new_space.spaceID;
         std::string tmps_value = new_space.serialize();
         spacePtr->set(tmps_key, tmps_value);
@@ -277,17 +283,9 @@ namespace hvs{
         std::string spaceID = req.spaceID;
         int64_t newSpaceSize = req.newSpaceSize;
 
-        int result_i = SpaceSizeChange(spaceID, newSpaceSize);
+        int result = SpaceSizeChange(spaceID, newSpaceSize);
 
-        std::string result;
-
-        if (result_i == 0){
-            result = "success";
-        }
-        else {
-            result = "fail";
-        }
-        response.send(Http::Code::Ok, result); //result;
+        response.send(Http::Code::Ok, json_encode(result)); //result;
     }
 
     int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {

@@ -65,12 +65,10 @@ int main(int argc, char *argv[])
             }
             else
             {
-                vector<string> lists;
+                vector<StorageResource> lists;
                 json_decode(ipcresult, lists);
-                for (auto res : lists)
+                for (auto qres : lists)
                 {
-                    StorageResource qres;
-                    qres.deserialize(res);
                     string resstate = "";
                     switch ((StorageResState)qres.state)
                     {

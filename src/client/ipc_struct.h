@@ -111,6 +111,7 @@ namespace hvs{
             put("host_center_id", host_center_id);
             put("host_center_name", host_center_name);
             put("total_capacity", total_capacity);
+            put("assign_capacity", assign_capacity);
             put("mgs_address", mgs_address);
             put("state", state);
         };
@@ -148,6 +149,7 @@ namespace hvs{
             get("host_center_id", host_center_id);
             get("host_center_name", host_center_name);
             get("total_capacity", total_capacity);
+            get("assign_capacity", assign_capacity);
             get("mgs_address", mgs_address);   
             get("state", state);            
         };

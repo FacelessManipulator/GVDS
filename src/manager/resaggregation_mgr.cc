@@ -47,10 +47,15 @@ bool ResAggregation_MGR::add(const Rest::Request &req, Http::ResponseWriter res)
   err = cbd->insert(storage_res->key(), storage_res->json_value());
   usleep(100000); // may take 100ms to be effective
   if (!err)
+  {
     res.send(Code::Accepted, "ok");
+    return true;
+  }
   else
+  {
     res.send(Code::Bad_Request, "fail");
-  return true;
+    return false;
+  }
 }
 
 bool ResAggregation_MGR::list(const Rest::Request &req, Http::ResponseWriter res)
@@ -83,7 +88,6 @@ bool ResAggregation_MGR::list(const Rest::Request &req, Http::ResponseWriter res
   }
   else
   {
-    cout << "here" << endl;
     res.send(Code::Bad_Request, "");
   }
 }
@@ -95,34 +99,30 @@ bool ResAggregation_MGR::del(const Rest::Request &req, Http::ResponseWriter res)
   auto cbd = static_cast<CouchbaseDatastore *>(dbPtr.get());
   auto uuid = req.param(":id").as<std::string>();
   string reluuid = StorageResource::prefix() + uuid;
-  char query[256];
+  char delstr[256];
 
   if (uuid == "all") //查询所有
   {
-    snprintf(query, 256,
-             "select storage_src_id,storage_src_name,host_center_id,host_center_name,"
-             "total_capacity,assign_capacity,mgs_address,state"
-             "from `%s` where SUBSTR(META().id,0,%d) == '%s' order by "
-             "META().id",
+    snprintf(delstr, 256,
+             "delete from `%s` where SUBSTR(META().id,0,%d) == '%s'",
              bucket.c_str(), StorageResource::prefix().length(),
              StorageResource::prefix().c_str());
   }
   else //查询对应资源
   {
-    snprintf(query, 256, "select * from `%s` where META().id == '%s'", bucket.c_str(), reluuid.c_str());
+    snprintf(delstr, 256, "delete from `%s` where META().id == '%s'", bucket.c_str(), reluuid.c_str());
   }
-  auto [iop_infos, err] = cbd->n1ql(string(query));
+  auto [iop_infos, err] = cbd->n1ql(string(delstr));
   if (!err)
   {
-    res.send(Code::Ok, json_encode(*iop_infos));
+    res.send(Code::Ok, "ok");
+    return true;
   }
   else
   {
-    cout << "here" << endl;
-    res.send(Code::Bad_Request, "");
+    res.send(Code::Bad_Request, "fail");
+    return false;
   }
-
-
 
   // auto err = dbPtr->remove(reluuid);
   // if (!err)
@@ -155,10 +155,15 @@ bool ResAggregation_MGR::update(const Rest::Request &req, Http::ResponseWriter r
   //err = cbd->insert(storage_res->key(), storage_res->json_value());
   usleep(100000); // may take 100ms to be effective
   if (!(dbPtr->set(storage_res->key(), storage_res->json_value())))
+  {
     res.send(Code::Accepted, "ok");
+    return true;
+  }
   else
+  {
     res.send(Code::Bad_Request, "fail");
-  return true;
+    return false;
+  }
 }
 
 std::shared_ptr<StorageResource> ResAggregation_MGR::parse_request(

@@ -77,7 +77,7 @@ bool ResAggregation_MGR::list(const Rest::Request &req, Http::ResponseWriter res
              bucket.c_str(), StorageResource::prefix().length(),
              StorageResource::prefix().c_str());
   }
-  else //查询对应资源
+  else //查询id对应资源
   {
     snprintf(query, 256, "select * from `%s` where META().id == '%s'", bucket.c_str(), reluuid.c_str());
   }
@@ -101,14 +101,14 @@ bool ResAggregation_MGR::del(const Rest::Request &req, Http::ResponseWriter res)
   string reluuid = StorageResource::prefix() + uuid;
   char delstr[256];
 
-  if (uuid == "all") //查询所有
+  if (uuid == "all") //删除所有
   {
     snprintf(delstr, 256,
              "delete from `%s` where SUBSTR(META().id,0,%d) == '%s'",
              bucket.c_str(), StorageResource::prefix().length(),
              StorageResource::prefix().c_str());
   }
-  else //查询对应资源
+  else //删除id对应资源
   {
     snprintf(delstr, 256, "delete from `%s` where META().id == '%s'", bucket.c_str(), reluuid.c_str());
   }

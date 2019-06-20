@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
                        const_cast<char *>("--cn"), const_cast<char *>("zhongkeyuan"),
                        const_cast<char *>("--tc"), const_cast<char *>("1000"),
                        const_cast<char *>("--ac"), const_cast<char *>("0"),
-                       const_cast<char *>("--mgs"), const_cast<char *>("http://192.168.5.119"),
+                       const_cast<char *>("--mgs"), const_cast<char *>("192.168.5.119"),
                        const_cast<char *>("--st"), const_cast<char *>("1")}; //BIGBOSSSY
 
     char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     string cmdname = argv[0];
     commandline.cmd_desc_func_map[cmdname] = [](shared_ptr<po::options_description> res_cmdline_options) -> void {
         po::options_description command("资源注册模块");
-        command.add_options()("ri", po::value<string>(), "存储资源UUID")("rn", po::value<string>(), "存储资源名称")("ci", po::value<string>(), "超算中心UUID")("cn", po::value<string>(), "超算中心名称")("tc", po::value<int64_t>(), "存储资源空间容量大小")("ac", po::value<int64_t>(), "已分配存储资源空间容量大小")("mgs", po::value<string>(), "资源mgs地址")("st", po::value<int>(), "资源状态,0:初始化中 1:正常使用 2:负载过载 3:注销退出中 4:已经退出");
+        command.add_options()("ri", po::value<string>(), "存储资源UUID")("rn", po::value<string>(), "存储资源名称")("ci", po::value<string>(), "超算中心UUID")("cn", po::value<string>(), "超算中心名称")("tc", po::value<int64_t>(), "存储资源空间容量大小(MB)")("ac", po::value<int64_t>(), "已分配存储资源空间容量大小(MB)")("mgs", po::value<string>(), "资源mgs地址")("st", po::value<int>(), "资源状态,0:初始化中 1:正常使用 2:负载过载 3:注销退出中 4:已经退出");
         res_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值

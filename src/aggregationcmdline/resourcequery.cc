@@ -22,9 +22,9 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-
-    char *demo1[2] = {const_cast<char *>("resourcequery"), const_cast<char *>("--ri")}; //BIGBOSSSY
-    char *demo2[2] = {const_cast<char *>("resourcequery"), const_cast<char *>("--help")};
+    string cmdtitle = "resourcequery";
+    char *demo1[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--ri")}; //BIGBOSSSY
+    char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
 
     string storage_src_id = ""; // 存储资源UUID
     CmdLineProxy commandline(argc, argv);
@@ -70,19 +70,41 @@ int main(int argc, char *argv[])
                 for (auto res : lists)
                 {
                     StorageResource qres;
-                    std::string value = res.substr(8, res.length() - 9);
-                    qres.deserialize(value);
+                    qres.deserialize(res);
+                    string resstate = "";
+                    switch ((StorageResState)qres.state)
+                    {
+                    case Initializing:
+                        resstate = "Initializing";
+                        break;
+                    case Normal:
+                        resstate = "Normal";
+                        break;
+                    case OverLoad:
+                        resstate = "OverLoad";
+                        break;
+                    case Logouting:
+                        resstate = "Logouting";
+                        break;
+                    case Quited:
+                        resstate = "Quited";
+                        break;
+                    default:
+                        break;
+                    }
+
                     int srcidlen = qres.storage_src_id.length();
                     int prefixlen = StorageResource::prefix().length();
-                    string realsrcid = qres.storage_src_id.substr(prefixlen,srcidlen - prefixlen);
-                    cout<<"存储资源ID:"<<realsrcid<<endl;
-                    cout<<"存储资源名称:"<<qres.storage_src_name<<endl;
-                    cout<<"存储资源所在超算中心UUID:"<<qres.host_center_id<<endl;
-                    cout<<"存储资源所在超算中心名称:"<<qres.host_center_name<<endl;
-                    cout<<"存储资源空间容量大小:"<<qres.total_capacity<<endl;
-                    cout<<"存储资源已分配空间容量大小:"<<qres.assign_capacity<<endl;
-                    cout<<"存储资源MGS地址:"<<qres.mgs_address<<endl;
-                    cout<<"存储资源状态:"<<(StorageResState)qres.state<<endl;
+                    string realsrcid = qres.storage_src_id.substr(prefixlen, srcidlen - prefixlen);
+                    cout << "存储资源ID:" << realsrcid << endl;
+                    cout << "存储资源名称:" << qres.storage_src_name << endl;
+                    cout << "存储资源所在超算中心UUID:" << qres.host_center_id << endl;
+                    cout << "存储资源所在超算中心名称:" << qres.host_center_name << endl;
+                    cout << "存储资源空间容量大小:" << qres.total_capacity << endl;
+                    cout << "存储资源已分配空间容量大小:" << qres.assign_capacity << endl;
+                    cout << "存储资源MGS地址:" << qres.mgs_address << endl;
+                    cout << "存储资源状态:" << resstate << endl;
+                    cout << endl;
                 }
             }
 
@@ -90,14 +112,12 @@ int main(int argc, char *argv[])
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         cout << "正在执行命令..." << endl;
-
-        // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "resourcequery";
+        ipcreq.cmdname = cmdtitle;
         ipcreq.storage_src_id = storage_src_id;
 
-        // TODO: 发送
-        auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
+        // 发送
+        auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str()); 
         ipcClient.write(*msg); // 传递一个消息；
         fu.get();              // TODO: 等待客户端返回结果
         ipcClient.stop();

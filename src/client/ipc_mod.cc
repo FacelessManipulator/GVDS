@@ -198,20 +198,6 @@ std::string ClientIPC::doresourcedelete(IPCreq &ipcreq) {
 std::string ClientIPC::doresourceregister(IPCreq &ipcreq) {
 
     return doregisterupdate(ipcreq,"/resource/register");
-    // ipcreq.cmdname = "resourcequery";
-    // string qrst = doresourcequery(ipcreq);
-    // std::vector <std::string> lists;
-    // json_decode(qrst, lists);
-    // if(qrst != "")
-    // {
-    // for(auto res : lists) 
-    // {
-    //     StorageResource qres; 
-    //     qres.deserialize(res); 
-    //     if(qres.storage_src_id == StorageResource::prefix() + newRes.storage_src_id) 
-    //     return "the resource already exit";
-    // }
-    // }
 }
 
 std::string ClientIPC::dospacerename(IPCreq &ipcreq) {

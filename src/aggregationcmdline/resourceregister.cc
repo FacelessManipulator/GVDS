@@ -22,8 +22,8 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-
-    char *demo1[17] = {const_cast<char *>("resourceregister"), const_cast<char *>("--ri"), const_cast<char *>("resource_0001"),
+    string cmdtitle = "resourceregister";
+    char *demo1[17] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--ri"), const_cast<char *>("resource_0001"),
                        const_cast<char *>("--rn"), const_cast<char *>("lustre_0001"),
                        const_cast<char *>("--ci"), const_cast<char *>("centerid_0001"),
                        const_cast<char *>("--cn"), const_cast<char *>("zhongkeyuan"),
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
                        const_cast<char *>("--mgs"), const_cast<char *>("http://192.168.5.119"),
                        const_cast<char *>("--st"), const_cast<char *>("1")}; //BIGBOSSSY
 
-    char *demo2[2] = {const_cast<char *>("resourceregister"), const_cast<char *>("--help")};
+    char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
 
     string storage_src_id = "";   // 存储资源UUID
     string storage_src_name = ""; // 存储资源名称
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
         //构造请求结构体，并发送
         IPCreq ipcreq;
-        ipcreq.cmdname = "resourceregister";
+        ipcreq.cmdname = cmdtitle;
         ipcreq.storage_src_id = storage_src_id;
         ipcreq.storage_src_name = storage_src_name;
         ipcreq.host_center_id = host_center_id;

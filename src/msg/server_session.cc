@@ -64,6 +64,8 @@ void ServerSession::do_read() {
       op->type = IO_PROXY_DATA;
       op->offset = buf.offset;
       op->id = buf.id;
+      op->fid = buf.fid;
+      op->open_flags = buf.flags;
       if (buf.is_read) {
         op->operation = IOProxyDataOP::read;
         op->size = static_cast<size_t>(buf.read_size);

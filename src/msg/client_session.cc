@@ -34,6 +34,9 @@ void ClientSession::close() {
 }
 
 int ClientSession::write(ioproxy_rpc_buffer &buffer) {
+  if(writer->is_stop()) {
+    return -ECONNRESET;
+  }
   clmdep_msgpack::sbuffer data;
   buffer.id = seq_n++;
   clmdep_msgpack::pack(data, buffer);
@@ -60,8 +63,13 @@ std::unique_ptr<ioproxy_rpc_buffer> ClientSession::wait_op(int id) {
   future<std::unique_ptr<ioproxy_rpc_buffer>> ft = move(it->second);
   futures.erase(id);
   session_lock.unlock();
-  unique_ptr<ioproxy_rpc_buffer> res = ft.get();
-  return res;
+  auto status = ft.wait_for(chrono::seconds(5));
+  if(status != future_status::ready)
+    return nullptr;
+  else {
+    unique_ptr<ioproxy_rpc_buffer> res = ft.get();
+    return res;
+  }
 }
 
 // currently without asio, we use epoll.

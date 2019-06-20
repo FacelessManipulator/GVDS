@@ -16,6 +16,7 @@ class UDTWriter : public Thread {
   void start();
   void close();
   void write(clmdep_msgpack::sbuffer &&data);
+  bool is_stop() {return m_stop;}
 
  protected:
   void *entry() override;

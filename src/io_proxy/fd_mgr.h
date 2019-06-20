@@ -17,6 +17,9 @@ namespace hvs {
         // should be local path
         int open(const std::string& path, int flags, int mode);
         int close(const std::string& path);
+        int create(const std::string& path, int mode);
+        int remove(const std::string& path);
+        int expire(const std::string& path);
         int flush(const std::string& path);
         bool setMaxFdNum(size_t num) {
             // max_fd_num should bigger than 1

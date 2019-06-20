@@ -10,6 +10,7 @@
 #include <pistache/http.h>
 #include <pistache/net.h>
 #include <atomic>
+#include <chrono>
 
 #include "opt_node.h"
 #include "myping.h"
@@ -155,11 +156,16 @@ int SelectNode::getRTT(map<string, double> &mymap){
             CenterInfo mycenter;
             mycenter.deserialize(center_Information); 
 
-        double rtt_beijing = subgetRTT(mycenter.centerIP["1"]);
-        double rtt_shanghai = subgetRTT(mycenter.centerIP["2"]);
-        double rtt_guangzhou = subgetRTT(mycenter.centerIP["3"]);
-        double rtt_changsha = subgetRTT(mycenter.centerIP["4"]);
-        double rtt_jinan = subgetRTT(mycenter.centerIP["5"]);
+        double rtt_beijing = subgetRTT(mycenter.centerIP["1"], 2,
+            atoi(mycenter.centerPort["1"].c_str()));
+        double rtt_shanghai = subgetRTT(mycenter.centerIP["2"], 2,
+            atoi(mycenter.centerPort["2"].c_str()));
+        double rtt_guangzhou = subgetRTT(mycenter.centerIP["3"], 2, 
+            atoi(mycenter.centerPort["3"].c_str()));
+        double rtt_changsha = subgetRTT(mycenter.centerIP["4"], 2, 
+            atoi(mycenter.centerPort["4"].c_str()));
+        double rtt_jinan = subgetRTT(mycenter.centerIP["5"], 2,
+         atoi(mycenter.centerPort["5"].c_str()));
 
         mymap[supercomputing_A] = rtt_beijing;
         mymap[supercomputing_B] = rtt_shanghai;
@@ -173,7 +179,24 @@ int SelectNode::getRTT(map<string, double> &mymap){
 }
 
 
-double SelectNode::subgetRTT(string hostOrIp){
+double SelectNode::subgetRTT(std::string hostOrIp, int type, int port) {
+    if(type == 1) {
+        return subgetRTT_ping(hostOrIp);
+    } else if(type == 2) {
+        return subgetRTT_rest(hostOrIp, port);
+    }
+}
+
+double SelectNode::subgetRTT_rest(string hostOrIp, int port) {
+  char url[64];
+  snprintf(url, 64, "http://%s:%d", hostOrIp.c_str(), port);
+  auto start = chrono::steady_clock::now();
+  string response = client->rpc->get_request(url, "/manager");
+  auto end = chrono::steady_clock::now();
+  return chrono::duration_cast<chrono::milliseconds>(end - start).count();
+}
+
+double SelectNode::subgetRTT_ping(string hostOrIp){
     
     //string hostOrIp = "www.baidu.com";
     int nsend = 0, nreceived = 0;
@@ -283,7 +306,8 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
 
 void SelectNode::getCenterInformation(){
   string response = client->rpc->get_request("http://localhost:9090", "/mconf/searchCenter");
-  center_Information = response;
+  if(response != "")
+    center_Information = response;
 }
 
 

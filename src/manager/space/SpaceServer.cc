@@ -56,6 +56,8 @@ namespace hvs{
         {
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
+            if(err)
+                continue;
             std::string tmps_value = *vs;
             tmps.deserialize(tmps_value);
             tmp_si.push_back(tmps);

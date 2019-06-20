@@ -13,39 +13,45 @@ void ClientRpc::stop() {
 }
 
 std::shared_ptr<RpcClient> ClientRpc::rpc_channel(
-    std::shared_ptr<IOProxyNode> node) {
+    std::shared_ptr<IOProxyNode> node, bool reconnect) {
   // Found, already established connection, maybe out-of-date.
   // Currently we not mantain the exists connection.
-  rpc_mutex.lock();
+  lock_guard<mutex> lock(rpc_mutex);
   auto rpcc = rpc_clients.find(node->uuid);
 
   if (rpcc != rpc_clients.end()) {
-    rpc_mutex.unlock();
-    return rpcc->second;
+    auto& rpc_client = rpcc->second;
+    if(reconnect) {
+      rpc_clients[node->uuid].reset(new RpcClient(node->ip, node->rpc_port));
+    }
+    return rpc_client;
   }
   // Just try create it
+  // may cost a lot of moment
   auto rpcp = make_shared<RpcClient>(node->ip, node->rpc_port);
   rpc_clients.try_emplace(node->uuid, rpcp);
-  rpc_mutex.unlock();
   return rpcp;
 }
 
 std::shared_ptr<ClientSession> ClientRpc::udt_channel(
-    std::shared_ptr<IOProxyNode> node) {
+    std::shared_ptr<IOProxyNode> node, bool reconnect) {
   // Found, already established connection, maybe out-of-date.
   // Currently we not mantain the exists connection.
-  rpc_mutex.lock();
+  lock_guard<mutex> lock(rpc_mutex);
   auto udtc = udt_clients.find(node->uuid);
 
   if (udtc != udt_clients.end()) {
-    rpc_mutex.unlock();
-    return udtc->second;
+    auto& udtc_old = udtc->second;
+    if(reconnect) {
+      auto new_con = udt_client.create_session(node->ip, node->data_port);
+      udtc_old.swap(new_con);
+    }
+    return udtc_old;
   }
   // Just try create it
   auto udtp = udt_client.create_session(node->ip, node->data_port);
   if (!udtp.get()) return nullptr;
   udt_clients.try_emplace(node->uuid, udtp);
-  rpc_mutex.unlock();
   return udtp;
 }
 
@@ -55,8 +61,17 @@ int ClientRpc::write_data(std::shared_ptr<IOProxyNode> node,
   auto udtc = udt_channel(node);
   if (!udtc.get()) return -ETIMEDOUT;
   int id = udtc->write(buf);
+  if(id == -ECONNRESET) {
+    udtc = udt_channel(node, true);
+    id = udtc->write(buf);
+  }
+  if(id < 0)
+    return -ECONNREFUSED;
   auto res = udtc->wait_op(id);
-  return res->error_code;
+  if(res)
+    return res->error_code;
+  else
+    return -ETIMEDOUT;
 }
 
 unique_ptr<ioproxy_rpc_buffer> ClientRpc::read_data(
@@ -65,19 +80,29 @@ unique_ptr<ioproxy_rpc_buffer> ClientRpc::read_data(
   auto udtc = udt_channel(node);
   if (!udtc.get()) return nullptr;
   int id = udtc->write(buf);
+  if(id < 0) {
+    udtc = udt_channel(node, true);
+    id = udtc->write(buf);
+  }
+  if(id < 0)
+    return nullptr;
   auto res = udtc->wait_op(id);
-  return res;
+  if(res)
+    return res;
+  else {
+    // timeout
+    return nullptr;
+  }
 }
 
 std::shared_ptr<Pistache::Http::Client> ClientRpc::rest_channel(
     std::string endpoint) {
   // Found, already established connection, maybe out-of-date.
   // Currently we not mantain the exists connection.
-  rpc_mutex.lock();
+  lock_guard<mutex> lock(rpc_mutex);
   auto restc = rest_clients.find(endpoint);
 
   if (restc != rest_clients.end()) {
-    rpc_mutex.unlock();
     return restc->second;
   }
   // Just try create it
@@ -85,7 +110,6 @@ std::shared_ptr<Pistache::Http::Client> ClientRpc::rest_channel(
   auto opts = Http::Client::options().threads(2).maxConnectionsPerHost(8);
   restcp->init(opts);
   rest_clients[endpoint] = restcp;
-  rpc_mutex.unlock();
   return restcp;
 }
 

@@ -64,7 +64,9 @@ public:
     
 
 private:
-    double subgetRTT(std::string hostOrIp);
+    double subgetRTT_ping(std::string hostOrIp);
+    double subgetRTT_rest(std::string hostOrIp, int port);
+    double subgetRTT(std::string hostOrIp, int type = 1, int port = 9090);
     int getRTT(std::map<std::string, double> &mymap); //获取RTT
     void write_rtt(std::vector<PAIR> &myvec); //写缓存
 

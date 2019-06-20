@@ -60,7 +60,7 @@ namespace hvs {
         return results;
     }
 
-    inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, int offset){
+    inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, int offset, int fd){
         std::string fullpath = hvsfs_fullpath(pathname);
         auto op = std::make_shared<IOProxyDataOP>();
         op->id = 1;
@@ -70,6 +70,7 @@ namespace hvs {
         op->should_prepare = true;
         op->size = static_cast<size_t>(size);
         op->offset = offset;
+        op->fid = fd;
         static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         if (op->error_code >= 0) {
             ioproxy_rpc_buffer res(pathname.c_str(), op->release_obuf(), offset, size);
@@ -91,14 +92,17 @@ namespace hvs {
         op->size = static_cast<size_t>(size);
         op->offset = offset;
         op->ibuf = obuf.buf.ptr;
+        op->fid = obuf.fid;
         static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
 
-    inline int ioproxy_open(const std::string pathname){
+    inline int ioproxy_open(const std::string pathname, int flags){
         std::string fullpath = hvsfs_fullpath(pathname);
         std::cout << "open: " << fullpath.c_str() << std::endl;
-        return 0;
+        // TODO: may have some secure issue if we default open an file in 0655
+        int fd = static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->fdm.open(fullpath, flags | O_RDWR, 0655);
+        return fd;
     }
 
     inline int ioproxy_close(const int fd){

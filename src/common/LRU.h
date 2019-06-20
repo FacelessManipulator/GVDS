@@ -17,6 +17,7 @@ struct LRUObject {
   K key;
   V data;
   LRUObject(const K& _key) : key(_key), pinned(false) {}
+  LRUObject(const K& _key, const V& _v) : key(_key), pinned(false), data(_v) {}
   LRUObject() : pinned(false) {}
   void swap(LRUObject& oths) {
     LRUObject tmp = oths;
@@ -86,6 +87,27 @@ class LRU {
       return *lruit;
     }
   }
+
+    void touch(K key, V value) {
+      auto indexIter = lruindex.find(key);
+      // not exists
+      if (indexIter == lruindex.end()) {
+        if (max_n != 0 && size() >= max_n) {
+          expire();
+        }
+        // I want to use emplace_front but unluckily, emplace_front not return
+        // iterator
+        auto lruit = lrulist.emplace(lrulist.begin(), key, value);
+        lruindex.insert_or_assign(key, lruit);
+        return ;
+      } else {
+        LRUObject<K, V> tmp = *(indexIter->second);
+        lrulist.erase(indexIter->second);
+        auto lruit = lrulist.emplace(lrulist.begin(), tmp);
+        indexIter->second = lruit;
+        return ;
+      }
+    }
 
   bool hit(K key) {
     auto indexIter = lruindex.find(key);

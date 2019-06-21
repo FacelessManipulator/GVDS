@@ -326,60 +326,75 @@ TEST_F(HVSZoneTest, Rename) {
  }
 
  TEST_F(HVSZoneTest, ZoneAdd) {
-    Http::Client client;
-    char url[256];
-    snprintf(url, 256, "http://localhost:%d/zone/add", 51521);
-    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    client.init(opts);
+    // Http::Client client;
+    // char url[256];
+    // snprintf(url, 256, "http://localhost:%d/zone/add", 51521);
+    // auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    // client.init(opts);
 
-    ZoneRequest req;
-    req.zoneName = "compute-zone";
-    req.ownerID = "000";
-    req.memberID.emplace_back("111");
-    req.memberID.emplace_back("222");
-    Space tmpm;
-    tmpm.hostCenterName = "beihang";
-    tmpm.storageSrcName = "localstorage";
-    tmpm.spacePath = "6f607624-d570-4cd0-afcc-574bec802110";
-    req.spacePathInfo = tmpm.serialize();
+    // ZoneRequest req;
+    // req.zoneName = "compute-zone";
+    // req.ownerID = "000";
+    // req.memberID.emplace_back("111");
+    // req.memberID.emplace_back("222");
+    // Space tmpm;
+    // tmpm.hostCenterName = "beihang";
+    // tmpm.storageSrcName = "localstorage";
+    // tmpm.spacePath = "6f607624-d570-4cd0-afcc-574bec802110";
+    // req.spacePathInfo = tmpm.serialize();
 
-    std::string value = req.serialize();
+    // std::string value = req.serialize();
 
-    auto response = client.post(url).body(value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
+    // auto response = client.post(url).body(value).send();
+    //     dout(-1) << "Client Info: post request " << url << dendl;
 
-    std::promise<bool> prom;
-    auto fu = prom.get_future();
-    response.then(
-        [&](Http::Response res) {
-        dout(-1) << "Manager Info: " << res.body() << dendl;
-        prom.set_value(true);
-        },
-        Async::IgnoreException);
-    EXPECT_TRUE(fu.get());
-    client.shutdown();
+    // std::promise<bool> prom;
+    // auto fu = prom.get_future();
+    // response.then(
+    //     [&](Http::Response res) {
+    //     dout(-1) << "Manager Info: " << res.body() << dendl;
+    //     prom.set_value(true);
+    //     },
+    //     Async::IgnoreException);
+    // EXPECT_TRUE(fu.get());
+    // client.shutdown();
  }
 
 
-// TEST_F(HVSZoneTest, simpleInfo){
-//     Zone tmp;
-//     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
-//           hvs::CouchbaseDatastore("zone_info"));
-//     zonePtr->init();
-//     std::string tmp_key = "aeed1d09-779d-4b8b-9005-c4c73d8b5ba1";
-//     auto [vp, err] = zonePtr->get(tmp_key);
-//     std::string tmp_value = *vp;//待插入报错
-//     std::cout << tmp_value << std::endl;
+TEST_F(HVSZoneTest, simpleInfo){
+    Zone tmp;
+    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
+          hvs::CouchbaseDatastore("zone_info"));
+    zonePtr->init();
+    std::string tmp_key = "0";
+    tmp.zoneID = "0";
+    tmp.zoneName = "hjtest";
+    tmp.ownerID = "0";
+    tmp.spaceID.push_back("0");
+    tmp.spaceID.push_back("1");
+    std::string tmp_value = tmp.serialize();//待插入报错   
+    zonePtr->set(tmp_key, tmp_value);
+    std::cout << tmp_value << std::endl;
 
-//     Space tmps;
-//     std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-//           hvs::CouchbaseDatastore("space_info"));
-//     spacePtr->init();
-//     tmp_key = "ee9637e0-f13f-46d5-b15d-38dcf1043708";
-//     auto [vps, errs] = spacePtr->get(tmp_key);
-//     tmp_value = *vps;//待插入报错
-//     std::cout << tmp_value << std::endl;
+    Space tmps;
+    std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+          hvs::CouchbaseDatastore("space_info"));
+    spacePtr->init();
+    tmp_key = "0";
+    tmps.spaceID = "0";
+    tmps.spaceName = "test1";
+    tmps.spaceSize = 10;
+    tmps.hostCenterID = "0";
+    tmps.storageSrcID = "0";
+    tmps.spacePath = "test1";
+    tmps.hostCenterName = "h0";
+    tmps.storageSrcName = "s0";
+    tmps.status = true;
+    
+    tmp_value = tmps.serialize();//待插入报错   ;//待插入报错
+    spacePtr->set(tmp_key, tmp_value);
+    std::cout << tmp_value << std::endl;
 
-// }
+}
 
 

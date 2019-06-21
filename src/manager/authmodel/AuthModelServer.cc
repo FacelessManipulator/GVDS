@@ -79,12 +79,12 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
     Space spacemeta;
     spacemeta.deserialize(auth_space.spaceinformation);
 
-    //TODO  确认是否匹配
+    //  确认是否匹配
     string hostCenterName  = spacemeta.hostCenterName;
 
     // 1、获取ownerID 本地对应的超算账户，testowner     这个要知道区域的每个空间都在哪个超算
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
-    string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); //TODO 确认是否hostCenterName匹配
+    string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); // 确认是否hostCenterName匹配
     if (value.compare("fail") == 0){
         cout << "SpacePermissionSyne fail" << endl;
         return -1;
@@ -95,7 +95,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
     vector<string>::iterator m_iter;
     for(m_iter = auth_space.memberID.begin(); m_iter != auth_space.memberID.end(); m_iter++){
         //1.1获取*iter对应的相应超算的本地账户，test1
-        //TODO 确认是否hostCenterName匹配
+        // 确认是否hostCenterName匹配
         string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
         if (m_value.compare("fail") == 0){
             cout << "SpacePermissionSyne fail" << endl;
@@ -105,10 +105,10 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
         member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
 
         //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
-        //TODO   usermod -a -G localpair.localaccount member_localpair.localaccount
+        //   usermod -a -G localpair.localaccount member_localpair.localaccount
         string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
         cout << "cmd :" << cmd << endl;
-        system(cmd.c_str()); //TODO 确认是否可行
+        system(cmd.c_str()); 
     }// for
 
     return 0;
@@ -145,12 +145,12 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
     Space spacemeta;
     spacemeta.deserialize(auth_space.spaceinformation);
 
-    //TODO  确认是否匹配
+    //  确认是否匹配
     string hostCenterName  = spacemeta.hostCenterName;
 
     // 1、获取ownerID 本地对应的超算账户，testowner     这个要知道区域的每个空间都在哪个超算
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
-    string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); //TODO 确认是否hostCenterName匹配
+    string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); // 确认是否hostCenterName匹配
     if (value.compare("fail") == 0){
         cout << "SpacePermissionSyne fail" << endl;
         return -1;
@@ -161,7 +161,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
     vector<string>::iterator m_iter;
     for(m_iter = auth_space.memberID.begin(); m_iter != auth_space.memberID.end(); m_iter++){
         //1.1获取*iter对应的相应超算的本地账户，test1
-        //TODO 确认是否hostCenterName匹配
+        // 确认是否hostCenterName匹配
         string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
         if (m_value.compare("fail") == 0){
             cout << "member delete fail" << endl;
@@ -171,10 +171,10 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
         member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
 
         //1.2将test1从testowner同名的组中删除    gpasswd testowner -d test222
-        //TODO       gpasswd localpair.localaccount -d member_localpair.localaccount
+        //      gpasswd localpair.localaccount -d member_localpair.localaccount
         string cmd = "gpasswd " + localpair.localaccount + " -d " + member_localpair.localaccount;
         cout << "cmd:" << cmd << endl;
-        system(cmd.c_str()); //TODO 确认是否可行
+        system(cmd.c_str()); 
     }// for
 
     return 0;
@@ -211,7 +211,7 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
     Space spacemeta;
     spacemeta.deserialize(groupinfo.spaceinformation);
 
-    //TODO  确认是否匹配
+    //  确认是否匹配
     string hostCenterName  = spacemeta.hostCenterName;
 
     // //没用到hvsID
@@ -269,7 +269,7 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
     return 0;
 }
 
-//1.2 空间权限同步接口  :: 被空间创建模块调用 :: 查询空间所属区域的权限，设置空间为此权限
+//1.2 空间权限同步接口  :: 被空间创建模块调用 :: 查询空间所属区域的权限，设置空间为此权限,并且查询组员，同步设置组员权限
 //一次只设置一个空间，不涉及跨超算调用【因此此接口已完成，不用再次修改】
 int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID){
     cout << "=======start: SpacePermissionSyne=======" << endl;
@@ -388,17 +388,23 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         //     return -1;
         // }
 
-        string tmp_cmd = "chown -R " + localpair.localaccount + ":" + localpair.localaccount + " " + spacepath;
-        system(tmp_cmd.c_str());
-            //2.3 设置权限：chmod （au_person）(au_group)0 文件名
-        string tmp_str = "0" + au_person + au_group + au_other;
-        int tmp_int = atoi(tmp_str.c_str());
-        cout << "tmp_int: " << tmp_int << endl;
-        //TODO  注意确认这块设置权限是否有问题
-        if (chmod(spacepath.c_str(), 0770) == -1){ //TODO    tmp_int=770 这块参数类型有问题，要0770才正常
-            cout << "chmod fail";
-            return -1;
-        }
+        string chown_cmd = "chown -R " + localpair.localaccount + ":" + localpair.localaccount + " " + spacepath;
+        cout << chown_cmd << endl;
+        system(chown_cmd.c_str());
+            //2.3 设置权限：chmod （au_person）(au_group)(au_other) 文件名      chmod 777 filename
+        string tmp_str = au_person + au_group + au_other;
+        //  注意确认这块设置权限是否有问题
+        // if (chmod(spacepath.c_str(), 0770) == -1){ //TODO    tmp_int=770 这块参数类型有问题，要0770才正常
+        //     cout << "chmod fail";
+        //     return -1;
+        // }
+        string chmod_cmd = "chmod " + tmp_str + " " + spacepath;
+        cout << chmod_cmd << endl;
+        system(chmod_cmd.c_str());
+        //TODO 设置组员权限
+            //获取组成员hvsID 对应的本地账户
+            //加入区域ownerID 对应的本地账户中
+        
 
     } //for 
 
@@ -479,7 +485,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         SelfAuthSpaceInfo auth_space;
         auth_space.spaceinformation = space_iter.serialize();
         auth_space.ownerID_zone = ownerID;
-        auth_space.memberID = memberID;//TODO 赋值有问题
+        auth_space.memberID = memberID;//赋值
 
         string tmp_value = auth_space.serialize();
 
@@ -677,7 +683,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID){
 //2.5
 
 
-//3、权限修改模块，提供一个rest api，让前端调用  //TODO  这个等其他的测试都通过再写吧，否则没意义【流程参考A4纸上的】
+//3、权限修改模块，提供一个rest api，让前端调用  //  这个等其他的测试都通过再写吧，否则没意义【流程参考A4纸上的】
 // 返回33权限， 0成功，-1失败
 void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start AuthModelServer function: AuthModifyRest ======"<< endl;

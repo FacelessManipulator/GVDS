@@ -15,6 +15,7 @@ using namespace hvs;
 using namespace std;
 
 int FdManager::open(const string& path, int flags, int mode) {
+    lock_guard<mutex> lock(fdm_mu);
     auto fd_it = fds.find(path);
     if (fd_it != fds.end()) {
         // we should trunc this preallocate file handler if trunc flag is set
@@ -50,6 +51,7 @@ int FdManager::close(const string& path) {
 }
 
 int FdManager::create(const string& path, int mode) {
+    lock_guard<mutex> lock(fdm_mu);
     int fd_new = ::open(path.c_str(), O_CREAT | O_SYNC ,mode);
     if(fd_new >= 0) {
         auto fd_it = fds.find(path);
@@ -66,6 +68,7 @@ int FdManager::create(const string& path, int mode) {
 }
 
 int FdManager::remove(const string& path) {
+    lock_guard<mutex> lock(fdm_mu);
     auto fd_it = fds.find(path);
     if (fd_it != fds.end()) {
         // close fd
@@ -78,6 +81,7 @@ int FdManager::remove(const string& path) {
 }
 
 int FdManager::expire(const string& path) {
+    lock_guard<mutex> lock(fdm_mu);
     auto fd_it = fds.find(path);
     int fd_old = -1;
     if (fd_it != fds.end()) {
@@ -90,6 +94,7 @@ int FdManager::expire(const string& path) {
 }
 
 int FdManager::flush(const string& path) {
+    lock_guard<mutex> lock(fdm_mu);
     // out handler, not really close file but only flush it
     auto fd_it = fds.find(path);
     if (fd_it != fds.end()) {

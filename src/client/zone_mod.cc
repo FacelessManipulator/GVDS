@@ -25,7 +25,7 @@ void hvs::ClientZone::stop() { m_stop = true; }
 
 void *ClientZone::entry() {
   while (!m_stop) {
-    client->zone->GetZoneInfo("202");
+    client->zone->GetZoneInfo("0");
     std::this_thread::sleep_for(std::chrono::seconds(10));
   }
 }
@@ -44,7 +44,7 @@ bool hvs::ClientZone::GetZoneInfo(std::string clientID) {
   spacemap_mutex.lock_shared();
   spaceuuid_to_metadatamap.clear();  // 进行清空map
   spacemap_mutex.unlock_shared();
-  zonemap_mutex.lock_shared();
+  zonemap_mutex.lock();
   zonemap.clear();
   for (auto it : zoneinfores) {
     // TODO: 获取空间信息对每个空间，并更新到内存中；
@@ -56,7 +56,7 @@ bool hvs::ClientZone::GetZoneInfo(std::string clientID) {
     }
     spacemap_mutex.unlock_shared();
   }
-  zonemap_mutex.unlock_shared();
+  zonemap_mutex.unlock();
   return true;
 }
 
@@ -98,6 +98,7 @@ std::tuple<std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> hvs::Clie
   } else {
     remotepath = path.substr(pos);
   }
+  lock_guard<mutex> lock(zonemap_mutex);
   auto mapping = zonemap.find(zonename);
   if (mapping != zonemap.end()) {
     auto zone = mapping->second;

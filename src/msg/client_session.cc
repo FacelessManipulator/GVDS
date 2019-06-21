@@ -34,7 +34,7 @@ void ClientSession::close() {
 }
 
 int ClientSession::write(ioproxy_rpc_buffer &buffer) {
-  if(writer->is_stop()) {
+  if(writer->error_stat()) {
     return -ECONNRESET;
   }
   clmdep_msgpack::sbuffer data;
@@ -50,6 +50,7 @@ int ClientSession::write(ioproxy_rpc_buffer &buffer) {
   ready_promises[buffer.id] = move(ready_promise);
   session_lock.unlock();
   writer->write(std::move(data));
+  dout(-1) << "client write: " << buffer.id << " len: " << buffer.buf.size << dendl;
   return buffer.id;
 }
 
@@ -108,6 +109,7 @@ void ClientSession::do_read() {
       // handle the message
       try {
         auto buf = msg.as<ioproxy_rpc_buffer>();
+        lock_guard<mutex> lock(session_lock);
         auto it = ready_promises.find(buf.id);
         if (it == ready_promises.end()) {
           // error duplicated msg?
@@ -115,7 +117,15 @@ void ClientSession::do_read() {
         } else {
           promise<unique_ptr<ioproxy_rpc_buffer>> pm = move(it->second);
           ready_promises.erase(it);
-          pm.set_value(make_unique<ioproxy_rpc_buffer>(move(buf)));
+          if(auto_handler.count(buf.id)) {
+            auto ft = futures.find(buf.id);
+            if(ft != futures.end())
+              futures.erase(ft);
+            // TODO: Should we handle the write state inline? such as resend the error write?
+            // usually, resend still cause errors. Error should be prevented in open or stat call.
+          } else {
+            pm.set_value(make_unique<ioproxy_rpc_buffer>(move(buf)));
+          }
         }
       } catch (exception &e) {
         // msg corrupt

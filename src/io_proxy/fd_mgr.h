@@ -4,6 +4,7 @@
 
 #pragma once
 #include "common/LRU.h"
+#include <mutex>
 #include <string>
 
 namespace hvs {
@@ -12,6 +13,7 @@ namespace hvs {
     private:
         LRU<std::string, int> fds;
         size_t max_fd_num;
+        std::mutex fdm_mu;
     public:
         FdManager(IOProxy* ioProxy) : max_fd_num(500), iop(ioProxy) {}
         // should be local path

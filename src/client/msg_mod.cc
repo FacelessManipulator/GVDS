@@ -43,6 +43,7 @@ std::shared_ptr<ClientSession> ClientRpc::udt_channel(
   if (udtc != udt_clients.end()) {
     auto& udtc_old = udtc->second;
     if(reconnect) {
+      udt_client.close_session(udtc_old);
       auto new_con = udt_client.create_session(node->ip, node->data_port);
       udtc_old.swap(new_con);
     }
@@ -72,6 +73,24 @@ int ClientRpc::write_data(std::shared_ptr<IOProxyNode> node,
     return res->error_code;
   else
     return -ETIMEDOUT;
+}
+
+int ClientRpc::write_data_async(std::shared_ptr<IOProxyNode> node,
+                          ioproxy_rpc_buffer& buf) {
+  // TODO: We assume RpcClient can concurently call
+  auto udtc = udt_channel(node);
+  if (!udtc.get()) return -ETIMEDOUT;
+  int id = udtc->write(buf);
+  if(id == -ECONNRESET) {
+    udtc = udt_channel(node, true);
+    if (!udtc.get()) return -ETIMEDOUT;
+    id = udtc->write(buf);
+  }
+  if(id < 0)
+    return -ECONNREFUSED;
+  // not waiting, result immediately
+  udtc->auto_handle(id);
+  return buf.buf.size;
 }
 
 unique_ptr<ioproxy_rpc_buffer> ClientRpc::read_data(

@@ -29,7 +29,7 @@ class ClientZone : public ClientModule, public Thread {
   void *entry() override;
 
  private:
-  std::shared_mutex zonemap_mutex;
+  std::mutex zonemap_mutex;
   std::shared_mutex spacemap_mutex;
 
  public:

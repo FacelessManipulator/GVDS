@@ -22,10 +22,13 @@ class ClientRpc : public ClientModule {
   std::unordered_map<std::string, std::shared_ptr<RpcClient>> rpc_clients;
   std::unordered_map<std::string, std::shared_ptr<ClientSession>> udt_clients;
   std::unordered_map<std::string, std::shared_ptr<Pistache::Http::Client>> rest_clients;
+  std::unordered_map<std::string, Pistache::Http::CookieJar> rest_cookies;
+
+private:
   std::shared_ptr<RpcClient> rpc_channel(std::shared_ptr<IOProxyNode> node, bool reconnect = false);
   std::shared_ptr<ClientSession> udt_channel(std::shared_ptr<IOProxyNode> node, bool reconnect = false);
   std::shared_ptr<Pistache::Http::Client> rest_channel(std::string endpoint);
-  std::unordered_map<std::string, Pistache::Http::CookieJar> rest_cookies;
+  // auto handle the data write operation response
 
  public:
   ClientRpc(const char* name, Client* cli) : ClientModule(name, cli) {
@@ -43,6 +46,7 @@ class ClientRpc : public ClientModule {
       Args... args);
 
   int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
+  int write_data_async(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
   std::unique_ptr<ioproxy_rpc_buffer> read_data(
       std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
   // WARNNING: the return result may be empty if request failed

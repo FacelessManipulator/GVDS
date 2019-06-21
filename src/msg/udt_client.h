@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "msg/client_session.h"
 #include "rpc/msgpack.hpp"
+#include <mutex>
 
 namespace hvs {
 
@@ -34,6 +35,7 @@ class UDTClient {
   unsigned long buff_size;
 
   friend class UDTSession;
+  friend class ClientSession;
 };
 
 }  // namespace hvs

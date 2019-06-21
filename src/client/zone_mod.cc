@@ -1,8 +1,5 @@
 #include <utility>
-
-#include <utility>
-
-#include <utility>
+#include "client/clientuser/ClientUser.h"
 
 //
 // Created by yaowen on 5/28/19.
@@ -25,7 +22,9 @@ void hvs::ClientZone::stop() { m_stop = true; }
 
 void *ClientZone::entry() {
   while (!m_stop) {
-    client->zone->GetZoneInfo("0");
+    auto client_id = client->user->getAccountID();
+    if(client_id != "")
+        client->zone->GetZoneInfo(client_id);
     std::this_thread::sleep_for(std::chrono::seconds(10));
   }
 }

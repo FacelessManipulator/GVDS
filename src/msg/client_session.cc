@@ -50,7 +50,6 @@ int ClientSession::write(ioproxy_rpc_buffer &buffer) {
   ready_promises[buffer.id] = move(ready_promise);
   session_lock.unlock();
   writer->write(std::move(data));
-  dout(-1) << "client write: " << buffer.id << " len: " << buffer.buf.size << dendl;
   return buffer.id;
 }
 

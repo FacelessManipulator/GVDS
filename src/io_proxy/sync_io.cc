@@ -58,7 +58,6 @@ ssize_t sync_io::sread(const std::string& path, void *buf, size_t count, off_t o
 
 ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, struct OP* op) {
     ssize_t ret = pwrite(fd, buf, count, offset); // 该操作是原子操作
-    dout(-1) << "write-id: " << op->id << " off()/4k: " << offset/4096 << "len: " << count <<" res: " << ret << dendl;
     op->error_code = static_cast<int>(ret);
     if(ret == -1){
         op->error_code = -errno;

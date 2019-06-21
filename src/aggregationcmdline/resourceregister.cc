@@ -22,17 +22,17 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-
-    char *demo1[17] = {const_cast<char *>("resourceregister"), const_cast<char *>("--ri"), const_cast<char *>("resource_0001"),
+    string cmdtitle = "resourceregister";
+    char *demo1[17] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--ri"), const_cast<char *>("resource_0001"),
                        const_cast<char *>("--rn"), const_cast<char *>("lustre_0001"),
                        const_cast<char *>("--ci"), const_cast<char *>("centerid_0001"),
                        const_cast<char *>("--cn"), const_cast<char *>("zhongkeyuan"),
                        const_cast<char *>("--tc"), const_cast<char *>("1000"),
                        const_cast<char *>("--ac"), const_cast<char *>("0"),
-                       const_cast<char *>("--mgs"), const_cast<char *>("http://192.168.5.119"),
+                       const_cast<char *>("--mgs"), const_cast<char *>("192.168.5.119"),
                        const_cast<char *>("--st"), const_cast<char *>("1")}; //BIGBOSSSY
 
-    char *demo2[2] = {const_cast<char *>("resourceregister"), const_cast<char *>("--help")};
+    char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
 
     string storage_src_id = "";   // 存储资源UUID
     string storage_src_name = ""; // 存储资源名称
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     string cmdname = argv[0];
     commandline.cmd_desc_func_map[cmdname] = [](shared_ptr<po::options_description> res_cmdline_options) -> void {
         po::options_description command("资源注册模块");
-        command.add_options()("ri", po::value<string>(), "存储资源UUID")("rn", po::value<string>(), "存储资源名称")("ci", po::value<string>(), "超算中心UUID")("cn", po::value<string>(), "超算中心名称")("tc", po::value<int64_t>(), "存储资源空间容量大小")("ac", po::value<int64_t>(), "已分配存储资源空间容量大小")("mgs", po::value<string>(), "资源mgs地址")("st", po::value<int>(), "资源状态,0:初始化中 1:正常使用 2:负载过载 3:注销退出中 4:已经退出");
+        command.add_options()("ri", po::value<string>(), "存储资源UUID")("rn", po::value<string>(), "存储资源名称")("ci", po::value<string>(), "超算中心UUID")("cn", po::value<string>(), "超算中心名称")("tc", po::value<int64_t>(), "存储资源空间容量大小(MB)")("ac", po::value<int64_t>(), "已分配存储资源空间容量大小(MB)")("mgs", po::value<string>(), "资源mgs地址")("st", po::value<int>(), "资源状态,0:初始化中 1:正常使用 2:负载过载 3:注销退出中 4:已经退出");
         res_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         if (res_variables_map->count("tc"))
             total_capacity = (*res_variables_map)["tc"].as<int64_t>();
         if (res_variables_map->count("ac"))
-            total_capacity = (*res_variables_map)["ac"].as<int64_t>();
+            assign_capacity = (*res_variables_map)["ac"].as<int64_t>();
         if (res_variables_map->count("mgs"))
             mgs_address = (*res_variables_map)["mgs"].as<string>();
         if (res_variables_map->count("st"))
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
         //构造请求结构体，并发送
         IPCreq ipcreq;
-        ipcreq.cmdname = "resourceregister";
+        ipcreq.cmdname = cmdtitle;
         ipcreq.storage_src_id = storage_src_id;
         ipcreq.storage_src_name = storage_src_name;
         ipcreq.host_center_id = host_center_id;
@@ -108,7 +108,6 @@ int main(int argc, char *argv[])
         ipcreq.assign_capacity = assign_capacity;
         ipcreq.mgs_address = mgs_address;
         ipcreq.state = state;
-
         //发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); //传递一个消息

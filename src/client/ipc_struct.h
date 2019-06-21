@@ -44,13 +44,13 @@ namespace hvs{
         int port ;  // 端口号
         std::string zonename; // 空间名称
         std::string newzonename;
-        std::string zoneuuid;
+        //std::string zoneuuid;
         std::string ownID; // 用户ID
         std::vector<std::string> memID;
         std::vector<std::string> memName;
         std::string newspacename; // "BUAABUAA";
-        std::string spaceuuid;
-        std::vector<std::string> spaceuuids;
+        //std::string spaceuuid;
+        //std::vector<std::string> spaceuuids;
         std::string spacename;
         std::vector<std::string> spacenames;
         int64_t newspacesize;
@@ -84,13 +84,13 @@ namespace hvs{
             put("port", port);
             put("zonename", zonename);
             put("newzonename", newzonename);
-            put("zoneuuid", zoneuuid);
+            //put("zoneuuid", zoneuuid);
             put("ownID", ownID);
             put("memID", memID);
             put("memName", memName);
             put("newspacename", newspacename);
-            put("spaceuuid", spaceuuid);
-            put("spaceuuids", spaceuuids);
+            //put("spaceuuid", spaceuuid);
+            //put("spaceuuids", spaceuuids);
             put("spacename", spacename);
             put("spacenames", spacenames);
             put("newspacesize", newspacesize);
@@ -111,6 +111,7 @@ namespace hvs{
             put("host_center_id", host_center_id);
             put("host_center_name", host_center_name);
             put("total_capacity", total_capacity);
+            put("assign_capacity", assign_capacity);
             put("mgs_address", mgs_address);
             put("state", state);
         };
@@ -121,13 +122,13 @@ namespace hvs{
             get("port", port);
             get("zonename", zonename);
             get("newzonename", newzonename);
-            get("zoneuuid", zoneuuid);
+            //get("zoneuuid", zoneuuid);
             get("ownID", ownID);
             get("memID", memID);
             get("memName", memName);
             get("newspacename", newspacename);
-            get("spaceuuid", spaceuuid);
-            get("spaceuuids", spaceuuids);
+            //get("spaceuuid", spaceuuid);
+            //get("spaceuuids", spaceuuids);
             get("spacename", spacename);
             get("spacenames", spacenames);
             get("newspacesize", newspacesize);
@@ -148,6 +149,7 @@ namespace hvs{
             get("host_center_id", host_center_id);
             get("host_center_name", host_center_name);
             get("total_capacity", total_capacity);
+            get("assign_capacity", assign_capacity);
             get("mgs_address", mgs_address);   
             get("state", state);            
         };

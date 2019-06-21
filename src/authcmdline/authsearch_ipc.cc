@@ -5,13 +5,16 @@
 
 // TODO: 添加的新头文件
 // #include "client/clientuser/ClientUser_struct.h"
+#include "client/clientuser/ClientAuth_struct.h"
 #include "ipc/IPCClient.h"
 #include "client/ipc_struct.h"
 
 
 
+
 using namespace Pistache;
 using namespace hvs;
+using namespace std;
 //bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
  * zonerename 命令行客户端
@@ -23,14 +26,10 @@ int main(int argc, char* argv[]){
 
     //权限查询
     char* demo1[7] = {const_cast<char *>("authsearch_ipc"), 
-                       const_cast<char *>("--ip"), const_cast<char *>("127.0.0.1"),
-                       const_cast<char *>("-p"), const_cast<char *>("9090"), 
                        const_cast<char *>("--user"), const_cast<char *>("lbq-7")};
     char* demo2[2] = {const_cast<char *>("authsearch_ipc"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
-    std::string ip ;//= "127.0.0.1";
-    int port ;//= 55107;
     std::string username;//= "lbq-7";
 
     // TODO: 获取命令行信息
@@ -49,14 +48,6 @@ int main(int argc, char* argv[]){
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
-        if (sp_variables_map->count("ip"))
-        {
-            ip = (*sp_variables_map)["ip"].as<std::string>();
-        }
-        if (sp_variables_map->count("port"))
-        {
-            port = (*sp_variables_map)["port"].as<int>();
-        }
         if (sp_variables_map->count("user"))
         {
             username = (*sp_variables_map)["user"].as<std::string>();
@@ -73,19 +64,34 @@ int main(int argc, char* argv[]){
     }
 
      try{
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             // 客户端输出服务端发送来的消息
-//            char tmp[IPCMessage::max_body_length] = {0};
-//            std::memcpy(tmp, msg.body(), msg.body_length());
             std::string ipcresult (msg.body(), msg.body_length());
-            if (ipcresult != "success"){
-                //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
-                std::cerr << ipcresult << std::endl; // 执行结果
-            } else {
-                std::cout << "执行结果：" << ipcresult << std::endl;
+            if(ipcresult == "fail"){
+                std::cout << "Not Found Zone" << std::endl;
             }
+            else if(ipcresult == "33"){
+                std::cout << "Verification failed, access denied" << std::endl;
+            }
+            else{
+                AuthSearch myauth;
+                myauth.deserialize(ipcresult);
+
+                cout << myauth.hvsID << endl;
+                vector<string>::iterator iter;
+                for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
+                    cout << "区域名字： " << *iter << endl;
+                    cout << "区域读权限： " << myauth.read[*iter] << endl;
+                    cout << "区域写权限： " << myauth.write[*iter] << endl;
+                    cout << "区域执行权限： "<< myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
+                    cout << endl;
+                }
+            }
+            prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
@@ -94,16 +100,15 @@ int main(int argc, char* argv[]){
          // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
         ipcreq.cmdname = "authsearch"; //这里每个不一样
-        ipcreq.ip = ip ; // ip
-        ipcreq.port = port;  // 端口号
-       
+        
         ipcreq.accountName = username; //账户名
         
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        sleep(1); // TODO: 等待客户端返回结果
+        fu.get();
+        // sleep(1); // TODO: 等待客户端返回结果
         ipcClient.stop();
 
     } catch (std::exception &e) {

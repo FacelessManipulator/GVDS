@@ -1,4 +1,5 @@
 #include "client/msg_mod.h"
+#include "client/clientuser/ClientUser.h"
 
 using namespace std;
 using namespace hvs;
@@ -138,7 +139,8 @@ std::string ClientRpc::post_request(const std::string& endpoint,
   try {
     auto restc = rest_channel(endpoint);
     string real_url = endpoint + url;
-    auto response = restc->post(real_url).body(data).send();
+    string mtoken = client->user->getToken();
+    auto response = restc->post(real_url).cookie(Http::Cookie("token", mtoken)).body(data).send();
     dout(15) << "Info: Client post request to " << url << dendl;
 
     auto prom_p = make_shared<promise<std::string>>();
@@ -179,7 +181,8 @@ string ClientRpc::get_request(const string& endpoint, const string& url) {
   try {
     auto restc = rest_channel(endpoint);
     string real_url = endpoint + url;
-    auto response = restc->get(real_url).send();
+    string mtoken = client->user->getToken();
+    auto response = restc->get(real_url).cookie(Http::Cookie("token", mtoken)).send();
     dout(15) << "Info: Client get request to " << url << dendl;
 
     auto prom_p = make_shared<promise<std::string>>();

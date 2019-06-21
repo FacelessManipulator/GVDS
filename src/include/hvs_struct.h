@@ -231,6 +231,7 @@ struct ZoneRequest : public hvs::JsonSerializer {
     put("ZoneName", zoneName);
     put("newZoneName", newZoneName);
     put("spaceSize", spaceSize);
+    put("spaceName", spaceName);
     put("spacePathInfo", spacePathInfo);
   }
 
@@ -246,6 +247,7 @@ struct ZoneRequest : public hvs::JsonSerializer {
     get("ZoneName", zoneName);
     get("newZoneName", newZoneName);
     get("spaceSize", spaceSize);
+    get("spaceName", spaceName);
     get("spacePathInfo", spacePathInfo);
   }
 };

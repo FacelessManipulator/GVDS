@@ -43,7 +43,7 @@ couchbase = {
 
 rest = {
     port = 9090;
-    thread_num = 6;
+    thread_num = 10;
 };
 
 // only client node need these settings

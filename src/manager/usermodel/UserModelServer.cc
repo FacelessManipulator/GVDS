@@ -164,14 +164,15 @@ string UserModelServer::UserRegister(Account &person){
     
     int f1_flag = f0_dbPtr->set(pari_key, pair_value);
     if (f1_flag != 0){
-        string result_0 = "Registration fail: DB[account_map_id] write fail;";
-        return result_0;
+        cout << "Registration fail: DB[account_map_id] write fail;" << endl;
+        return "Registration fail";
     }
 
     //sc_accounut_pool取出并调整,   sc_account_info写入
     bool buildmap = BuildAccountMapping(person.accountID);
     if(!buildmap){
-        return "buildmap fail";
+        cout << "buildmap fail" << endl;
+        return "Registration fail";
     }
 
     //写入account_info表
@@ -186,8 +187,8 @@ string UserModelServer::UserRegister(Account &person){
     
     int flag = f0_dbPtr->set(person_key, person_value);
     if (flag != 0){
-        string result_0 = "Registration fail: DB[account_info] write fail;";
-        return result_0;
+        cout << "Registration fail: DB[account_info] write fail;" << endl;
+        return "Registration fail";
     }
     else{
         string result_1 = "Dear:" + person.accountName + ", registration success";
@@ -303,14 +304,15 @@ bool UserModelServer::UserLogin(std::string account, std::string pass, std::stri
 
 
 //账户信息查询
+//返回33权限，-1失败，正常值；
 void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: getUserinfoRest ======"<< endl;
 
-    // bool valid = auth_token(request);
-    // if (!valid){
-    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-    //     return;
-    // }
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "33");
+        return;
+    }
     
     
     auto uuid = request.param(":name").as<std::string>();
@@ -322,7 +324,7 @@ void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::Respon
         response.send(Http::Code::Ok, data);
     }
     else{
-        response.send(Http::Code::Not_Found, data); //point
+        response.send(Http::Code::Not_Found, "-1"); //point
     }
     
     cout << "====== end UserModelServer function: getUserinfoRest ======"<< endl;
@@ -355,7 +357,7 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
     auto [pvalue, error] = f0_dbPtr->get(key);
     if (error){
         is_get_success = false;
-        return "Search fail, try again.";
+        return "SearchFail";
     }
 
     cout<<"pvalue:"<< *pvalue <<endl;
@@ -364,15 +366,15 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
 }
 
 
-
+// 返回33权限，应有结果；
 void UserModelServer::modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: modifyUserinfoRest ======"<< endl;
 
-    // bool valid = auth_token(request);
-    // if (!valid){
-    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-    //     return;
-    // }
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "Verification failed, access denied");
+        return;
+    }
 
     auto info = request.body();
     cout << info << endl;
@@ -404,7 +406,8 @@ string UserModelServer::modifyUserinfo(Account &person){
     
     int flag = f0_dbPtr->set(person_key, person_value);
     if (flag != 0){
-        return "Modify fail: DB[account_info] update fail";
+        cout << "Modify fail: DB[account_info] update fail" << endl;
+        return "Modify fail";
     }
     else{
         return "Modify success";
@@ -412,14 +415,15 @@ string UserModelServer::modifyUserinfo(Account &person){
 
 }
 
+//返回：33权限，字符串-1失败, 正常值；
 void UserModelServer::exitUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: exitUserAccountRest ======"<< endl;
 
-    // bool valid = auth_token(request);
-    // if (!valid){
-    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-    //     return;
-    // }
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "33");
+        return;
+    }
     
     //auto uuid = request.param(":id").as<std::string>();
     
@@ -456,11 +460,11 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
     int flag = f0_dbPtr->remove(mtoken);
     if(flag == 0){
         is_exit_success = true;
-        return "Eixt Success.";
+        return "Eixt success.";
     }
     else{
         is_exit_success = false;
-        return "Exit False.";
+        return "-1";
     }
     
 //删除token，返回登录页
@@ -468,14 +472,15 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
 
 
 //彻底注销虚拟数据空间用户
+//返回33权限，-1，-2，正常结果
 void UserModelServer::cancellationUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: cancellationUserAccountRest ======"<< endl;
 
-    // bool valid = auth_token(request);
-    // if (!valid){
-    //     response.send(Http::Code::Unauthorized, "Verification failed, access denied");
-    //     return;
-    // }
+    bool valid = auth_token(request);
+    if (!valid){
+        response.send(Http::Code::Unauthorized, "33");
+        return;
+    }
 
     auto uuid = request.param(":id").as<std::string>();
     bool is_cancel_success = true;
@@ -503,7 +508,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     if(error){
         is_cancel_success = false;
         cout << "access to db[account_info] fail" << endl;
-        return "User cancellation fail";
+        return "-1";
     }
     Account hvsperson;
     hvsperson.deserialize(*pvalue);
@@ -513,14 +518,15 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     if(!is_district_cancel){
         is_cancel_success = false;
         cout << "User cancellation fail, your Zone is not cancal success" << endl;
-        return "User cancellation fail";
+        return "-2";
     }
 
     //释放映射的账户，删除sc_account_info中以uuid为key的内容
     bool is_remove_acc = RemoveAccountMapping(uuid);
     if(!is_remove_acc){
         is_cancel_success = false;
-        return "Account map remove fail";
+        cout << "Account map remove fail" << endl;
+        return "-1";
     }
 
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -530,7 +536,8 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     int flag = f1_dbPtr->remove(uuid);
     if(flag){
         is_cancel_success = false;
-        return "Remove account fail";
+        cout << "Remove account fail" << endl;
+        return "-1";
     }
 
     //调用账户退出子函数,删除token，但是不删也没事
@@ -541,7 +548,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     if(acc_map_id_flag){
         is_cancel_success = false;
         cout << "when db[account_map_id] remove, fail" << endl;
-        return "Remove account fail";
+        return "-1";
     }
 
     //删除account_info
@@ -549,7 +556,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     if(acc_info_flag){
         is_cancel_success = false;
         cout << "when db[account_map_id] remove, fail" << endl;
-        return "Remove account fail";
+        return "-1";
     }
 
     is_cancel_success = true;

@@ -30,13 +30,11 @@ int main(int argc, char* argv[]){
     char* demo2[2] = {const_cast<char *>("spacerename"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
-    std::string ip ;//= "127.0.0.1";
-    int port ;//= 55107;
+
     std::string zonename ;//= "syremotezone"; // 空间名称
-    std::string ownID;// = "202"; // 用户ID
     std::string spacename;// = "NewWorld";
     std::string newspacename;// = "BUAABUAA";
-    std::string spaceuuid;
+
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
@@ -47,10 +45,7 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("空间重命名模块");
         command.add_options()
-                ("ip", po::value<std::string>(), "管理节点IP")
-                ("port,p", po::value<int>(), "管理节点端口号")
                 ("zonename", po::value<std::string>(), "区域名称")
-                ("id", po::value<std::string>(), "管理员ID")
                 ("oldname,o", po::value<std::string>(), "空间旧名称")
                 ("newname,n", po::value<std::string>(), "空间新名称")
                 ;
@@ -58,21 +53,9 @@ int main(int argc, char* argv[]){
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
-        if (sp_variables_map->count("ip"))
-        {
-            ip = (*sp_variables_map)["ip"].as<std::string>();
-        }
-        if (sp_variables_map->count("port"))
-        {
-            port = (*sp_variables_map)["port"].as<int>();
-        }
         if (sp_variables_map->count("zonename"))
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
-        }
-        if (sp_variables_map->count("id"))
-        {
-            ownID = (*sp_variables_map)["id"].as<std::string>();
         }
         if (sp_variables_map->count("oldname"))
         {
@@ -86,13 +69,15 @@ int main(int argc, char* argv[]){
     commandline.start(); //开始解析命令行参数
 
     //TODO :判断是否有参数，如果没有，则报错
-    if (commandline.argc <= 1 || ip.empty() ) {
+    if (commandline.argc <= 1) {
         std::cerr << "请输入命令参数！" << std::endl;
         commandline.print_options();
         exit(-1);
     }
 
     try{
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
@@ -104,8 +89,9 @@ int main(int argc, char* argv[]){
                 //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
                 std::cerr << ipcresult << std::endl; // 执行结果
             } else {
-                std::cout << "执行结果：" << ipcresult << std::endl;
+                std::cout << ipcresult << std::endl;
             }
+            prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
@@ -113,13 +99,9 @@ int main(int argc, char* argv[]){
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
         ipcreq.cmdname = "spacerename";
-        ipcreq.ip = ip ; // ip
-        ipcreq.port = port;  // 端口号
         ipcreq.zonename = zonename; // 空间名称
-        ipcreq.ownID = ownID; // 用户ID
         ipcreq.spacename = spacename; // "NewWorld";
         ipcreq.newspacename = newspacename; // "BUAABUAA";
-        ipcreq.spaceuuid = spaceuuid; // uuid
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());

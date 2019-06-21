@@ -61,9 +61,16 @@ inline void default_config(hvs::ConfigureSettings* _config) {
 _config->add("center_information", string("center_id1,center_id2,centerid3"));
 _config->add("center_id1",string("192,168,1,2|192,168,1,3"));
 
-
+//client
 _config->add("default_ip",string("127.0.0.1"));
 _config->add("default_port",string("9090"));
+
+
+//manager
+_config->add("ManagerID",string("1")); //TODO 每个超算要改
+
+
+
 
 
 _config->add("center_information_old", string("{"\

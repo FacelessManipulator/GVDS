@@ -80,35 +80,27 @@ void ClientIPC::init() {
             }
             //auth
             if(ipcreq.cmdname == "userlogin"){
-                cout << "can get here1" <<endl;
                 return douserlogin(ipcreq);
             }
             if(ipcreq.cmdname == "usersearch"){
-                cout << "can get here2" <<endl;
                 return dousersearch(ipcreq);
             }
             if(ipcreq.cmdname == "usersignup"){
-                cout << "can get here3" <<endl;
                 return dousersignup(ipcreq);
             }
             if(ipcreq.cmdname == "usermodify"){
-                cout << "can get here4" <<endl;
                 return dousermodify(ipcreq);
             }
             if(ipcreq.cmdname == "userexit"){
-                cout << "can get here5" <<endl;
                 return douserexit(ipcreq);
             }
             if(ipcreq.cmdname == "usercancel"){
-                cout << "can get here5" <<endl;
                 return dousercancel(ipcreq);
             }
             if(ipcreq.cmdname == "authsearch"){
-                cout << "can get here1" <<endl;
                 return doauthsearch(ipcreq);
             }
             if(ipcreq.cmdname == "authmodify"){
-                cout << "can get here1" <<endl;
                 return doauthmodify(ipcreq);
             }
 
@@ -725,10 +717,11 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     myaccount.Password = password;
     std::string mes = myaccount.serialize();
 
-    cout << myaccount.accountName << endl;
+    // cout << myaccount.accountName << endl;
 
     std::string mtoken;
     std::string return_value = "login fail";
+
 
     //auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(mes).send();
     auto response = Pclient.post(url).body(mes).send();
@@ -738,38 +731,38 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     auto fu = prom.get_future();
     response.then(
         [&](Http::Response res) {
-            //dout(-1) << "Manager Info: " << res.body() << dendl;
-            std::cout << "Response code = " << res.code() << std::endl;
+            // std::cout << "Response code = " << res.code() << std::endl;
             if (Http::Code::Ok ==  res.code()){
                 auto body = res.body();
                 if (!body.empty()){
-                    std::cout << "Response body = " << body << std::endl;
+                    // std::cout << "Response body = " << body << std::endl;
                 }
-                std::cout<< "Response cookie = ";
+                // std::cout<< "Response cookie = ";
                 auto cookies = res.cookies();
                 for (const auto& c: cookies) {
-                    std::cout << c.name << " : " << c.value << std::endl;
+                    // std::cout << c.name << " : " << c.value << std::endl;
                     mtoken = c.value;
                 }
                 client->user->setToken(mtoken);
                 client->user->setAccountName(myaccount.accountName);
                 client->user->setAccountID(body);
-                
-                cout << "getToken(): " << client->user->getToken() << endl;
-                cout << "getAccountName(): " << client->user->getAccountName() << endl;
-                cout << "getAccountID(): " << client->user->getAccountID() << endl;
-                cout << "centerName= Beijing   id= " << client->optNode->getmapIdName("Beijing") << endl;
 
-                std::vector<std::string> memberName; 
-                memberName.push_back("lbq-7");
-                memberName.push_back("lbq-8");
-                std::vector<std::string> memberID;
-                bool tm = client->user->getMemberID(memberName, memberID);
-                if(tm){
-                    for(int j=0; j<memberID.size(); j++){
-                        cout << "memID: " << memberID[j] << endl;
-                    }
-                }
+                // //接口示例                
+                // cout << "getToken(): " << client->user->getToken() << endl;
+                // cout << "getAccountName(): " << client->user->getAccountName() << endl;
+                // cout << "getAccountID(): " << client->user->getAccountID() << endl;
+                // cout << "centerName= Beijing   id= " << client->optNode->getmapIdName("Beijing") << endl;
+
+                // std::vector<std::string> memberName; 
+                // memberName.push_back("lbq-9");
+                // memberName.push_back("lbq-8");
+                // std::vector<std::string> memberID;
+                // bool tm = client->user->getMemberID(memberName, memberID);
+                // if(tm){
+                //     for(int j=0; j<memberID.size(); j++){
+                //         cout << "memID: " << memberID[j] << endl;
+                //     }
+                // }
                 //client->zone->GetZoneInfo("202");
                 return_value = "login success";
             }//if

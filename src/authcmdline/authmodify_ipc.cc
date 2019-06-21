@@ -79,6 +79,11 @@ int main(int argc, char* argv[]){
         commandline.print_options();
         exit(-1);
     }
+    if((atoi(changeauth.c_str())<0) || (atoi(changeauth.c_str())>7)){
+        std::cerr << "输入错误，权限值取值范围： 0~7" << std::endl;
+        std::cerr << "读:4, 写:2, 执行:1" << std::endl;
+        exit(-1);
+    }
 
     try{
         std::promise<bool> prom;

@@ -2,6 +2,7 @@
 #include <vector>
 #include <stdio.h>
 #include "common/JsonSerializer.h"
+#include "common/centerinfo.h"
 #include "context.h"
 #include "datastore/datastore.h"
 
@@ -227,9 +228,10 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
 
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
         cout <<"localstoragepath: " << localstoragepath << endl;
-    string spacepath = localstoragepath + spacemeta.spacePath; //这个可能不是最终的路径，需确认TODO
+    string spacepath = localstoragepath + spacemeta.spacePath; //这个可能不是最终的路径，需确认
         cout << "final path :" << spacepath << endl;
 
+    //示例chmod 777 filename
     string cmd = "chmod " + groupinfo.au_person + groupinfo.au_group + groupinfo.au_other + " " + spacepath;
         cout << "cmd:" << cmd << endl;
     system(cmd.c_str());
@@ -271,7 +273,7 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
 
 //1.2 空间权限同步接口  :: 被空间创建模块调用 :: 查询空间所属区域的权限，设置空间为此权限,并且查询组员，同步设置组员权限
 //一次只设置一个空间，不涉及跨超算调用【因此此接口已完成，不用再次修改】
-int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID){
+int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID, std::vector<std::string> memberID){
     cout << "=======start: SpacePermissionSyne=======" << endl;
 
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
@@ -331,7 +333,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
     //2、根据区域权限设置空间的权限
         //2.1 获取ownerid 对应的的本地账户(空间所在地)test1;
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
-    //TODO   根据空间获取hostCenterName 值
+    // 根据空间获取hostCenterName 值
         //2.1.1查询区域信息,获取区域对应空间信息
     cout << "112.1" << endl;
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
@@ -361,7 +363,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
             continue;
         }
 
-        //TODO 测试时假设是Shanghai
+        //测试时假设是Shanghai
         string hostCenterName = spacemeta.hostCenterName;
         cout <<"spacemeta.hostCenterName: " << spacemeta.hostCenterName << endl;
         //string hostCenterName ="Shanghai";
@@ -373,7 +375,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
             return -1;
         }
         LocalAccountPair localpair;
-        localpair.deserialize(value);  //localpair.localaccount 这个是账户名
+        localpair.deserialize(value);  //localpair.localaccount 这个是账户名 ownerID对应的
 
             //2.2 更改文件夹所属用户和组chown -R test1:test1 空间名
         //获取物理路径 spacepath值 
@@ -402,11 +404,25 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         cout << chmod_cmd << endl;
         system(chmod_cmd.c_str());
         //TODO 设置组员权限
-            //获取组成员hvsID 对应的本地账户
-            //加入区域ownerID 对应的本地账户中
-        
+            //获取组成员hvsID 对应的本地账户    【localpair.localaccount】
+            //加入区域ownerID 对应的本地账户中  【member_localpair.localaccount】
+        vector<string>::iterator m_iter;   //TODO如何获取memberID！！！！！！！！！！！！！！！！！！！！！！！
+        for(m_iter = memberID.begin(); m_iter != memberID.end(); m_iter++){
+                string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
+                if (m_value.compare("fail") == 0){
+                    cout << "SpacePermissionSyne fail" << endl;
+                    return -1;
+                }
+                LocalAccountPair member_localpair;
+                member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
+                //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
+                //   usermod -a -G localpair.localaccount member_localpair.localaccount
+                string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
+                cout << "cmd :" << cmd << endl;
+                system(cmd.c_str()); 
+        }
 
-    } //for 
+    } //外层for 
 
     //不需要记录数据库
 
@@ -453,6 +469,23 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
     //+++++++
+    //---提前读取center_information信息----
+     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info"));
+    f0_dbPtr->init();
+    string c_key = "center_information";
+    auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+    if (c_error){
+        cout << "authmodelserver: get center_information fail" << endl;
+        return -1;
+    }
+    CenterInfo mycenter;
+    mycenter.deserialize(*pcenter_value);
+    vector<string>::iterator c_iter;
+    //--------------------
+    
+
+
     Http::Client client;
     char url[256];
 
@@ -475,44 +508,54 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         //              （3）设置相应权限
 
         //+++++
-        //获取空间对应ip地址   根据   spacemeta.hostCenterName 或者 spacemeta.hostCenterID 获取地址
-        //hostCenterName可能需要做转换
-        //TODO  暂时设置为localhost
-        string ip_space = "localhost";
-        //TODO 注意端口是否正确
-        snprintf(url, 256, "http://%s:%d/auth/selfmemberadd", ip_space.c_str() ,mgr->rest_port());
-
+        //TODO获取空间对应ip地址   根据   spacemeta.hostCenterName 或者 spacemeta.hostCenterID 获取地址
         SelfAuthSpaceInfo auth_space;
         auth_space.spaceinformation = space_iter.serialize();
         auth_space.ownerID_zone = ownerID;
         auth_space.memberID = memberID;//赋值
-
         string tmp_value = auth_space.serialize();
 
-        auto response = client.post(url).body(tmp_value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
+        if(ManagerID == spacemeta.hostCenterID){ //本地
+            if(self_Authmemberadd(auth_space) != 0){
+                return_flag = -1;
+            } 
+        }
+        else //远端
+        { 
+            cout << "发送到远端"<<endl;
+            string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
+            string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
+            cout << tmp_ip << endl;
+            cout << tmp_port << endl;
 
-        std::promise<bool> prom;
-        auto fu = prom.get_future();
-        response.then(
-        [&](Http::Response res) {
-          //dout(-1) << "Manager Info: " << res.body() << dendl;
-          std::cout << "Response code = " << res.code() << std::endl;
-          auto body = res.body();
-          if (!body.empty()){
-              std::cout << "Response body = " << body << std::endl;
-              //your code write here
-              if (body != "0"){
-                  cout << "body != 0, fail " << endl;
-                  return_flag = -1;
-              }
+        
+            //TODO 注意端口是否正确
+            snprintf(url, 256, "http://%s:%s/auth/selfmemberadd", tmp_ip.c_str() ,tmp_port.c_str());
 
-          }
-          prom.set_value(true);
-        },
-        Async::IgnoreException);
-        //阻塞
-        fu.get();
+            auto response = client.post(url).body(tmp_value).send();
+            dout(-1) << "Client Info: post request " << url << dendl;
+
+            std::promise<bool> prom;
+            auto fu = prom.get_future();
+            response.then(
+            [&](Http::Response res) {
+                std::cout << "Response code = " << res.code() << std::endl;
+                auto body = res.body();
+                if (!body.empty()){
+                    std::cout << "Response body = " << body << std::endl;
+                    //your code write here
+                    if (body != "0"){
+                        cout << "body != 0, fail " << endl;
+                        return_flag = -1;
+                    }
+
+                }
+                prom.set_value(true);
+            },
+            Async::IgnoreException);
+            //阻塞
+            fu.get();
+        } //else
         //++++++++++++++++++++++++++++++++++++
     } // 外层for
 
@@ -570,6 +613,21 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
     //+++++++
+    //---提前读取center_information信息----
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info"));
+    f0_dbPtr->init();
+    string c_key = "center_information";
+    auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+    if (c_error){
+        cout << "authmodelserver: get center_information fail" << endl;
+        return -1;
+    }
+    CenterInfo mycenter;
+    mycenter.deserialize(*pcenter_value);
+    vector<string>::iterator c_iter;
+    //--------------------
+
     Http::Client client;
     char url[256];
 
@@ -594,47 +652,66 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
         //+++++
         //获取空间对应ip地址   根据   spacemeta.hostCenterName 或者 spacemeta.hostCenterID 获取地址
         //hostCenterName可能需要做转换
-        //TODO  暂时设置为localhost
-        string ip_space = "localhost";
-
-        //TODO 注意端口是否正确  
-
-        snprintf(url, 256, "http://%s:%d/auth/selfmemberdel", ip_space.c_str() ,mgr->rest_port());
-
+        //TODO获取空间对应ip地址   根据   spacemeta.hostCenterName 或者 spacemeta.hostCenterID 获取地址
         SelfAuthSpaceInfo auth_space;
         auth_space.spaceinformation = space_iter.serialize();
         auth_space.ownerID_zone = ownerID;
-        auth_space.memberID = memberID;   //TODO 这块拷贝会有问题   添加的这块同样有问题
-
+        auth_space.memberID = memberID;//赋值
         string tmp_value = auth_space.serialize();
 
-        auto response = client.post(url).body(tmp_value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
+        if(ManagerID == spacemeta.hostCenterID){ //本地
+            if(self_Authmemberdel(auth_space) != 0){
+                return_flag = -1;
+            } 
+        }
+        else //远端
+        { 
+            cout <<"发送到远端" << endl;
+            string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
+            string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
+            cout << tmp_ip << endl;
+            cout << tmp_port << endl;
 
-        std::promise<bool> prom;
-        auto fu = prom.get_future();
-        response.then(
-        [&](Http::Response res) {
-          //dout(-1) << "Manager Info: " << res.body() << dendl;
-          std::cout << "Response code = " << res.code() << std::endl;
-          auto body = res.body();
-          if (!body.empty()){
-              std::cout << "Response body = " << body << std::endl;
-              //your code write here
-              if (body != "0"){
-                  cout << "body != 0, fail " << endl;
-                  return_flag = -1;
-              }
 
-          }
-          prom.set_value(true);
-        },
-        Async::IgnoreException);
+            //TODO 注意端口是否正确  
 
-        //阻塞
-        fu.get();
-        //++++++++++++++++++++++++++++++++++++
-    }
+            snprintf(url, 256, "http://%s:%s/auth/selfmemberdel", tmp_ip.c_str() ,tmp_port.c_str());
+
+            SelfAuthSpaceInfo auth_space;
+            auth_space.spaceinformation = space_iter.serialize();
+            auth_space.ownerID_zone = ownerID;
+            auth_space.memberID = memberID;   //TODO 这块拷贝会有问题   添加的这块同样有问题
+
+            string tmp_value = auth_space.serialize();
+
+            auto response = client.post(url).body(tmp_value).send();
+            dout(-1) << "Client Info: post request " << url << dendl;
+
+            std::promise<bool> prom;
+            auto fu = prom.get_future();
+            response.then(
+                [&](Http::Response res) {
+                //dout(-1) << "Manager Info: " << res.body() << dendl;
+                std::cout << "Response code = " << res.code() << std::endl;
+                auto body = res.body();
+                if (!body.empty()){
+                    std::cout << "Response body = " << body << std::endl;
+                    //your code write here
+                    if (body != "0"){
+                        cout << "body != 0, fail " << endl;
+                        return_flag = -1;
+                    }
+
+                }
+                prom.set_value(true);
+            },
+            Async::IgnoreException);
+
+            //阻塞
+            fu.get();
+            //++++++++++++++++++++++++++++++++++++
+        }//else
+    }//最外层for
     
     //不需要改动数据库，
     //++++++++
@@ -737,7 +814,6 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
         return -1;
     }
 
-    cout << "here!!!!" << endl;
     Zone tmp;
     std::vector<std::string>::iterator it = vp->begin();   //查询结果只有一个，就是对应owner 的 zoneID
     std::string n1ql_result = *it;
@@ -814,6 +890,23 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
     //+++++++
+    //---提前读取center_information信息----
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info"));
+    f0_dbPtr->init();
+    //string c_key = "center_information";
+    cout << "c_key : " << c_key << endl;
+    auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+    if (c_error){
+        cout << "authmodelserver: get center_information fail" << endl;
+        return -1;
+    }
+    CenterInfo mycenter;
+    mycenter.deserialize(*pcenter_value);
+    vector<string>::iterator c_iter;
+    //--------------------
+
+
     Http::Client client;
     char url[256];
 
@@ -831,46 +924,62 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
         string hostCenterName = spacemeta.hostCenterName;
 
         //TODO 根据hostCenterName获取相应超算的ip和port
-        string ip_space = "localhost";
-
-        //TODO 注意端口是否正确  
-        //snprintf(url, 256, "http://%s:%d/auth/selfgroupauthmodify", ip_space.c_str() ,mgr->rest_port());
-        snprintf(url, 256, "http://%s:9090/auth/selfgroupauthmodify", ip_space.c_str());
-            //rest中：hvsID对应的本地ID
-                     //chmod 7修改值0 spaceID
         AuthModifygroupinfo groupinfo;
         groupinfo.spaceinformation = space_iter.serialize();
         groupinfo.hvsID = hvsID;
         groupinfo.au_person = au_person;
         groupinfo.au_group = modify_groupauth;
         groupinfo.au_other = au_other;
-
         string tmp_value = groupinfo.serialize();
-        auto response = client.post(url).body(tmp_value).send();
-        dout(-1) << "Client Info: post request " << url << dendl;
 
-        std::promise<bool> prom;
-        auto fu = prom.get_future();
-        response.then(
-        [&](Http::Response res) {
-          //dout(-1) << "Manager Info: " << res.body() << dendl;
-          std::cout << "Response code = " << res.code() << std::endl;
-          auto body = res.body();
-          if (!body.empty()){
-              std::cout << "Response body = " << body << std::endl;
-              //your code write here
-              if (body != "0"){
-                  cout << "body != 0, fail " << endl;
-                  return_flag = -1;
-              }
+        if(ManagerID == spacemeta.hostCenterID){ //本地
+            if(self_Authgroupmodify(groupinfo) != 0){
+                cout<< "修改权限失败" << endl;
+                return_flag = -1;
+            }
+        }
+        else
+        {
+            cout << "发送到远端"<<endl;
+            string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
+            string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
+            cout << tmp_ip << endl;
+            cout << tmp_port << endl;
 
-          }
-          prom.set_value(true);
-        },
-        Async::IgnoreException);
 
-        //阻塞
-        fu.get();
+            //TODO 注意端口是否正确  
+            // snprintf(url, 256, "http://%s:9090/auth/selfgroupauthmodify", ip_space.c_str());
+            snprintf(url, 256, "http://%s:%s/auth/selfgroupauthmodify", tmp_ip.c_str() ,tmp_port.c_str());
+
+            
+                //rest中：hvsID对应的本地ID
+                        //chmod 7修改值0 spaceID
+            
+            auto response = client.post(url).body(tmp_value).send();
+            dout(-1) << "Client Info: post request " << url << dendl;
+
+            std::promise<bool> prom;
+            auto fu = prom.get_future();
+            response.then(
+            [&](Http::Response res) {
+                //dout(-1) << "Manager Info: " << res.body() << dendl;
+                std::cout << "Response code = " << res.code() << std::endl;
+                auto body = res.body();
+                if (!body.empty()){
+                    std::cout << "Response body = " << body << std::endl;
+                    //your code write here
+                    if (body != "0"){
+                        cout << "body != 0, fail " << endl;
+                        return_flag = -1;
+                    }
+            }
+            prom.set_value(true);
+            },
+            Async::IgnoreException);
+
+            //阻塞
+            fu.get();
+        }//else
         //++++++++++++++++++++++++++++++++++++
     }
     

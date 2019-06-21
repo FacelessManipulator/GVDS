@@ -31,7 +31,7 @@ struct CmpByValue {
 class SelectNode: public ClientModule, public Thread{
 public:
     SelectNode (const char* name, Client* cli) : ClientModule(name, cli), m_stop(true) {
-        std::cout << "start: SelectNode构造函数" << std::endl;
+        // std::cout << "start: SelectNode构造函数" << std::endl;
         isThread = true;  //TODO 这是什么意思？
     }
     ~SelectNode(){};
@@ -91,7 +91,7 @@ private:
     std::string supercomputing_D = "Changsha";
     std::string supercomputing_E = "Jinan";
 
-    std::string center_Information = "nothing"; //TODO设置成全局变量？？  是否设置成static
+    std::string center_Information; //TODO设置成全局变量？？  是否设置成static
 };
 
 

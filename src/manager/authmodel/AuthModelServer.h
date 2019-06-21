@@ -59,7 +59,7 @@ public:
     int ZonePermissionAdd(std::string zoneID, std::string ownerID);
     
     //空间权限同步接口
-    int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID);
+    int SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID, std::vector<std::string> memberID);
 
     //TODO 副本权限同步接口
     int ReplacePermissionSyne();
@@ -105,6 +105,9 @@ public:
     std::string cancellationUserAccount(std::string uuid, bool is_cancel_success);
     */
  //--------------------------------------------
+
+    string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("ManagerID"));  //TODO标识所述超算，此超算是北京
+    string c_key = "center_information";
 public:
     AuthModelServer() : ManagerModule("auth") {
         //aaaaa = *(HvsContext::get_context()->_config->get<std::string>("storage"));

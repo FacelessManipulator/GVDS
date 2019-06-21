@@ -37,7 +37,7 @@ void SelectNode::mutex_unlock(){
     mtx.unlock();
 }
 
-vector<struct_Node> SelectNode::getNode(int choice){
+vector<struct_Node> SelectNode::getNode(int choice){   //调用的时候判断下返回的vector.size()是否为0
     mutex_lock();
     std::vector<struct_Node> return_buf;
 
@@ -82,7 +82,7 @@ void SelectNode::erase_v_area(){
 void SelectNode::start(){
     m_stop = false;
     getCenterInformation();
-    if(center_Information!= "nothing"){
+    if(!center_Information.empty()){
         std::cout << "设置opt缓存初值" << std::endl;
         CenterInfo mycenter;
         mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
@@ -109,7 +109,7 @@ void SelectNode::stop(){
 //     getCenterInformation();//获取center_Information
 //     std::cout << "center_Information : " << center_Information << std::endl;
 
-//         if(center_Information!= "nothing"){
+//         if(!center_Information.empty()){
 //             std::cout << "设置opt缓存初值" << std::endl;
 //             CenterInfo mycenter;
 //             mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
@@ -151,9 +151,10 @@ void* SelectNode::entry() {
 int SelectNode::getRTT(map<string, double> &mymap){
 
     //string a = "www.baidu.com";
-    if(center_Information!= "nothing"){
-            CenterInfo mycenter;
-            mycenter.deserialize(center_Information); 
+    if(!center_Information.empty()){
+        CenterInfo mycenter;
+        mycenter.deserialize(center_Information); 
+        //for 改成for
 
         double rtt_beijing = subgetRTT(mycenter.centerIP["1"]);
         double rtt_shanghai = subgetRTT(mycenter.centerIP["2"]);
@@ -172,7 +173,7 @@ int SelectNode::getRTT(map<string, double> &mymap){
     return -1;
 }
 
-
+//输入ip 返回 延迟
 double SelectNode::subgetRTT(string hostOrIp){
     
     //string hostOrIp = "www.baidu.com";
@@ -213,81 +214,115 @@ double SelectNode::subgetRTT(string hostOrIp){
 }
 
 
-
+//输入排序， 写入缓存
 void SelectNode::write_rtt(vector<PAIR> &myvec){
-
-    struct_Node Beijing, Shanghai, Guangzhou, Changsha, Jinan;
-    //SelectNode anode;
-
-    if(center_Information!= "nothing"){
-            CenterInfo mycenter;
-            mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
-
     
-    
-        // anode.mutex_lock(); cout<<"wirte lock"<<endl;
-        // anode.erase_v_delay();
+    if(!center_Information.empty()){
+        CenterInfo mycenter;
+        mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
+
         mutex_lock(); //cout<<"wirte lock"<<endl; //展示工作量时输出
         erase_v_delay();
         for (int i = 0; i != myvec.size(); ++i) {
-            //展示工作量时输出
-            //cout << myvec[i].first << " : " << myvec[i].second << endl;
-            if (myvec[i].first.compare(supercomputing_A) == 0){
-                Beijing.location = mycenter.centerName["1"];   //TODO从客户端获取CenterName
-                Beijing.ip_addr = mycenter.centerIP["1"];
-                Beijing.port = mycenter.centerPort["1"];
-                //anode.setNode_delay(Beijing);
-                setNode_delay(Beijing);
-            }
-            else if (myvec[i].first.compare(supercomputing_B) == 0){
-                Shanghai.location = mycenter.centerName["2"];
-                Shanghai.ip_addr = mycenter.centerIP["2"];
-                Shanghai.port = mycenter.centerPort["2"];
-                //anode.setNode_delay(Shanghai);
-                setNode_delay(Shanghai);
-            }
-            else if (myvec[i].first.compare(supercomputing_C) == 0){
-                Guangzhou.location = mycenter.centerName["3"];
-                Guangzhou.ip_addr = mycenter.centerIP["3"];
-                Guangzhou.port = mycenter.centerPort["3"];
-                //anode.setNode_delay(Guangzhou);
-                setNode_delay(Guangzhou);
-            }
-            else if (myvec[i].first.compare(supercomputing_D) == 0){
-                Changsha.location = mycenter.centerName["4"];
-                Changsha.ip_addr = mycenter.centerIP["4"];
-                Changsha.port =  mycenter.centerPort["4"];
-                //anode.setNode_delay(Changsha);
-                setNode_delay(Changsha);
-            }
-            else if (myvec[i].first.compare(supercomputing_E) == 0){
-                Jinan.location = mycenter.centerName["5"];
-                Jinan.ip_addr = mycenter.centerIP["5"];
-                Jinan.port = mycenter.centerPort["5"];
-                //anode.setNode_delay(Jinan);
-                setNode_delay(Jinan);
-            }
-        }//for
+            string id = getmapIdName(myvec[i].first);   // myvec[i].first是hostCenterName
 
-    }//if
+            struct_Node myNode;
+            myNode.location = mycenter.centerName[id]; 
+            myNode.ip_addr = mycenter.centerIP[id];
+            myNode.port = mycenter.centerPort[id];
+            setNode_delay(myNode);
+
+            // if (myvec[i].first.compare(supercomputing_A) == 0)
+        }
+        mutex_unlock();
+    }
     else{
-        getCenterInformation();
+         getCenterInformation();
     }
     //展示工作量时输出
     //cout<<"wirte unlock"<<endl;
-    
-    mutex_unlock();
-
 }
+
+// //输入排序， 写入缓存
+// void SelectNode::write_rtt_notuse(vector<PAIR> &myvec){
+
+//     struct_Node Beijing, Shanghai, Guangzhou, Changsha, Jinan;
+//     //SelectNode anode;
+
+//     if(!center_Information.empty()){
+//             CenterInfo mycenter;
+//             mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
+
+    
+//         // anode.mutex_lock(); cout<<"wirte lock"<<endl;
+//         // anode.erase_v_delay();
+//         mutex_lock(); //cout<<"wirte lock"<<endl; //展示工作量时输出
+//         erase_v_delay();
+//         for (int i = 0; i != myvec.size(); ++i) {
+//             //展示工作量时输出
+//             // cout << myvec[i].first << " --:-- " << myvec[i].second << endl;   //myvec[i].first是hostCenterName  myvec[i].seconds是延迟
+//             if (myvec[i].first.compare(supercomputing_A) == 0){
+//                 Beijing.location = mycenter.centerName["1"];   //TODO从客户端获取CenterName
+//                 Beijing.ip_addr = mycenter.centerIP["1"];
+//                 Beijing.port = mycenter.centerPort["1"];
+//                 //anode.setNode_delay(Beijing);
+//                 setNode_delay(Beijing);
+//             }
+//             else if (myvec[i].first.compare(supercomputing_B) == 0){
+//                 Shanghai.location = mycenter.centerName["2"];
+//                 Shanghai.ip_addr = mycenter.centerIP["2"];
+//                 Shanghai.port = mycenter.centerPort["2"];
+//                 //anode.setNode_delay(Shanghai);
+//                 setNode_delay(Shanghai);
+//             }
+//             else if (myvec[i].first.compare(supercomputing_C) == 0){
+//                 Guangzhou.location = mycenter.centerName["3"];
+//                 Guangzhou.ip_addr = mycenter.centerIP["3"];
+//                 Guangzhou.port = mycenter.centerPort["3"];
+//                 //anode.setNode_delay(Guangzhou);
+//                 setNode_delay(Guangzhou);
+//             }
+//             else if (myvec[i].first.compare(supercomputing_D) == 0){
+//                 Changsha.location = mycenter.centerName["4"];
+//                 Changsha.ip_addr = mycenter.centerIP["4"];
+//                 Changsha.port =  mycenter.centerPort["4"];
+//                 //anode.setNode_delay(Changsha);
+//                 setNode_delay(Changsha);
+//             }
+//             else if (myvec[i].first.compare(supercomputing_E) == 0){
+//                 Jinan.location = mycenter.centerName["5"];
+//                 Jinan.ip_addr = mycenter.centerIP["5"];
+//                 Jinan.port = mycenter.centerPort["5"];
+//                 //anode.setNode_delay(Jinan);
+//                 setNode_delay(Jinan);
+//             }
+//         }//for
+
+//     }//if
+//     else{
+//         getCenterInformation();
+//     }
+//     //展示工作量时输出
+//     //cout<<"wirte unlock"<<endl;
+    
+//     mutex_unlock();
+
+// }
 
 
 void SelectNode::getCenterInformation(){
     string ip = *(HvsContext::get_context()->_config->get<std::string>("default_ip"));
     string port = *(HvsContext::get_context()->_config->get<std::string>("default_port"));
-    string url = "http://" + ip + ":" + port; //http://localhost:9090
+    string url = "http://" + ip + ":" + port;   //http://localhost:9090
+
     string response = client->rpc->get_request(url, "/mconf/searchCenter");
-    // string response = client->rpc->get_request("http://localhost:9090", "/mconf/searchCenter");
-    center_Information = response;
+    if((response == "fail") && center_Information.empty()){
+        cout << "Not access to Server.." << endl;
+    }
+    else{
+        center_Information = response;
+    }
+    
 }
 
 
@@ -310,7 +345,7 @@ std::string SelectNode::getmapIdName(std::string centerName){
 SelectNode::SelectNode(){
         getCenterInformation();//获取center_Information
 
-        if(center_Information!= "nothing"){
+        if(!center_Information.empty()){
             CenterInfo mycenter;
             mycenter.deserialize(center_Information);    //b-1 s-2 g-3 c-4 j-5
             

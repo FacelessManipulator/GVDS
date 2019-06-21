@@ -421,7 +421,7 @@ namespace hvs{
         if(res_za == 0)
         {
           cout << "heresy" << endl;
-          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, tmp.ownerID);//shanchu
+          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, tmp.ownerID, tmp.memberID);//shanchu
           cout << "notheresy" << endl;
           if(tmp.memberID.empty())
           {
@@ -545,7 +545,7 @@ namespace hvs{
         tmp.contains_spaceinfo = false;
         zonePtr->set(tmp.zoneID, tmp.serialize());
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
-        int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID);
+        int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, memberID);
         if(spacesyne == 0) return 0;
         else
         {
@@ -671,7 +671,7 @@ namespace hvs{
         tmp.contains_spaceinfo = false;
         zonePtr->set(tmp_key, tmp.serialize());
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
-        int spacesyne = p_auth->SpacePermissionSyne(spaceID, zoneID, ownerID);
+        int spacesyne = p_auth->SpacePermissionSyne(spaceID, zoneID, ownerID, tmp.memberID);
         if(spacesyne == 0) return 0;
         else
         {

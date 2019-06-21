@@ -43,8 +43,8 @@ int main(int argc, char* argv[]){
 //    CmdLineProxy commandline(2, demo2);
     //std::string cmdname = "userlogin_ipc";
     std::string cmdname = argv[0];
-    std::cout << "agrv[0]" <<argv[0] << std::endl;
-    std::cout << "agrv[1]" <<argv[1] << std::endl;
+    // std::cout << "agrv[0]" <<argv[0] << std::endl;
+    // std::cout << "agrv[1]" <<argv[1] << std::endl;
 
 
 
@@ -77,7 +77,6 @@ int main(int argc, char* argv[]){
         exit(-1);
     }
     
-    std::cout << "1: " << username << std::endl; //账户名
      try{
         std::promise<bool> prom;
         auto fu = prom.get_future();

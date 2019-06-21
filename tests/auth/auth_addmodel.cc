@@ -69,7 +69,8 @@ TEST_F(HVSAuthTest, auth_addmodel) {
     //空间权限同步接口
     cout << "开始：空间权限同步接口" << endl;
     string spaceID = "b71268dc-c8ad-4cf0-a7a3-6e9c262b36ce";    // 那个zoneID 对应了三个 spaceID 这块测试的时候需要调用 三回，设置用户、用户组、权限
-    int spacesyne = p_auth->SpacePermissionSyne(spaceID, zoneID, ownerID);
+    vector<string> memberID; //TODO需要添加memberID再测试
+    int spacesyne = p_auth->SpacePermissionSyne(spaceID, zoneID, ownerID, memberID);
     
     if (spacesyne == 0) cout << "success: 空间权限同步接口" << endl;
     else cout << "fail: 空间权限同步接口" << endl;

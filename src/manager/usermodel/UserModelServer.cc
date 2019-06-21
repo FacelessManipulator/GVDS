@@ -704,6 +704,7 @@ bool UserModelServer::BuildAccountMapping(string accountID){
 
 }
 
+//20190621 不用修改，这个是活的
 //建立给定地区(location)的用户的［1个］账户映射，即调用Beijing两次，则在Beijing建立2个账户映射; 删除是直接删除给定地区的所有账户映射，若想只删除给定地区的其中一个账户，则需再自定函数实现
 bool UserModelServer::SubBuildAccountMapping(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
     
@@ -814,11 +815,13 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
             SCAccount person_1;
             person_1.deserialize(*pvalue_1);
             iter = person_1.Beijing_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }
         else{
             iter = person.Beijing_account.begin();   //这块person是在最前面定义；
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }
@@ -841,11 +844,13 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
             SCAccount person_1;
             person_1.deserialize(*pvalue_1);
             iter = person_1.Shanghai_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }
         else{
             iter = person.Shanghai_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }// if
@@ -868,11 +873,13 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
             SCAccount person_1;
             person_1.deserialize(*pvalue_1);
             iter = person_1.Guangzhou_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }
         else{
             iter = person.Guangzhou_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }// if
@@ -895,11 +902,13 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
             SCAccount person_1;
             person_1.deserialize(*pvalue_1);
             iter = person_1.Changsha_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }
         else{
             iter = person.Changsha_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }// if
@@ -923,11 +932,13 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
             SCAccount person_1;
             person_1.deserialize(*pvalue_1); cout << "333" << endl;
             iter = person_1.Jinan_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }
         else{
             iter = person.Jinan_account.begin();
+            if(!existlocalaccount(iter->first)) return "fail";
             LocalAccountPair localpair(iter->first, iter->second); //对应的本地账户名，密码
             return localpair.serialize();
         }// if
@@ -1114,6 +1125,63 @@ bool UserModelServer::addSCaccount(){
 }
 
 
+
+//existlocalaccount
+//输入一个账户，检验本地是否存在
+bool UserModelServer::existlocalaccount(string valid){
+    int bufsize = 80000;
+    FILE *read_fp;
+    char buffer[bufsize + 1];
+    int chars_read;
+    memset(buffer, '\0', sizeof(buffer));
+    read_fp = popen ("cat /etc/passwd|grep -v nologin|grep -v halt|grep -v shutdown|awk -F\":\" '{ print $1}'|more", "r");
+    if (read_fp != NULL)
+    {
+        chars_read = fread(buffer, sizeof(char), bufsize, read_fp);
+        if (chars_read > 0)
+        {
+            // printf("Output was: \n%s", buffer);
+            std::vector<std::string> my;
+            int i=0;
+            int front = 0;
+            for(i=0; i < strlen(buffer); i++){
+                if (buffer[i] == '\n'){
+                    string tmp_str;
+                    while(front != i){
+                        tmp_str += buffer[front];
+                        front++;
+                    }
+                    front++;
+                    // cout << "tmp_str: " << tmp_str << endl;
+                    my.push_back(tmp_str);
+                }
+                //printf("aaaaaa %c ",buffer[i]);
+            }
+            
+            for(int j=0; j<my.size(); j++){
+                if(valid==my[j]){
+                    cout << "my:" << my[j] << endl;
+                    cout << "返回成功" << endl;
+                    return true;
+                }
+            }
+            cout << "返回失败" << endl;
+            return false;
+        }
+        else
+        {
+            cout << "返回失败" << endl;
+            return false;
+
+        }
+        pclose(read_fp);
+        
+    }
+    else{
+        cout << "返回失败" <<endl;
+        return false;
+    }
+}
 
 //MD5
 

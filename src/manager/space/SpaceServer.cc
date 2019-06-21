@@ -7,6 +7,7 @@
 #include "datastore/datastore.h"
 
 #include "manager/space/SpaceServer.h"
+#include "manager/usermodel/UserModelServer.h"
 #include "hvs_struct.h"
 
 
@@ -95,6 +96,19 @@ namespace hvs{
         std::string rootdir = localstoragepath;
         rootdir += tmp_uuid; // TODO: 路径拼接，后期如果有子空间再修改；
         int mkret = mkdir(rootdir.c_str(), 0770);
+        
+        UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+        string m_value = p_usermodel->getLocalAccountinfo(ownerID, tmpm.hostCenterName); 
+        if (m_value.compare("fail") == 0){
+            cout << "getLocalAccountinfo fail" << endl;
+            return "-1";
+        }
+        LocalAccountPair owner_localpair;
+        owner_localpair.deserialize(m_value);
+        string new_cmd = "chown -R " + owner_localpair.localaccount + ":" + owner_localpair.localaccount + " " + rootdir;
+        cout << new_cmd << endl;
+        system(new_cmd.c_str());
+
         if (mkret != 0 ) {
             perror("SpaceCreate");
             return "-2"; // 文件夹创建失败后，返回false字符串，用于之后的判断

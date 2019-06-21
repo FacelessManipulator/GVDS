@@ -74,8 +74,10 @@ private:
     bool RemoveAccountMapping(std::string accountID);
     bool SubRemoveAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
+    bool existlocalaccount(std::string valid);
+
 private:
-    string supercomputing_A = "Beijing"; //"Beijing";
+    string supercomputing_A = "Beijing"; //"Beijing";     //TODO
     string supercomputing_B = "Shanghai"; //"Shanghai";
     string supercomputing_C = "Guangzhou";
     string supercomputing_D = "Changsha";

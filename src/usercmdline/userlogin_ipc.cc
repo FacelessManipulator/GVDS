@@ -85,12 +85,11 @@ int main(int argc, char* argv[]){
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             // 客户端输出服务端发送来的消息
             std::string ipcresult (msg.body(), msg.body_length());
-
-            if (ipcresult != "success"){
-                //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
-                std::cerr << ipcresult << std::endl; // 执行结果
-            } else {
-                std::cout << "执行结果：" << ipcresult << std::endl;
+            if(ipcresult == "-1"){
+                std::cout << "login fail" << std::endl;
+            }
+            else{  //"0"
+                std::cout << "login success" << std::endl;
             }
             prom.set_value(true);
         });

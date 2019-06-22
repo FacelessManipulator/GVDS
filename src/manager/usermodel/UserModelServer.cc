@@ -201,7 +201,7 @@ string UserModelServer::UserRegister(Account &person){
 
 
 //账户登录
-//登录成功，返回：｛id：token｝超算中心账户密码
+//登录成功，返回：token   失败：-1 ，成功：uuid；
 void UserModelServer::UserLoginRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: UserLoginRest ======"<< endl;
     //=====
@@ -227,7 +227,9 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
         string value ="1";
         int login_flag = f0_dbPtr->set(mtoken, value);
         if (login_flag != 0){
-            response.send(Http::Code::Ok, "login fail!,token set fail");
+            // response.send(Http::Code::Ok, "login fail!,token set fail");
+            response.send(Http::Code::Ok, "-1");
+            
         }
         else{
             response.cookies().add(Http::Cookie("token", mtoken));
@@ -235,7 +237,9 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
         }
     }
     else{
-        response.send(Http::Code::Unauthorized, "login fail!");
+        // response.send(Http::Code::Unauthorized, "login fail!");
+         response.send(Http::Code::Ok, "-1");
+
     }
 
     //auto pmtoken = response.headers().get("Token");
@@ -324,7 +328,7 @@ void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::Respon
         response.send(Http::Code::Ok, data);
     }
     else{
-        response.send(Http::Code::Not_Found, "-1"); //point
+        response.send(Http::Code::Ok, "-1"); //point
     }
     
     cout << "====== end UserModelServer function: getUserinfoRest ======"<< endl;
@@ -440,10 +444,10 @@ void UserModelServer::exitUserAccountRest(const Rest::Request& request, Http::Re
     
     string data = exitUserAccount(mtoken, is_exit_success);
     if(is_exit_success){
-        response.send(Http::Code::Ok, data);
+        response.send(Http::Code::Ok, "0");
     }
     else{
-        response.send(Http::Code::Not_Found, data); //point
+        response.send(Http::Code::Ok, "-1"); //point
     }
     
     cout << "====== end UserModelServer function: exitUserAccountRest ======"<< endl;
@@ -460,10 +464,10 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
     int flag = f0_dbPtr->remove(mtoken);
     if(flag == 0){
         is_exit_success = true;
-        return "Eixt success.";
+        return "Eixt success";
     }
     else{
-        is_exit_success = false;
+        is_exit_success = true;
         return "-1";
     }
     
@@ -472,7 +476,7 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
 
 
 //彻底注销虚拟数据空间用户
-//返回33权限，-1，-2，正常结果
+//返回33权限，失败：-1，-2，成功：正常结果
 void UserModelServer::cancellationUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start UserModelServer function: cancellationUserAccountRest ======"<< endl;
 
@@ -490,7 +494,7 @@ void UserModelServer::cancellationUserAccountRest(const Rest::Request& request, 
         response.send(Http::Code::Ok, data);
     }
     else{
-        response.send(Http::Code::Not_Found, data); //point
+        response.send(Http::Code::Ok, data); //point
     }
     
     cout << "====== end UserModelServer function: cancellationUserAccountRest ======"<< endl;

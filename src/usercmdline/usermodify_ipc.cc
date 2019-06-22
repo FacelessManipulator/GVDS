@@ -107,6 +107,9 @@ int main(int argc, char* argv[]){
             if(ipcresult == "33"){
                 std::cout << "Verification failed, access denied" << std::endl; 
             }
+            else if(ipcresult == "client_input_error"){
+                std::cout << "账户名输入错误" << std::endl;
+            }
             else{
                 std::cout << ipcresult << std::endl;
             }
@@ -121,7 +124,7 @@ int main(int argc, char* argv[]){
         ipcreq.cmdname = "usermodify"; //这里每个不一样
         
        
-        ipcreq.accountName = username; //账户名
+        ipcreq.accountName = username; //账户名不能改
         //ipcreq.hvsID = " "; //在服务端产生   //TODO 获取登录用户的UUID
         ipcreq.Password = pass;
         ipcreq.email = email;

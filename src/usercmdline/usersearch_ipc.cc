@@ -82,6 +82,9 @@ int main(int argc, char* argv[]){
             else if(ipcresult == "33"){
                 std::cout << "Verification failed, access denied" << std::endl;
             }
+            else if(ipcresult == "client_input_error"){
+                std::cout << "账户名输入错误" << std::endl;
+            }
             else {
                 Account person;
                 person.deserialize(ipcresult);

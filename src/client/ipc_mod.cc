@@ -720,7 +720,7 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     // cout << myaccount.accountName << endl;
 
     std::string mtoken;
-    std::string return_value = "login fail";
+    std::string return_value = "-1";
 
 
     //auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(mes).send();
@@ -732,11 +732,12 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     response.then(
         [&](Http::Response res) {
             // std::cout << "Response code = " << res.code() << std::endl;
-            if (Http::Code::Ok ==  res.code()){
-                auto body = res.body();
-                if (!body.empty()){
-                    // std::cout << "Response body = " << body << std::endl;
-                }
+            auto body = res.body();
+            if (body == "-1"){
+                // std::cout << "Response body = " << body << std::endl;
+                return_value = "-1";
+            }
+            else{  //登录成果
                 // std::cout<< "Response cookie = ";
                 auto cookies = res.cookies();
                 for (const auto& c: cookies) {
@@ -762,10 +763,10 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
                 //     for(int j=0; j<memberID.size(); j++){
                 //         cout << "memID: " << memberID[j] << endl;
                 //     }
-                // }
+                // } //login success
                 //client->zone->GetZoneInfo("202");
-                return_value = "login success";
-            }//if
+                return_value = "0";
+            }
 
             prom.set_value(true);
         },
@@ -781,6 +782,10 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
 std::string ClientIPC::dousersearch(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     string username = ipcreq.accountName;
+
+    if(username != client->user->getAccountName() && !client->user->getAccountName().empty()){ //用户没有登录的时候是 false
+        return "client_input_error";
+    }
 
      //账户查询
     string return_value = "fail";
@@ -824,14 +829,17 @@ std::string ClientIPC::dousersignup(IPCreq &ipcreq){
 std::string ClientIPC::dousermodify(IPCreq &ipcreq){
  // TODO: 提前准备的数据
 
-
     string username = ipcreq.accountName; //账户名
-    string hvsID = client->user->getAccountID(); //在服务端产生     //TODO 账户修改这块，调用函数获取
+    string hvsID = client->user->getAccountID(); //在服务端产生     // 不能修改
     string pass = ipcreq.Password;
     string email = ipcreq.email;
     string phone = ipcreq.phone;
     string ad = ipcreq.address;
     string de = ipcreq.department;
+
+    if(username != client->user->getAccountName() && !client->user->getAccountName().empty()){ //用户没有登录的时候是 false
+        return "client_input_error";
+    }
 
   //账户修改
     Account person(username, pass, hvsID, email, phone, ad, de);
@@ -848,23 +856,43 @@ std::string ClientIPC::dousermodify(IPCreq &ipcreq){
 
 std::string ClientIPC::douserexit(IPCreq &ipcreq){
     // TODO: 提前准备的数据
+    string username = ipcreq.accountName; //账户名
+
+    if(username != client->user->getAccountName() && !client->user->getAccountName().empty()){ //用户没有登录的时候是 false
+        return "client_input_error";
+    }
+
     string endpoint = client->get_manager();   
     string routepath = "/users/exit/" + client->user->getAccountID();    ///users/search/用戶id
     string res = client->rpc->get_request(endpoint, routepath);
 
     return res;
 }
+
 std::string ClientIPC::dousercancel(IPCreq &ipcreq){
      // TODO: 提前准备的数据
+    string username = ipcreq.accountName; //账户名
+    if(username != client->user->getAccountName() && !client->user->getAccountName().empty()){ //用户没有登录的时候是 false
+        return "client_input_error";
+    }
+
+
     string endpoint = client->get_manager();   
     string routepath = "/users/cancel/" + client->user->getAccountID();    ///users/search/用戶id
     string res = client->rpc->get_request(endpoint, routepath);
 
     return res;
 }
+
 //auth
  std::string ClientIPC::doauthsearch(IPCreq &ipcreq){
      // TODO: 提前准备的数据
+    string username = ipcreq.accountName; //账户名
+    if(username != client->user->getAccountName() && !client->user->getAccountName().empty()){ //用户没有登录的时候是 false
+        return "client_input_error";
+    }
+
+     
     std::string hvsID = client->user->getAccountID(); //在服务端产生 
 
     //权限查询
@@ -879,6 +907,11 @@ std::string ClientIPC::dousercancel(IPCreq &ipcreq){
  std::string ClientIPC::doauthmodify(IPCreq &ipcreq){
          // TODO: 提前准备的数据
 
+    string username = ipcreq.accountName; //账户名
+    if(username != client->user->getAccountName() && !client->user->getAccountName().empty()){ //用户没有登录的时候是 false
+        return "client_input_error";
+    }
+    
     FEAuthModifygroupinfo FEgroup;
     FEgroup.hvsID = client->user->getAccountID(); //在服务端产生 
     FEgroup.zonename = ipcreq.zonename;

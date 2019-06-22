@@ -77,11 +77,14 @@ int main(int argc, char* argv[]){
             else if(ipcresult == "33"){
                 std::cout << "Verification failed, access denied" << std::endl;
             }
+            else if(ipcresult == "client_input_error"){
+                std::cout << "账户名输入错误" << std::endl;
+            }
             else{
                 AuthSearch myauth;
                 myauth.deserialize(ipcresult);
 
-                cout << myauth.hvsID << endl;
+                // cout << myauth.hvsID << endl;
                 vector<string>::iterator iter;
                 for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
                     cout << "区域名字： " << *iter << endl;

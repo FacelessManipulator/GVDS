@@ -17,6 +17,7 @@
 
 using namespace Pistache;
 using namespace hvs;
+using namespace std;
 //bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
  * zonerename 命令行客户端
@@ -106,12 +107,7 @@ int main(int argc, char* argv[]){
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             std::string ipcresult (msg.body(), msg.body_length());
-            if (ipcresult != "success"){
-                //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
-                std::cerr << ipcresult << std::endl; // 执行结果
-            } else {
-                std::cout << "执行结果：" << ipcresult << std::endl;
-            }
+            cout << ipcresult << endl;
             prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数

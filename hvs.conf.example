@@ -1,5 +1,5 @@
 ip = "127.0.0.1";
-center_id = "20001";
+center_id = "1";
 log = {
     path = "/opt/hvs/var/log/hvs.log";
     level = 10;

@@ -15,29 +15,32 @@ using namespace hvs;
 using namespace std;
 
 int FdManager::open(const string& path, int flags, int mode) {
+    lock_guard<mutex> lock(fdm_mu);
     auto fd_it = fds.find(path);
     if (fd_it != fds.end()) {
+        // we should trunc this preallocate file handler if trunc flag is set
+        if(flags & O_TRUNC)
+            ::ftruncate(fd_it->data, 0);
         fds.hit(path);
         return fd_it->data;
     } else {
         // TODO: we need handle the flags and mode properly, currently by pass
-        int mask_flags = O_SYNC | O_DSYNC | O_DIRECT ;
+        int mask_flags = O_SYNC | O_DSYNC | O_DIRECT | O_RDONLY | O_WRONLY;
         flags &= ~mask_flags;
         int fd = ::open(path.c_str(), flags, mode);
         // open error may happened if fd == -1
         // fd usually >=0, 0 usually stands for standard output
         if (fd == -1) {
-            int err = errno;
+            int err = -errno;
             return err;
         } else if (fd >= 0) {
-            auto fd_create = fds.touch(path);
-            fd_create.data = fd;
+            fds.touch(path, fd);
             // TODO: close may take some time to flush, need more work such as background close queue
             checkAndExpire();
-            return fd_create.data;
+            return fd;
         } else {
             // unknown problem happened
-            return EACCES;
+            return -EACCES;
         }
     }
 }
@@ -47,7 +50,51 @@ int FdManager::close(const string& path) {
     return 0;
 }
 
+int FdManager::create(const string& path, int mode) {
+    lock_guard<mutex> lock(fdm_mu);
+    int fd_new = ::open(path.c_str(), O_CREAT | O_SYNC ,mode);
+    if(fd_new >= 0) {
+        auto fd_it = fds.find(path);
+        if (fd_it != fds.end()) {
+            // close fd
+            int fd_old = fd_it->data;
+            fds.remove(fd_it->key);
+            ::close(fd_old);
+        }
+        return 0;
+    } else {
+        return fd_new;
+    }
+}
+
+int FdManager::remove(const string& path) {
+    lock_guard<mutex> lock(fdm_mu);
+    auto fd_it = fds.find(path);
+    if (fd_it != fds.end()) {
+        // close fd
+        int fd_old = fd_it->data;
+        fds.remove(fd_it->key);
+        ::close(fd_old);
+    }
+    int fd_new = ::unlink(path.c_str());
+    return fd_new;
+}
+
+int FdManager::expire(const string& path) {
+    lock_guard<mutex> lock(fdm_mu);
+    auto fd_it = fds.find(path);
+    int fd_old = -1;
+    if (fd_it != fds.end()) {
+        // close fd
+        fd_old = fd_it->data;
+        fds.remove(fd_it->key);
+        ::close(fd_old);
+    }
+    return fd_old;
+}
+
 int FdManager::flush(const string& path) {
+    lock_guard<mutex> lock(fdm_mu);
     // out handler, not really close file but only flush it
     auto fd_it = fds.find(path);
     if (fd_it != fds.end()) {

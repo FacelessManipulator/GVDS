@@ -8,7 +8,7 @@ using namespace hvs;
 using namespace std;
 ServerSession::ServerSession(UDTServer *srv, UDTSOCKET socket)
     : parent(srv), unpacker(), socket_(socket), m_stop(false) {
-  unpacker.reserve_buffer(10240000);
+  unpacker.reserve_buffer(2048000);
   writer = make_shared<UDTWriter>(socket_);
   writer->start();
   iop = static_cast<IOProxy *>(hvs::HvsContext::get_context()->node);
@@ -64,6 +64,8 @@ void ServerSession::do_read() {
       op->type = IO_PROXY_DATA;
       op->offset = buf.offset;
       op->id = buf.id;
+      op->fid = buf.fid;
+      op->open_flags = buf.flags;
       if (buf.is_read) {
         op->operation = IOProxyDataOP::read;
         op->size = static_cast<size_t>(buf.read_size);

@@ -66,6 +66,8 @@ struct ioproxy_rpc_buffer {
   unsigned long read_size;
   std::string path;
   bool finalize_buf;
+  int fid;
+  int flags;
   // for write request purpose
   ioproxy_rpc_buffer(const char* _path, const char* buffer, unsigned long off,
                      int _size)
@@ -98,6 +100,8 @@ struct ioproxy_rpc_buffer {
       this->read_size = oths.read_size;
       this->path = oths.path;
       this->finalize_buf = oths.finalize_buf;
+      this->fid = oths.fid;
+      this->flags = oths.flags;
       // we have to provide a const function to rpclib
       // and we also have to modify oths ptr to move ownership of memory
       // const_cast is not a good chioce but pass the compile
@@ -115,6 +119,8 @@ struct ioproxy_rpc_buffer {
     this->read_size = oths.read_size;
     this->path = oths.path;
     this->finalize_buf = oths.finalize_buf;
+      this->fid = oths.fid;
+      this->flags = oths.flags;
     // we have to provide a const function to rpclib
     // and we also have to modify oths ptr to move ownership of memory
     // const_cast is not a good chioce but pass the compile
@@ -130,7 +136,7 @@ struct ioproxy_rpc_buffer {
       buf.size = 0;
     }
   }
-  MSGPACK_DEFINE_ARRAY(error_code, path, buf, offset, is_read, id, read_size);
+  MSGPACK_DEFINE_ARRAY(error_code, path, buf, offset, is_read, id, read_size, fid, flags);
 };
 
 struct ioproxy_rpc_dirent {

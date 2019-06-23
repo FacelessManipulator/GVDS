@@ -34,6 +34,9 @@ void ClientSession::close() {
 }
 
 int ClientSession::write(ioproxy_rpc_buffer &buffer) {
+  if(writer->error_stat()) {
+    return -ECONNRESET;
+  }
   clmdep_msgpack::sbuffer data;
   buffer.id = seq_n++;
   clmdep_msgpack::pack(data, buffer);
@@ -60,8 +63,13 @@ std::unique_ptr<ioproxy_rpc_buffer> ClientSession::wait_op(int id) {
   future<std::unique_ptr<ioproxy_rpc_buffer>> ft = move(it->second);
   futures.erase(id);
   session_lock.unlock();
-  unique_ptr<ioproxy_rpc_buffer> res = ft.get();
-  return res;
+  auto status = ft.wait_for(chrono::seconds(5));
+  if(status != future_status::ready)
+    return nullptr;
+  else {
+    unique_ptr<ioproxy_rpc_buffer> res = ft.get();
+    return res;
+  }
 }
 
 // currently without asio, we use epoll.
@@ -100,6 +108,7 @@ void ClientSession::do_read() {
       // handle the message
       try {
         auto buf = msg.as<ioproxy_rpc_buffer>();
+        lock_guard<mutex> lock(session_lock);
         auto it = ready_promises.find(buf.id);
         if (it == ready_promises.end()) {
           // error duplicated msg?
@@ -107,7 +116,15 @@ void ClientSession::do_read() {
         } else {
           promise<unique_ptr<ioproxy_rpc_buffer>> pm = move(it->second);
           ready_promises.erase(it);
-          pm.set_value(make_unique<ioproxy_rpc_buffer>(move(buf)));
+          if(auto_handler.count(buf.id)) {
+            auto ft = futures.find(buf.id);
+            if(ft != futures.end())
+              futures.erase(ft);
+            // TODO: Should we handle the write state inline? such as resend the error write?
+            // usually, resend still cause errors. Error should be prevented in open or stat call.
+          } else {
+            pm.set_value(make_unique<ioproxy_rpc_buffer>(move(buf)));
+          }
         }
       } catch (exception &e) {
         // msg corrupt

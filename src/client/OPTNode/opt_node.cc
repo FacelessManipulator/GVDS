@@ -148,38 +148,61 @@ void* SelectNode::entry() {
 }
 
 
-//线程功能函数
-int SelectNode::getRTT(map<string, double> &mymap){
 
-    //string a = "www.baidu.com";
+
+
+//线程功能函数
+// int SelectNode::getRTT_notuse(map<string, double> &mymap){
+
+//     //string a = "www.baidu.com";
+//     if(!center_Information.empty()){
+//         CenterInfo mycenter;
+//         mycenter.deserialize(center_Information); 
+//         //for 改成for
+
+//         double rtt_beijing = subgetRTT(mycenter.centerIP["1"], 2,
+//             atoi(mycenter.centerPort["1"].c_str()));
+//         double rtt_shanghai = subgetRTT(mycenter.centerIP["2"], 2,
+//             atoi(mycenter.centerPort["2"].c_str()));
+//         double rtt_guangzhou = subgetRTT(mycenter.centerIP["3"], 2, 
+//             atoi(mycenter.centerPort["3"].c_str()));
+//         double rtt_changsha = subgetRTT(mycenter.centerIP["4"], 2, 
+//             atoi(mycenter.centerPort["4"].c_str()));
+//         double rtt_jinan = subgetRTT(mycenter.centerIP["5"], 2,
+//          atoi(mycenter.centerPort["5"].c_str()));
+
+//         mymap[supercomputing_A] = rtt_beijing;
+//         mymap[supercomputing_B] = rtt_shanghai;
+//         mymap[supercomputing_C] = rtt_guangzhou;
+//         mymap[supercomputing_D] = rtt_changsha;
+//         mymap[supercomputing_E] = rtt_jinan;
+
+//         return 0;
+//     }
+//     return -1;
+// }
+
+
+int SelectNode::getRTT(map<string, double> &mymap){
     if(!center_Information.empty()){
         CenterInfo mycenter;
         mycenter.deserialize(center_Information); 
         //for 改成for
 
-        double rtt_beijing = subgetRTT(mycenter.centerIP["1"], 2,
-            atoi(mycenter.centerPort["1"].c_str()));
-        double rtt_shanghai = subgetRTT(mycenter.centerIP["2"], 2,
-            atoi(mycenter.centerPort["2"].c_str()));
-        double rtt_guangzhou = subgetRTT(mycenter.centerIP["3"], 2, 
-            atoi(mycenter.centerPort["3"].c_str()));
-        double rtt_changsha = subgetRTT(mycenter.centerIP["4"], 2, 
-            atoi(mycenter.centerPort["4"].c_str()));
-        double rtt_jinan = subgetRTT(mycenter.centerIP["5"], 2,
-         atoi(mycenter.centerPort["5"].c_str()));
+        std::vector<std::string>::iterator iter;
+        for(iter = mycenter.centerID.begin(); iter != mycenter.centerID.end(); iter++){
+            double location_rtt = subgetRTT(mycenter.centerIP[*iter], 2, 
+                                            atoi(mycenter.centerPort[*iter].c_str()));
 
-        mymap[supercomputing_A] = rtt_beijing;
-        mymap[supercomputing_B] = rtt_shanghai;
-        mymap[supercomputing_C] = rtt_guangzhou;
-        mymap[supercomputing_D] = rtt_changsha;
-        mymap[supercomputing_E] = rtt_jinan;
+            mymap[mycenter.centerName[*iter]] = location_rtt;
+        }
 
         return 0;
     }
     return -1;
 }
 
-
+//获取给定ip的实验时延
 double SelectNode::subgetRTT(std::string hostOrIp, int type, int port) {
     if(type == 1) {
         return subgetRTT_ping(hostOrIp);
@@ -194,7 +217,8 @@ double SelectNode::subgetRTT_rest(string hostOrIp, int port) {
   auto start = chrono::steady_clock::now();
   string response = client->rpc->get_request(url, "/manager");
   auto end = chrono::steady_clock::now();
-  return chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+  return chrono::duration_cast<chrono::microseconds>(end - start).count();
 }
 
 double SelectNode::subgetRTT_ping(string hostOrIp){
@@ -247,14 +271,15 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
         mutex_lock(); //cout<<"wirte lock"<<endl; //展示工作量时输出
         erase_v_delay();
         for (int i = 0; i != myvec.size(); ++i) {
-            string id = getmapIdName(myvec[i].first);   // myvec[i].first是hostCenterName
-
+            string id = getmapIdName(myvec[i].first);   // myvec[i].first是hostCenterName   是rtt
+            
             struct_Node myNode;
             myNode.location = mycenter.centerName[id]; 
             myNode.ip_addr = mycenter.centerIP[id];
             myNode.port = mycenter.centerPort[id];
             setNode_delay(myNode);
 
+            cout << myvec[i].first << " : " << myvec[i].second << endl; //展示工作量时输出
             // if (myvec[i].first.compare(supercomputing_A) == 0)
         }
         mutex_unlock();

@@ -60,10 +60,10 @@ TEST_F(HVSAccountTest, test_mconf_add_update) {
   client.init(opts);
 
   FECenterInfo FEcenter;
-  FEcenter.centerID = "4";
-  FEcenter.centerIP = "127.0.0.9";
+  FEcenter.centerID = "6";
+  FEcenter.centerIP = "127.0.0.1";
   FEcenter.centerPort = "9090";
-  FEcenter.centerName = "Jinan";
+  FEcenter.centerName = "xi-an";
 
   string mes = FEcenter.serialize();
   cout << "mes: " << mes << endl;

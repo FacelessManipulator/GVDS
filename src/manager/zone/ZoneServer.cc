@@ -500,20 +500,28 @@ namespace hvs{
         int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
         if(res_za == 0)
         {
-
-          if(tmp.memberID.empty())
+          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, memberID);
+          if (spacesyne ==0)
           {
-            return 0;
+            if(tmp.memberID.empty())
+            {
+              return 0;
+            }
+            else
+            {            
+              int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);
+              if(memadd == 0) return 0;
+              else
+              {
+                std::cerr << "ZoneAdd:添加成员失败！" << std::endl;
+                return errno = EAGAIN;
+              } 
+            }
           }
           else
-          {            
-            int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);
-            if(memadd == 0) return 0;
-            else
-            {
-              std::cerr << "ZoneAdd:添加成员失败！" << std::endl;
-              return errno = EAGAIN;
-            } 
+          {
+            std::cerr << "ZoneAdd:空间权限同步失败" << std::endl;
+            return errno = EAGAIN;
           }
         }
         else

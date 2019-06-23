@@ -420,9 +420,6 @@ namespace hvs{
         int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
         if(res_za == 0)
         {
-          cout << "heresy" << endl;
-          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, tmp.ownerID, tmp.memberID);//shanchu
-          cout << "notheresy" << endl;
           if(tmp.memberID.empty())
           {
             return 0;
@@ -588,11 +585,27 @@ namespace hvs{
         int res_zd = p_auth->ZonePermissionDeduct(zoneID, ownerID);
         if(res_zd == 0)
         {
-          SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
-          if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+          int spaceauthfault = 0;
+          for(std::vector<std::string>::iterator m = tmp.spaceID.begin(); m != tmp.spaceID.end(); m++)
           {
-            zonePtr->remove(zoneID);
-            return 0;
+            int spaceauthdel = p_auth->SpacePermissionDelete(*m);
+            if(spaceauthdel == 0) continue;
+            else
+            {
+              std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+              spaceauthfault = 1;
+              break;
+            }
+          }
+          if(spaceauthfault == 0)
+          {
+            SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
+            if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+            {
+              zonePtr->remove(zoneID);
+              return 0;
+            }
+            else return errno = EAGAIN;
           }
           else return errno = EAGAIN;
         }
@@ -606,11 +619,27 @@ namespace hvs{
           int res_zd = p_auth->ZonePermissionDeduct(zoneID, ownerID);
           if(res_zd == 0)
           {
-            SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
-            if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+            int spaceauthfault = 0;
+            for(std::vector<std::string>::iterator m = tmp.spaceID.begin(); m != tmp.spaceID.end(); m++)
             {
-              zonePtr->remove(zoneID);
-              return 0;
+              int spaceauthdel = p_auth->SpacePermissionDelete(*m);
+              if(spaceauthdel == 0) continue;
+              else
+              {
+                std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+                spaceauthfault = 1;
+                break;
+              }
+            }
+            if(spaceauthfault == 0)
+            {
+              SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
+              if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
+              {
+                zonePtr->remove(zoneID);
+                return 0;
+              }
+              else return errno = EAGAIN;
             }
             else return errno = EAGAIN;
           }

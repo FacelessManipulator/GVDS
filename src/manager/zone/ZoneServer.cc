@@ -209,7 +209,6 @@ namespace hvs{
           tmp_zi.spaceID.push_back(sp->spaceID);
         }
         result_z.push_back(tmp_zi);
-        cout << tmp_zi.serialize() << endl;
       }
 
       for (std::vector<std::string>::iterator it2 = vp2->begin(); it2 != vp2->end(); it2++)
@@ -680,7 +679,6 @@ namespace hvs{
       SpaceServer* tmp_server = static_cast<SpaceServer*>(mgr->get_module("space").get());//调用方法
       //SpaceServer* tmp_server = hvs::SpaceServer::getInstance();
       std::string res_sc = tmp_server->SpaceCreate(spaceName, ownerID, memberID, spaceSize, spacePathInfo);
-      cout << res_sc << endl;
       if (res_sc == "-1")
       {
         return errno = ENOSPC;

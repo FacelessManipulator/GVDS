@@ -34,7 +34,6 @@ namespace hvs{
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
             std::string tmps_value = *vs;
-            std::cout << "1" << tmps_value << std::endl;
             tmps.deserialize(tmps_value);
 
             //TODO:资源聚合模块查询名字
@@ -106,7 +105,6 @@ namespace hvs{
         LocalAccountPair owner_localpair;
         owner_localpair.deserialize(m_value);
         string new_cmd = "chown -R " + owner_localpair.localaccount + ":" + owner_localpair.localaccount + " " + rootdir;
-        cout << new_cmd << endl;
         system(new_cmd.c_str());
 
         if (mkret != 0 ) {

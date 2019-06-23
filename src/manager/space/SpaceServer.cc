@@ -133,9 +133,9 @@ namespace hvs{
     }
 
     std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string& hostCenterName, std::string& storageSrcName) {
-        std::shared_ptr<hvs::CouchbaseDatastore> storagePtr = std::create_shared<hvs::CouchbaseDatastore>(
-                hvs::CouchbaseDatastore(storagebucket));
-        storagePtr->init();
+        std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(storagebucket, hvs::DatastoreType::couchbase);
+        auto storagePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
+
         std::string query = "";
         //根据存储集群名称查找 存储集群ID
         if(storageSrcName.empty()){
@@ -172,9 +172,8 @@ namespace hvs{
 
     std::string SpaceServer::SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo)
     {
-        std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::create_shared<hvs::CouchbaseDatastore>(
-              hvs::CouchbaseDatastore(spacebucket));
-        spacePtr->init();
+        std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase);
+        auto spacePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
         Space tmpm;
         tmpm.deserialize(spacePathInfo);
         auto [storid, hostid] = GetSpaceCreatePath(0, tmpm.hostCenterName, tmpm.storageSrcName);
@@ -213,7 +212,7 @@ namespace hvs{
                     perror("SpaceCheck.SpaceSizeAdd");
                     return "false";
                 }
-                spacePtr->set(tmps.spaceID, tmps.serialize());
+                dbPtr->set(tmps.spaceID, tmps.serialize());
                 return tmps.spaceID;
             }
         }

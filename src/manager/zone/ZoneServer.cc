@@ -87,8 +87,7 @@ namespace hvs{
   int ZoneServer::ZoneRename(std::string zoneID, std::string ownerID, std::string newZoneName)
   {
       Zone tmp;
-      std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::create_shared<hvs::CouchbaseDatastore>(
-            hvs::CouchbaseDatastore(zonebucket));
+      std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
       zonePtr->init();
       auto [vp, err] = zonePtr->get(zoneID);
       std::string tmp_value = *vp;
@@ -130,8 +129,7 @@ namespace hvs{
   bool ZoneServer::GetZoneLocateInfo(std::vector<Space> &result, std::string clientID, std::string zoneID, std::vector<std::string> spaceID)
   {
       Zone tmp;
-      std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::create_shared<hvs::CouchbaseDatastore>(
-            hvs::CouchbaseDatastore(zonebucket));
+      std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
       zonePtr->init();
       auto [vz, err] = zonePtr->get(zoneID);
       std::string tmp_value = *vz;
@@ -174,9 +172,8 @@ namespace hvs{
     int pos = query.find("ownerID");
     query.erase(pos, 7);
     query.insert(pos, clientID);
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::create_shared<hvs::CouchbaseDatastore>(
-            hvs::CouchbaseDatastore(zonebucket));
-    zonePtr->init();
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     auto [vp, err] = zonePtr->n1ql(query);
 
     //查找是member的区域
@@ -184,9 +181,8 @@ namespace hvs{
     int pos2 = query2.find("clientID");
     query2.erase(pos2, 8);
     query2.insert(pos2, clientID);
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr2 = std::create_shared<hvs::CouchbaseDatastore>(
-            hvs::CouchbaseDatastore(zonebucket));
-    zonePtr2->init();
+    std::shared_ptr<hvs::Datastore> dbPtr2 = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    auto zonePtr2 = static_cast<CouchbaseDatastore*>(dbPtr2.get());
     auto [vp2, err2] = zonePtr2->n1ql(query2);
 
     if(vp->size()==0 && vp2->size()==0) return false;
@@ -208,7 +204,7 @@ namespace hvs{
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
         tmp_server->GetSpaceInfo(result_s, tmp.spaceID);
         for(auto& result: result_s)
-          tmp_zi.spaceBicInfo.push_back(create_shared<Space>(result));
+          tmp_zi.spaceBicInfo.push_back(make_shared<Space>(result));
         for(auto& sp: tmp_zi.spaceBicInfo) {
           tmp_zi.spaceID.push_back(sp->spaceID);
         }
@@ -232,7 +228,7 @@ namespace hvs{
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
         tmp_server->GetSpaceInfo(result_s2, tmp2.spaceID);
         for(auto& result: result_s2)
-          tmp_zi2.spaceBicInfo.push_back(create_shared<Space>(result));
+          tmp_zi2.spaceBicInfo.push_back(make_shared<Space>(result));
         for(auto& sp: tmp_zi2.spaceBicInfo) {
           tmp_zi2.spaceID.push_back(sp->spaceID);
         }
@@ -258,8 +254,7 @@ namespace hvs{
   int ZoneServer::ZoneShare(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
   {
     Zone tmp;
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::create_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore(zonebucket));
+    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
     zonePtr->init();
     auto [vp, err] = zonePtr->get(zoneID);
     std::string tmp_value = *vp;
@@ -303,8 +298,7 @@ namespace hvs{
   int ZoneServer::ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
   {
     Zone tmp;
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::create_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore(zonebucket));
+    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
     zonePtr->init();
     auto [vp, err] = zonePtr->get(zoneID);
     if(err != 0){
@@ -366,9 +360,8 @@ namespace hvs{
       std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
   {
 
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::create_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore(zonebucket));
-    zonePtr->init();
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     //插入判断，加的这个区域是否已经存在
     std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
     int pos = query.find("ownerID");
@@ -414,7 +407,7 @@ namespace hvs{
 
         tmp.contains_spaceinfo = false;
         if (tmp.zoneName == "") return errno = EAGAIN;
-        zonePtr->set(tmp.zoneID, tmp.serialize());
+        dbPtr->set(tmp.zoneID, tmp.serialize());
 
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
         int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
@@ -462,9 +455,8 @@ namespace hvs{
       std::string spacePathInfo)
   {
     Zone tmp;
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::create_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore(zonebucket));
-    zonePtr->init();
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     //插入判断，加的这个区域是否已经存在
     std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
     int pos = query.find("ownerID");
@@ -495,12 +487,13 @@ namespace hvs{
         tmp.spaceID.emplace_back(spaceID);
 
         tmp.contains_spaceinfo = false;
-        zonePtr->set(tmp.zoneID, tmp.serialize());
+        dbPtr->set(tmp.zoneID, tmp.serialize());
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
         int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
         if(res_za == 0)
         {
-          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, memberID);
+          std::vector<std::string> mem;
+          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, mem);
           if (spacesyne ==0)
           {
             if(tmp.memberID.empty())
@@ -548,7 +541,7 @@ namespace hvs{
         tmp.deserialize(tmp_value);
         tmp.spaceID.emplace_back(spaceID);
         tmp.contains_spaceinfo = false;
-        zonePtr->set(tmp.zoneID, tmp.serialize());
+        dbPtr->set(tmp.zoneID, tmp.serialize());
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
         int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, memberID);
         if(spacesyne == 0) return 0;
@@ -578,7 +571,7 @@ namespace hvs{
   int ZoneServer::ZoneCancel(std::string zoneID, std::string ownerID)
   {
     Zone tmp;
-    std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
     auto [vp, err] = zonePtr->get(zoneID);
     if( err != 0 ){
       return errno = ENOENT;

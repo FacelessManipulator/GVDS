@@ -133,7 +133,7 @@ namespace hvs{
     }
 
     std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string& hostCenterName, std::string& storageSrcName) {
-        std::shared_ptr<hvs::CouchbaseDatastore> storagePtr = std::make_shared<hvs::CouchbaseDatastore>(
+        std::shared_ptr<hvs::CouchbaseDatastore> storagePtr = std::create_shared<hvs::CouchbaseDatastore>(
                 hvs::CouchbaseDatastore(storagebucket));
         storagePtr->init();
         std::string query = "";
@@ -172,7 +172,7 @@ namespace hvs{
 
     std::string SpaceServer::SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo)
     {
-        std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
+        std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::create_shared<hvs::CouchbaseDatastore>(
               hvs::CouchbaseDatastore(spacebucket));
         spacePtr->init();
         Space tmpm;

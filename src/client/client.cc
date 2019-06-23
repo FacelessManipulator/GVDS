@@ -66,7 +66,6 @@ void Client::registe_module(std::shared_ptr<ClientModule> mod) {
 
 string Client::get_manager() {
   auto centers = optNode->getNode(1);
-
   if(centers.size() > 0) {
     auto center = centers[0];
     char url[256];

@@ -23,6 +23,14 @@ class IOProxy : public Thread, public Node {
     // TODO: should read from config file
     m_max_op = 1000;
     m_max_worker = 1024;
+    pthread_mutexattr_t mu_attr;
+    pthread_mutexattr_init(&mu_attr);
+    pthread_mutexattr_settype(&mu_attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&m_queue_mutex, &mu_attr);
+    pthread_mutex_init(&m_dispatch_mutex, &mu_attr);
+    pthread_cond_init(&m_cond_dispatcher, nullptr);
+    pthread_cond_init(&m_cond_ioproxy, nullptr);
+    pthread_mutexattr_destroy(&mu_attr);
   }
   bool start();
   void stop();
@@ -35,7 +43,13 @@ class IOProxy : public Thread, public Node {
   bool queue_and_wait(std::shared_ptr<OP> op);
   bool queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops);
   bool add_idle_worker(IOProxyWorker* woker);
-  ~IOProxy() override {stop();};
+  ~IOProxy() override {
+    stop();
+    pthread_mutex_destroy(&m_queue_mutex);
+    pthread_mutex_destroy(&m_dispatch_mutex);
+    pthread_cond_destroy(&m_cond_dispatcher);
+    pthread_cond_destroy(&m_cond_ioproxy);
+  };
 
  private:
   void* entry() override;

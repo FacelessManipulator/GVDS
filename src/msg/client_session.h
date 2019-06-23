@@ -24,6 +24,10 @@ class ClientSession : public Thread {
   void do_read();
   // return the id to be waited
   int write(ioproxy_rpc_buffer& buffer);
+  void auto_handle(int id) {
+    std::lock_guard<std::mutex> lock(session_lock);
+    auto_handler.insert(id);
+  }
   
   std::unique_ptr<ioproxy_rpc_buffer> wait_op(int id);
 
@@ -39,6 +43,7 @@ class ClientSession : public Thread {
   bool m_stop = false;
   std::atomic_uint64_t seq_n;
   std::mutex session_lock;
+  std::set<int> auto_handler;
   friend class UDTClient;
 };
 }  // namespace hvs

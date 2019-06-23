@@ -59,7 +59,7 @@ int ProxyOP::ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
       break;
     }
     case IOProxyMetadataOP::open: {
-      op->error_code = iop->fdm.open(op->path, O_CREAT|O_RDWR, 0655);
+      op->error_code = iop->fdm.open(op->path, op->open_flags|O_RDWR, 0655);
       break;
     }
     case IOProxyMetadataOP::close: {

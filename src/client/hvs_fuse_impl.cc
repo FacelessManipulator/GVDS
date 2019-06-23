@@ -77,7 +77,7 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
-    return -ENOENT;
+    return -ENETUNREACH;
   }
 
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat", rpath);
@@ -169,8 +169,9 @@ int hvsfs_open(const char *path, struct fuse_file_info *fi) {
   retstat = res->as<int>();
   if (retstat > 0) {
     fi->fh = retstat;
-  }
-  return retstat;
+    return 0;
+  } else
+    return retstat;
 }
 
 int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
@@ -182,6 +183,8 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
   }
 
   ioproxy_rpc_buffer _buffer(rpath.c_str(), offset, size);
+  _buffer.fid = fi->fh;
+  _buffer.flags = fi->flags;
 
   if (HVS_FUSE_DATA->fuse_client->use_udt) {
     // UDT version
@@ -197,7 +200,7 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
     return res->buf.size;
   } else {
     auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_read", rpath,
-                                                size, offset);
+                                                size, offset, fi->fh);
     if (!res.get()) {
       // timeout exception raised
       return -ENOENT;
@@ -222,6 +225,8 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
   ioproxy_rpc_buffer _buffer(rpath.c_str(), buf, offset, size);
   _buffer.is_read = false;
+  _buffer.fid = fi->fh;
+  _buffer.flags = fi->flags;
 
   if (HVS_FUSE_DATA->fuse_client->use_udt) {
     // UDT version

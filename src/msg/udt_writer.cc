@@ -4,7 +4,7 @@ using namespace hvs;
 using namespace std;
 
 void UDTWriter::start() {
-  m_max_write = 5;
+  m_max_write = 20;
   m_stop = false;
   create("udt session");
 }
@@ -27,8 +27,8 @@ void *UDTWriter::entry() {
 
 void UDTWriter::close() {
   if (!m_stop) {
-    pthread_mutex_lock(&m_queue_mutex);
     m_stop = true;
+    pthread_mutex_lock(&m_queue_mutex);
     pthread_cond_signal(&m_cond_writer);
     pthread_cond_broadcast(&m_cond_session);
     pthread_mutex_unlock(&m_queue_mutex);
@@ -38,11 +38,12 @@ void UDTWriter::close() {
 
 void UDTWriter::write(clmdep_msgpack::sbuffer &&data) {
   pthread_mutex_lock(&m_queue_mutex);
-  while (m_new.size() > m_max_write) {
+  while (m_pending_write > m_max_write) {
     // buffer size exceed limit, wait on session's cond
     pthread_cond_wait(&m_cond_session, &m_queue_mutex);
   }
   m_new.push(std::move(data));
+  ++m_pending_write;
   pthread_cond_signal(&m_cond_writer);
   pthread_mutex_unlock(&m_queue_mutex);
 }
@@ -55,16 +56,19 @@ void UDTWriter::do_write() {
   // buffer consumed.
   pthread_cond_broadcast(&m_cond_session);
   pthread_mutex_unlock(&m_queue_mutex);
-  _write_unsafe(&t);
+  should_close = _write_unsafe(&t);
 
   pthread_mutex_unlock(&m_writer_mutex);
 }
 
-void UDTWriter::_write_unsafe(std::queue<clmdep_msgpack::sbuffer> *q) {
+bool UDTWriter::_write_unsafe(std::queue<clmdep_msgpack::sbuffer> *q) {
+  if(should_close)
+    return true;
   while (!q->empty()) {
     // zero copy with move semantic
     clmdep_msgpack::sbuffer data(std::move(q->front()));
     q->pop();
+    --m_pending_write;
     {
       // send circle in case of the lack of udt buffer
       unsigned long sent = 0, total = data.size();
@@ -79,9 +83,9 @@ void UDTWriter::_write_unsafe(std::queue<clmdep_msgpack::sbuffer> *q) {
       }
       if (sent < total) {
         // error occured, close session
-        m_stop = true;
-        break;
+        return true;
       }
     }
   }
+  return false;
 }

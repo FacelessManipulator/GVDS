@@ -10,6 +10,7 @@
 #include "manager/manager.h"
 #include "aggregation_struct.h"
 #include "hvs_struct.h"
+#include "client/clientuser/ClientAuth_struct.h"
 
 
 #include <errno.h>
@@ -748,7 +749,9 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
                 client->user->setAccountName(myaccount.accountName);
                 client->user->setAccountID(body);
 
-                // //接口示例                
+                string hvsID = client->user->getAccountID();
+                client->optNode->getAuthFromServer(hvsID);
+                // //【接口示例】                
                 // cout << "getToken(): " << client->user->getToken() << endl;
                 // cout << "getAccountName(): " << client->user->getAccountName() << endl;
                 // cout << "getAccountID(): " << client->user->getAccountID() << endl;
@@ -774,6 +777,29 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
     fu.get();
     
     Pclient.shutdown();
+
+    // //【接口示例】 客户端获取权限代码
+    // AuthSearch myauth = client->optNode->getAuthFromClient();
+    // cout << "aaa: "<<myauth.hvsID << endl;
+    // if(!myauth.hvsID.empty()){
+    //     vector<string>::iterator iter;
+    //     for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
+    //         cout << "区域id： " << *iter << endl;
+    //         cout << "区域读权限： " << myauth.read[*iter] << endl;
+    //         cout << "区域写权限： " << myauth.write[*iter] << endl;
+    //         cout << "区域执行权限： "<< myauth.exe[*iter] << endl;  
+    //         cout << "身份： ";
+    //         if(myauth.isowner[*iter]=="1"){
+    //             cout << "区域拥有者" << endl;  
+    //         }
+    //         else{
+    //             cout << "区域成员" << endl;  
+    //         }
+    //         cout << endl;
+    //     }
+
+    // }
+    
 
     return return_value;
 }
@@ -922,6 +948,14 @@ std::string ClientIPC::dousercancel(IPCreq &ipcreq){
     string endpoint = client->get_manager();
     string routepath = "/auth/modify";
     string res = client->rpc->post_request(endpoint, routepath, value);
+
+
+
+    //++++++
+    //修改完要获取最新权限
+    string hvsID = client->user->getAccountID();
+    client->optNode->getAuthFromServer(hvsID);
+    //++++++
     if(res == "-1"){
         return "modify auth fail";
     }

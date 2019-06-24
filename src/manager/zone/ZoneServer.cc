@@ -683,8 +683,18 @@ namespace hvs{
     for(std::vector<Space>::iterator m = tmps.begin(); m != tmps.end(); m++)
     {
       std::cout << (*m).hostCenterName << std::endl;
-      if ((*m).hostCenterName == spaceurl.hostCenterName) return errno = EINVAL;
-      else continue;
+      if ((*m).hostCenterName == spaceurl.hostCenterName)
+      {
+        return errno = EINVAL;
+      } 
+      else if ((*m).spaceName == spaceName)
+      {
+        return errno = EINVAL;
+      } 
+      else 
+      {
+        continue;
+      }
     }
 
     if(tmp.ownerID == ownerID)

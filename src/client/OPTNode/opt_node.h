@@ -4,6 +4,7 @@
 #include <thread>
 #include "client/client.h"
 #include "common/centerinfo.h"
+#include "client/clientuser/ClientAuth_struct.h"
 
 #include <iostream>
 #include <vector>
@@ -49,6 +50,9 @@ public:
     //3、获取centerName 对应的 centerid
     std::string getmapIdName(std::string centerName);
 
+    void getAuthFromServer(std::string hvsID);
+    AuthSearch getAuthFromClient();
+
 
     void mutex_lock(); //因为mtx是私有，只能定义成员函数来操作
     void mutex_unlock();
@@ -73,6 +77,7 @@ private:
     void getCenterInformation(); //向服务端获取center_Information
 
 
+
 private:
     virtual void start() override;
     virtual void stop() override;
@@ -92,6 +97,9 @@ private:
     std::string supercomputing_C = "Guangzhou";
     std::string supercomputing_D = "Changsha";
     std::string supercomputing_E = "Jinan";
+
+    //客户端缓存权限
+    AuthSearch myauth;
 
     std::string center_Information; //TODO设置成全局变量？？  是否设置成static
 };

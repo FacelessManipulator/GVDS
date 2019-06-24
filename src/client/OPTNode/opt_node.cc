@@ -388,6 +388,44 @@ std::string SelectNode::getmapIdName(std::string centerName){
 }
 
 
+void SelectNode::getAuthFromServer(string hvsID){
+    // std::string hvsID = client->user->getAccountID(); //在服务端产生 
+    //权限查询
+    string endpoint = client->get_manager();
+    string routepath = "/auth/search";
+    string res = client->rpc->post_request(endpoint, routepath, hvsID);
+    if(res!="fail" && res!="33"){
+        // cout << "res: "<< res << endl;
+        // cout << "getAuthFromServer success"<< endl;
+        mutex_lock(); //因为mtx是私有，只能定义成员函数来操作
+        myauth.deserialize(res);
+        mutex_unlock();
+    }
+    else{
+        // cout << "getAuthFromServer fail"<< endl;
+    }
+    
+}
+
+AuthSearch SelectNode::getAuthFromClient(){
+    AuthSearch tmp_auth;
+    mutex_lock(); 
+    cout << "getAuthFromClient:  myauth.hvsID  " << myauth.hvsID << endl;
+    if(!myauth.hvsID.empty()){
+        tmp_auth.hvsID = myauth.hvsID;
+        vector<string>::iterator iter;
+        for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
+            tmp_auth.vec_ZoneID.push_back(*iter);
+            tmp_auth.read[*iter] = myauth.read[*iter];
+            tmp_auth.write[*iter] = myauth.write[*iter];
+            tmp_auth.exe[*iter] = myauth.exe[*iter];
+            tmp_auth.isowner[*iter] = myauth.isowner[*iter];
+        }
+    }
+    mutex_unlock();
+    return tmp_auth;
+}
+
 /*
 
 SelectNode::SelectNode(){

@@ -40,8 +40,6 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("账户登录");
         command.add_options()
-                ("ip", po::value<std::string>(), "管理节点IP")
-                ("port,p", po::value<int>(), "管理节点端口号")
                 ("user,u", po::value<std::string>(), "账户名")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述

@@ -90,7 +90,14 @@ int main(int argc, char* argv[]){
                     cout << "区域名字： " << *iter << endl;
                     cout << "区域读权限： " << myauth.read[*iter] << endl;
                     cout << "区域写权限： " << myauth.write[*iter] << endl;
-                    cout << "区域执行权限： "<< myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
+                    cout << "区域执行权限： "<< myauth.exe[*iter] << endl;  
+                    cout << "身份： ";
+                    if(myauth.isowner[*iter]=="1"){
+                        cout << "区域拥有者" << endl;  
+                    }
+                    else{
+                        cout << "区域成员" << endl;  
+                    }
                     cout << endl;
                 }
             }

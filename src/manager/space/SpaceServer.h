@@ -36,7 +36,7 @@ public:
     void GetSpaceInfo(std::vector<Space> &result_s, std::vector<std::string> spaceID);
 
     //空间创建模块：空间创建接口
-    std::string SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo);
+    std::string SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo, std::string groupname);
 
     //空间创建模块：添加区域空间校验接口 注：spacePathInfo 为空间元数据信息
     std::string SpaceCheck(std::string ownerID, std::vector<std::string> memberID, std::string spacePathInfo);

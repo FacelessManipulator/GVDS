@@ -55,6 +55,7 @@ public:
   std::map<std::string, std::string> read;
   std::map<std::string, std::string> write;
   std::map<std::string, std::string> exe;
+  std::map<std::string, std::string> isowner;
 
 public:
   void serialize_impl() override;

@@ -279,7 +279,7 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
             myNode.port = mycenter.centerPort[id];
             setNode_delay(myNode);
 
-            cout << myvec[i].first << " : " << myvec[i].second << endl; //展示工作量时输出
+            // cout << myvec[i].first << " : " << myvec[i].second << endl; //展示工作量时输出
             // if (myvec[i].first.compare(supercomputing_A) == 0)
         }
         mutex_unlock();

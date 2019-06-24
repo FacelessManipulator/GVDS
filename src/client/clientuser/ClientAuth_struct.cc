@@ -57,6 +57,7 @@ void AuthSearch::serialize_impl(){
     put("read", read);
     put("write", write);
     put("exe", exe);
+    put("isowner", isowner);
 }
 
 void AuthSearch::deserialize_impl(){
@@ -65,6 +66,7 @@ void AuthSearch::deserialize_impl(){
     get("read", read);
     get("write", write);
     get("exe", exe);
+    get("isowner", isowner);
 }
 //
 

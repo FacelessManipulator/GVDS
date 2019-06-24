@@ -25,7 +25,7 @@ void Mconf::router(Router& router){
 }
 
 void Mconf::addCenterRest(const Rest::Request& request, Http::ResponseWriter response){
-    cout << "start: addCenterRest" << endl;
+    // cout << "start: addCenterRest" << endl;
     auto info = request.body();
     cout << info << endl;
 
@@ -40,7 +40,7 @@ void Mconf::addCenterRest(const Rest::Request& request, Http::ResponseWriter res
         response.send(Http::Code::Ok, "success"); 
     }
     
-    cout << "end: addCenterRest" << endl;
+    // cout << "end: addCenterRest" << endl;
 }
 
 
@@ -103,7 +103,7 @@ string Mconf::searchCenter(){
         hvs::CouchbaseDatastore("account_info"));
     f0_dbPtr->init();
 
-    cout << "key: " << key <<endl;
+    // cout << "key: " << key <<endl;
     auto [pvalue, error_0] = f0_dbPtr->get(key);   //key 在构造函数里
     if(error_0){
         cout << "get DB center_information fail" <<endl;

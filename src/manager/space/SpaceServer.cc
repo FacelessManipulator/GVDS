@@ -66,7 +66,7 @@ namespace hvs{
         result_s.swap(tmp_si);
     }
 
-    std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo)
+    std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID, std::vector<std::string> memberID, int64_t spaceSize, std::string spacePathInfo, std::string groupname)
     {
         Space new_space;
         std::shared_ptr<hvs::Datastore> spacePtr =hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase);
@@ -92,7 +92,7 @@ namespace hvs{
         boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
         const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
         new_space.spaceID = tmp_uuid;
-        std::string rootdir = localstoragepath;
+        std::string rootdir = localstoragepath + "/";
         rootdir += tmp_uuid; // TODO: 路径拼接，后期如果有子空间再修改；
         int mkret = mkdir(rootdir.c_str(), 0770);
         
@@ -104,7 +104,14 @@ namespace hvs{
         }
         LocalAccountPair owner_localpair;
         owner_localpair.deserialize(m_value);
-        string new_cmd = "chown -R " + owner_localpair.localaccount + ":" + owner_localpair.localaccount + " " + rootdir;
+        //创建组
+        std::string gp = groupname; 
+        std::string group_cmd = "groupadd " + gp;
+        std::cout << group_cmd << std::endl;
+        system(group_cmd.c_str());
+
+        //设置权限
+        string new_cmd = "chown -R " + owner_localpair.localaccount + ":" + gp + " " + rootdir;
         system(new_cmd.c_str());
 
         if (mkret != 0 ) {

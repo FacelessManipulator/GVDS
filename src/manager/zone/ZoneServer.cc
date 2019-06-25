@@ -374,12 +374,18 @@ namespace hvs{
     {
       return errno = EINVAL;
     }
-    else{
+    else{        
+      Zone tmp;
+      
+      boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+      const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
+      tmp.zoneID = tmp_uuid;
+      std::string groupname = tmp_uuid.substr(0, 9);
       //1、TODO: 调用spacecreate接口（涉及到跨域创建空间的情况，则返还客户端，并再次发送） , 目前在区域初始注册的时候，只能创建一个默认的空间
       //跨域空间创建情况，考虑采用各超算管各自的创建，本超算不成功则返回客户端发送请求到下一顺位
       //2、TODO：调用权限模块
       SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端模块
-      std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo));
+      std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo), groupname);
       if (res_sc == "-1")
       {
         return errno = ENOSPC;
@@ -394,11 +400,7 @@ namespace hvs{
       }
       else
       {
-        Zone tmp;
         std::string spaceID = res_sc;
-        boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
-        const std::string tmp_uuid = boost::uuids::to_string(a_uuid);
-        tmp.zoneID = tmp_uuid;
         tmp.zoneName = std::move(zoneName);
         tmp.ownerID = ownerID;
         tmp.memberID = memberID;
@@ -588,7 +590,7 @@ namespace hvs{
           int spaceauthfault = 0;
           for(std::vector<std::string>::iterator m = tmp.spaceID.begin(); m != tmp.spaceID.end(); m++)
           {
-            int spaceauthdel = p_auth->SpacePermissionDelete(*m);
+            int spaceauthdel = p_auth->SpacePermissionDelete(*m, tmp.zoneID);
             if(spaceauthdel == 0) continue;
             else
             {
@@ -622,7 +624,7 @@ namespace hvs{
             int spaceauthfault = 0;
             for(std::vector<std::string>::iterator m = tmp.spaceID.begin(); m != tmp.spaceID.end(); m++)
             {
-              int spaceauthdel = p_auth->SpacePermissionDelete(*m);
+              int spaceauthdel = p_auth->SpacePermissionDelete(*m, tmp.zoneID);
               if(spaceauthdel == 0) continue;
               else
               {
@@ -673,12 +675,35 @@ namespace hvs{
     auto [vp, err] = zonePtr->get(tmp_key);
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
+    std::vector<Space> tmps;
+    Space spaceurl;
+    spaceurl.deserialize(spacePathInfo);
+    SpaceServer* tmp_server = static_cast<SpaceServer*>(mgr->get_module("space").get());
+    tmp_server->GetSpacePosition(tmps, tmp.spaceID);
+    for(std::vector<Space>::iterator m = tmps.begin(); m != tmps.end(); m++)
+    {
+      std::cout << (*m).hostCenterName << std::endl;
+      if ((*m).hostCenterName == spaceurl.hostCenterName)
+      {
+        return errno = EINVAL;
+      } 
+      else if ((*m).spaceName == spaceName)
+      {
+        return errno = EINVAL;
+      } 
+      else 
+      {
+        continue;
+      }
+    }
+
     if(tmp.ownerID == ownerID)
     {
       std::vector<std::string> memberID = tmp.memberID;
-      SpaceServer* tmp_server = static_cast<SpaceServer*>(mgr->get_module("space").get());//调用方法
+      //调用方法
       //SpaceServer* tmp_server = hvs::SpaceServer::getInstance();
-      std::string res_sc = tmp_server->SpaceCreate(spaceName, ownerID, memberID, spaceSize, spacePathInfo);
+      std::string groupname = zoneID.substr(0, 9);
+      std::string res_sc = tmp_server->SpaceCreate(spaceName, ownerID, memberID, spaceSize, spacePathInfo, groupname);
       if (res_sc == "-1")
       {
         return errno = ENOSPC;
@@ -736,7 +761,7 @@ namespace hvs{
         for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
         {
           AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
-          int spaceauthdel = p_auth->SpacePermissionDelete(*m);
+          int spaceauthdel = p_auth->SpacePermissionDelete(*m, tmp.zoneID);
           if(spaceauthdel == 0) continue;
           else
           {

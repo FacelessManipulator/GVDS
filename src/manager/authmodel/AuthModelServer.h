@@ -75,7 +75,7 @@ public:
     int ZoneMemberDel(std::string zoneID, std::string ownerID, std::vector<string> memberID);
 
     //空间权限删除接口
-    int SpacePermissionDelete(std::string spaceID);
+    int SpacePermissionDelete(std::string spaceID, std::string zoneID);
 
     //3、权限修改模块
     void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response);
@@ -84,7 +84,7 @@ public:
     //4、权限查询模块
     void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string AuthSearchModel(std::string &hvsID);
-    int subAuthSearchModel(Zone &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x);
+    int subAuthSearchModel(Zone &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x, std::string &identity);
     /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);

@@ -92,6 +92,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
     }
     LocalAccountPair localpair;
     localpair.deserialize(value);  //localpair.localaccount 这个是账户名
+    string gp = auth_space.zoneID.substr(0, 9);
 
     vector<string>::iterator m_iter;
     for(m_iter = auth_space.memberID.begin(); m_iter != auth_space.memberID.end(); m_iter++){
@@ -107,7 +108,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
 
         //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
         //   usermod -a -G localpair.localaccount member_localpair.localaccount
-        string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
+        string cmd = "usermod -a -G " + gp + " " + member_localpair.localaccount;
         cout << "cmd :" << cmd << endl;
         system(cmd.c_str()); 
     }// for
@@ -158,6 +159,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
     }
     LocalAccountPair localpair;
     localpair.deserialize(value);  //localpair.localaccount 这个是账户名
+    string gp = auth_space.zoneID.substr(0, 9);
 
     vector<string>::iterator m_iter;
     for(m_iter = auth_space.memberID.begin(); m_iter != auth_space.memberID.end(); m_iter++){
@@ -173,7 +175,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
 
         //1.2将test1从testowner同名的组中删除    gpasswd testowner -d test222
         //      gpasswd localpair.localaccount -d member_localpair.localaccount
-        string cmd = "gpasswd " + localpair.localaccount + " -d " + member_localpair.localaccount;
+        string cmd = "gpasswd " + gp + " -d " + member_localpair.localaccount;
         cout << "cmd:" << cmd << endl;
         system(cmd.c_str()); 
     }// for
@@ -228,7 +230,7 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
 
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
         cout <<"localstoragepath: " << localstoragepath << endl;
-    string spacepath = localstoragepath + spacemeta.spacePath; //这个可能不是最终的路径，需确认
+    string spacepath = localstoragepath + "/" + spacemeta.spacePath; //这个可能不是最终的路径，需确认
         cout << "final path :" << spacepath << endl;
 
     //示例chmod 777 filename
@@ -379,7 +381,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
 
             //2.2 更改文件夹所属用户和组chown -R test1:test1 空间名
         //获取物理路径 spacepath值 
-        string spacepath = localstoragepath + spacemeta.spacePath; //这个可能不是最终的路径，需确认TODO
+        string spacepath = localstoragepath + "/" + spacemeta.spacePath; //这个可能不是最终的路径，需确认TODO
         cout << "localstoragepath : " << localstoragepath <<endl; 
         cout << "final path :" << spacepath << endl;
         //TODO  获取账户名(localpair.localaccount)和组名（localpair.localaccount）的uid、gid
@@ -389,11 +391,17 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         // if(chown(spacepath.c_str(), uid, gid) == -1){
         //     return -1;
         // }
+        //（1）创建组    //重复创建不影响
+        string gp = zoneID.substr(0, 9);
+        string g_cmd = "groupadd " + gp;
+        cout << "g_cmd: " << g_cmd <<endl;
+        system(g_cmd.c_str());
 
-        string chown_cmd = "chown -R " + localpair.localaccount + ":" + localpair.localaccount + " " + spacepath;
+        //（2）设置全 （拥有者:组）权限
+        string chown_cmd = "chown -R " + localpair.localaccount + ":" + gp + " " + spacepath;
         cout << chown_cmd << endl;
         system(chown_cmd.c_str());
-            //2.3 设置权限：chmod （au_person）(au_group)(au_other) 文件名      chmod 777 filename
+            //（3）2.3 设置权限：chmod （au_person）(au_group)(au_other) 文件名      chmod 777 filename
         string tmp_str = au_person + au_group + au_other;
         //  注意确认这块设置权限是否有问题
         // if (chmod(spacepath.c_str(), 0770) == -1){ //TODO    tmp_int=770 这块参数类型有问题，要0770才正常
@@ -417,7 +425,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
                 member_localpair.deserialize(m_value);  //member_localpair.localaccount 这个是账户名
                 //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
                 //   usermod -a -G localpair.localaccount member_localpair.localaccount
-                string cmd = "usermod -a -G " + localpair.localaccount + " " + member_localpair.localaccount;
+                string cmd = "usermod -a -G " + gp + " " + member_localpair.localaccount;
                 cout << "cmd :" << cmd << endl;
                 system(cmd.c_str()); 
         }
@@ -513,6 +521,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         auth_space.spaceinformation = space_iter.serialize();
         auth_space.ownerID_zone = ownerID;
         auth_space.memberID = memberID;//赋值
+        auth_space.zoneID = zoneID;
         string tmp_value = auth_space.serialize();
 
         if(ManagerID == spacemeta.hostCenterID){ //本地
@@ -657,6 +666,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
         auth_space.spaceinformation = space_iter.serialize();
         auth_space.ownerID_zone = ownerID;
         auth_space.memberID = memberID;//赋值
+        auth_space.zoneID = zoneID;
         string tmp_value = auth_space.serialize();
 
         if(ManagerID == spacemeta.hostCenterID){ //本地
@@ -676,13 +686,6 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
             //TODO 注意端口是否正确  
 
             snprintf(url, 256, "http://%s:%s/auth/selfmemberdel", tmp_ip.c_str() ,tmp_port.c_str());
-
-            SelfAuthSpaceInfo auth_space;
-            auth_space.spaceinformation = space_iter.serialize();
-            auth_space.ownerID_zone = ownerID;
-            auth_space.memberID = memberID;   //TODO 这块拷贝会有问题   添加的这块同样有问题
-
-            string tmp_value = auth_space.serialize();
 
             auto response = client.post(url).body(tmp_value).send();
             dout(-1) << "Client Info: post request " << url << dendl;
@@ -725,7 +728,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
 
 //2.4 空间权限删除接口  ：：被空间创建模块调用：：删除存储集群上空间对应的权限  //数据库不用更新，因为无此空间记录
 //这个也不跨超算，因此不用rest，【不用更改】 //这是因为在客户端就判断好了在哪个管理节点--宋尧
-int AuthModelServer::SpacePermissionDelete(string spaceID){
+int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
 
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
     cout <<"localstoragepath: " << localstoragepath << endl;
@@ -738,18 +741,23 @@ int AuthModelServer::SpacePermissionDelete(string spaceID){
         dout(-1) << "start: recall GetSpacePosition" << dendl;
     p_space->GetSpacePosition(result, tmp_vec_spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
-    
+
+    string gp = zoneID.substr(0, 9);
     for (auto space_iter : result){
         Space spacemeta = space_iter;
 
         //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
-        string spacepath = localstoragepath + spacemeta.spacePath;
+        string spacepath = localstoragepath + "/" + spacemeta.spacePath;
         cout << "final path: " << spacepath << endl;
 
         //root的gid、uid为0
         if(chown(spacepath.c_str(), 0, 0) == -1){
             return -1;
         }
+
+        string group_cmd = "groupdel " + gp;
+        cout << "group_cmd" << group_cmd << endl;
+        system(group_cmd.c_str());
     }
 
     //不需要记录数据库
@@ -764,11 +772,11 @@ int AuthModelServer::SpacePermissionDelete(string spaceID){
 // 返回33权限， 0成功，-1失败
 void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start AuthModelServer function: AuthModifyRest ======"<< endl;
-    bool valid = auth_token(request);
-    if (!valid){
-        response.send(Http::Code::Unauthorized, "33");
-        return;
-    }
+    // bool valid = auth_token(request);
+    // if (!valid){
+    //     response.send(Http::Code::Unauthorized, "33");
+    //     return;
+    // }
 
     auto info = request.body();
     cout << info << endl;
@@ -998,12 +1006,12 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
 //失败返回 33, fail 正常值；
 void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response){
     cout << "====== start AuthModelServer function: AuthSearchModelRest ======"<< endl;
-    bool valid = auth_token(request);
-    if (!valid){
-        cout << "aaa here?" << endl;
-        response.send(Http::Code::Unauthorized, "33");
-        return;
-    }
+    // bool valid = auth_token(request);
+    // if (!valid){
+    //     cout << "aaa here?" << endl;
+    //     response.send(Http::Code::Unauthorized, "33");
+    //     return;
+    // }
 
     auto info = request.body();
     cout << "info: " <<info << endl;  //hvsid
@@ -1043,8 +1051,8 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     for(auto iter : result_z){
         Zone myzone = iter;
         
-        string r,w,x;
-        int tmp = subAuthSearchModel(myzone, hvsID, r, w, x);
+        string r,w,x,identity;
+        int tmp = subAuthSearchModel(myzone, hvsID, r, w, x , identity);
         if (tmp==-1){
             continue;// 直接接续下一个区域
         }
@@ -1052,6 +1060,7 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
         myauth.read[myzone.zoneID] = r;
         myauth.write[myzone.zoneID] = w;
         myauth.exe[myzone.zoneID] = x;
+        myauth.isowner[myzone.zoneID] = identity;
         //2.1调用子函数
             //查询在每个区域中是主人 还是 成员
             //然后获取相应身份的权限数据
@@ -1062,15 +1071,17 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     return myauth.serialize();
 }
  //2.1调用子函数
-int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, string &w, string &x){
+int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, string &w, string &x , string &identity){
     bool isowner=false;
     bool ismember=false;
     //2.1.1查询在每个区域中是主人 还是 成员
     if(myzone.ownerID.compare(hvsID)==0){
+        identity = "1";
         isowner = true;
     }
     else{
         //不用查询了，因为这是这个用户所拥有的看见之一，因此不是owner，必然是member
+        identity = "0";
         ismember = true;
     }
 

@@ -40,8 +40,6 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("账户登录");
         command.add_options()
-                ("ip", po::value<std::string>(), "管理节点IP")
-                ("port,p", po::value<int>(), "管理节点端口号")
                 ("user,u", po::value<std::string>(), "账户名")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
@@ -90,7 +88,14 @@ int main(int argc, char* argv[]){
                     cout << "区域名字： " << *iter << endl;
                     cout << "区域读权限： " << myauth.read[*iter] << endl;
                     cout << "区域写权限： " << myauth.write[*iter] << endl;
-                    cout << "区域执行权限： "<< myauth.exe[*iter] << endl;  //可以加上显示，是这个区的成员 还是 主人，回头加吧
+                    cout << "区域执行权限： "<< myauth.exe[*iter] << endl;  
+                    cout << "身份： ";
+                    if(myauth.isowner[*iter]=="1"){
+                        cout << "区域拥有者" << endl;  
+                    }
+                    else{
+                        cout << "区域成员" << endl;  
+                    }
                     cout << endl;
                 }
             }

@@ -874,8 +874,10 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
         }
     }
 
+    //++++++++
+    client.shutdown();
+    //++++++++
     //不需要记录数据库
-    cout << "return_flag: " << return_flag << endl;
     return return_flag;
 }
 

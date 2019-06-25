@@ -624,12 +624,9 @@ namespace hvs{
             int spaceauthfault = 0;
             for(std::vector<std::string>::iterator m = tmp.spaceID.begin(); m != tmp.spaceID.end(); m++)
             {
-              std::cout << "here" << std::endl;
               int spaceauthdel = p_auth->SpacePermissionDelete(*m, tmp.zoneID);
-              std::cout << "spaceauthdel" << spaceauthdel << std::endl;
               if(spaceauthdel == 0)
               {
-                std::cout << "spacePD ok" << std::endl;
                 continue;
               } 
               else

@@ -226,7 +226,6 @@ namespace hvs{
     int SpaceServer::SpaceDelete(std::vector<std::string> spaceID)
     {
         // TODO：是否要在实际集群中ownerID
-        std::cout << "sd" << std::endl;
         for(std::vector<std::string>::iterator m = spaceID.begin(); m != spaceID.end(); m++)
         {
             Space tmps;

@@ -231,8 +231,10 @@ namespace hvs{
             Space tmps;
             std::shared_ptr<hvs::Datastore> spacePtr =hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase);
             std::string tmps_key = *m;
+            std::cout << tmps_key << std::endl;
             auto[vs, err] = spacePtr->get(tmps_key);
             std::string tmps_value = *vs;
+            std::cout << tmps_value << std::endl;
             tmps.deserialize(tmps_value);
             tmps.status = false;
             tmps_value = tmps.serialize();

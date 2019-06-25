@@ -625,7 +625,10 @@ namespace hvs{
             for(std::vector<std::string>::iterator m = tmp.spaceID.begin(); m != tmp.spaceID.end(); m++)
             {
               int spaceauthdel = p_auth->SpacePermissionDelete(*m, tmp.zoneID);
-              if(spaceauthdel == 0) continue;
+              if(spaceauthdel == 0)
+              {
+                continue;
+              } 
               else
               {
                 std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
@@ -635,6 +638,7 @@ namespace hvs{
             }
             if(spaceauthfault == 0)
             {
+              std::cout << "spaceauthfault" << spaceauthfault << std::endl;
               SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
               if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
               {
@@ -769,7 +773,6 @@ namespace hvs{
             spaceauthfault = 1;
             break;
           }
-
         }
         if(spaceauthfault == 0)
         {

@@ -96,6 +96,7 @@ void SelectNode::start(){
             local.location = mycenter.centerName[*iter];  //从centerInfo里获取
             local.ip_addr = mycenter.centerIP[*iter];
             local.port = mycenter.centerPort[*iter];
+            local.center_id = *iter;
             buf_delay.push_back(local);
         }
     }

@@ -56,56 +56,12 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("manager.port", 9090);
   _config->add("manager.thread_num", 6);
 
-
-
-_config->add("center_information", string("center_id1,center_id2,centerid3"));
-_config->add("center_id1",string("192,168,1,2|192,168,1,3"));
-
 //client
 _config->add("default_ip",string("127.0.0.1"));
 _config->add("default_port",string("9090"));
 
-
 //manager
 _config->add("ManagerID",string("1")); //TODO 每个超算要改
-
-
-
-
-
-_config->add("center_information_old", string("{"\
-  "\"center1\":{"\
-    "\"centerID\":\"1\","\
-    "\"centerName\":\"Beijing\","\
-    "\"managerPort\":\"9090\","\
-    "\"managerIP\":\"127.0.0.1\""\
-  "},"\
-  "\"center2\":{"\
-    "\"centerID\":\"2\","\
-    "\"centerName\":\"Beijing\","\
-    "\"managerPort\":\"9090\","\
-    "\"managerIP\":\"127.0.0.1\""\
-  "},"\
-    "\"center3\":{"\
-    "\"centerID\":\"3\","\
-    "\"centerName\":\"Beijing\","\
-    "\"managerPort\":\"9090\","\
-    "\"managerIP\":\"127.0.0.1\""\
-  "},"\
-    "\"center4\":{"\
-    "\"centerID\":\"4\","\
-    "\"centerName\":\"Beijing\","\
-    "\"managerPort\":\"9090\","\
-    "\"managerIP\":\"127.0.0.1\""\
-  "},"\
-    "\"center5\":{"\
-    "\"centerID\":\"5\","\
-    "\"centerName\":\"Beijing\","\
-    "\"managerPort\":\"9090\","\
-    "\"managerIP\":\"127.0.0.1\""\
-  "}"\
-"}"));
-
 
 }
 }  // namespace hvs

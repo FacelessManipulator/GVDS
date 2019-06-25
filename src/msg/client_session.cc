@@ -63,7 +63,7 @@ std::unique_ptr<ioproxy_rpc_buffer> ClientSession::wait_op(int id) {
   future<std::unique_ptr<ioproxy_rpc_buffer>> ft = move(it->second);
   futures.erase(id);
   session_lock.unlock();
-  auto status = ft.wait_for(chrono::seconds(5));
+  auto status = ft.wait_for(chrono::seconds(10));
   if(status != future_status::ready)
     return nullptr;
   else {

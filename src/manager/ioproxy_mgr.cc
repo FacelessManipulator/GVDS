@@ -122,7 +122,9 @@ void IOProxy_MGR::init_ioproxy_list() {
     try {
       auto ion = make_shared<IOProxyNode>();
       ion->deserialize(info);
-      live_ioproxy_tmp[ion->uuid] = ion;
+      if(ion->cid == mgr->center_id) {
+        live_ioproxy_tmp[ion->uuid] = ion;
+      }
     } catch (Expectation& e) {
       continue;
     }

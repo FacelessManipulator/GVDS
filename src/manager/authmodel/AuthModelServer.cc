@@ -244,6 +244,7 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
 }
 
 void AuthModelServer::self_AuthSPDRest(const Rest::Request& request, Http::ResponseWriter response){
+    cout << "=========enter：self_AuthSPDRest============" << endl;
     auto info = request.body();
     cout << info << endl;
 
@@ -251,6 +252,7 @@ void AuthModelServer::self_AuthSPDRest(const Rest::Request& request, Http::Respo
     mySPD.deserialize(info);
 
     int flag = self_AuthSPD(mySPD);
+    cout << "flag: " << flag <<endl;
      if(flag == 0){
         dout(-1) << "success" << dendl;
         response.send(Http::Code::Ok, "0");;
@@ -259,17 +261,19 @@ void AuthModelServer::self_AuthSPDRest(const Rest::Request& request, Http::Respo
         dout(-1) << "fail" << dendl;
         response.send(Http::Code::Ok, "-1"); //point
     }
+    cout << "=========end：self_AuthSPDRest============"<< endl;
 }
 
 int AuthModelServer::self_AuthSPD(SelfSPD &mySPD){
     
+    cout << "=========enter：self_AuthSPD============" << endl;
     Space spacemeta;
     spacemeta.deserialize(mySPD.spaceinformation);
 
     //设置root 删除组
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
         cout <<"localstoragepath: " << localstoragepath << endl;
-        
+
     string spacepath = localstoragepath + "/" + spacemeta.spacePath;
     cout << "final path: " << spacepath << endl;
 
@@ -279,8 +283,11 @@ int AuthModelServer::self_AuthSPD(SelfSPD &mySPD){
     }
 
     string group_cmd = "groupdel " + mySPD.gp;
-    cout << "group_cmd" << group_cmd << endl;
+    cout << "group_cmd: " << group_cmd << endl;
     system(group_cmd.c_str());
+
+    cout << "=========end：self_AuthSPD============" << endl;
+    return 0;
 
 }
 
@@ -772,7 +779,6 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
 //2.4 空间权限删除接口  ：：被空间创建模块调用：：删除存储集群上空间对应的权限  //数据库不用更新，因为无此空间记录
 //这个也不跨超算，因此不用rest，【不用更改】 //这是因为在客户端就判断好了在哪个管理节点--宋尧
 int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
-
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
     cout <<"localstoragepath: " << localstoragepath << endl;
 
@@ -829,6 +835,9 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
                 cout<< "删除空间权限失败" << endl;
                 return_flag = -1;
             }
+            else{
+                cout<< "删除空间权限成功" << endl;
+            }
         }
         else{ //远端
             cout <<"发送到远端" << endl;
@@ -866,6 +875,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
     }
 
     //不需要记录数据库
+    cout << "return_flag: " << return_flag << endl;
     return return_flag;
 }
 

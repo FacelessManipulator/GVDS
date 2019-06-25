@@ -38,6 +38,7 @@ public:
     std::string spaceinformation;
     std::string ownerID_zone;
     std::vector<std::string> memberID;
+    std::string zoneID;
 
 public:
   void serialize_impl() override;
@@ -57,6 +58,9 @@ public:
   std::map<std::string, std::string> exe;
   std::map<std::string, std::string> isowner;
 
+  std::map<std::string, std::string> ownergroupR;
+  std::map<std::string, std::string> ownergroupW;
+  std::map<std::string, std::string> ownergroupE;
 public:
   void serialize_impl() override;
   void deserialize_impl() override;

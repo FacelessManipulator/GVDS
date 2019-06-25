@@ -90,7 +90,7 @@ int Mconf::addCenter(FECenterInfo &FEcenter){
 
 void Mconf::searchCenterRest(const Rest::Request& request, Http::ResponseWriter response){
     //get
-    cout << "start: addCenterRest" << endl;
+    // cout << "start: addCenterRest" << endl;
     string data = searchCenter();
     if(data == "fail"){
         response.send(Http::Code::Not_Found, "fail"); 

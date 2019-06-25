@@ -58,6 +58,9 @@ public:
   std::map<std::string, std::string> exe;
   std::map<std::string, std::string> isowner;
 
+  std::map<std::string, std::string> ownergroupR;
+  std::map<std::string, std::string> ownergroupW;
+  std::map<std::string, std::string> ownergroupE;
 public:
   void serialize_impl() override;
   void deserialize_impl() override;
@@ -93,6 +96,21 @@ public:
 public:
   FEAuthModifygroupinfo() = default;
 };
+
+
+class SelfSPD: public hvs::JsonSerializer {
+public:
+  std::string spaceinformation;
+  std::string gp; //组名字，就是 zoneID.substr(0,9)
+  std::string zoneID;
+  std::string spaceID;
+public:
+  void serialize_impl() override;
+  void deserialize_impl() override;
+public:
+  SelfSPD() = default;
+};
+
 /*
 class Auth: public hvs::JsonSerializer {
 public:

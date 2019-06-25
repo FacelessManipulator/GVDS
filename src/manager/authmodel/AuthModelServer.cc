@@ -47,6 +47,8 @@ void AuthModelServer::router(Router& router){
 
     Routes::Post(router, "/auth/modify", Routes::bind(&AuthModelServer::AuthModifyRest, this));
     Routes::Post(router, "/auth/search", Routes::bind(&AuthModelServer::AuthSearchModelRest, this));
+    
+    Routes::Post(router, "/auth/selfSPD", Routes::bind(&AuthModelServer::self_AuthSPDRest, this));
 }
 
 void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http::ResponseWriter response){
@@ -239,6 +241,47 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
     system(cmd.c_str());
 
     return 0;
+}
+
+void AuthModelServer::self_AuthSPDRest(const Rest::Request& request, Http::ResponseWriter response){
+    auto info = request.body();
+    cout << info << endl;
+
+    SelfSPD mySPD;
+    mySPD.deserialize(info);
+
+    int flag = self_AuthSPD(mySPD);
+     if(flag == 0){
+        dout(-1) << "success" << dendl;
+        response.send(Http::Code::Ok, "0");;
+    }
+    else{
+        dout(-1) << "fail" << dendl;
+        response.send(Http::Code::Ok, "-1"); //point
+    }
+}
+
+int AuthModelServer::self_AuthSPD(SelfSPD &mySPD){
+    
+    Space spacemeta;
+    spacemeta.deserialize(mySPD.spaceinformation);
+
+    //设置root 删除组
+    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+        cout <<"localstoragepath: " << localstoragepath << endl;
+        
+    string spacepath = localstoragepath + "/" + spacemeta.spacePath;
+    cout << "final path: " << spacepath << endl;
+
+    //root的gid、uid为0
+    if(chown(spacepath.c_str(), 0, 0) == -1){
+        return -1;
+    }
+
+    string group_cmd = "groupdel " + mySPD.gp;
+    cout << "group_cmd" << group_cmd << endl;
+    system(group_cmd.c_str());
+
 }
 
 //1权限增加模块
@@ -742,26 +785,88 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
     p_space->GetSpacePosition(result, tmp_vec_spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
 
+    
+    //+++++++
+    //---提前读取center_information信息----
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info"));
+    f0_dbPtr->init();
+    string c_key = "center_information";
+    auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+    if (c_error){
+        cout << "authmodelserver: get center_information fail" << endl;
+        return -1;
+    }
+    CenterInfo mycenter;
+    mycenter.deserialize(*pcenter_value);
+    vector<string>::iterator c_iter;
+    //--------------------
+     Http::Client client;
+     char url[256];
+
+    auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+    client.init(opts);
+    //----------------------
+    int return_flag = 0;
+
     string gp = zoneID.substr(0, 9);
-    for (auto space_iter : result){
+    for (auto space_iter : result){ //for其实没有用，因为vector只有一个spaceID，即每次只删除一个spaceID
         Space spacemeta = space_iter;
 
+        string hostCenterName = spacemeta.hostCenterName;
+
+        SelfSPD mySPD;
+        mySPD.spaceinformation = space_iter.serialize();
+        mySPD.gp = gp;
+        mySPD.zoneID = zoneID;
+        mySPD.spaceID = spaceID;
+        string tmp_value = mySPD.serialize();
+
+
         //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
-        string spacepath = localstoragepath + "/" + spacemeta.spacePath;
-        cout << "final path: " << spacepath << endl;
-
-        //root的gid、uid为0
-        if(chown(spacepath.c_str(), 0, 0) == -1){
-            return -1;
+        if(ManagerID == spacemeta.hostCenterID){ //本地
+            if(self_AuthSPD(mySPD) != 0){
+                cout<< "删除空间权限失败" << endl;
+                return_flag = -1;
+            }
         }
+        else{ //远端
+            cout <<"发送到远端" << endl;
+            string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
+            string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
+            
+            snprintf(url, 256, "http://%s:%s/auth/selfSPD", tmp_ip.c_str() ,tmp_port.c_str());
 
-        string group_cmd = "groupdel " + gp;
-        cout << "group_cmd" << group_cmd << endl;
-        system(group_cmd.c_str());
+            auto response = client.post(url).body(tmp_value).send();
+            dout(-1) << "Client Info: post request " << url << dendl;
+
+            std::promise<bool> prom;
+            auto fu = prom.get_future();
+            response.then(
+                [&](Http::Response res) {
+                //dout(-1) << "Manager Info: " << res.body() << dendl;
+                std::cout << "Response code = " << res.code() << std::endl;
+                auto body = res.body();
+                if (!body.empty()){
+                    std::cout << "Response body = " << body << std::endl;
+                    //your code write here
+                    if (body != "0"){
+                        cout << "body != 0, fail " << endl;
+                        return_flag = -1;
+                    }
+
+                }
+                prom.set_value(true);
+            },
+            Async::IgnoreException);
+
+            //阻塞
+            fu.get();
+        }
     }
 
     //不需要记录数据库
-    return 0;
+    return return_flag;
 }
 
 
@@ -1052,7 +1157,8 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
         Zone myzone = iter;
         
         string r,w,x,identity;
-        int tmp = subAuthSearchModel(myzone, hvsID, r, w, x , identity);
+        string ownergroupR, ownergroupW, ownergroupE;
+        int tmp = subAuthSearchModel(myzone, hvsID, r, w, x , identity, ownergroupR, ownergroupW, ownergroupE);
         if (tmp==-1){
             continue;// 直接接续下一个区域
         }
@@ -1061,6 +1167,11 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
         myauth.write[myzone.zoneID] = w;
         myauth.exe[myzone.zoneID] = x;
         myauth.isowner[myzone.zoneID] = identity;
+        if(identity == "1"){ //主人
+            myauth.ownergroupR[myzone.zoneID] = ownergroupR;
+            myauth.ownergroupW[myzone.zoneID] = ownergroupW;
+            myauth.ownergroupE[myzone.zoneID] = ownergroupE;
+        }
         //2.1调用子函数
             //查询在每个区域中是主人 还是 成员
             //然后获取相应身份的权限数据
@@ -1071,18 +1182,16 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     return myauth.serialize();
 }
  //2.1调用子函数
-int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, string &w, string &x , string &identity){
-    bool isowner=false;
-    bool ismember=false;
+int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, string &w, string &x , string &identity,
+                                        string &ownergroupR, string &ownergroupW, string &ownergroupE){
+    
     //2.1.1查询在每个区域中是主人 还是 成员
     if(myzone.ownerID.compare(hvsID)==0){
         identity = "1";
-        isowner = true;
     }
     else{
         //不用查询了，因为这是这个用户所拥有的看见之一，因此不是owner，必然是member
         identity = "0";
-        ismember = true;
     }
 
     //2.1.2然后获取相应身份的权限数据
@@ -1100,13 +1209,16 @@ int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, s
     person.deserialize(*pvalue);
 
     //2.1.3判读是主人还是成员
-    if(isowner){
+    if(identity == "1"){ //主人
         r = to_string(person.owner_read);
         w = to_string(person.owner_write);
         x = to_string(person.owner_exe);
+        ownergroupR = to_string(person.group_read);
+        ownergroupW = to_string(person.group_write);
+        ownergroupE = to_string(person.group_exe);
         return 0;
     }
-    if(ismember){
+    if(identity == "0"){
         r = to_string(person.group_read);
         w = to_string(person.group_write);
         x = to_string(person.group_exe);

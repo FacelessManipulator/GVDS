@@ -54,6 +54,9 @@ public:
     void self_AuthgroupmodifyRest(const Rest::Request& request, Http::ResponseWriter response);
     int self_Authgroupmodify(AuthModifygroupinfo &groupinfo);
 
+    void self_AuthSPDRest(const Rest::Request& request, Http::ResponseWriter response);
+    int self_AuthSPD(SelfSPD &mySPD);
+
     //1、权限增加模块
     //区域初始权限记录接口
     int ZonePermissionAdd(std::string zoneID, std::string ownerID);
@@ -84,7 +87,8 @@ public:
     //4、权限查询模块
     void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string AuthSearchModel(std::string &hvsID);
-    int subAuthSearchModel(Zone &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x, std::string &identity);
+    int subAuthSearchModel(Zone &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x, std::string &identity,
+                           std::string &ownergroupR, std::string &ownergroupW, std::string &ownergroupE);
     /*
     void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string UserRegister(Account &person);

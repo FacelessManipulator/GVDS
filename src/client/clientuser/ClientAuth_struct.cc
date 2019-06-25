@@ -43,12 +43,14 @@ void SelfAuthSpaceInfo::serialize_impl() {
     put("spaceinformation", spaceinformation);
     put("ownerID_zone", ownerID_zone);
     put("memberID", memberID);
+    put("zoneID", zoneID);
 }
 
 void SelfAuthSpaceInfo::deserialize_impl() {
     get("spaceinformation", spaceinformation);
     get("ownerID_zone", ownerID_zone);
     get("memberID", memberID);
+    get("zoneID", zoneID);
 }
 //
 void AuthSearch::serialize_impl(){
@@ -58,6 +60,9 @@ void AuthSearch::serialize_impl(){
     put("write", write);
     put("exe", exe);
     put("isowner", isowner);
+    put("ownergroupR", ownergroupR);
+    put("ownergroupW", ownergroupW);
+    put("ownergroupE", ownergroupE);
 }
 
 void AuthSearch::deserialize_impl(){
@@ -67,6 +72,9 @@ void AuthSearch::deserialize_impl(){
     get("write", write);
     get("exe", exe);
     get("isowner", isowner);
+    get("ownergroupR", ownergroupR);
+    get("ownergroupW", ownergroupW);
+    get("ownergroupE", ownergroupE);
 }
 //
 
@@ -99,4 +107,5 @@ void FEAuthModifygroupinfo::deserialize_impl(){
     get("zonename", zonename);
     get("modify_groupauth", modify_groupauth);
 }
+
 

@@ -172,6 +172,7 @@ namespace hvs{
     int pos = query.find("ownerID");
     query.erase(pos, 7);
     query.insert(pos, clientID);
+    std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore(accountbucket, hvs::DatastoreType::couchbase);
     std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
     auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     auto [vp, err] = zonePtr->n1ql(query);
@@ -197,9 +198,28 @@ namespace hvs{
         tmp.deserialize(tmp_value);
         tmp_zi.zoneID = tmp.zoneID;
         tmp_zi.zoneName = tmp.zoneName;
-        tmp_zi.ownerID = tmp.ownerID;
-        tmp_zi.memberID = tmp.memberID;
+        //id赋值name
+        auto [own, oerr] = accountPtr->get(tmp.ownerID);
+        if (!oerr)
+        {
+          Account owner;
+          owner.deserialize(*own);
+          tmp_zi.ownerID = owner.accountName;
+        }
+        else return false;
 
+        //memberid赋值
+        for (std::vector<std::string>::iterator m = tmp.memberID.begin(); m != tmp.memberID.end(); m++)
+        {
+          auto [mem, merr] = accountPtr->get(*m);
+          if (!merr)
+          {
+            Account member;
+            member.deserialize(*mem);
+            tmp_zi.memberID.push_back(member.accountName);
+          }
+          else return false;
+        }
         std::vector<Space> result_s;
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
         tmp_server->GetSpaceInfo(result_s, tmp.spaceID);
@@ -220,8 +240,28 @@ namespace hvs{
         tmp2.deserialize(tmp_value2);
         tmp_zi2.zoneID = tmp2.zoneID;
         tmp_zi2.zoneName = tmp2.zoneName;
-        tmp_zi2.ownerID = tmp2.ownerID;
-        tmp_zi2.memberID = tmp2.memberID;
+        //id赋值name
+        auto [own, oerr] = accountPtr->get(tmp.ownerID);
+        if (!oerr)
+        {
+          Account owner;
+          owner.deserialize(*own);
+          tmp_zi2.ownerID = owner.accountName;
+        }
+        else return false;
+
+        //memberid赋值
+        for (std::vector<std::string>::iterator m = tmp.memberID.begin(); m != tmp.memberID.end(); m++)
+        {
+          auto [mem, merr] = accountPtr->get(*m);
+          if (!merr)
+          {
+            Account member;
+            member.deserialize(*mem);
+            tmp_zi2.memberID.push_back(member.accountName);
+          }
+          else return false;
+        }
 
         std::vector<Space> result_s2;
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());

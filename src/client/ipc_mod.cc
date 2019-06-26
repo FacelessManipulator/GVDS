@@ -199,6 +199,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    std::string ownName = client->user->getAccountName();
     std::string spacename = ipcreq.spacename;
     std::string newspacename = ipcreq.newspacename;
     std::string spaceuuid;
@@ -213,7 +214,8 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
         auto zoneinfo = mapping->second;
-        if(zoneinfo.ownerID != ownID) return "權限不足";
+        std::cout << zoneinfo.ownerID << std::endl;
+        if(zoneinfo.ownerID != ownName) return "权限不足";
         for(auto it : zoneinfo.spaceBicInfo){
             if (it->spaceName == spacename){
                 spaceuuid = it->spaceID;

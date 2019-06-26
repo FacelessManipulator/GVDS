@@ -871,6 +871,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
 
             //阻塞
             fu.get();
+            cout << "fu.get()"<< endl;
         }
     }
 

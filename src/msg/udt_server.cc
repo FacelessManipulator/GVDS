@@ -1,4 +1,5 @@
 #include "msg/udt_server.h"
+#include "CUDPBlast.h"
 #include "context.h"
 
 using namespace hvs;
@@ -34,8 +35,8 @@ bool UDTServer::start() {
   serv_fd = UDT::socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
   // UDT Options
-  //   UDT::setsockopt(serv, 0, UDT_CC, new CCCFactory<CUDPBlast>,
-  //                   sizeof(CCCFactory<CUDPBlast>));
+  UDT::setsockopt(serv_fd, 0, UDT_CC, new CCCFactory<CUDPBlast>,
+                  sizeof(CCCFactory<CUDPBlast>));
   //   UDT::setsockopt(serv, 0, UDT_MSS, new int(9000), sizeof(int));
   UDT::setsockopt(serv_fd, 0, UDT_RCVBUF, &buff_size, sizeof(int));
   UDT::setsockopt(serv_fd, 0, UDP_RCVBUF, &buff_size, sizeof(int));
@@ -47,6 +48,13 @@ bool UDTServer::start() {
   }
 
   freeaddrinfo(res);
+
+  // using CC method
+  CUDPBlast* cchandle = NULL;
+  int temp;
+  UDT::getsockopt(serv_fd, 0, UDT_CC, &cchandle, &temp);
+  if (NULL != cchandle)
+    cchandle->setRate(800000);
 
   dout(5) << "DEBUG: udt server is ready at port: " << service << dendl;
 

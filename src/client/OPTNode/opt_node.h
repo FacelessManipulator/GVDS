@@ -21,6 +21,7 @@ struct struct_Node{
 	std::string location;
 	std::string ip_addr;
 	std::string port;
+    std::string center_id;
 };
 
 struct CmpByValue {

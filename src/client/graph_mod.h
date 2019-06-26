@@ -10,19 +10,22 @@
 #include <unordered_map>
 
 namespace hvs {
-class ClientGraph : public ClientModule {
+class ClientGraph : public ClientModule, public Thread {
+  typedef std::map<std::string, std::shared_ptr<IOProxyNode>> IOProxyListType;
  private:
   virtual void start() override;
   virtual void stop() override;
+  void* entry();
 
  private:
   std::shared_mutex graph_mutex;
+  bool m_stop;
   // currently I store space-gpath mappings in a map, please dev a space mod to handle this
 //  std::unordered_map<std::string, std::tuple<std::shared_ptr<IOProxyNode>, std::string>> mappings;
-  std::map<std::string, std::shared_ptr<IOProxyNode>> ioproxy_list;
+  std::map<std::string, std::shared_ptr<IOProxyListType>> ioproxy_list;
 
  public:
-  ClientGraph(const char* name, Client* cli) : ClientModule(name, cli) {
+  ClientGraph(const char* name, Client* cli) : ClientModule(name, cli), m_stop(true) {
     isThread = false;
   }
 

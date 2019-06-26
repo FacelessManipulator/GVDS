@@ -1,5 +1,6 @@
 #include "udt_client.h"
 #include "context.h"
+#include "CUDPBlast.h"
 using namespace hvs;
 using namespace std;
 
@@ -30,6 +31,8 @@ std::shared_ptr<ClientSession> UDTClient::create_session(
 
   UDTSOCKET session_fd =
       UDT::socket(hints.ai_family, hints.ai_socktype, hints.ai_protocol);
+  UDT::setsockopt(session_fd, 0, UDT_CC, new CCCFactory<CUDPBlast>,
+                  sizeof(CCCFactory<CUDPBlast>));
   UDT::setsockopt(session_fd, 0, UDT_RCVBUF, &buff_size, sizeof(int));
   UDT::setsockopt(session_fd, 0, UDP_RCVBUF, &buff_size, sizeof(int));
   string port_s = to_string(port);
@@ -46,6 +49,12 @@ std::shared_ptr<ClientSession> UDTClient::create_session(
     return nullptr;
   }
   freeaddrinfo(peer);
+    // using CC method
+  CUDPBlast* cchandle = NULL;
+  int temp;
+  UDT::getsockopt(session_fd, 0, UDT_CC, &cchandle, &temp);
+  if (NULL != cchandle)
+    cchandle->setRate(800000);
   // connected
   auto se_ref = make_shared<ClientSession>(this, session_fd);
       sessions[session_fd] = se_ref;

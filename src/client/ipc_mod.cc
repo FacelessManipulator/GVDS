@@ -214,7 +214,6 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
         auto zoneinfo = mapping->second;
-        std::cout << zoneinfo.ownerID << std::endl;
         if(zoneinfo.ownerID != ownName) return "权限不足";
         for(auto it : zoneinfo.spaceBicInfo){
             if (it->spaceName == spacename){

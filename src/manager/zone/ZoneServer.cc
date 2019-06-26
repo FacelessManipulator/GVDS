@@ -7,6 +7,7 @@
 
 #include "manager/zone/ZoneServer.h"
 #include "manager/authmodel/AuthModelServer.h"
+#include "manager/usermodel/Account.h"
 #include "common/json.h"
 
 bool isSubset(std::vector<std::string> v1, std::vector<std::string> v2)
@@ -241,7 +242,7 @@ namespace hvs{
         tmp_zi2.zoneID = tmp2.zoneID;
         tmp_zi2.zoneName = tmp2.zoneName;
         //id赋值name
-        auto [own, oerr] = accountPtr->get(tmp.ownerID);
+        auto [own, oerr] = accountPtr->get(tmp2.ownerID);
         if (!oerr)
         {
           Account owner;
@@ -251,7 +252,7 @@ namespace hvs{
         else return false;
 
         //memberid赋值
-        for (std::vector<std::string>::iterator m = tmp.memberID.begin(); m != tmp.memberID.end(); m++)
+        for (std::vector<std::string>::iterator m = tmp2.memberID.begin(); m != tmp2.memberID.end(); m++)
         {
           auto [mem, merr] = accountPtr->get(*m);
           if (!merr)

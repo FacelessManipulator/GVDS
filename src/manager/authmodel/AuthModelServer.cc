@@ -1112,10 +1112,56 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
     //++++++++
     client.shutdown();
     //++++++++
+
+    //若实际修改成功，要更新数据库
+    if (return_flag == 0)
+    {   
+        int pr,pw,pe;
+        transform_auth(modify_groupauth, pr, pw, pe);
+        person.group_read = pr;
+        person.group_write = pw;
+        person.group_exe = pe;
+        string m_value = person.serialize();
+        int f3_f = f3_dbPtr->set(zoneID, m_value);
+        if (f3_f != 0){
+            cout << "fail" << endl;
+            return_flag = -1;
+        }
+    }
+    
+
     return return_flag; //0是成功
 }
 
-
+void AuthModelServer::transform_auth(std::string &modify_groupauth, int &pr, int &pw, int &pe){
+    if(modify_groupauth == "0"){
+        pr = 0; pw = 0; pe = 0;
+    }
+    else if(modify_groupauth == "1"){
+        pr = 0; pw = 0; pe = 1;
+    }
+    else if(modify_groupauth == "2"){
+        pr = 0; pw = 1; pe = 0;
+    }
+    else if(modify_groupauth == "3"){
+        pr = 0; pw = 1; pe = 1;
+    }
+    else if(modify_groupauth == "4"){
+        pr = 1; pw = 0; pe = 0;
+    }
+    else if(modify_groupauth == "5"){
+        pr = 1; pw = 0; pe = 1;
+    }
+    else if(modify_groupauth == "6"){
+        pr = 1; pw = 1; pe = 0;
+    }
+    else if(modify_groupauth == "7"){
+        pr = 1; pw = 1; pe = 1;
+    }
+    else {
+        pr = 0; pw = 0; pe = 0;
+    }
+}
 
 
 
@@ -1179,6 +1225,7 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
         myauth.write[myzone.zoneID] = w;
         myauth.exe[myzone.zoneID] = x;
         myauth.isowner[myzone.zoneID] = identity;
+        myauth.zoneName[myzone.zoneID] = myzone.zoneName;
         if(identity == "1"){ //主人
             myauth.ownergroupR[myzone.zoneID] = ownergroupR;
             myauth.ownergroupW[myzone.zoneID] = ownergroupW;

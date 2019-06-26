@@ -83,6 +83,7 @@ public:
     //3、权限修改模块
     void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response);
     int AuthModify(std::string hvsID, std::string zonename, std::string modify_groupauth);
+    void transform_auth(std::string &modify_groupauth, int &pr, int &pw, int &pe);
 
     //4、权限查询模块
     void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);
@@ -109,6 +110,8 @@ public:
     std::string cancellationUserAccount(std::string uuid, bool is_cancel_success);
     */
  //--------------------------------------------
+
+    
 
     string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("ManagerID"));  //TODO标识所述超算，此超算是北京
     string c_key = "center_information";

@@ -1183,7 +1183,7 @@ void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::Re
     string m_info = info;
     string data = AuthSearchModel(m_info);
     if (data.compare("fail") == 0){
-        response.send(Http::Code::Not_Found, "fail"); 
+        response.send(Http::Code::Ok, "fail"); 
     }
     else{
         response.send(Http::Code::Ok, data); // data 在C++客户端使用AuthSearch 返序列化
@@ -1212,12 +1212,24 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     //2、然后for区域
     AuthSearch myauth;
     myauth.hvsID = hvsID;
+
+    string hvsname;
+    std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore("account_info", hvs::DatastoreType::couchbase);
+    auto [own, oerr] = accountPtr->get(hvsID);
+    if (!oerr)
+    {
+          Account owner;
+          owner.deserialize(*own);
+          hvsname = owner.accountName;
+    }
+    else return "fail";
+
     for(auto iter : result_z){
         Zone myzone = iter;
         
         string r,w,x,identity;
         string ownergroupR, ownergroupW, ownergroupE;
-        int tmp = subAuthSearchModel(myzone, hvsID, r, w, x , identity, ownergroupR, ownergroupW, ownergroupE);
+        int tmp = subAuthSearchModel(myzone, hvsname, r, w, x , identity, ownergroupR, ownergroupW, ownergroupE);
         if (tmp==-1){
             continue;// 直接接续下一个区域
         }

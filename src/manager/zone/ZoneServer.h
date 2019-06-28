@@ -77,12 +77,14 @@ public:
     ZoneServer() : ManagerModule("zone") {
         zonebucket = "zone_info";
         accountbucket = "account_info";
+        authbucket = "auth_info";
     };
     ~ZoneServer() = default;
 
 private:
     std::string  zonebucket;
     std::string  accountbucket;
+    std::string  authbucket;
 };
 
 }// namespace hvs

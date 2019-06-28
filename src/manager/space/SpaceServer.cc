@@ -94,8 +94,14 @@ namespace hvs{
         new_space.spaceID = tmp_uuid;
         std::string rootdir = localstoragepath + "/";
         rootdir += tmp_uuid; // TODO: 路径拼接，后期如果有子空间再修改；
+        std::cout << rootdir <<std::endl;
+        std::cout << tmp_uuid <<std::endl;
         int mkret = mkdir(rootdir.c_str(), 0770);
-        
+        std::cout << mkret <<std::endl;
+        if (mkret != 0 ) {
+            perror("SpaceCreate");
+            return "-2"; // 文件夹创建失败后，返回false字符串，用于之后的判断
+        }
         UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
         string m_value = p_usermodel->getLocalAccountinfo(ownerID, tmpm.hostCenterName); 
         if (m_value.compare("fail") == 0){
@@ -114,10 +120,7 @@ namespace hvs{
         string new_cmd = "chown -R " + owner_localpair.localaccount + ":" + gp + " " + rootdir;
         system(new_cmd.c_str());
 
-        if (mkret != 0 ) {
-            perror("SpaceCreate");
-            return "-2"; // 文件夹创建失败后，返回false字符串，用于之后的判断
-        }
+
         new_space.spacePath = tmp_uuid; // TODO: 默认当前 spacepath 在存储集群顶层，且空间的名字为相对lustre挂载点的路径，并且使用UUID作为文件夹的名字
         //3、权限增加模块 ： 不需要
         //4、空间分配容量记录到聚合模块中
@@ -256,6 +259,10 @@ namespace hvs{
         req.deserialize(info);
         std::string spaceID = req.spaceID;
         std::string newSpaceName = req.newSpaceName;
+
+
+        std::cout << "info: " << info << std::endl;
+        std::cout <<req.newSpaceName << std::endl;
 
         int result_i = SpaceRename(spaceID, newSpaceName);
         std::string result;

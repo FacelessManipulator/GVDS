@@ -74,7 +74,7 @@ void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::Respon
     }
     else{
         cout << "get getMemberIDRest fail" << endl;
-        response.send(Http::Code::Not_Found, "fail");
+        response.send(Http::Code::Ok, "fail");
     }
     cout << "====== end UserModelServer function: getMemberIDRest ======"<< endl;
 }

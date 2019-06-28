@@ -686,6 +686,7 @@ bool ClientIPC::GetZoneInfo(std::string clientID) {
     vector<Zone> zoneinfores;
     string endpoint = client->get_manager();
     string inforesult = client->rpc->post_request(endpoint, "/zone/info", clientID);
+    //cout << inforesult << endl;
     if (!inforesult.empty()) {
         json_decode(inforesult, zoneinfores); //获取返回的结果
     }

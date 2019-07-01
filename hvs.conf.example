@@ -15,7 +15,7 @@ bucket = {
     auth_info = "auth_info";
     zone_info = "zone_info";
     space_info = "space_info";
-}
+};
 
 // only ioproxy node need these settings
 rpc = {

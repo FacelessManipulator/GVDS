@@ -7,6 +7,16 @@ log = {
 
 manager_addr = ("http://127.0.0.1:9090", );
 
+
+//DB
+bucket = {
+    account_info = "account_info";
+    sc_account_info = "sc_account_info";
+    auth_info = "auth_info";
+    zone_info = "zone_info";
+    space_info = "space_info";
+}
+
 // only ioproxy node need these settings
 rpc = {
   port = 9092;

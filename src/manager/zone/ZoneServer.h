@@ -75,9 +75,10 @@ public:
  //--------------------------------------------
 public:
     ZoneServer() : ManagerModule("zone") {
-        zonebucket = "zone_info";
-        accountbucket = "account_info";
-        authbucket = "auth_info";
+        auto _config = HvsContext::get_context()->_config;
+        zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
+        accountbucket = _config->get<std::string>("bucket.account_info").value_or("account_info");
+        authbucket = _config->get<std::string>("bucket.auth_info").value_or("auth_info");
     };
     ~ZoneServer() = default;
 

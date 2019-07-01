@@ -311,7 +311,7 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
     string value = person.serialize();
 
     std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("auth_info"));
+        hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
     int f1_flag = f3_dbPtr->set(zoneID, value);
@@ -342,7 +342,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
 
     //1、根据zoneid 获取区域的权限 
     std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("auth_info"));
+        hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
     auto [pvalue, error] = f3_dbPtr->get(zoneID);
@@ -389,7 +389,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         //2.1.1查询区域信息,获取区域对应空间信息
     cout << "112.1" << endl;
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("zone_info"));
+        hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
     auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
     if (zone_error){
@@ -505,7 +505,7 @@ int AuthModelServer::ReplacePermissionSyne(){}
 int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string> memberID){
     
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("zone_info"));
+        hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
     auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
     if (zone_error){
@@ -529,7 +529,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
     //+++++++
     //---提前读取center_information信息----
      std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
     string c_key = "center_information";
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
@@ -633,7 +633,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
 //2.1 区域权限删除接口     ::被区域注销模块调用::删除相应权限,删除数据库中权限记录，无需知道ownerid
 int AuthModelServer::ZonePermissionDeduct(string zoneID, string OwnerID){
     std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("auth_info"));
+        hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
     int flag = f3_dbPtr->remove(zoneID);
@@ -650,7 +650,7 @@ int AuthModelServer::ZonePermissionDeduct(string zoneID, string OwnerID){
 //2.2 成员权限删除接口  ::被区域共享模块调用::删除成员对区域的权限，不需要记录数据库 //区域拥有者的空间都在哪些超算，要分别从到每个超算对应的组删除
 int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string> memberID){
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("zone_info"));
+        hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
     auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
     if (zone_error){
@@ -674,7 +674,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
     //+++++++
     //---提前读取center_information信息----
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
     string c_key = "center_information";
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
@@ -795,7 +795,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
     //+++++++
     //---提前读取center_information信息----
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
     string c_key = "center_information";
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
@@ -919,7 +919,7 @@ void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::Respons
 int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_groupauth){
     cout << "enter AuthModify"<< endl;
     //1、  获取hvsID 对应的 zoneID  以及权限   (根据hvsID 和 zonename 如何获取到一个zoneID？)
-    std::string zonebucket = "zone_info";
+   
     std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
           hvs::CouchbaseDatastore(zonebucket));
     zonePtr->init();
@@ -952,7 +952,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
 
     //1.5 获取这个区域对应的组权限
     std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("auth_info"));
+        hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
     auto [pvalue, error] = f3_dbPtr->get(zoneID);
@@ -994,7 +994,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
 
     //2、zoneID 对应的所有spaceID
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("zone_info"));
+        hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
     auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
     if (zone_error){
@@ -1018,7 +1018,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
     //+++++++
     //---提前读取center_information信息----
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
     //string c_key = "center_information";
     cout << "c_key : " << c_key << endl;
@@ -1214,7 +1214,7 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
     myauth.hvsID = hvsID;
 
     string hvsname;
-    std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore("account_info", hvs::DatastoreType::couchbase);
+    std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase);
     auto [own, oerr] = accountPtr->get(hvsID);
     if (!oerr)
     {
@@ -1268,7 +1268,7 @@ int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, s
 
     //2.1.2然后获取相应身份的权限数据
     std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("auth_info"));
+        hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
     auto [pvalue, error] = f3_dbPtr->get(myzone.zoneID);

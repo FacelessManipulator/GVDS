@@ -23,3 +23,6 @@ target_link_libraries(zadd hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
 add_executable(zregister zoneregister_ipc.cc)
 target_link_libraries(zregister hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+add_executable(zlist zonelist_ipc.cc)
+target_link_libraries(zlist hvscommon ${HVSCOMMOM_DEPENDS_ON})

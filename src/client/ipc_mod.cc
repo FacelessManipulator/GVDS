@@ -79,6 +79,9 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "zonesharecancel"){
                 return dozonesharecancel(ipcreq);
             }
+            if(ipcreq.cmdname == "zonelist"){
+                return dozonelist(ipcreq);
+            }
             //auth
             if(ipcreq.cmdname == "userlogin"){
                 return douserlogin(ipcreq);
@@ -679,6 +682,13 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     json_decode(response, result);
     if (!result) return "success";
     else return std::strerror(result);   
+}
+
+std::string ClientIPC::dozonelist(IPCreq &ipcreq) {
+    std::string ownID = client->user->getAccountID();
+    std::string endpoint = client->get_manager();
+    std::string inforesult = client->rpc->post_request(endpoint, "/zone/info", ownID);
+    return inforesult;
 }
 
 // 调用获取区域信息；

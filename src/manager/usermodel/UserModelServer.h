@@ -18,6 +18,7 @@ date:2019.03.21
 #include "manager/usermodel/Account.h"
 #include "manager/manager.h"
 #include "hvs_struct.h"
+#include "config/ConfigureSettings.h"
 
 class Account;
 class SCAccount;
@@ -63,7 +64,11 @@ public:
     bool getMemberID(std::vector<std::string> &memberName, std::vector<std::string> &memberID);
 
 public:
-    UserModelServer() : ManagerModule("user") {};
+    UserModelServer() : ManagerModule("user") {
+        auto _config = HvsContext::get_context()->_config;
+        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
+        bucket_sc_account_info = _config->get<std::string>("bucket.sc_account_info").value_or("sc_account_info");
+    };
     ~UserModelServer() {};
 
 private:
@@ -82,6 +87,9 @@ private:
     string supercomputing_C = "Guangzhou";
     string supercomputing_D = "Changsha";
     string supercomputing_E = "Jinan";
+
+    string bucket_account_info;
+    string bucket_sc_account_info;
 
 };
 

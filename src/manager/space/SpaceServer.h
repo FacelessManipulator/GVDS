@@ -60,8 +60,9 @@ public:
  //--------------------------------------------
 public:
     SpaceServer() : ManagerModule("space") {
+        auto _config = HvsContext::get_context()->_config;
+        spacebucket = _config->get<std::string>("bucket.space_info").value_or("space_info");
         storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
-        spacebucket = "space_info";
         localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
     };
     ~SpaceServer() = default;

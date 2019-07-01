@@ -61,6 +61,8 @@ public:
   std::map<std::string, std::string> ownergroupR;
   std::map<std::string, std::string> ownergroupW;
   std::map<std::string, std::string> ownergroupE;
+
+  std::map<std::string, std::string> zoneName;
 public:
   void serialize_impl() override;
   void deserialize_impl() override;

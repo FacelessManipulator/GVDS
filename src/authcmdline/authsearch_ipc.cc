@@ -85,13 +85,17 @@ int main(int argc, char* argv[]){
                 // cout << myauth.hvsID << endl;
                 vector<string>::iterator iter;
                 for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
-                    cout << "区域名字： " << *iter << endl;
+                    cout << "区域id： " << *iter << endl;
+                    cout << "区域名字: " << myauth.zoneName[*iter] << endl;
                     cout << "区域读权限： " << myauth.read[*iter] << endl;
                     cout << "区域写权限： " << myauth.write[*iter] << endl;
                     cout << "区域执行权限： "<< myauth.exe[*iter] << endl;  
                     cout << "身份： ";
                     if(myauth.isowner[*iter]=="1"){
                         cout << "区域拥有者" << endl;  
+                        cout << "组-读权限：" << myauth.ownergroupR[*iter] << endl;
+                        cout << "组-写权限： " << myauth.ownergroupW[*iter] << endl;
+                        cout << "组-执行权限： " << myauth.ownergroupE[*iter] << endl;
                     }
                     else{
                         cout << "区域成员" << endl;  

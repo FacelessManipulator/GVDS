@@ -83,42 +83,34 @@ public:
     //3、权限修改模块
     void AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response);
     int AuthModify(std::string hvsID, std::string zonename, std::string modify_groupauth);
+    void transform_auth(std::string &modify_groupauth, int &pr, int &pw, int &pe);
 
     //4、权限查询模块
     void AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string AuthSearchModel(std::string &hvsID);
     int subAuthSearchModel(Zone &myzone, std::string hvsID, std::string &r, std::string &w, std::string &x, std::string &identity,
                            std::string &ownergroupR, std::string &ownergroupW, std::string &ownergroupE);
-    /*
-    void UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string UserRegister(Account &person);
-    
-    void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool UserLogin(std::string account, std::string pass);
 
-    void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string getUserinfo(std::string uuid , bool &is_get_success);
-
-    void modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string modifyUserinfo(Account &person);
-
-    void exitUserAccountRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string exitUserAccount(std::string mtoken , bool &is_exit_success);
-
-    void cancellationUserAccountRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string cancellationUserAccount(std::string uuid, bool is_cancel_success);
-    */
  //--------------------------------------------
+
+    
 
     string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("ManagerID"));  //TODO标识所述超算，此超算是北京
     string c_key = "center_information";
 public:
     AuthModelServer() : ManagerModule("auth") {
         //aaaaa = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+        auto _config = HvsContext::get_context()->_config;
+        bucket_auth_info = _config->get<std::string>("bucket.auth_info").value_or("auth_info");
+        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
+        zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
     };
     ~AuthModelServer() {};
 public:
     //std::string aaaaa; // 本机存储集群路径
+    std::string bucket_auth_info;
+    std::string bucket_account_info;
+    std::string zonebucket;
 };
 
 

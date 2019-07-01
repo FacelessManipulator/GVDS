@@ -79,6 +79,9 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "zonesharecancel"){
                 return dozonesharecancel(ipcreq);
             }
+            if(ipcreq.cmdname == "zonelist"){
+                return dozonelist(ipcreq);
+            }
             //auth
             if(ipcreq.cmdname == "userlogin"){
                 return douserlogin(ipcreq);
@@ -199,6 +202,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    std::string ownName = client->user->getAccountName();
     std::string spacename = ipcreq.spacename;
     std::string newspacename = ipcreq.newspacename;
     std::string spaceuuid;
@@ -213,7 +217,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
         auto zoneinfo = mapping->second;
-        if(zoneinfo.ownerID != ownID) return "權限不足";
+        if(zoneinfo.ownerID != ownName) return "权限不足";
         for(auto it : zoneinfo.spaceBicInfo){
             if (it->spaceName == spacename){
                 spaceuuid = it->spaceID;
@@ -680,11 +684,19 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     else return std::strerror(result);   
 }
 
+std::string ClientIPC::dozonelist(IPCreq &ipcreq) {
+    std::string ownID = client->user->getAccountID();
+    std::string endpoint = client->get_manager();
+    std::string inforesult = client->rpc->post_request(endpoint, "/zone/info", ownID);
+    return inforesult;
+}
+
 // 调用获取区域信息；
 bool ClientIPC::GetZoneInfo(std::string clientID) {
     vector<Zone> zoneinfores;
     string endpoint = client->get_manager();
     string inforesult = client->rpc->post_request(endpoint, "/zone/info", clientID);
+    //cout << inforesult << endl;
     if (!inforesult.empty()) {
         json_decode(inforesult, zoneinfores); //获取返回的结果
     }

@@ -74,7 +74,7 @@ void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::Respon
     }
     else{
         cout << "get getMemberIDRest fail" << endl;
-        response.send(Http::Code::Not_Found, "fail");
+        response.send(Http::Code::Ok, "fail");
     }
     cout << "====== end UserModelServer function: getMemberIDRest ======"<< endl;
 }
@@ -84,7 +84,7 @@ bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &me
     
     //获取每一个membername 对应的 hvsid
      std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
 
     
@@ -138,7 +138,7 @@ string UserModelServer::UserRegister(Account &person){
     //检查是否存在key，不存在，则进行下面代码开始注册，存在则返回注册失败
     
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
     
     auto [pvalue, error_0] = f0_dbPtr->get(person.accountName);
@@ -182,7 +182,7 @@ string UserModelServer::UserRegister(Account &person){
     std::cout<<person_value<<endl;
    
     // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore("account_info"));
+    //     hvs::CouchbaseDatastore(bucket_account_info));
     // f0_dbPtr->init();
     
     int flag = f0_dbPtr->set(person_key, person_value);
@@ -222,7 +222,7 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
         string origin_str = acc_pass.accountName + acc_pass.Password; //再加上url以及时间等等信息
         string mtoken = md5(origin_str);
         std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-            hvs::CouchbaseDatastore("account_info"));
+            hvs::CouchbaseDatastore(bucket_account_info));
         f0_dbPtr->init();
         string value ="1";
         int login_flag = f0_dbPtr->set(mtoken, value);
@@ -256,7 +256,7 @@ bool UserModelServer::UserLogin(std::string account, std::string pass, std::stri
     //查询账户名对应的id，作为数据库查询的key
 
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
 
     f0_dbPtr->init();
 
@@ -354,7 +354,7 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
     string key = uuid;
 
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
 
     //判断key是否存在
@@ -405,7 +405,7 @@ string UserModelServer::modifyUserinfo(Account &person){
     cout << person_value << endl;
    
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info")); 
+        hvs::CouchbaseDatastore(bucket_account_info)); 
     f0_dbPtr->init();
     
     int flag = f0_dbPtr->set(person_key, person_value);
@@ -458,7 +458,7 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
     cout << "enter exitUserAccount"<< endl;
     
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));//token
+        hvs::CouchbaseDatastore(bucket_account_info));//token
     f0_dbPtr->init();
 
     int flag = f0_dbPtr->remove(mtoken);
@@ -505,7 +505,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
 
     //获取用户信息
     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+        hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
 
     auto [pvalue, error] = f0_dbPtr->get(uuid);
@@ -534,7 +534,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     }
 
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("sc_account_info"));  
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
      
     int flag = f1_dbPtr->remove(uuid);
@@ -570,7 +570,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
 bool UserModelServer::RemoveAccountMapping(string accountID){
 
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("sc_account_info"));  
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
 
     auto [pvalue_scuser, error] = f1_dbPtr->get(accountID);  //sc_account_info  key:uuid
@@ -687,7 +687,7 @@ bool UserModelServer::BuildAccountMapping(string accountID){
     SCAccount person(accountID);
 
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("sc_account_info"));  
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
     
     //账户映射算法，选一个地点进行映射，目前是默认Beijing，如果不做算法，这里就直接映射5个就完事了（直接把下面四个//取消）
@@ -786,7 +786,7 @@ bool UserModelServer::SubBuildAccountMapping(SCAccount &person, string location,
 //账户映射接口，返回指定超算本地账户的账户名，密码
 string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterName){
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("sc_account_info"));
+        hvs::CouchbaseDatastore(bucket_sc_account_info));
     f1_dbPtr->init();
 
     //TODO:这块要try一下 否则不存在此ownerid，查寻不到此用户
@@ -960,7 +960,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
 //这个里面确定了账户池的key，如果要改，可以在这改
 bool UserModelServer::addSCaccount(){
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("sc_account_info")); 
+        hvs::CouchbaseDatastore(bucket_sc_account_info)); 
     f1_dbPtr->init();
 
     //Beijing

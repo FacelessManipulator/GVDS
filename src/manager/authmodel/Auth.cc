@@ -63,6 +63,7 @@ void AuthSearch::serialize_impl(){
     put("ownergroupR", ownergroupR);
     put("ownergroupW", ownergroupW);
     put("ownergroupE", ownergroupE);
+    put("zoneName", zoneName);
 }
 
 void AuthSearch::deserialize_impl(){
@@ -75,6 +76,7 @@ void AuthSearch::deserialize_impl(){
     get("ownergroupR", ownergroupR);
     get("ownergroupW", ownergroupW);
     get("ownergroupE", ownergroupE);
+    get("zoneName", zoneName);
 }
 //
 

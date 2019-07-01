@@ -156,6 +156,17 @@ struct SpaceRequest : public hvs::JsonSerializer {
 };
 
 struct Zone : public hvs::JsonSerializer {
+  // enum AuthType {
+  //   NO,
+  //   X,
+  //   W,
+  //   WX,
+  //   R,
+  //   RX,
+  //   RW,
+  //   RWX,
+  // };
+
  public:
   std::string zoneID;                 //区域ID,UUID
   std::string zoneName;               //区域名
@@ -163,6 +174,14 @@ struct Zone : public hvs::JsonSerializer {
   std::vector<std::string> memberID;  //区域成员ID，UUID
   std::vector<std::string> spaceID;   //区域映射空间ID，UUID
   std::vector<std::shared_ptr<Space>> spaceBicInfo;    //空间基本信息
+
+  // AuthType ownerType;
+  // AuthType groupType;
+  // AuthType otherType;
+  int ownerAuth;
+  int groupAuth;
+  int otherAuth;
+
   bool contains_spaceinfo;
 
  public:
@@ -172,7 +191,19 @@ struct Zone : public hvs::JsonSerializer {
     put("owner", ownerID);
     put("members", memberID);
     put("spaces", spaceID);
-    if (contains_spaceinfo) put("spaceinfo", spaceBicInfo);
+    if (contains_spaceinfo) {
+      put("spaceinfo", spaceBicInfo);
+      // int ownerAuth = ownerType;
+      // put("ownerAuth", ownerAuth);
+      // int groupAuth = groupType;
+      // put("groupAuth", groupAuth);
+      // int otherAuth = otherType;
+      // put("otherAuth", otherAuth);
+      put("ownerAuth", ownerAuth);
+      put("groupAuth", groupAuth);
+      put("otherAuth", otherAuth);
+    }
+    
   }
 
   void deserialize_impl() override {
@@ -181,7 +212,21 @@ struct Zone : public hvs::JsonSerializer {
     get("owner", ownerID);
     get("members", memberID);
     get("spaces", spaceID);
-    if (contains_spaceinfo) get("spaceinfo", spaceBicInfo);
+    if (contains_spaceinfo) {
+      get("spaceinfo", spaceBicInfo);
+      get("ownerAuth", ownerAuth);
+      get("groupAuth", groupAuth);
+      get("otherAuth", otherAuth);
+      // int ownerAuth;
+      // get("ownerAuth", ownerAuth);
+      // ownerType = static_cast<AuthType>(ownerAuth);
+      // int groupAuth;
+      // get("groupAuth", groupAuth);
+      // groupType = static_cast<AuthType>(groupAuth);
+      // int otherAuth;
+      // get("otherAuth", otherAuth);
+      // otherType = static_cast<AuthType>(otherAuth);
+    }
   }
   Zone& operator = (const Zone& oths) {
       zoneID = oths.zoneID;

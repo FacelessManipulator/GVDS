@@ -8,6 +8,7 @@ public:
    {
       m_dPktSndPeriod = 10; 
       m_dCWndSize = 83333.0;
+      m_iMSS = 1500;
    }
 
 public:

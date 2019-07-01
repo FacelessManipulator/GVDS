@@ -33,6 +33,7 @@ class UDTClient {
   int port_cur;
   int port_left;
   unsigned long buff_size;
+  unsigned long bw; // max bandwidth for blast UDT
 
   friend class UDTSession;
   friend class ClientSession;

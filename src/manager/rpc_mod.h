@@ -37,7 +37,7 @@ std::shared_ptr<RPCLIB_MSGPACK::object_handle> ManagerRpc::call(
     std::shared_ptr<IOProxyNode> node, std::string const& func_name,
     Args... args) {
   // TODO: We assume RpcClient can concurently call
-  auto rpcc = rpc_channel(node);
+  auto rpcc = rpc_channel(node, true);
   auto res = rpcc->call(func_name, args...);
   if (!res) {
     // timeout? try reconnect

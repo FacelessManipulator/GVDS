@@ -33,6 +33,7 @@ class UDTServer : public Thread {
   unsigned short port;
   unsigned long buff_size;
   unsigned long max_conn;
+  unsigned long bw;
   UDTSOCKET epoll_fd;
   UDTSOCKET serv_fd;
   std::unordered_map<UDTSOCKET, std::shared_ptr<ServerSession>> sessions;

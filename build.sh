@@ -15,5 +15,5 @@ if [[ ! -d /opt/hvs/var/data ]]; then
     mkdir -p /opt/hvs/var/data
 fi
 
-cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/opt/hvs
-cmake --build build -j 3
+cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/opt/hvs
+cmake --build build -j 4

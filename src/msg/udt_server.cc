@@ -10,10 +10,12 @@ bool UDTServer::start() {
   auto _pt = _config->get<int>("ioproxy.data_port");
   auto _bs = _config->get<int>("ioproxy.data_buffer");
   auto _mc = _config->get<int>("ioproxy.data_conn");
+  auto _ebw = _config->get<int>("ioproxy.bw");
   port = _pt.value_or(9095);
   buff_size = _bs.value_or(10240000);  // default 10MB
   max_conn =
       _mc.value_or(50);  // default max 1000 pending connection per server
+  bw = _ebw.value_or(0);
 
   addrinfo hints;
   addrinfo* res;
@@ -35,9 +37,11 @@ bool UDTServer::start() {
   serv_fd = UDT::socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
   // UDT Options
-  UDT::setsockopt(serv_fd, 0, UDT_CC, new CCCFactory<CUDPBlast>,
-                  sizeof(CCCFactory<CUDPBlast>));
-  //   UDT::setsockopt(serv, 0, UDT_MSS, new int(9000), sizeof(int));
+  if (bw) {
+    UDT::setsockopt(serv_fd, 0, UDT_CC, new CCCFactory<CUDPBlast>,
+                    sizeof(CCCFactory<CUDPBlast>));
+    dout(10) << "INFO: Using Blast UDT with bw " << bw << "mbps" << dendl;
+  }
   UDT::setsockopt(serv_fd, 0, UDT_RCVBUF, &buff_size, sizeof(int));
   UDT::setsockopt(serv_fd, 0, UDP_RCVBUF, &buff_size, sizeof(int));
 
@@ -50,11 +54,13 @@ bool UDTServer::start() {
   freeaddrinfo(res);
 
   // using CC method
-  CUDPBlast* cchandle = NULL;
-  int temp;
-  UDT::getsockopt(serv_fd, 0, UDT_CC, &cchandle, &temp);
-  if (NULL != cchandle)
-    cchandle->setRate(800000);
+  if (bw) {
+    CUDPBlast *cchandle = NULL;
+    int temp;
+    UDT::getsockopt(serv_fd, 0, UDT_CC, &cchandle, &temp);
+    if (NULL != cchandle)
+      cchandle->setRate(1000);
+  }
 
   dout(5) << "DEBUG: udt server is ready at port: " << service << dendl;
 

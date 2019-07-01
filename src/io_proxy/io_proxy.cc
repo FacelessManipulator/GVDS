@@ -27,9 +27,14 @@ bool IOProxy::add_idle_worker(IOProxyWorker* woker) {
 };
 
 bool IOProxy::queue_and_wait(std::shared_ptr<OP> op) {
-  std::vector<std::shared_ptr<OP>> ops;
-  ops.push_back(op);
-  queue_and_wait(ops);
+  auto worker_is_done = make_shared<promise<bool>>();
+  auto f = worker_is_done->get_future();
+  boost::function0<void> cb = [worker_is_done]() {
+    worker_is_done->set_value(true);
+  };
+  op->complete_callbacks.push_back(cb);
+  queue_op(op, true);
+  f.wait_for(std::chrono::seconds(3));
 }
 
 bool IOProxy::queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops) {
@@ -38,8 +43,8 @@ bool IOProxy::queue_and_wait(const std::vector<std::shared_ptr<OP>>& ops) {
   const long expect_done = ops.size();
   auto f = worker_is_done.get_future();
   boost::function0<void> cb = [&worker_is_done, &cnt, expect_done]() {
-    ++cnt;
-    if (cnt.load() >= expect_done) {
+    int total = ++cnt;
+    if (total >= expect_done) {
       worker_is_done.set_value(true);
     }
   };

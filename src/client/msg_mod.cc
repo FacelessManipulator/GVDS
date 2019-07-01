@@ -127,7 +127,7 @@ std::shared_ptr<Pistache::Http::Client> ClientRpc::rest_channel(
   }
   // Just try create it
   auto restcp = make_shared<Http::Client>();
-  auto opts = Http::Client::options().threads(2).maxConnectionsPerHost(8);
+  auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
   restcp->init(opts);
   rest_clients[endpoint] = restcp;
   return restcp;
@@ -163,7 +163,7 @@ std::string ClientRpc::post_request(const std::string& endpoint,
           }
           prom_p->set_value("");
         });
-    auto status = fu.wait_for(std::chrono::seconds(3));
+    auto status = fu.wait_for(std::chrono::seconds(30));
     if (status == std::future_status::timeout) {
       dout(5) << "ERROR: Client connot connect to " << endpoint << dendl;
       return {};
@@ -205,7 +205,7 @@ string ClientRpc::get_request(const string& endpoint, const string& url) {
           }
           prom_p->set_value("");
         });
-    auto status = fu.wait_for(std::chrono::seconds(3));
+    auto status = fu.wait_for(std::chrono::seconds(30));
     if (status == std::future_status::timeout) {
       dout(5) << "ERROR: Client connot connect to " << endpoint << dendl;
       return {};
@@ -246,7 +246,7 @@ string ClientRpc::delete_request(const string& endpoint, const string& url) {
                 }
                 prom_p->set_value("");
             });
-    auto status = fu.wait_for(std::chrono::seconds(3));
+    auto status = fu.wait_for(std::chrono::seconds(30));
     if (status == std::future_status::timeout) {
       dout(5) << "ERROR: Client connot connect to " << endpoint << dendl;
       return {};

@@ -107,6 +107,18 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "authmodify"){
                 return doauthmodify(ipcreq);
             }
+            if(ipcreq.cmdname == "modifycenter"){
+                return domodifycenter(ipcreq);
+            }
+            if(ipcreq.cmdname == "searchcenter"){
+                return dosearchcenter(ipcreq);
+            }
+            if(ipcreq.cmdname == "deletecenter"){
+                cout << "dodeletecenter here" <<endl;
+                return dodeletecenter(ipcreq);
+            }
+            
+            
 
             
             //resource register
@@ -978,47 +990,47 @@ std::string ClientIPC::dousercancel(IPCreq &ipcreq){
         return "modify auth success";
     }
 
-
-    //权限修改
-    // std::string return_value = "authmodify fail";
-    // Http::Client client;
-    // char url[256];
-    // //snprintf(url, 256, "http://localhost:%d/auth/modify", manager->rest_port());
-    // snprintf(url, 256, "http://localhost:9090/auth/modify");
-    // auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
-    // client.init(opts);
-
-
-    // std::cout << "before" << endl;
-    // auto response = client.post(url).cookie(Http::Cookie("FOO", "bar")).body(value).send();
-    //         dout(-1) << "Client Info: post request " << url << dendl;
-
-    // std::cout << "after" << endl;
-    // std::promise<bool> prom;
-    // auto fu = prom.get_future();
-    // response.then(
-    //     [&](Http::Response res) {
-    //         //dout(-1) << "Manager Info: " << res.body() << dendl;
-    //         std::cout << "Response code = " << res.code() << std::endl;
-    //         return_value = "authmodify success";
-    //         auto body = res.body();
-    //         if (!body.empty()){
-    //             std::cout << "Response body = " << body << std::endl;
-    //             //====================
-    //             //your code write here
-            
-    //             //====================
-    //         }
-    //         prom.set_value(true);
-    //     },
-    //     Async::IgnoreException);
-    // fu.get();
-
-    // client.shutdown();
-    // return return_value;
  }
 
+ std::string ClientIPC::domodifycenter(IPCreq &ipcreq){
+          // TODO: 提前准备的数据
 
+    FECenterInfo FEcenter;
+    FEcenter.centerID = ipcreq.centerID;
+    FEcenter.centerIP = ipcreq.centerIP;
+    FEcenter.centerPort = ipcreq.centerPort;
+    FEcenter.centerName = ipcreq.centerName;
+    
+    string value = FEcenter.serialize();
 
+    string endpoint = client->get_manager();   
+    string routepath = "/mconf/addCenter";    
+    string res = client->rpc->post_request(endpoint, routepath, value);
+
+    return res;
+ }
+
+ std::string ClientIPC::dosearchcenter(IPCreq &ipcreq){
+          // TODO: 提前准备的数据
+
+    string endpoint = client->get_manager();   
+    string routepath = "/mconf/searchCenter";    
+    string res = client->rpc->get_request(endpoint, routepath);
+
+    return res;
+ }
+
+std::string ClientIPC::dodeletecenter(IPCreq &ipcreq){
+          // TODO: 提前准备的数据
+    string value = ipcreq.centerID;
+
+    cout << "value: " << value << endl;
+    string endpoint = client->get_manager();   
+    string routepath = "/mconf/deleteCenter";    
+    string res = client->rpc->post_request(endpoint, routepath, value);
+
+    cout << "res :"<< res <<endl;
+    return res;
+ }
 
 }//namespace

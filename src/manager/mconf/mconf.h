@@ -29,20 +29,31 @@ private:
 public:
  //--------------------------------------------
     //define your function here
+    //添加和修改都是此接口
     void addCenterRest(const Rest::Request& request, Http::ResponseWriter response);
     int addCenter(FECenterInfo &FEcenter);
 
+    //查询
     void searchCenterRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string searchCenter();
 
+    //删除
+    void deleteCenterRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string deleteCenter(std::string centerID);
+
+
 public:
     Mconf() : ManagerModule("mconf") {
-        key = "center_information";
+      auto _config = HvsContext::get_context()->_config;
+      bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
+      
+      key = "center_information";
     };
     ~Mconf() {};
 
 private:
   string key;
+  string bucket_account_info;
 };
 
 }//namespace

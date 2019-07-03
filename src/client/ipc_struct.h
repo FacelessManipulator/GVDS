@@ -66,6 +66,11 @@ namespace hvs{
         std::string department;
 
         std::string changeauth;
+        //mconf
+        std::string centerID;
+        std::string centerIP; 
+        std::string centerPort; 
+        std::string centerName;
 
         //resource aggregation
         std::string storage_src_id;     // 存储资源UUID
@@ -105,6 +110,12 @@ namespace hvs{
             put("department", department);
             put("changeauth", changeauth);
 
+            put("centerID", centerID);
+            put("centerIP", centerIP);
+            put("centerPort", centerPort);
+            put("centerName", centerName);
+
+
             //resource aggregation
             put("storage_src_id", storage_src_id);
             put("storage_src_name", storage_src_name);
@@ -142,6 +153,11 @@ namespace hvs{
             get("address", address);
             get("department", department);
             get("changeauth", changeauth);
+
+            get("centerID", centerID);
+            get("centerIP", centerIP);
+            get("centerPort", centerPort);
+            get("centerName", centerName);
 
             //resource aggregation
             get("storage_src_id", storage_src_id);

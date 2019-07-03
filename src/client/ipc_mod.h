@@ -69,6 +69,11 @@ namespace hvs{
 
         std::string doauthsearch(IPCreq &ipcreq);
         std::string doauthmodify(IPCreq &ipcreq);
+
+        std::string domodifycenter(IPCreq &ipcreq);
+        std::string dosearchcenter(IPCreq &ipcreq);
+        std::string dodeletecenter(IPCreq &ipcreq);
+        
     };
 }
 

@@ -55,5 +55,6 @@ add_subdirectory(zonecmdline)
 add_subdirectory(usercmdline)
 add_subdirectory(authcmdline)
 add_subdirectory(aggregationcmdline)
+add_subdirectory(mconfcmdline)
 
 #TARGET_LINK_LIBRARIES(hvsd hello)

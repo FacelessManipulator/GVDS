@@ -360,8 +360,8 @@ void SelectNode::write_rtt(vector<PAIR> &myvec){
 
 
 void SelectNode::getCenterInformation(){
-    string ip = *(HvsContext::get_context()->_config->get<std::string>("default_ip"));
-    string port = *(HvsContext::get_context()->_config->get<std::string>("default_port"));
+    string ip = *(HvsContext::get_context()->_config->get<std::string>("manager_addr"));
+    string port = *(HvsContext::get_context()->_config->get<std::string>("manager_port"));
     string url = "http://" + ip + ":" + port;   //http://localhost:9090
 
     string response = client->rpc->get_request(url, "/mconf/searchCenter");

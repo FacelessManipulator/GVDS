@@ -230,7 +230,7 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
     // LocalAccountPair localpair;
     // localpair.deserialize(value);  //localpair.localaccount 这个是账户名
 
-    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
         cout <<"localstoragepath: " << localstoragepath << endl;
     string spacepath = localstoragepath + "/" + spacemeta.spacePath; //这个可能不是最终的路径，需确认
         cout << "final path :" << spacepath << endl;
@@ -271,7 +271,7 @@ int AuthModelServer::self_AuthSPD(SelfSPD &mySPD){
     spacemeta.deserialize(mySPD.spaceinformation);
 
     //设置root 删除组
-    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
         cout <<"localstoragepath: " << localstoragepath << endl;
 
     string spacepath = localstoragepath + "/" + spacemeta.spacePath;
@@ -328,7 +328,7 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
 int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID, std::vector<std::string> memberID){
     cout << "=======start: SpacePermissionSyne=======" << endl;
 
-    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
     cout <<"localstoragepath: " << localstoragepath << endl;
 
     // string ZoneID;
@@ -779,7 +779,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
 //2.4 空间权限删除接口  ：：被空间创建模块调用：：删除存储集群上空间对应的权限  //数据库不用更新，因为无此空间记录
 //这个也不跨超算，因此不用rest，【不用更改】 //这是因为在客户端就判断好了在哪个管理节点--宋尧
 int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
-    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+    string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
     cout <<"localstoragepath: " << localstoragepath << endl;
 
     vector<string> tmp_vec_spaceID;

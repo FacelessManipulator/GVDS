@@ -1,12 +1,11 @@
 ip = "127.0.0.1";
 center_id = "1";
+manager_addr = "127.0.0.1";
+manager_port = "9090";
 log = {
     path = "/opt/hvs/var/log/hvs.log";
     level = 10;
 };
-
-manager_addr = ("http://127.0.0.1:9090", );
-
 
 //DB
 bucket = {
@@ -38,22 +37,18 @@ ioproxy = {
 
 manager = {
     //use linux command uuid to generate your own uuid
-    uuid = "6305fe8e-7fbd-11e9-a2ea-27b96962514c";
+    id = "1";
+    data_path = "/opt/hvs/var/data/";
     port = 9090;
     thread_num = 6;
 };
 
 // only manager node need these settings
 couchbase = {
-    address = "192.168.10.235";
+    address = "192.168.10.83";
     user = "dev";
     password = "buaaica";
     bucket = "test";
-};
-
-rest = {
-    port = 9090;
-    thread_num = 10;
 };
 
 // only client node need these settings

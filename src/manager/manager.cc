@@ -17,7 +17,7 @@ bool Manager::start() {
   auto rest_port = _config->get<int>("manager.port");
   auto rest_thread = _config->get<int>("manager.thread_num");
   auto ip = _config->get<std::string>("ip");
-  auto _uuid = _config->get<std::string>("manager.uuid");
+  auto _uuid = _config->get<std::string>("manager.id");
   auto cid = _config->get<std::string>("center_id");
   if (!_uuid.has_value()) {
     dout(-1) << "ERROR: Manager UUID not found! Please use linux command UUID "
@@ -45,7 +45,7 @@ bool Manager::start() {
   center_id = cid.value();
 
   Port port(*rest_port);
-  Address addr(*ip, port);
+  Address addr("0.0.0.0", port);
 
   restserver = make_unique<RestServer>(addr);
   restserver->init(*rest_thread);  //[原始函数]

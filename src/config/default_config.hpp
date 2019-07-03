@@ -17,7 +17,10 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("list", vector{1, 2, 3});
 
   _config->add("ip", string("0.0.0.0"));
-  _config->add("manager_addr", vector{string("127.0.0.1")});
+  _config->add("manager_addr", string("127.0.0.1"));
+  _config->add("manager_port",string("9090"));
+  _config->add("center_id",string("1"));
+
   _config->add("log.path", string("/var/log/hvs.log"));
   _config->add("log.level", 10);
   _config->add("rpc.port", 9092);
@@ -37,7 +40,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("fuse.debug", false);
   _config->add("fuse.multithread", true);
   _config->add("fuse.auto_unmount", true);
-  _config->add("fuse.use_udt", true);
+  _config->add("fuse.use_udt", false);
 
   // ioproxy config options
   _config->add("ioproxy.scher", 6);
@@ -50,18 +53,10 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("client.data_port_end", 9150);
   _config->add("client.data_buffer", 10240000);
 
-  // storage 本地挂载的文件系统（lustre等）
-  _config->add("storage", string("/tmp/hvs/tests/data"));
   // manager config options
   _config->add("manager.port", 9090);
   _config->add("manager.thread_num", 6);
-
-//client
-_config->add("default_ip",string("127.0.0.1"));
-_config->add("default_port",string("9090"));
-
-//manager
-_config->add("ManagerID",string("1")); //TODO 每个超算要改
+  _config->add("manager.id", string("1"));
 
 }
 }  // namespace hvs

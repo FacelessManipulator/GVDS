@@ -13,22 +13,6 @@ using namespace hvs;
 using namespace std;
 
 void Client::start() {
-  // init rest server
-  auto _config = HvsContext::get_context()->_config;
-  auto rest_port = _config->get<int>("rest.port");
-  auto rpc_port = _config->get<int>("rpc.port");
-  auto ip = _config->get<std::string>("ip");
-  manager_endpoints = _config->get_list<std::string>("manager_addr");
-  if (!rest_port) {
-    std::cerr << "restserver error: invalid port." << std::endl;
-  } else if (!rpc_port) {
-    std::cerr << "restserver error: invalid rpc port." << std::endl;
-  } else if (!ip) {
-    std::cerr << "restserver warning: invalid ip, turning to use 0.0.0.0"
-              << std::endl;
-    ip = "0.0.0.0";
-  }
-
   // init modules
   for (auto mod : uninit_modules) {
     mod->start();

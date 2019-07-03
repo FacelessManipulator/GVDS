@@ -50,8 +50,6 @@ class Client : public Thread, public Node, public JsonSerializer {
   bool m_stop;
 
   public:
-  // TODO: this should be stored and mantained in best node selection mod
-  std::shared_ptr<std::vector<std::string>> manager_endpoints;
   std::string get_manager();
 
 public:

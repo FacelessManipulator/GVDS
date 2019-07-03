@@ -63,7 +63,7 @@ public:
         auto _config = HvsContext::get_context()->_config;
         spacebucket = _config->get<std::string>("bucket.space_info").value_or("space_info");
         storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
-        localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+        localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
     };
     ~SpaceServer() = default;
 

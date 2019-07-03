@@ -95,11 +95,11 @@ public:
 
     
 
-    string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("ManagerID"));  //TODO标识所述超算，此超算是北京
+    string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("manager.id"));  //TODO标识所述超算，此超算是北京
     string c_key = "center_information";
 public:
     AuthModelServer() : ManagerModule("auth") {
-        //aaaaa = *(HvsContext::get_context()->_config->get<std::string>("storage"));
+        //aaaaa = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
         auto _config = HvsContext::get_context()->_config;
         bucket_auth_info = _config->get<std::string>("bucket.auth_info").value_or("auth_info");
         bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");

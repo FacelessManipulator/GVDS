@@ -6,8 +6,14 @@
 #include "stdio.h"
 #include "datastore/datastore.h"
 
+#include <pistache/client.h>
+#include <pistache/http.h>
+#include <pistache/net.h>
+#include <atomic>
+
 #include "manager/space/SpaceServer.h"
 #include "manager/usermodel/UserModelServer.h"
+#include "common/centerinfo.h"
 #include "hvs_struct.h"
 
 
@@ -23,6 +29,8 @@ namespace hvs{
     void SpaceServer::router(Router& router) {
        Routes::Post(router, "/space/rename", Routes::bind(&SpaceServer::SpaceRenameRest, this));
        Routes::Post(router, "/space/changesize", Routes::bind(&SpaceServer::SpaceSizeChangeRest, this));
+       Routes::Post(router, "/space/spaceusage", Routes::bind(&SpaceServer::SpaceUsageRest, this));
+       Routes::Post(router, "/space/spaceusagecheck", Routes::bind(&SpaceServer::SpaceUsageCheckRest, this));
     }
 
     void SpaceServer::GetSpacePosition(std::vector<Space> &result, std::vector<std::string> spaceID)
@@ -382,6 +390,162 @@ namespace hvs{
             storptr->set(StorageID, storage.serialize()); // 容量改变，并重新存储到数据库中；
         }
         return 0;
+    }
+
+
+    void SpaceServer::SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response){
+        std::cout << "====== start SpaceServer function: SpaceUsageRest ======"<< std::endl;
+        auto info = request.body();
+
+        SpaceRequest req;
+        req.deserialize(info);
+        std::vector<std::string> spaceID = req.spaceIDs;
+
+        std::vector<int64_t> result_i = SpaceUsage(spaceID);
+        std::string result;
+        if (!result_i.empty()){
+            result = json_encode(result_i);
+        }
+        else{
+            result = "fail";
+        }
+
+        response.send(Http::Code::Ok, result); //point
+        std::cout << "====== end SpaceServer function: SpaceUsageRest ======"<< std::endl;
+    }
+
+    std::vector<int64_t> SpaceServer::SpaceUsage(std::vector<std::string> spaceID){
+        std::vector<int64_t> res;
+        string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
+        cout <<"localstoragepath: " << localstoragepath << endl;
+
+        std::vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
+        GetSpacePosition(result, spaceID);
+
+        //+++++++
+        //---提前读取center_information信息----
+        std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+            hvs::CouchbaseDatastore(bucket_account_info));
+        f0_dbPtr->init();
+        string c_key = "center_information";
+        auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+        if (c_error){
+            cout << "authmodelserver: get center_information fail" << endl;
+            return res;
+        }
+        CenterInfo mycenter;
+        mycenter.deserialize(*pcenter_value);
+        vector<string>::iterator c_iter;//???
+        //--------------------
+        Http::Client client;
+        char url[256];
+
+        auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+        client.init(opts);
+        //----------------------
+        for (auto space_iter : result){ //for其实没有用，因为vector只有一个spaceID，即每次只删除一个spaceID
+            Space spacemeta = space_iter;
+
+            string spacepath = localstoragepath + "/" + spacemeta.spacePath;
+
+            //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
+            if(ManagerID == spacemeta.hostCenterID){ //本地
+                //调本地
+                int64_t spaceuse = SpaceUsageCheck(spacepath);
+                res.push_back(spaceuse);
+            }
+            else{ //远端
+                cout <<"发送到远端" << endl;
+                string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
+                string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
+                
+                snprintf(url, 256, "http://%s:%s/space/spaceusagecheck", tmp_ip.c_str() ,tmp_port.c_str());
+
+                auto response = client.post(url).body(spacepath).send();
+                dout(-1) << "Client Info: post request " << url << dendl;
+
+                std::promise<bool> prom;
+                auto fu = prom.get_future();
+                response.then(
+                    [&](Http::Response resp) {
+                    //dout(-1) << "Manager Info: " << res.body() << dendl;
+                    std::cout << "Response code = " << resp.code() << std::endl;
+                    auto body = resp.body();
+                    int64_t spaceuseage;
+                    json_decode(body, spaceuseage);
+                    res.push_back(spaceuseage);
+                    prom.set_value(true);
+                },
+                Async::IgnoreException);
+
+                //阻塞
+                fu.get();
+                cout << "fu.get()"<< endl;
+            }
+        }
+
+        //++++++++
+        client.shutdown();
+        //++++++++
+        //不需要记录数据库
+        return res;
+    }
+
+    void SpaceServer::SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response){
+        std::cout << "====== start SpaceServer function: SpaceUsageCheckRest ======"<< std::endl;
+        std::string spacepath = request.body();
+
+        int64_t result_i = SpaceUsageCheck(spacepath);
+        std::string result = json_encode(result_i);
+        response.send(Http::Code::Ok, result); //point
+        std::cout << "====== end SpaceServer function: SpaceUsageCheckRest ======"<< std::endl;
+    }
+
+    int64_t SpaceServer::SpaceUsageCheck(std::string spacepath){
+        int cmdsize = 150; // 默认命令的总长度不超过150个字符
+        int bufsize = 200;
+        char cmd[cmdsize];
+        char buf[bufsize];
+        memset(cmd, '\0', cmdsize);
+        memset(buf, '\0', bufsize);
+        if(sprintf(cmd, "du -h -d 0 %s", spacepath.c_str()) <0 ){
+            perror("sprintf()");
+            return -1;
+        }
+        FILE *fp = popen(cmd, "r");
+        if (fp == NULL) {
+            perror("popen()");
+            return -1;
+        }
+        fgets(buf, bufsize-1, fp);
+        std::string cmdresult(buf);
+        // std::cout << "du 运行结果：" << cmdresult;
+        // 下面进行根据获取的返回值解析容量大小
+        int formal_size = 0;
+        size_t start = 0;
+        start = cmdresult.find_first_of(" ", start);
+        size_t end = cmdresult.find_first_of("\t", start+1);
+        // 获取容量字符串
+        std::string size_str = cmdresult.substr(start+1, end-start-1);
+        // 获取容量数字大小
+        int unit = size_str.size()-1;
+        // std::cout  << size_str.substr(0, unit).c_str() << std::endl;
+        sscanf(size_str.substr(0, unit).c_str(), "%d", &formal_size);
+        // std::cout << "解析后容量大小(数字):"<< formal_size << size_str[unit]<< std::endl;
+        // 根据容量后单位G,M,K统一转化为KB为单位的容量大小
+        int64_t size = 0;
+        if(size_str[unit] == 'G'){
+            size = formal_size * 1000 * 1000;
+        }
+        if(size_str[unit] == 'M'){
+            size = formal_size*1000;
+        }
+        if(size_str[unit] == 'K'){
+            size = formal_size;
+        }
+        // 输出字符串形式的容量大小
+        // std::cout << "解析后容量大小(字符串):" << size_str << std::endl;
+        return size;
     }
 
 }//namespace hvs

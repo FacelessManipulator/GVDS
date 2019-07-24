@@ -57,12 +57,19 @@ public:
     int SpaceSizeAdd(std::string StorageID, int64_t newSpaceSize);
     int SpaceSizeDeduct(std::string StorageID, int64_t newSpaceSize);
 
+    //空间容量查询
+    void SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::vector<int64_t> SpaceUsage(std::vector<std::string> spaceID); 
+    void SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response);
+    int64_t SpaceUsageCheck(std::string spacepath); 
+    string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("manager.id"));  //TODO标识所述超算，此超算是北京
  //--------------------------------------------
 public:
     SpaceServer() : ManagerModule("space") {
         auto _config = HvsContext::get_context()->_config;
         spacebucket = _config->get<std::string>("bucket.space_info").value_or("space_info");
         storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
+        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
         localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
     };
     ~SpaceServer() = default;
@@ -71,6 +78,7 @@ public:
 private:
     std::string storagebucket;
     std::string spacebucket;
+    std::string bucket_account_info;
     std::string localstoragepath; // 本机存储集群路径
 };
 

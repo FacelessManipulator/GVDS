@@ -130,15 +130,18 @@ struct SpaceRequest : public hvs::JsonSerializer {
   enum SpaceRequestType {
     rename,
     sizeChange,
+    usage,
   };
 
  public:
   SpaceRequestType type;
   std::string spaceID;       //空间ID
+  std::vector<std::string> spaceIDs;
   int64_t newSpaceSize;      //空间容量
   std::string newSpaceName;  //区域名
   void serialize_impl() {
     put("UUID", spaceID);
+    put("UUIDs", spaceIDs);
     int t = type;
     put("type", t);
     put("newSpaceSize", newSpaceSize);
@@ -147,6 +150,7 @@ struct SpaceRequest : public hvs::JsonSerializer {
 
   void deserialize_impl() {
     get("UUID", spaceID);
+    get("UUIDs", spaceIDs);
     int t;
     get("type", t);
     type = static_cast<SpaceRequestType>(t);

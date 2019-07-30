@@ -55,6 +55,9 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "spacesizechange"){
                 return dospacesizechange(ipcreq);
             }
+            if(ipcreq.cmdname == "spaceusage"){
+                return dospaceusage(ipcreq);
+            }
             if(ipcreq.cmdname == "mapadd"){
                 return domapadd(ipcreq);
             }
@@ -250,6 +253,54 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     req.newSpaceName = newspacename;
     string response = client->rpc->post_request(client->get_manager(), "/space/rename", req.serialize());
     return response;
+}
+
+std::string ClientIPC::dospaceusage(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string zonename = ipcreq.zonename;
+    std::string ownID = client->user->getAccountID();
+    std::vector<std::string> spacenames = ipcreq.spacenames;
+    std::vector<std::string> spaceuuids;
+
+
+    //获取区域信息
+    cout << ownID << endl;
+    int ret = GetZoneInfo(ownID);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        Zone zoneinfo = mapping->second;
+        for(const auto &m : spacenames){
+            bool found = false;
+            for(const auto it : zoneinfo.spaceBicInfo){
+                if (it->spaceName == m){
+                    spaceuuids.push_back(it->spaceID);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found){
+                std::cerr << "空间名" << m << "不存在，请确认空间名称正确！" << std::endl;
+                return "空间名"+m+"不存在，请确认空间名称正确！";
+            }
+        }
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    SpaceRequest req;
+    req.spaceIDs = spaceuuids;
+
+    string response = client->rpc->post_request(client->get_manager(), "/zone/mapdeduct", req.serialize());//TODO：修改按需选择管理节点
+    return response;
+    
+    // if (!result) return "success";
+    // else return std::strerror(result);
 }
 
 std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {

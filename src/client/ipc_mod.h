@@ -39,6 +39,7 @@ namespace hvs{
         // TODO: 客户端具体处理函数
         std::string dospacerename(IPCreq &ipcreq); // 处理客户端函数
         std::string dospacesizechange(IPCreq &ipcreq);
+        std::string dospaceusage(IPCreq &ipcreq);
         std::string domapadd(IPCreq &ipcreq);
         std::string domapdeduct(IPCreq &ipcreq);
         std::string dozoneadd(IPCreq &ipcreq);

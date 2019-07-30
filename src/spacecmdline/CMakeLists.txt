@@ -5,3 +5,6 @@ target_link_libraries(sprename hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
 add_executable(spsizechange spacesizechange_ipc.cc)
 target_link_libraries(spsizechange hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+add_executable(spusage spaceusage_ipc.cc)
+target_link_libraries(spusage hvscommon ${HVSCOMMOM_DEPENDS_ON})

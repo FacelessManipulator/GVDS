@@ -528,7 +528,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
     
     //+++++++
     //---提前读取center_information信息----
-     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
     string c_key = "center_information";

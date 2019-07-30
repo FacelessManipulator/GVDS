@@ -1003,9 +1003,13 @@ std::string ClientIPC::dousercancel(IPCreq &ipcreq){
     
     string value = FEcenter.serialize();
 
-    string endpoint = client->get_manager();   
+    string ip = *(HvsContext::get_context()->_config->get<std::string>("manager_addr"));
+    string port = *(HvsContext::get_context()->_config->get<std::string>("manager_port"));
+    string url = "http://" + ip + ":" + port;   //http://localhost:9090
+
+    //string endpoint = client->get_manager();   
     string routepath = "/mconf/addCenter";    
-    string res = client->rpc->post_request(endpoint, routepath, value);
+    string res = client->rpc->post_request(url, routepath, value);
 
     return res;
  }

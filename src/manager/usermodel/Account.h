@@ -8,15 +8,31 @@
 
 
 //对应sc_account_info表
+// class SCAccount : public hvs::JsonSerializer {
+// public:
+//     std::string accountID;
+//     std::map<std::string, std::string> Beijing_account;
+//     std::map<std::string, std::string> Shanghai_account;
+//     std::map<std::string, std::string> Guangzhou_account;
+//     std::map<std::string, std::string> Changsha_account;
+//     std::map<std::string, std::string> Jinan_account;
+
+
+// public:
+//   void serialize_impl() override;
+//   void deserialize_impl() override;
+
+// public:
+//     SCAccount() = default;
+//     SCAccount(std::string id) : accountID(id){}
+// };
+
 class SCAccount : public hvs::JsonSerializer {
 public:
     std::string accountID;
-    std::map<std::string, std::string> Beijing_account;
-    std::map<std::string, std::string> Shanghai_account;
-    std::map<std::string, std::string> Guangzhou_account;
-    std::map<std::string, std::string> Changsha_account;
-    std::map<std::string, std::string> Jinan_account;
-
+    std::vector<std::string> centerName;
+    std::map<std::string, std::string> localaccount;
+    std::map<std::string, std::string> localpassword;
 
 public:
   void serialize_impl() override;
@@ -25,6 +41,7 @@ public:
 public:
     SCAccount() = default;
     SCAccount(std::string id) : accountID(id){}
+
 };
 
 
@@ -111,30 +128,5 @@ public:
 };
 
 //int lbqprint();
-
-/*
-class SCAccount : public hvs::JsonSerializer {
- public:
-
-  std::string accountID;//虚拟数据空间账户ID
-  std::map<std::string, std::string> SC_account_password;   //zhanghu  password
-  std::map<std::string, std::string> SC_account_location;   //zhanghu  password
- 
-
- public:
-  void serialize_impl() override {
-  
-
-
-  }
-  void deserialize_impl() override {
-
-  }
-
- public:
-  Account() = default;
-};
-
-*/
 
 #endif

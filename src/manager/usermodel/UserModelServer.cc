@@ -16,7 +16,7 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 #include "common/JsonSerializer.h"
 #include "context.h"
 #include "datastore/datastore.h"
-
+#include "common/centerinfo.h"
 
 #include "manager/usermodel/UserModelServer.h"
 #include "manager/usermodel/MD5.h"
@@ -169,7 +169,7 @@ string UserModelServer::UserRegister(Account &person){
     }
 
     //sc_accounut_pool取出并调整,   sc_account_info写入
-    bool buildmap = BuildAccountMapping(person.accountID);
+    bool buildmap = BuildAccountMapping_v2(person.accountID);
     if(!buildmap){
         cout << "buildmap fail" << endl;
         return "Registration fail";
@@ -526,7 +526,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     }
 
     //释放映射的账户，删除sc_account_info中以uuid为key的内容
-    bool is_remove_acc = RemoveAccountMapping(uuid);
+    bool is_remove_acc = RemoveAccountMapping_v2(uuid);
     if(!is_remove_acc){
         is_cancel_success = false;
         cout << "Account map remove fail" << endl;
@@ -566,8 +566,9 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     is_cancel_success = true;
     return "User cancellation success.";
 }
-
-bool UserModelServer::RemoveAccountMapping(string accountID){
+ 
+ /* 
+bool UserModelServer::RemoveAccountMapping_old(string accountID){
 
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(bucket_sc_account_info));  
@@ -583,11 +584,11 @@ bool UserModelServer::RemoveAccountMapping(string accountID){
     person.deserialize(*pvalue_scuser);
     
     //删除受hostCenterName影响，因为一下删除5个地点，因此这块不用改
-    bool beijing = SubRemoveAccountMapping(person, "Beijing", f1_dbPtr);  //sc_account_pool  key:Beijing,Shanghai...
-    bool shanghai = SubRemoveAccountMapping(person, "Shanghai", f1_dbPtr);
-    bool guangzhou = SubRemoveAccountMapping(person, "Guangzhou", f1_dbPtr);
-    bool changsha = SubRemoveAccountMapping(person, "Changsha", f1_dbPtr);
-    bool jinan = SubRemoveAccountMapping(person, "Jinan", f1_dbPtr);
+    bool beijing = SubRemoveAccountMapping_old(person, "Beijing", f1_dbPtr);  //sc_account_pool  key:Beijing,Shanghai...
+    bool shanghai = SubRemoveAccountMapping_old(person, "Shanghai", f1_dbPtr);
+    bool guangzhou = SubRemoveAccountMapping_old(person, "Guangzhou", f1_dbPtr);
+    bool changsha = SubRemoveAccountMapping_old(person, "Changsha", f1_dbPtr);
+    bool jinan = SubRemoveAccountMapping_old(person, "Jinan", f1_dbPtr);
     
     if(!(beijing && shanghai && guangzhou && changsha && jinan)){
        return false;
@@ -598,7 +599,7 @@ bool UserModelServer::RemoveAccountMapping(string accountID){
 }
 
 //删除一个用户指定地区(location)的［所有］账户映射
-bool UserModelServer::SubRemoveAccountMapping(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
+bool UserModelServer::SubRemoveAccountMapping_old(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
     cout << "location " << location << endl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);    //sc_account_pool  key:Beijing,Shanghai...
     if (error){
@@ -680,7 +681,7 @@ bool UserModelServer::SubRemoveAccountMapping(SCAccount &person, string location
 }
 
 //register，first, build account mapping 
-bool UserModelServer::BuildAccountMapping(string accountID){
+bool UserModelServer::BuildAccountMapping_old(string accountID){
     
     //get sc_account_pool
     
@@ -710,7 +711,7 @@ bool UserModelServer::BuildAccountMapping(string accountID){
 
 //20190621 不用修改，这个是活的
 //建立给定地区(location)的用户的［1个］账户映射，即调用Beijing两次，则在Beijing建立2个账户映射; 删除是直接删除给定地区的所有账户映射，若想只删除给定地区的其中一个账户，则需再自定函数实现
-bool UserModelServer::SubBuildAccountMapping(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
+bool UserModelServer::SubBuildAccountMapping_old(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
     
     cout << "location " << location << endl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);
@@ -781,10 +782,227 @@ bool UserModelServer::SubBuildAccountMapping(SCAccount &person, string location,
     }    
     
 }
+*/
+bool UserModelServer::RemoveAccountMapping_v2(string accountID){
+     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
+
+    auto [pvalue_scuser, error] = f1_dbPtr->get(accountID);  //sc_account_info  key:uuid
+    if(error){
+        cout << "get sc_account_info fail."<< endl;
+        return false;
+    }
+
+    SCAccount person;
+    person.deserialize(*pvalue_scuser);
+
+    //删除受hostCenterName影响
+    //获取超算信息，for 每一个超算，调用删除映射子函数
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
+    
+    cout << "c_key: " << c_key << endl;
+    auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+    if (c_error){
+        cout << "authmodelserver: get center_information fail" << endl;
+        return -1;
+    }
+    CenterInfo mycenter;
+    mycenter.deserialize(*pcenter_value);
+    vector<string>::iterator c_iter;
+
+    // 循环删除 该账户的 每个已有账户映射
+    bool removeflag = false;
+    for(c_iter = mycenter.centerID.begin(); c_iter!= mycenter.centerID.end(); c_iter++){
+        string name = mycenter.centerName[*c_iter];
+        bool removeflag = SubRemoveAccountMapping_v2(person, name, f1_dbPtr);  //sc_account_pool  key（参数name）:Beijing,Shanghai...
+        if(!removeflag)
+            return false;
+    }
+    return true;
+
+}
+
+//删除一个用户指定地区(location)的账户映射，每次只删除一个地点
+bool UserModelServer::SubRemoveAccountMapping_v2(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
+    //获取对应账户池
+    cout << "location " << location << endl;
+    auto [pvalue_location, error] = f1_dbPtr->get(location);    //sc_account_pool  key:Beijing,Shanghai...
+    if (error){
+        cout << "get "<< location << " err"<<endl;
+        return false;
+    }
+    //cout << *pvalue_location <<endl;
+
+    AccountSCPool somewhere;
+    somewhere.deserialize(*pvalue_location);
+    vector<string>::iterator iter;
+
+    //每次for循环做的事
+        //修改相应地区账户池，key1添加到unuse中，然后在use中删除该key1
+        //删除该用户的映射
+    for(iter = person.centerName.begin(); iter != person.centerName.end(); iter++){
+        if(*iter==location){ //每次只删除 指定的location地点
+            string name = *iter;
+            string tmp_account = person.localaccount[name]; //是用户在 参数“location”这个地点的账户
+            string tmp_password = person.localpassword[name];
+
+            somewhere.unuse_account[tmp_account] = tmp_password;//account  password
+            somewhere.use_account.erase(tmp_account);
+            
+            person.localaccount.erase(tmp_account);// 其实这步不做也行
+            person.localpassword.erase(tmp_account);
+        }
+    }
+
+    //更新数据库的sc_account_pool  和  sc_account_info 
+    string value1 = somewhere.serialize();
+    int flag1 = f1_dbPtr->set(location, value1);  //sc_account_pool
+    if (flag1 != 0){
+        cout<< "remove map fail: DB[sc_account_pool] update fail"<< endl;
+        return false;
+    }
+    else{
+        cout<< "remove map success: DB[sc_account_pool] update success" << endl;
+    }    
+    
+    string value2 = person.serialize();
+    int flag2 = f1_dbPtr->set(person.accountID, value2);   //sc_account_info
+    if (flag2 != 0){
+        cout<< "remove map fail: DB[sc_account_info] update fail"<<endl;
+        return false;
+    }
+    else{
+        cout<< "removeAccountMapping success: DB[sc_account_info] update success" << endl;
+        return true;
+    }    
+
+}
+
+// 注册时建立账户映射，以及其他动态情况，需建立账户映射
+bool UserModelServer::BuildAccountMapping_v2(string accountID){
+    SCAccount person(accountID);
+    
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
+
+    //账户映射算法，选一个地点进行映射，目前是默认Beijing，如果不做算法，这里就直接映射5个就完事了（直接把下面四个//取消）
+    //参数是数据库中的key，因此不能换，这里要做转换， if ... key = "Beijing"
+    bool build_result = SubBuildAccountMapping_v2(person, "Beijing", f1_dbPtr);   //sc_account_pool
+    // bool shanghai = SubBuildAccountMapping_v2(person, "Shanghai", f1_dbPtr);
+    // bool guangzhou = SubBuildAccountMapping_v2(person, "Guangzhou", f1_dbPtr);
+    // bool changsha = SubBuildAccountMapping_v2(person, "Changsha", f1_dbPtr);
+    // bool jinan = SubBuildAccountMapping_v2(person, "Jinan", f1_dbPtr);
+
+   if(build_result){
+       return true;
+   }
+   else{
+       return false;
+   }
+}
+//建立给定地区(location)的用户的［1个］账户映射，即调用Beijing两次，为防止在Beijing 覆盖之前的本地账户，因此这块加判断，每个地区只能建立一个本地账户
+bool UserModelServer::SubBuildAccountMapping_v2(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
+    //获取对应账户池
+    cout << "location " << location << endl;
+    auto [pvalue_location, error] = f1_dbPtr->get(location);
+    if (error){
+        cout << "get "<< location << " err"<<endl;
+        return false;
+    }
+    //cout << *pvalue_location <<endl;
+
+    AccountSCPool somewhere;
+    somewhere.deserialize(*pvalue_location);
+    if(somewhere.unuse_account.empty()){
+        cout << location <<" .unuse_account is empty , no local account can be used to build accountmap. Fail. " << endl;
+        return false;
+    }
+
+    map<string, string>::iterator iter;
+    iter = somewhere.unuse_account.begin();  //从未用账户池中取出一个账户
+
+    //add to person
+        //如果已有账户，为防止覆盖，不在建立账户，直接返回
+        //没有账户则建立账户
+    for(auto item : person.centerName){
+        if(item == location){
+            cout << "already exist local account，can not create new one" << endl;
+            return true; //这里返回true， 毕竟有账户
+        }
+    }
+    person.centerName.push_back(location);
+    person.localaccount[location] = iter->first; //account
+    person.localpassword[location] = iter->second;  //password
+    
+    //add to use
+    somewhere.use_account[iter->first] = iter->second;
+    //del from unuse
+    somewhere.unuse_account.erase(iter->first);
+
+    //更新两个数据库表sc_account_pool  sc_account_info
+    string value = somewhere.serialize();   //sc_account_pool
+    int flag = f1_dbPtr->set(location, value);
+    if (flag != 0){
+        cout<< "map fail: DB[sc_account_pool] update fail"<< endl;
+        return false;
+    }
+    else{
+        cout<< "map success: DB[sc_account_pool] update success" << endl;
+    }    
+
+    string person_value = person.serialize();
+    int flag2 = f1_dbPtr->set(person.accountID, person_value); //sc_account_info
+    if (flag2 != 0){
+        cout<< "map fail: DB[sc_account_info] update fail"<<endl;
+        return false;
+    }
+    else{
+        cout<< "BuildAccountMapping success: DB[sc_account_info] update success" << endl;
+        return true;
+    }    
+
+}
+
 
 
 //账户映射接口，返回指定超算本地账户的账户名，密码
 string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterName){
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));
+    f1_dbPtr->init();
+
+    //是否存在此ownerid
+    auto [pvalue, error] = f1_dbPtr->get(ownerID);
+    if(error){
+
+        cout << "fail" << endl;
+        return "fail";
+    }
+
+    SCAccount person;
+    person.deserialize(*pvalue);
+
+    //可以直接调用SubBuildAccountMapping_v2，里面有检测是否存已存在账户的机制，已存在，则不建立新账户，直接返回true
+    bool tmp_flag = SubBuildAccountMapping_v2(person, hostCenterName, f1_dbPtr); //这块"Beijing"是做key，不能随意改
+    if(!tmp_flag){
+        return "fail";
+    }
+
+    string name = person.localaccount[hostCenterName]; //SubBuildAccountMapping_v2 的person 是的地址传递，因此已更改，这块不用从数据库读
+    string pass = person.localpassword[hostCenterName];
+
+    //检测本地是否存在此账户
+    if(!existlocalaccount(name)) return "fail";
+
+    LocalAccountPair localpair(name, pass); //对应的本地账户名，密码
+    return localpair.serialize();
+
+
+/*
     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(bucket_sc_account_info));
     f1_dbPtr->init();
@@ -806,7 +1024,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
         if(person.Beijing_account.empty()){
             //调用接口，建立到北京的账户映射；
                 //第二个参数是账户池的key
-            bool tmp_flag = SubBuildAccountMapping(person, "Beijing", f1_dbPtr); //这块"Beijing"是做key，不能随意改
+            bool tmp_flag = SubBuildAccountMapping_v2(person, "Beijing", f1_dbPtr); //这块"Beijing"是做key，不能随意改
             if (!tmp_flag){
                 return "fail";
             }
@@ -835,7 +1053,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
         if(person.Shanghai_account.empty()){
             //调用接口，建立到上海的账户映射；
                 //第二个参数是账户池的key
-            bool tmp_flag = SubBuildAccountMapping(person, "Shanghai", f1_dbPtr); //这块"Shanghai"是做key，不能随意改
+            bool tmp_flag = SubBuildAccountMapping_v2(person, "Shanghai", f1_dbPtr); //这块"Shanghai"是做key，不能随意改
             if (!tmp_flag){
                 return "fail";
             }
@@ -864,7 +1082,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
         if(person.Guangzhou_account.empty()){
             //调用接口，建立到上海的账户映射；
                 //第二个参数是账户池的key
-            bool tmp_flag = SubBuildAccountMapping(person, "Guangzhou", f1_dbPtr); //这块"Guangzhou"是做key，不能随意改
+            bool tmp_flag = SubBuildAccountMapping_v2(person, "Guangzhou", f1_dbPtr); //这块"Guangzhou"是做key，不能随意改
             if (!tmp_flag){
                 return "fail";
             }
@@ -893,7 +1111,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
         if(person.Changsha_account.empty()){
             //调用接口，建立到上海的账户映射；
                 //第二个参数是账户池的key
-            bool tmp_flag = SubBuildAccountMapping(person, "Changsha", f1_dbPtr); //这块"Changsha"是做key，不能随意改
+            bool tmp_flag = SubBuildAccountMapping_v2(person, "Changsha", f1_dbPtr); //这块"Changsha"是做key，不能随意改
             if (!tmp_flag){
                 return "fail";
             }
@@ -922,7 +1140,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
         if(person.Jinan_account.empty()){
             //调用接口，建立到上海的账户映射；
                 //第二个参数是账户池的key
-            bool tmp_flag = SubBuildAccountMapping(person, "Jinan", f1_dbPtr); //这块"Jinan"是做key，不能随意改
+            bool tmp_flag = SubBuildAccountMapping_v2(person, "Jinan", f1_dbPtr); //这块"Jinan"是做key，不能随意改
             if (!tmp_flag){
                 return "fail";
             }
@@ -947,7 +1165,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
             return localpair.serialize();
         }// if
     }
-
+ */
 }
 
 
@@ -978,7 +1196,24 @@ bool UserModelServer::addSCaccount(){
     Beijing.unuse_account["test11"] = "123456";
     Beijing.unuse_account["test12"] = "123456";
     Beijing.unuse_account["test13"] = "123456";
+    Beijing.unuse_account["test13"] = "123456";
+    Beijing.unuse_account["test13"] = "123456";
+    Beijing.unuse_account["test13"] = "123456";
+    Beijing.unuse_account["test13"] = "123456";
+    Beijing.unuse_account["test13"] = "123456";
+    Beijing.unuse_account["test13"] = "123456";
+    Beijing.unuse_account["test13"] = "123456";
 
+    Beijing.unuse_account["test14"] = "123456";
+    Beijing.unuse_account["test15"] = "123456";
+    Beijing.unuse_account["test16"] = "123456";
+    Beijing.unuse_account["test17"] = "123456";
+    Beijing.unuse_account["test18"] = "123456";
+    Beijing.unuse_account["test19"] = "123456";
+    Beijing.unuse_account["test20"] = "123456";
+    Beijing.unuse_account["test21"] = "123456";
+    Beijing.unuse_account["test22"] = "123456";
+    Beijing.unuse_account["test23"] = "123456";
 
     Beijing.use_account["user1"] = "555555";
     Beijing.use_account["user2"] = "555555";

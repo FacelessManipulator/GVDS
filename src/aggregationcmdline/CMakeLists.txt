@@ -11,3 +11,9 @@ target_link_libraries(rd hvscommon ${HVSCOMMOM_DEPENDS_ON} managerO)
 
 add_executable(ru resourceupdate.cc)
 target_link_libraries(ru hvscommon ${HVSCOMMOM_DEPENDS_ON} managerO)
+
+install(TARGETS rg rq rd ru
+RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

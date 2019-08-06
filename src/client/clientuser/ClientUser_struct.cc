@@ -4,6 +4,7 @@
 #include "datastore/datastore.h"
 #include "context.h"
 
+
 /*
 int lbqprint(){
     std::cout<<"lbqprint"<<std::endl;
@@ -39,21 +40,16 @@ void Account::deserialize_impl() {
 
 
 void SCAccount::serialize_impl() {
-    put("HVSAccountID", accountID);
-    put("Beijing_account", Beijing_account);
-    put("Shanghai_account", Shanghai_account);
-    put("Guangzhou_account", Guangzhou_account);
-    put("Changsha_account", Changsha_account);
-    put("Jinan_account", Jinan_account);
-
+    put("accountID", accountID);
+    put("centerName", centerName);
+    put("localaccount", localaccount);
+    put("localpassword", localpassword);
 }
 void SCAccount::deserialize_impl() {
-    get("HVSAccountID", accountID);
-    get("Beijing_account", Beijing_account);
-    get("Shanghai_account", Shanghai_account);
-    get("Guangzhou_account", Guangzhou_account);
-    get("Changsha_account", Changsha_account);
-    get("Jinan_account", Jinan_account);
+    get("accountID", accountID);
+    get("centerName", centerName);
+    get("localaccount", localaccount);
+    get("localpassword", localpassword);
  }
 
 

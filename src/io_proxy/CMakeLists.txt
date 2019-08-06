@@ -6,4 +6,11 @@ ADD_EXECUTABLE(hvs_ioproxy hvs_ioproxy_main.cc)
 
 TARGET_LINK_LIBRARIES(hvs_ioproxy io_proxy hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
+install(TARGETS hvs_ioproxy
+RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+
 # TARGET_LINK_LIBRARIES(io_proxy  hvscommon ${HVSCOMMOM_DEPENDS_ON} boost_thread boost_system)

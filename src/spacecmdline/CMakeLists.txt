@@ -5,3 +5,9 @@ target_link_libraries(sprename hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
 add_executable(spsizechange spacesizechange_ipc.cc)
 target_link_libraries(spsizechange hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+install(TARGETS sprename spsizechange
+RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

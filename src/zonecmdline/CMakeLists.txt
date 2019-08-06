@@ -26,3 +26,9 @@ target_link_libraries(zregister hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
 add_executable(zlist zonelist_ipc.cc)
 target_link_libraries(zlist hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+install(TARGETS zrename spadd spdeduct zshare zcancel zadd zregister zlist
+RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

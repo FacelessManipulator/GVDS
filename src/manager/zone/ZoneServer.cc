@@ -468,6 +468,10 @@ namespace hvs{
       {
         return errno = ENOENT;
       }
+      if (res_sc == "-4")
+      {
+        return errno = EACCES;
+      }
       else
       {
         std::string spaceID = res_sc;
@@ -795,6 +799,10 @@ namespace hvs{
       if (res_sc == "-3")
       {
         return errno = ENOENT;
+      }
+      if (res_sc == "-4")
+      {
+        return errno = EACCES;
       }
       else
       {

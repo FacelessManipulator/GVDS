@@ -79,11 +79,35 @@ if(HVS_BOOST_BUILTIN)
             file(TOUCH ${CMAKE_BINARY_DIR}/lib/boost_built_flag)
         endif()
     endif()
+    ADD_LIBRARY(boost_system SHARED IMPORTED)
+    ADD_LIBRARY(boost_filesystem SHARED IMPORTED)
+    ADD_LIBRARY(boost_program_options SHARED IMPORTED)
+    ADD_LIBRARY(boost_thread SHARED IMPORTED)
+    set_target_properties(boost_system PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_system.so)
+    set_target_properties(boost_filesystem PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_filesystem.so)
+    set_target_properties(boost_program_options PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_program_options.so)
+    set_target_properties(boost_thread PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_thread.so)
+
+    install(FILES
+        ${CMAKE_BINARY_DIR}/lib/libboost_system.so.1.68.0
+        ${CMAKE_BINARY_DIR}/lib/libboost_filesystem.so.1.68.0
+        ${CMAKE_BINARY_DIR}/lib/libboost_program_options.so.1.68.0
+        ${CMAKE_BINARY_DIR}/lib/libboost_thread.so.1.68.0
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
 endif()
-ADD_SUBDIRECTORY(googletest)
-ADD_SUBDIRECTORY(pistache)
-ADD_SUBDIRECTORY(rapidjson)
-ADD_SUBDIRECTORY(libcouchbase)
-ADD_SUBDIRECTORY(rpclib)
-ADD_SUBDIRECTORY(libconfig/lib)
-ADD_SUBDIRECTORY(udt4/udt4)
+
+ADD_SUBDIRECTORY(googletest EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(pistache EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(rapidjson EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(libcouchbase EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(rpclib EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(libconfig/lib EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(udt4/udt4 EXCLUDE_FROM_ALL)
+
+install(TARGETS pistache_shared couchbase
+RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

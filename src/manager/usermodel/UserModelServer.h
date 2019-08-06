@@ -68,17 +68,26 @@ public:
         auto _config = HvsContext::get_context()->_config;
         bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
         bucket_sc_account_info = _config->get<std::string>("bucket.sc_account_info").value_or("sc_account_info");
+        c_key = "center_information";
     };
     ~UserModelServer() {};
 
 private:
     bool addSCaccount();
-    bool SubBuildAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
-    bool BuildAccountMapping(std::string accountID);
+    bool BuildAccountMapping_v2(std::string accountID);
+    bool SubBuildAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
-    bool RemoveAccountMapping(std::string accountID);
-    bool SubRemoveAccountMapping(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
+    bool RemoveAccountMapping_v2(std::string accountID);
+    bool SubRemoveAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
+    //不使用了////
+    // bool SubBuildAccountMapping_old(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
+    // bool BuildAccountMapping_old(std::string accountID);
+
+    // bool RemoveAccountMapping_old(std::string accountID);
+    // bool SubRemoveAccountMapping_old(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
+
+    //检测本地是否存在账户，否则建立账户映射失败
     bool existlocalaccount(std::string valid);
 
 private:
@@ -90,6 +99,7 @@ private:
 
     string bucket_account_info;
     string bucket_sc_account_info;
+    string c_key;
 
 };
 

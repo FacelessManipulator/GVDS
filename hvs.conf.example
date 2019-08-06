@@ -58,7 +58,7 @@ fuse = {
     debug = false;
     multithread = true;
     auto_unmount = true;
-    use_udt = true;
+    use_udt = false;
 };
 
 client = {

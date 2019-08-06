@@ -54,7 +54,8 @@ int Mconf::addCenter(FECenterInfo &FEcenter){
 // /* 
     auto [pvalue, error_0] = f0_dbPtr->get(key);   //key 在构造函数里
     if(error_0){
-        cout << "get DB center_information fail, no key" <<endl;
+        cout << "get DB center_information fail, no key" << endl;
+        cout << "waiting, create key success" <<endl;
         first_access_flag = 1; //首次添加
     }
 // */

@@ -114,7 +114,7 @@ namespace hvs{
         string m_value = p_usermodel->getLocalAccountinfo(ownerID, tmpm.hostCenterName); 
         if (m_value.compare("fail") == 0){
             cout << "getLocalAccountinfo fail" << endl;
-            return "-1";
+            return "-4";
         }
         LocalAccountPair owner_localpair;
         owner_localpair.deserialize(m_value);

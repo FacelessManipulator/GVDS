@@ -731,6 +731,8 @@ namespace hvs{
           std::vector<std::string> wrongspace;
           wrongspace.emplace_back(spaceID);
           tmp_server->SpaceDelete(wrongspace);
+          tmp.spaceID.pop_back();
+          dbPtr->set(tmp.zoneID, tmp.serialize());
           return errno = EAGAIN;
         }
       }
@@ -992,6 +994,8 @@ namespace hvs{
           std::vector<std::string> wrongspace;
           wrongspace.emplace_back(spaceID);
           tmp_server->SpaceDelete(wrongspace);
+          tmp.spaceID.pop_back();
+          zonePtr->set(tmp_key, tmp.serialize());
           return errno = EAGAIN;
         }
       }

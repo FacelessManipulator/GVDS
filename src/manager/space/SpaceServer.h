@@ -51,7 +51,11 @@ public:
     void SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceRename(std::string spaceID, std::string newSpaceName);
 
-    //空间缩放模块：空间缩放接口
+    //空间缩放模块：空间缩放申请接口
+    void SpaceSizeChangeApplyRest(const Rest::Request& request, Http::ResponseWriter response);
+    int SpaceSizeChangeApply(std::string apply); 
+
+    //空间缩放模块：空间缩放接口--管理员调用
     void SpaceSizeChangeRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceSizeChange(std::string spaceID, int64_t newSpaceSize);
     int SpaceSizeAdd(std::string StorageID, int64_t newSpaceSize);
@@ -71,6 +75,7 @@ public:
         storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
         bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
         localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
+        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
     };
     ~SpaceServer() = default;
 
@@ -80,6 +85,7 @@ private:
     std::string spacebucket;
     std::string bucket_account_info;
     std::string localstoragepath; // 本机存储集群路径
+    std::string  applybucket;
 };
 
 //std::string md5(std::string strPlain);

@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
         }
-        if (sp_variables_map->count("oldname"))
+        if (sp_variables_map->count("spacename"))
         {
             spacenames = (*sp_variables_map)["spacename"].as<std::vector<std::string>>();
         }

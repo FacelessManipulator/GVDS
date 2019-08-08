@@ -518,8 +518,14 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     hvsperson.deserialize(*pvalue);
 
     //TODO判断区域是否注销完毕sy
-    bool is_district_cancel = true;
-    if(!is_district_cancel){
+    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\";";
+    int pos = query.find("ownerID");
+    query.erase(pos, 7);
+    query.insert(pos, uuid);
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
+    auto [vp, err] = zonePtr->n1ql(query);
+    if(vp->size() != 0){
         is_cancel_success = false;
         cout << "User cancellation fail, your Zone is not cancal success" << endl;
         return "-2";

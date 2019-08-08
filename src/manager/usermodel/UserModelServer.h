@@ -66,6 +66,7 @@ public:
 public:
     UserModelServer() : ManagerModule("user") {
         auto _config = HvsContext::get_context()->_config;
+        zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
         bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
         bucket_sc_account_info = _config->get<std::string>("bucket.sc_account_info").value_or("sc_account_info");
         c_key = "center_information";
@@ -91,14 +92,11 @@ private:
     bool existlocalaccount(std::string valid);
 
 private:
-    string supercomputing_A = "Beijing"; //"Beijing";     //TODO
-    string supercomputing_B = "Shanghai"; //"Shanghai";
-    string supercomputing_C = "Guangzhou";
-    string supercomputing_D = "Changsha";
-    string supercomputing_E = "Jinan";
+
 
     string bucket_account_info;
     string bucket_sc_account_info;
+    std::string  zonebucket;
     string c_key;
 
 };

@@ -12,13 +12,14 @@ void ClientFuse::start() {
   auto debug = _config->get<bool>("fuse.debug");
   auto multithread = _config->get<bool>("fuse.multithread");
   auto auto_unmount = _config->get<bool>("fuse.auto_unmount");
-  use_udt = _config->get<bool>("fuse.use_udt").value_or(true);
+  use_udt = _config->get<bool>("fuse.use_udt").value_or(false);
+  async_mode = _config->get<bool>("client.async").value_or(false);
   snprintf(workers_argv, 32, "max_idle_threads=%u", _config->get<unsigned int>("fuse.workers").value_or(10));
   memcpy(mountpoint, mp.value_or("/mnt/hvs").c_str(), mp.value_or("/mnt/hvs").size());
   char *options[] = {
       const_cast<char *>("hvs_client"), const_cast<char *>("-f"),
       const_cast<char *>("-d"),         const_cast<char *>("-s"),
-      const_cast<char *>("-o"),         const_cast<char *>("auto_unmount"),
+      const_cast<char *>("-o"),         const_cast<char *>("auto_unmount,max_read=524288"),
   };
   fuse_argv[fuse_argc] = options[0];
   fuse_argc++;

@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <vector>
 #include <limits.h>
+#include "common/buffer.h"
 
 namespace hvs {
     inline std::string hvsfs_fullpath(const std::string& path_rel) {
@@ -93,6 +94,20 @@ namespace hvs {
         op->offset = offset;
         op->ibuf = obuf.buf.ptr;
         op->fid = obuf.fid;
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
+        return op->error_code;
+    }
+
+    inline int iop_write(const hvs::Buffer obuf){
+        std::string fullpath = hvsfs_fullpath(obuf.path);
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 2;
+        op->operation = IOProxyDataOP::write;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->size = static_cast<size_t>(obuf.buf.size);
+        op->offset = obuf.offset;
+        op->ibuf = obuf.buf.ptr;
         static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         return op->error_code;
     }
@@ -319,6 +334,7 @@ namespace hvs {
         rpc_server->bind("ioproxy_stat", ioproxy_stat);
         rpc_server->bind("ioproxy_read", ioproxy_read);
         rpc_server->bind("ioproxy_write", ioproxy_write);
+        rpc_server->bind("iop_write", iop_write);
         rpc_server->bind("ioproxy_open", ioproxy_open);
         rpc_server->bind("ioproxy_close", ioproxy_close);
         rpc_server->bind("ioproxy_opendir", ioproxy_opendir);

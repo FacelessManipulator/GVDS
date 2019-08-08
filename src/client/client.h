@@ -24,6 +24,7 @@ class ClientFuse;
 class ClientZone;
 class SelectNode;
 class ClientUser;
+class ClientBufferQueue;
 
 class Client : public Thread, public Node, public JsonSerializer {
  public:
@@ -61,6 +62,7 @@ public:
   std::shared_ptr<ClientZone> zone;
   std::shared_ptr<SelectNode> optNode;
   std::shared_ptr<ClientUser> user;
+  std::shared_ptr<ClientBufferQueue> queue;
 };
 
 class ClientModule {

@@ -41,8 +41,8 @@ private:
       Args... args);
 
   template <typename... Args>
-  std::future<RPCLIB_MSGPACK::object_handle> async_call(
-      std::shared_ptr<IOProxyNode> node, std::string const& func_name,
+  bool async_call(
+      std::shared_ptr<IOProxyNode> node, std::string const& func_name, std::function<void()> f,
       Args... args);
 
   int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
@@ -76,4 +76,20 @@ std::shared_ptr<RPCLIB_MSGPACK::object_handle> ClientRpc::call(
     return std::make_shared<RPCLIB_MSGPACK::object_handle>(std::move(*res));
   }
 }
+
+template <typename... Args>
+bool ClientRpc::async_call(
+            std::shared_ptr<IOProxyNode> node, std::string const& func_name, std::function<void()> f,
+            Args... args) {
+      // TODO: We assume RpcClient can concurently call
+      auto rpcc = rpc_channel(node);
+      // the callback function could be used to trigger some event
+      bool res = rpcc->async_call(func_name, f, args...);
+      if (!res) {
+        // timeout? try reconnect
+        rpcc = rpc_channel(node, true);
+        res = rpcc->async_call(func_name, f, args...);
+      }
+      return res;
+    }
 }  // namespace hvs

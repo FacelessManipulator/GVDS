@@ -57,9 +57,12 @@ class RpcClient {
  public:
   RpcClient(const std::string address, const unsigned port);
   RpcClient() {};
-  template <typename... Args>
-  std::optional<RPCLIB_MSGPACK::object_handle> call(
-      std::string const& func_name, Args... args);
+    template <typename... Args>
+    std::optional<RPCLIB_MSGPACK::object_handle> call(
+            std::string const& func_name, Args... args);
+    template <typename... Args>
+    bool async_call(
+            std::string const& func_name, std::function<void()> f, Args... args);
   void shutdown() {}
 
  public:
@@ -90,6 +93,29 @@ std::optional<RPCLIB_MSGPACK::object_handle> RpcClient::call(
   dout(1) << "ERROR: rpc client get no response, max retries=" << _retry
           << dendl;
   return {};
+}
+
+template <typename... Args>
+bool RpcClient::async_call(
+    std::string const& func_name, std::function<void()> f, Args... args) {
+  int retry_times = 0;
+  do {
+    ++retry_times;
+    try {
+      _client->async_call_callback(func_name, f, args...);
+      return true;
+    } catch (rpc::timeout timeout) {
+      dout(10) << "WARING: rpc client timeout, try " << retry_times << " time."
+               << dendl;
+    } catch (rpc::rpc_error error) {
+      dout(-1) << "ERROR: rpc client call " << error.get_function_name()
+               << " error, reason: " << error.what() << dendl;
+      return false;
+    }
+  } while (retry_times < _retry);
+  dout(1) << "ERROR: rpc client get no response, max retries=" << _retry
+          << dendl;
+  return false;
 }
 
 }  // namespace hvs

@@ -95,3 +95,23 @@ void LocalAccountPair::deserialize_impl(){
     get("localaccount", localaccount);
     get("localpassword", localpassword);
 }
+
+
+//admin
+void struct_AdminList::serialize_impl(){
+    put("namelist", namelist);
+}
+
+void struct_AdminList::deserialize_impl(){
+    get("namelist", namelist);
+}
+
+void struct_apply_info::serialize_impl(){
+    put("id", id);
+    put("data", data);
+}
+
+void struct_apply_info::deserialize_impl(){
+    get("id", id);
+    get("data", data);
+}

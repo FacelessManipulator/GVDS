@@ -75,6 +75,7 @@ namespace hvs{
         std::string dosearchcenter(IPCreq &ipcreq);
         std::string dodeletecenter(IPCreq &ipcreq);
         
+        std::string doadminsignup(IPCreq &ipcreq);
     };
 }
 

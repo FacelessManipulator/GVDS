@@ -18,7 +18,10 @@ target_link_libraries(userexit hvscommon ${HVSCOMMOM_DEPENDS_ON})
 add_executable(usercancel usercancel_ipc.cc ../client/clientuser/ClientUser_struct.cc)
 target_link_libraries(usercancel hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
-install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel
+add_executable(adminsignup adminsignup.cc ../client/clientuser/ClientUser_struct.cc)
+target_link_libraries(adminsignup hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel adminsignup
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -41,7 +41,7 @@ public:
     std::string UserRegister(Account &person);
     
     void UserLoginRest(const Rest::Request& request, Http::ResponseWriter response);
-    bool UserLogin(std::string account, std::string pass, std::string &userID);
+    bool UserLogin(std::string account, std::string pass, std::string &userID, std::string &identity);
 
     void getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string getUserinfo(std::string uuid , bool &is_get_success);
@@ -63,13 +63,33 @@ public:
     void getMemberIDRest(const Rest::Request& request, Http::ResponseWriter response);
     bool getMemberID(std::vector<std::string> &memberName, std::vector<std::string> &memberID);
 
+//---------------------
+    //管理员
+    //管理员注册接口
+    void AdminUserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string AdminUserRegister(Account &person);
+
+    //用户注册接口
+    void bufferUserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
+    int bufferUserRegister(std::string apply);
+
+    //删除请求记录
+    void removeoneofApplyInfoRest(const Rest::Request& request, Http::ResponseWriter response);
+
+    //验证身份是否为管理员
+    bool validadminidentity(std::string hvsID);
+
+    //管理员查看 apply_info 数据库中内容
+    
 public:
     UserModelServer() : ManagerModule("user") {
         auto _config = HvsContext::get_context()->_config;
         zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
         bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
         bucket_sc_account_info = _config->get<std::string>("bucket.sc_account_info").value_or("sc_account_info");
+        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
         c_key = "center_information";
+        adminlist = "adminwhitelist";
     };
     ~UserModelServer() {};
 
@@ -93,11 +113,12 @@ private:
 
 private:
 
-
-    string bucket_account_info;
-    string bucket_sc_account_info;
-    std::string  zonebucket;
-    string c_key;
+    std::string bucket_account_info;
+    std::string bucket_sc_account_info;
+    std::string zonebucket;
+    std::string applybucket;
+    std::string c_key;
+    std::string adminlist;
 
 };
 

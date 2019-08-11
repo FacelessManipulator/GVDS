@@ -120,6 +120,11 @@ void ClientIPC::init() {
                 cout << "dodeletecenter here" <<endl;
                 return dodeletecenter(ipcreq);
             }
+            //admin
+            if(ipcreq.cmdname == "adminsignup"){
+                cout << "doadminsignup here" <<endl;
+                return doadminsignup(ipcreq);
+            }
             
             
 
@@ -822,10 +827,16 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
                 }
                 client->user->setToken(mtoken);
                 client->user->setAccountName(myaccount.accountName);
-                client->user->setAccountID(body);
+
+                cout << "body: " << body << endl;
+                cout << "body.substr(2): " << body.substr(2) << endl;
+                cout << "body.substr(0,1): " << body.substr(0,1) << endl;
+
+                client->user->setAccountID(body.substr(2));
 
                 string hvsID = client->user->getAccountID();
                 client->optNode->getAuthFromServer(hvsID);
+                //client->zone->GetZoneInfo(hvsID);
                 // //【接口示例】                
                 // cout << "getToken(): " << client->user->getToken() << endl;
                 // cout << "getAccountName(): " << client->user->getAccountName() << endl;
@@ -903,7 +914,6 @@ std::string ClientIPC::dousersearch(IPCreq &ipcreq) {
 std::string ClientIPC::dousersignup(IPCreq &ipcreq){
     // TODO: 提前准备的数据
 
-        
     string username = ipcreq.accountName; //账户名
     string hvsID = ipcreq.hvsID; //在服务端产生
     string pass = ipcreq.Password;
@@ -918,14 +928,38 @@ std::string ClientIPC::dousersignup(IPCreq &ipcreq){
     std::cout << value << std::endl;
 
     string endpoint = client->get_manager();   
-    string routepath = "/users/registration";    ///users/search/用戶id
+    string routepath = "/users/bufferuserregister";    ///users/search/用戶id
 
     string res = client->rpc->post_request(endpoint, routepath, value);
 
     cout << "response: " << res <<endl;
     return res;
 }
+//管理员账户注册
+std::string ClientIPC::doadminsignup(IPCreq &ipcreq){
+    // TODO: 提前准备的数据
 
+    string username = ipcreq.accountName; //账户名
+    string hvsID = ipcreq.hvsID; //在服务端产生
+    string pass = ipcreq.Password;
+    string email = ipcreq.email;
+    string phone = ipcreq.phone;
+    string ad = ipcreq.address;
+    string de = ipcreq.department;
+
+    //账户注册
+    Account person(username, pass, hvsID, email, phone, ad,  de);   //以后在服务端产生uuid，客户端这块传值不影响
+    std::string value = person.serialize();
+    std::cout << value << std::endl;
+
+    string endpoint = client->get_manager();   
+    string routepath = "/users/adminregistration";    
+
+    string res = client->rpc->post_request(endpoint, routepath, value);
+
+    cout << "response: " << res <<endl;
+    return res;
+}
 
 std::string ClientIPC::dousermodify(IPCreq &ipcreq){
  // TODO: 提前准备的数据

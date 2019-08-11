@@ -107,7 +107,13 @@ int main(int argc, char* argv[]){
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             std::string ipcresult (msg.body(), msg.body_length());
-            cout << ipcresult << endl;
+            if(ipcresult == "0"){
+                std::cout << "请求成功" << std::endl;
+            }
+            else{  //"11"
+                std::cout << "请求失败，请再尝试" << std::endl;
+            }
+            
             prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数

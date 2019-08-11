@@ -149,6 +149,14 @@ namespace hvs{
         return new_space.spaceID;
     }
 
+    struct greaters
+    {
+        bool operator()(const int _Left, const int _Right) const
+        {
+            return (_Left > _Right);
+        }
+    };
+
     std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string& hostCenterName, std::string& storageSrcName) {
         std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(storagebucket, hvs::DatastoreType::couchbase);
         auto storagePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
@@ -169,17 +177,28 @@ namespace hvs{
             query.erase(pos2, 6);
             query.insert(pos2, storageSrcName);
         }
-        // TODO: 默认使用第一个作为查找到的结果
         auto [vp, err] = storagePtr->n1ql(query);
         if(vp->size() == 0){
             dout(10) << "GetSpaceCreatePath: 未查找到制定的存储ID，根据空间名和数据中心的名字！" << dendl;
             return {"", ""};
         }
-        std::vector<std::string>::iterator it = vp->begin();
-        std::string n1ql_result = *it;
-        std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
+
+        // 2019年08月11日 默认存储集群选择策略为：从查找到的所有 存储集群中选择剩余空间最多的集群，进行获取其 id 和 host_center_id
+        map<int, string, greaters> ma;
+
+        for(auto its = vp->begin(); its != vp->end(); ++its) {
+            std::string n1ql_result = *its;
+            std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
+            StorageResource storage;
+            storage.deserialize(tmp_value);
+            ma[storage.total_capacity-storage.assign_capacity] = tmp_value;
+        }
+        auto ite = ma.begin();
+//        std::vector<std::string>::iterator it = vp->begin();
+//        std::string n1ql_result = *it;
+//        std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
         StorageResource storage;
-        storage.deserialize(tmp_value);
+        storage.deserialize(ite->second); // 使用剩余存储空间最多的集群进行作为默认集群；
         hostCenterName = storage.host_center_name;
         storageSrcName = storage.storage_src_name;
         // dout(10) << "SpaceCreatePath: " << tmp_value << dendl;

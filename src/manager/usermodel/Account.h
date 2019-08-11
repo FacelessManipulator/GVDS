@@ -141,15 +141,15 @@ public:
     struct_AdminList() = default;
 };
 
-//apply_info  数据库中结构
-class struct_apply_info : public hvs::JsonSerializer{
-public:
-    std::string id;
-    std::string data;
-public:
-    void serialize_impl() override;
-    void deserialize_impl() override;
-public:
-    struct_apply_info() = default;
-};
+// //apply_info  数据库中结构
+// class struct_apply_info : public hvs::JsonSerializer{
+// public:
+//     std::string id;
+//     std::string data;
+// public:
+//     void serialize_impl() override;
+//     void deserialize_impl() override;
+// public:
+//     struct_apply_info() = default;
+// };
 #endif

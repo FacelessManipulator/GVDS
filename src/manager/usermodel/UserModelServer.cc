@@ -20,6 +20,7 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 
 #include "manager/usermodel/UserModelServer.h"
 #include "manager/usermodel/MD5.h"
+#include "hvs_struct.h"
 
 
 using namespace std;

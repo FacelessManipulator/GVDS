@@ -301,4 +301,23 @@ struct ZoneRequest : public hvs::JsonSerializer {
   }
 };
 
+//apply_info  数据库中结构
+class struct_apply_info : public hvs::JsonSerializer{
+public:
+    std::string id;
+    std::string data;
+public:
+    void serialize_impl(){
+      put("id", id);
+      put("data", data);
+    } 
+    void deserialize_impl(){
+      get("id", id);
+      get("data", data);
+    }
+public:
+    struct_apply_info() = default;
+};
+
+
 }  // namespace hvs

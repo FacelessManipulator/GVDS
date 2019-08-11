@@ -12,7 +12,7 @@ ClientWorker* ClientBufferQueue::_get_idle_worker() {
   ClientWorker* ret;
   // cause io process is fast, use spin lock here
   while (!idle_list.pop(ret))
-    ;
+    usleep(10);
   idle_worker_num--;
   return ret;
 }
@@ -20,7 +20,7 @@ ClientWorker* ClientBufferQueue::_get_idle_worker() {
 bool ClientBufferQueue::add_idle_worker(ClientWorker* wocker) {
   // should not wait, idle list max capcity > max number of idle worker
   while (!idle_list.push(wocker))
-    ;
+    usleep(10);
   idle_worker_num++;
   return true;
 };
@@ -31,13 +31,13 @@ bool ClientBufferQueue::queue_buffer(std::shared_ptr<Buffer> buf, bool block) {
   m_queue_mutex_holder = pthread_self();
 
   // see if we can merge
-      {
-        auto& last_buf = buf_waiting_line.front();
+      if (!buf_waiting_line.empty()){
+        auto& last_buf = buf_waiting_line.back();
         // if buf satisfies the following conditions, then do merge
         // 1. the same path with last queued buf
         // 2. consequent
         // 3. the merged size is smaller than 1MB
-        if(last_buf.get() && last_buf->path == buf->path && last_buf->buf.size + buf->buf.size < MAX_MERGE_SIZE &&
+        if(last_buf && last_buf->path == buf->path && last_buf->buf.size + buf->buf.size < MAX_MERGE_SIZE &&
            last_buf->offset+last_buf->buf.size == buf->offset) {
           // do merge
           last_buf->append(buf->buf);
@@ -49,7 +49,6 @@ bool ClientBufferQueue::queue_buffer(std::shared_ptr<Buffer> buf, bool block) {
         }
       }
   // wait for dispatch to catch up
-  if (buf_waiting_line.size() + buf_onlink > m_max_buf && !block) return false;
   while (buf_waiting_line.size() + buf_onlink > m_max_buf && block)
     pthread_cond_wait(&m_cond_ioproxy, &m_queue_mutex);
 

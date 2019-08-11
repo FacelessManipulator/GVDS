@@ -23,7 +23,9 @@ std::shared_ptr<RpcClient> ClientRpc::rpc_channel(
   if (rpcc != rpc_clients.end()) {
     auto& rpc_client = rpcc->second;
     if(reconnect) {
-      rpc_clients[node->uuid].reset(new RpcClient(node->ip, node->rpc_port));
+      dout(-1) << "create new rpc client" << dendl;
+      auto newClient = make_shared<RpcClient>(node->ip, node->rpc_port);
+      rpc_clients[node->uuid].swap(newClient);
     }
     return rpc_client;
   }

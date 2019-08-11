@@ -62,7 +62,7 @@ class ClientBufferQueue : public ClientModule, Thread {
   std::vector<boost::thread*> worker_threads;
   std::vector<std::shared_ptr<Client_scheduler>> schedulers;
   boost::lockfree::spsc_queue<ClientWorker* ,
-                              boost::lockfree::capacity<1024>>
+                              boost::lockfree::capacity<10000>>
       idle_list;
   std::queue<std::shared_ptr<Buffer>> buf_waiting_line;
   int m_max_buf;  // the max number of op in ioproxy

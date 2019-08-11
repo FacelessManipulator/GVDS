@@ -33,6 +33,7 @@ RpcClient::RpcClient(const std::string address, const unsigned port)
     dout(-1) << "ERROR: invaild rpc retry times." << dendl;
   }
   _client = std::make_unique<rpc::client>(address, port);
-  _client->set_timeout(*timeout);
+  // TODO: avoid timeout
+//  _client->set_timeout(*timeout);
   _retry = static_cast<unsigned int>(*retry);
 }

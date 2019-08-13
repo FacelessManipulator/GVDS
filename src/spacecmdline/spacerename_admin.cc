@@ -34,6 +34,7 @@ int main(int argc, char* argv[]){
     std::string zonename ;//= "syremotezone"; // 空间名称
     std::string spacename;// = "NewWorld";
     std::string newspacename;// = "BUAABUAA";
+    std::string ownername;
 
 
     // TODO: 获取命令行信息
@@ -45,6 +46,7 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("空间重命名模块");
         command.add_options()
+                ("ownername,w", po::value<std::string>(), "主人账户名")        
                 ("zonename,z", po::value<std::string>(), "区域名称")
                 ("oldname,o", po::value<std::string>(), "空间旧名称")
                 ("newname,n", po::value<std::string>(), "空间新名称")
@@ -53,6 +55,10 @@ int main(int argc, char* argv[]){
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
+        if (sp_variables_map->count("ownername"))
+        {
+            ownername = (*sp_variables_map)["ownername"].as<std::string>();
+        }
         if (sp_variables_map->count("zonename"))
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
@@ -98,7 +104,8 @@ int main(int argc, char* argv[]){
 
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "spacerename";
+        ipcreq.cmdname = "spacerename_admin";
+        ipcreq.ownName = ownername;
         ipcreq.zonename = zonename; // 空间名称
         ipcreq.spacename = spacename; // "NewWorld";
         ipcreq.newspacename = newspacename; // "BUAABUAA";

@@ -433,15 +433,15 @@ namespace hvs{
     }
 
 
-    void SpaceServer::SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response){
-        dout(10) << "====== start SpaceServer function: SpaceUsageRest ======"<< dendl;
+    void SpaceServer::SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response){
+        dout(10) << "====== start SpaceServer function: SpaceUsageCheckRest ======"<< dendl;
         auto info = request.body();
 
         SpaceRequest req;
         req.deserialize(info);
         std::vector<std::string> spaceID = req.spaceIDs;
 
-        std::vector<int64_t> result_i = SpaceUsage(spaceID);
+        std::vector<int64_t> result_i = SpaceUsageCheck(spaceID);
         std::string result;
         if (!result_i.empty()){
             result = json_encode(result_i);
@@ -451,10 +451,10 @@ namespace hvs{
         }
 
         response.send(Http::Code::Ok, result); //point
-        dout(10) << "====== end SpaceServer function: SpaceUsageRest ======"<< dendl;
+        dout(10) << "====== end SpaceServer function: SpaceUsageCheckRest ======"<< dendl;
     }
 
-    std::vector<int64_t> SpaceServer::SpaceUsage(std::vector<std::string> spaceID){
+    std::vector<int64_t> SpaceServer::SpaceUsageCheck(std::vector<std::string> spaceID){
         std::vector<int64_t> res;
         string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
         dout(10) <<"localstoragepath: " << localstoragepath <<dendl;
@@ -491,7 +491,7 @@ namespace hvs{
             //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
             if(ManagerID == spacemeta.hostCenterID){ //本地
                 //调本地
-                int64_t spaceuse = SpaceUsageCheck(spacepath);
+                int64_t spaceuse = SpaceUsage(spacepath);
                 res.push_back(spaceuse);
             }
             else{ //远端
@@ -499,7 +499,7 @@ namespace hvs{
                 string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
                 string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
                 
-                snprintf(url, 256, "http://%s:%s/space/spaceusagecheck", tmp_ip.c_str() ,tmp_port.c_str());
+                snprintf(url, 256, "http://%s:%s/space/spaceusage", tmp_ip.c_str() ,tmp_port.c_str());
 
                 auto response = client.post(url).body(spacepath).send();
                 dout(-1) << "Client Info: post request " << url << dendl;
@@ -531,17 +531,17 @@ namespace hvs{
         return res;
     }
 
-    void SpaceServer::SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response){
-        dout(10) << "====== start SpaceServer function: SpaceUsageCheckRest ======"<< dendl;
+    void SpaceServer::SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response){
+        dout(10) << "====== start SpaceServer function: SpaceUsageRest ======"<< dendl;
         std::string spacepath = request.body();
 
-        int64_t result_i = SpaceUsageCheck(spacepath);
+        int64_t result_i = SpaceUsage(spacepath);
         std::string result = json_encode(result_i);
         response.send(Http::Code::Ok, result); //point
-        dout(10) << "====== end SpaceServer function: SpaceUsageCheckRest ======"<< dendl;
+        dout(10) << "====== end SpaceServer function: SpaceUsageRest ======"<< dendl;
     }
 
-    int64_t SpaceServer::SpaceUsageCheck(std::string spacepath){
+    int64_t SpaceServer::SpaceUsage(std::string spacepath){
         int cmdsize = 150; // 默认命令的总长度不超过150个字符
         int bufsize = 200;
         char cmd[cmdsize];

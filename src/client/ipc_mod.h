@@ -38,17 +38,25 @@ namespace hvs{
     private:
         // TODO: 客户端具体处理函数
         std::string dospacerename(IPCreq &ipcreq); // 处理客户端函数
+        std::string dospacerename_admin(IPCreq &ipcreq);
         std::string dospacesizechange(IPCreq &ipcreq);
         std::string dospaceusage(IPCreq &ipcreq);
+        std::string dospaceusage_admin(IPCreq &ipcreq);
         std::string domapadd(IPCreq &ipcreq);
         std::string domapdeduct(IPCreq &ipcreq);
-        std::string dozoneadd(IPCreq &ipcreq);
+        std::string domapdeduct_admin(IPCreq &ipcreq);
+        std::string dozoneadd_admin(IPCreq &ipcreq);
         std::string dozonecancel(IPCreq &ipcreq);
+        std::string dozonecancel_admin(IPCreq &ipcreq);
         std::string dozoneregister(IPCreq &ipcreq);
         std::string dozonerename(IPCreq &ipcreq);
+        std::string dozonerename_admin(IPCreq &ipcreq);
         std::string dozoneshare(IPCreq &ipcreq);
+        std::string dozoneshare_admin(IPCreq &ipcreq);
         std::string dozonesharecancel(IPCreq &ipcreq);
+        std::string dozonesharecancel_admin(IPCreq &ipcreq);
         std::string dozonelist(IPCreq &ipcreq);
+        std::string dozonelist_admin(IPCreq &ipcreq);
         bool GetZoneInfo(std::string clientID);
 
 

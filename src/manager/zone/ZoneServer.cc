@@ -1080,8 +1080,12 @@ namespace hvs{
     std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
     boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
     const std::string uuid = boost::uuids::to_string(a_uuid);
-    std::string key = "Zreg-" + uuid;
-    int flag = applyPtr->set(key, apply);
+    std::string key = "zregi-" + uuid;
+    struct_apply_info applyinfo;
+    applyinfo.id = key;
+    applyinfo.data = apply;
+    std::string value = applyinfo.serialize();
+    int flag = applyPtr->set(key, value);
     if(flag != 0)
     {
       return errno = EAGAIN;
@@ -1104,8 +1108,12 @@ namespace hvs{
     std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
     boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
     const std::string uuid = boost::uuids::to_string(a_uuid);
-    std::string key = "SPadd-" + uuid;
-    int flag = applyPtr->set(key, apply);
+    std::string key = "spadd-" + uuid;
+    struct_apply_info applyinfo;
+    applyinfo.id = key;
+    applyinfo.data = apply;
+    std::string value = applyinfo.serialize();
+    int flag = applyPtr->set(key, value);
     if(flag != 0)
     {
       return errno = EAGAIN;

@@ -46,10 +46,10 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("映射增加模块");
         command.add_options()
-                ("zonename", po::value<std::string>(), "区域名称")
-                ("spacename", po::value<std::string>(), "空间名称")
-                ("spacesize", po::value<int64_t>(), "空间大小")
-                ("center", po::value<std::string>(), "超算名称")
+                ("zonename,z", po::value<std::string>(), "区域名称")
+                ("spacename,s", po::value<std::string>(), "空间名称")
+                ("size", po::value<int64_t>(), "空间大小")
+                ("center,c", po::value<std::string>(), "超算名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -63,9 +63,9 @@ int main(int argc, char* argv[]){
         {
             spacename = (*sp_variables_map)["spacename"].as<std::string>();
         }
-        if (sp_variables_map->count("spacesize"))
+        if (sp_variables_map->count("size"))
         {
-            spacesize = (*sp_variables_map)["spacesize"].as<int64_t>();
+            spacesize = (*sp_variables_map)["size"].as<int64_t>();
         }
         if (sp_variables_map->count("center"))
         {

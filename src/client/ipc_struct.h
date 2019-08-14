@@ -45,8 +45,8 @@ namespace hvs{
         std::string zonename; // 空间名称
         std::string newzonename;
         //std::string zoneuuid;
-        std::string ownID; // 用户ID
-        std::vector<std::string> memID;
+        std::string ownName; // 用户
+        //std::vector<std::string> memID;
         std::vector<std::string> memName;
         std::string newspacename; // "BUAABUAA";
         //std::string spaceuuid;
@@ -90,8 +90,8 @@ namespace hvs{
             put("zonename", zonename);
             put("newzonename", newzonename);
             //put("zoneuuid", zoneuuid);
-            put("ownID", ownID);
-            put("memID", memID);
+            put("ownName", ownName);
+            //put("memID", memID);
             put("memName", memName);
             put("newspacename", newspacename);
             //put("spaceuuid", spaceuuid);
@@ -134,8 +134,8 @@ namespace hvs{
             get("zonename", zonename);
             get("newzonename", newzonename);
             //get("zoneuuid", zoneuuid);
-            get("ownID", ownID);
-            get("memID", memID);
+            get("ownName", ownName);
+            //get("memID", memID);
             get("memName", memName);
             get("newspacename", newspacename);
             //get("spaceuuid", spaceuuid);

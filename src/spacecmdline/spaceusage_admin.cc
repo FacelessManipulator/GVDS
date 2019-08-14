@@ -32,8 +32,8 @@ int main(int argc, char* argv[]){
     // TODO: 提前准备的数据
 
     std::string zonename ;//= "syremotezone"; // 空间名称
-    std::string spacename;// = "NewWorld";
-    std::string newspacename;// = "BUAABUAA";
+    std::vector<std::string> spacenames;// = "NewWorld";
+    std::string ownername;
 
 
     // TODO: 获取命令行信息
@@ -43,27 +43,27 @@ int main(int argc, char* argv[]){
 //    std::string cmdname = demo1[0]; // TODO 命令名字
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("空间重命名模块");
+        po::options_description command("空间已用容量查询模块");
         command.add_options()
+                ("ownername,w", po::value<std::string>(), "主人账户名") 
                 ("zonename,z", po::value<std::string>(), "区域名称")
-                ("oldname,o", po::value<std::string>(), "空间旧名称")
-                ("newname,n", po::value<std::string>(), "空间新名称")
+                ("spacename,s", po::value<std::vector<std::string>>(), "空间名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
+        if (sp_variables_map->count("ownername"))
+        {
+            ownername = (*sp_variables_map)["ownername"].as<std::string>();
+        }
         if (sp_variables_map->count("zonename"))
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
         }
-        if (sp_variables_map->count("oldname"))
+        if (sp_variables_map->count("spacename"))
         {
-            spacename = (*sp_variables_map)["oldname"].as<std::string>();
-        }
-        if (sp_variables_map->count("newname"))
-        {
-            newspacename = (*sp_variables_map)["newname"].as<std::string>();
+            spacenames = (*sp_variables_map)["spacename"].as<std::vector<std::string>>();
         }
     };
     commandline.start(); //开始解析命令行参数
@@ -85,11 +85,16 @@ int main(int argc, char* argv[]){
 //            char tmp[IPCMessage::max_body_length] = {0};
 //            std::memcpy(tmp, msg.body(), msg.body_length());
             std::string ipcresult (msg.body(), msg.body_length());
-            if (ipcresult != "success"){
+            if (ipcresult == "fail"){
                 //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
-                std::cerr << ipcresult << std::endl; // 执行结果
+                std::cerr << "查询失败" << std::endl; // 执行结果
             } else {
-                std::cout << ipcresult << std::endl;
+                std::vector<int64_t> result;
+                json_decode(ipcresult, result);
+                for(int i = 0; i < spacenames.size(); i++)
+                {
+                    std::cout << "空间名称：" << spacenames[i] << "空间已用容量：" << result[i] <<std::endl;
+                }
             }
             prom.set_value(true);
         });
@@ -98,10 +103,10 @@ int main(int argc, char* argv[]){
 
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "spacerename";
+        ipcreq.cmdname = "spaceusage_admin";
+        ipcreq.ownName = ownername;
         ipcreq.zonename = zonename; // 空间名称
-        ipcreq.spacename = spacename; // "NewWorld";
-        ipcreq.newspacename = newspacename; // "BUAABUAA";
+        ipcreq.spacenames = spacenames; // "NewWorld";
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());

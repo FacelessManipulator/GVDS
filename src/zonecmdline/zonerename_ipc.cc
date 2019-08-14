@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("区域重命名模块");
         command.add_options()
-                ("zonename", po::value<std::string>(), "区域名称")
+                ("zonename,z", po::value<std::string>(), "区域名称")
                 ("newname,n", po::value<std::string>(), "区域新名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述

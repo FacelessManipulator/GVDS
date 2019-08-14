@@ -62,10 +62,10 @@ public:
     int SpaceSizeDeduct(std::string StorageID, int64_t newSpaceSize);
 
     //空间容量查询
-    void SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::vector<int64_t> SpaceUsage(std::vector<std::string> spaceID); 
     void SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response);
-    int64_t SpaceUsageCheck(std::string spacepath); 
+    std::vector<int64_t> SpaceUsageCheck(std::vector<std::string> spaceID); 
+    void SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response);
+    int64_t SpaceUsage(std::string spacepath); 
     string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("manager.id"));  //TODO标识所述超算，此超算是北京
  //--------------------------------------------
 public:

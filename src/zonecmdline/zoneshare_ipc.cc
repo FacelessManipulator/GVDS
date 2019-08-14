@@ -41,8 +41,8 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("区域共享模块");
         command.add_options()
-                ("zonename", po::value<std::string>(), "区域名称")
-                ("member", po::value<std::vector<std::string>>(), "区域新成员")
+                ("zonename,z", po::value<std::string>(), "区域名称")
+                ("member,m", po::value<std::vector<std::string>>(), "区域新成员")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };

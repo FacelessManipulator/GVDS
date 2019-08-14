@@ -81,7 +81,7 @@ namespace hvs{
 
   //区域重命名
   void ZoneServer::ZoneRenameRest(const Rest::Request& request, Http::ResponseWriter response){
-      std::cout << "====== start ZoneServer function: ZoneRenameRest ======"<< std::endl;
+      dout(10) << "====== start ZoneServer function: ZoneRenameRest ======"<< dendl;
       auto info = request.body();
 
       ZoneRequest req;
@@ -90,12 +90,9 @@ namespace hvs{
       std::string ownerID = req.ownerID;
       std::string newZoneName = req.newZoneName;
 
-      std::cout << "info: " << info << std::endl;
-      std::cout << "newZoneName: " << newZoneName << std::endl;
-
       int result = ZoneRename(zoneID, ownerID, newZoneName);
       response.send(Http::Code::Ok, json_encode(result));
-      std::cout << "====== end ZoneServer function: ZoneRenameRest ======"<< std::endl;
+      dout(10) << "====== end ZoneServer function: ZoneRenameRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneRename(std::string zoneID, std::string ownerID, std::string newZoneName)
@@ -122,7 +119,7 @@ namespace hvs{
 
   //区域定位
   void ZoneServer::GetZoneLocateInfoRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: GetZoneLocateInfoRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: GetZoneLocateInfoRest ======"<< dendl;
     auto info = request.body();
 
     ZoneRequest req;
@@ -141,7 +138,7 @@ namespace hvs{
       result = "fail";
     }
     response.send(Http::Code::Ok, result);
-    std::cout << "====== end ZoneServer function: GetZoneLocateInfoRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: GetZoneLocateInfoRest ======"<< dendl;
   }
 
   bool ZoneServer::GetZoneLocateInfo(std::vector<Space> &result, std::string clientID, std::string zoneID, std::vector<std::string> spaceID)
@@ -333,14 +330,14 @@ namespace hvs{
 
   //区域共享
   void ZoneServer::ZoneShareRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneShareRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneShareRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
 
     int result = ZoneShare( req.zoneID,  req.ownerID,  req.memberID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneShareRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneShareRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneShare(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
@@ -382,14 +379,14 @@ namespace hvs{
   }
 
   void ZoneServer::ZoneShareCancelRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneShareCancelRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneShareCancelRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
 
     int result = ZoneShareCancel(req.zoneID, req.ownerID, req.memberID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneShareCancelRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneShareCancelRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
@@ -399,7 +396,7 @@ namespace hvs{
     zonePtr->init();
     auto [vp, err] = zonePtr->get(zoneID);
     if(err != 0){
-        std::cerr << "未找到对应的区域" << std::endl;
+        dout(10) << "未找到对应的区域" << dendl;
         return errno = ENOENT;
     }
     std::string tmp_value = *vp;
@@ -443,7 +440,7 @@ namespace hvs{
 
   //区域注册--管理员通过审批后调用
   void ZoneServer::ZoneRegisterCheckRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneRegisterCheckRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneRegisterCheckRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
@@ -462,7 +459,7 @@ namespace hvs{
         string c_key = "center_information";
         auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
         if (c_error){
-            cout << "authmodelserver: get center_information fail" << endl;
+            dout(10) << "authmodelserver: get center_information fail" << dendl;
             errno = EAGAIN;
             response.send(Http::Code::Ok, json_encode(errno));
             return;
@@ -487,7 +484,7 @@ namespace hvs{
         response2.then(
             [&](Http::Response resp) {
             //dout(-1) << "Manager Info: " << res.body() << dendl;
-            std::cout << "Response code = " << resp.code() << std::endl;
+            dout(10) << "Response code = " << resp.code() << dendl;
             auto body = resp.body();
             response.send(Http::Code::Ok, body);
             prom.set_value(true);
@@ -500,21 +497,21 @@ namespace hvs{
 
     }
     
-    std::cout << "====== end ZoneServer function: ZoneRegisterCheckRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneRegisterCheckRest ======"<< dendl;
   }
   //跨域调用的接口
   void ZoneServer::ZoneRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneRegisterRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneRegisterRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
     //std::string globalManageNodeInfo =req.globalManageNodeInfo;客户端判断
 
-    std::cout << "info: " << info << std::endl;
+    dout(10) << "info: " << info << dendl;
 
     int result = ZoneRegister(req.zoneName, req.ownerID, req.memberID, req.spaceName, req.spaceSize, req.spacePathInfo);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneRegisterRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneRegisterRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneRegister(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
@@ -548,7 +545,6 @@ namespace hvs{
       //2、TODO：调用权限模块
       SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端模块
       std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo), groupname);
-      std::cout << res_sc <<std::endl;
       if (res_sc == "-1")
       {
         return errno = ENOSPC;
@@ -572,7 +568,6 @@ namespace hvs{
         tmp.ownerID = ownerID;
         tmp.memberID = memberID;
         tmp.spaceID.emplace_back(spaceID);
-        std::cout << tmp.zoneName <<std::endl;
         tmp.contains_spaceinfo = false;
         if (tmp.zoneName == "") return errno = EAGAIN;
         int flag = dbPtr->set(tmp.zoneID, tmp.serialize());
@@ -591,7 +586,7 @@ namespace hvs{
             if(memadd == 0) return 0;
             else
             {
-              std::cerr << "ZoneRegister:添加成员失败！" << std::endl;
+              dout(10) << "ZoneRegister:添加成员失败！" << dendl;
               dbPtr->remove(tmp.zoneID);
               tmp_server->SpaceDelete(tmp.spaceID);
               return errno = EAGAIN;
@@ -600,7 +595,7 @@ namespace hvs{
         }
         else
         {
-          std::cerr << "ZoneRegister:添加初始权限失败！" << std::endl;
+          dout(10) << "ZoneRegister:添加初始权限失败！" << dendl;
           dbPtr->remove(tmp.zoneID);
           tmp_server->SpaceDelete(tmp.spaceID);
           return errno = EAGAIN;
@@ -611,7 +606,7 @@ namespace hvs{
 
   //管理员区域添加
   void ZoneServer::ZoneAddRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneAddRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneAddRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
@@ -620,7 +615,7 @@ namespace hvs{
     int result = ZoneAdd(req.zoneName, req.ownerID, req.memberID, req.spacePathInfo);
 
     response.send(Http::Code::Ok, json_encode(result)); //point
-    std::cout << "====== end ZoneServer function: ZoneAddRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneAddRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneAdd(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
@@ -679,7 +674,7 @@ namespace hvs{
               if(memadd == 0) return 0;
               else
               {
-                std::cerr << "ZoneAdd:添加成员失败！" << std::endl;
+                dout(10) << "ZoneAdd:添加成员失败！" << dendl;
                 dbPtr->remove(tmp.zoneID);
                 tmp_server->SpaceDelete(tmp.spaceID);
                 return errno = EAGAIN;
@@ -688,7 +683,7 @@ namespace hvs{
           }
           else
           {
-            std::cerr << "ZoneAdd:空间权限同步失败" << std::endl;
+            dout(10) << "ZoneAdd:空间权限同步失败" << dendl;
             dbPtr->remove(tmp.zoneID);
             tmp_server->SpaceDelete(tmp.spaceID);
             return errno = EAGAIN;
@@ -696,7 +691,7 @@ namespace hvs{
         }
         else
         {
-          std::cerr << "ZoneAdd:添加初始权限失败！" << std::endl;
+          dout(10) << "ZoneAdd:添加初始权限失败！" << dendl;
           dbPtr->remove(tmp.zoneID);
           tmp_server->SpaceDelete(tmp.spaceID);
           return errno = EAGAIN;
@@ -727,7 +722,7 @@ namespace hvs{
         if(spacesyne == 0) return 0;
         else
         {
-          std::cerr << "ZoneAdd:空间权限同步失败！" << std::endl;
+          dout(10) << "ZoneAdd:空间权限同步失败！" << dendl;
           std::vector<std::string> wrongspace;
           wrongspace.emplace_back(spaceID);
           tmp_server->SpaceDelete(wrongspace);
@@ -743,18 +738,15 @@ namespace hvs{
 
   //区域注销
   void ZoneServer::ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneCancelRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneCancelRest ======"<< dendl;
     auto info = request.body();
-    std::cout << info << std::endl;
+    dout(10) << info << dendl;
     ZoneRequest req;
     req.deserialize(info);
 
-   std::cout << "req.zoneID: " << req.zoneID << std::endl;
-   std::cout << "req.ownerID: " << req.ownerID << std::endl;
-
     int result = ZoneCancel(req.zoneID, req.ownerID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneCancelRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneCancelRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneCancel(std::string zoneID, std::string ownerID)
@@ -782,7 +774,7 @@ namespace hvs{
             if(spaceauthdel == 0) continue;
             else
             {
-              std::cerr << "空间权限删除失败！" << std::endl;
+              dout(10) << "空间权限删除失败！" << dendl;
               spaceauthfault = 1;
               break;
             }
@@ -819,14 +811,13 @@ namespace hvs{
               } 
               else
               {
-                std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+                dout(10) << "MapDeduct:空间权限删除失败！" << dendl;
                 spaceauthfault = 1;
                 break;
               }
             }
             if(spaceauthfault == 0)
             {
-              std::cout << "spaceauthfault" << spaceauthfault << std::endl;
               SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
               if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
               {
@@ -847,7 +838,7 @@ namespace hvs{
 
   //区域映射编辑--管理员通过审批后调用
   void ZoneServer::MapAddCheckRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: MapAddCheckRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: MapAddCheckRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
@@ -866,7 +857,7 @@ namespace hvs{
         string c_key = "center_information";
         auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
         if (c_error){
-            cout << "authmodelserver: get center_information fail" << endl;
+            dout(10) << "authmodelserver: get center_information fail" << dendl;
             errno = EAGAIN;
             response.send(Http::Code::Ok, json_encode(errno));
             return;
@@ -891,7 +882,7 @@ namespace hvs{
         response2.then(
             [&](Http::Response resp) {
             //dout(-1) << "Manager Info: " << res.body() << dendl;
-            std::cout << "Response code = " << resp.code() << std::endl;
+            dout(10) << "Response code = " << resp.code() << dendl;
             auto body = resp.body();
             response.send(Http::Code::Ok, body);
             prom.set_value(true);
@@ -904,20 +895,20 @@ namespace hvs{
 
     }
     
-    std::cout << "====== end ZoneServer function: MapAddCheckRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: MapAddCheckRest ======"<< dendl;
   }
   //跨域调用接口
   void ZoneServer::MapAddRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: MapAddRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: MapAddRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
     //std::string globalManageNodeInfo =req.globalManageNodeInfo;客户端判断
-     std::cout << "info: " << info << std::endl;
+     dout(10) << "info: " << info << dendl;
     int result = MapAdd(req.zoneID, req.ownerID, req.spaceName, req.spaceSize, req.spacePathInfo);
 
     response.send(Http::Code::Ok, json_encode(result)); //point
-    std::cout << "====== end ZoneServer function: MapAddRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: MapAddRest ======"<< dendl;
   }
 
   int ZoneServer::MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
@@ -939,7 +930,6 @@ namespace hvs{
     tmp_server->GetSpacePosition(tmps, tmp.spaceID);
     for(std::vector<Space>::iterator m = tmps.begin(); m != tmps.end(); m++)
     {
-      std::cout << (*m).hostCenterName << std::endl;
       if ((*m).hostCenterName == spaceurl.hostCenterName)
       {
         return errno = EINVAL;
@@ -990,7 +980,7 @@ namespace hvs{
         if(spacesyne == 0) return 0;
         else
         {
-          std::cerr << "MapAdd:空间权限同步失败！" << std::endl;
+          dout(10) << "MapAdd:空间权限同步失败！" << dendl;
           std::vector<std::string> wrongspace;
           wrongspace.emplace_back(spaceID);
           tmp_server->SpaceDelete(wrongspace);
@@ -1003,17 +993,16 @@ namespace hvs{
   }
 
   void ZoneServer::MapDeductRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: MapDeductRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: MapDeductRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
 
-    std::cout << "info: " << info << std::endl;
+    dout(10) << "info: " << info << dendl;
 
     int result = MapDeduct(req.zoneID, req.ownerID, req.spaceID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "result: " <<result << std::endl;
-    std::cout << "====== end ZoneServer function: MapDeductRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: MapDeductRest ======"<< dendl;
   }
 
   int ZoneServer::MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID)
@@ -1039,7 +1028,7 @@ namespace hvs{
           if(spaceauthdel == 0) continue;
           else
           {
-            std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+            dout(10) << "MapDeduct:空间权限删除失败！" << dendl;
             spaceauthfault = 1;
             break;
           }
@@ -1077,23 +1066,26 @@ namespace hvs{
   }
 
   void ZoneServer::ZoneRegisterApplyRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneRegisterApplyRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneRegisterApplyRest ======"<< dendl;
     auto info = request.body();
 
-    std::cout << "info: " << info << std::endl;
+    dout(10) << "info: " << info << dendl;
 
     int result = ZoneRegisterApply(info);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "result: " <<result << std::endl;
-    std::cout << "====== end ZoneServer function: ZoneRegisterApplyRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneRegisterApplyRest ======"<< dendl;
   }
   int ZoneServer::ZoneRegisterApply(std::string apply)
   {
     std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
     boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
     const std::string uuid = boost::uuids::to_string(a_uuid);
-    std::string key = "Zreg-" + uuid;
-    int flag = applyPtr->set(key, apply);
+    std::string key = "zregi-" + uuid;
+    struct_apply_info applyinfo;
+    applyinfo.id = key;
+    applyinfo.data = apply;
+    std::string value = applyinfo.serialize();
+    int flag = applyPtr->set(key, value);
     if(flag != 0)
     {
       return errno = EAGAIN;
@@ -1102,23 +1094,26 @@ namespace hvs{
   }
 
   void ZoneServer::MapAddApplyRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: MapAddApplyRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: MapAddApplyRest ======"<< dendl;
     auto info = request.body();
 
-    std::cout << "info: " << info << std::endl;
+    dout(10) << "info: " << info << dendl;
 
     int result = MapAddApply(info);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "result: " <<result << std::endl;
-    std::cout << "====== end ZoneServer function: MapAddApplyRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: MapAddApplyRest ======"<< dendl;
   }
   int ZoneServer::MapAddApply(std::string apply)
   {
     std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
     boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
     const std::string uuid = boost::uuids::to_string(a_uuid);
-    std::string key = "SPadd-" + uuid;
-    int flag = applyPtr->set(key, apply);
+    std::string key = "spadd-" + uuid;
+    struct_apply_info applyinfo;
+    applyinfo.id = key;
+    applyinfo.data = apply;
+    std::string value = applyinfo.serialize();
+    int flag = applyPtr->set(key, value);
     if(flag != 0)
     {
       return errno = EAGAIN;

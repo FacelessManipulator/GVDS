@@ -53,11 +53,17 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "spacerename"){
                 return dospacerename(ipcreq);
             }
+            if(ipcreq.cmdname == "spacerename_admin"){
+                return dospacerename_admin(ipcreq);
+            }
             if(ipcreq.cmdname == "spacesizechange"){
                 return dospacesizechange(ipcreq);
             }
             if(ipcreq.cmdname == "spaceusage"){
                 return dospaceusage(ipcreq);
+            }
+            if(ipcreq.cmdname == "spaceusage_admin"){
+                return dospaceusage_admin(ipcreq);
             }
             if(ipcreq.cmdname == "mapadd"){
                 return domapadd(ipcreq);
@@ -65,11 +71,17 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "mapdeduct"){
                 return domapdeduct(ipcreq);
             }
-            if(ipcreq.cmdname == "zoneadd"){
-                return dozoneadd(ipcreq);
+            if(ipcreq.cmdname == "mapdeduct_admin"){
+                return domapdeduct_admin(ipcreq);
+            }
+            if(ipcreq.cmdname == "zoneadd_admin"){
+                return dozoneadd_admin(ipcreq);
             }
             if(ipcreq.cmdname == "zonecancel"){
                 return dozonecancel(ipcreq);
+            }
+            if(ipcreq.cmdname == "zonecancel_admin"){
+                return dozonecancel_admin(ipcreq);
             }
             if(ipcreq.cmdname == "zoneregister"){
                 return dozoneregister(ipcreq);
@@ -77,14 +89,26 @@ void ClientIPC::init() {
             if(ipcreq.cmdname == "zonerename"){
                 return dozonerename(ipcreq);
             }
+            if(ipcreq.cmdname == "zonerename_admin"){
+                return dozonerename_admin(ipcreq);
+            }
             if(ipcreq.cmdname == "zoneshare"){
                 return dozoneshare(ipcreq);
+            }
+            if(ipcreq.cmdname == "zoneshare_admin"){
+                return dozoneshare_admin(ipcreq);
             }
             if(ipcreq.cmdname == "zonesharecancel"){
                 return dozonesharecancel(ipcreq);
             }
+            if(ipcreq.cmdname == "zonesharecancel_admin"){
+                return dozonesharecancel_admin(ipcreq);
+            }
             if(ipcreq.cmdname == "zonelist"){
                 return dozonelist(ipcreq);
+            }
+            if(ipcreq.cmdname == "zonelist_admin"){
+                return dozonelist_admin(ipcreq);
             }
             //auth
             if(ipcreq.cmdname == "userlogin"){
@@ -223,6 +247,7 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::string ownName = client->user->getAccountName();
     std::string spacename = ipcreq.spacename;
     std::string newspacename = ipcreq.newspacename;
@@ -261,10 +286,60 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
     return response;
 }
 
+std::string ClientIPC::dospacerename_admin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string zonename = ipcreq.zonename;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::string spacename = ipcreq.spacename;
+    std::string newspacename = ipcreq.newspacename;
+    std::string spaceuuid;
+
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ownID[0]);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        auto zoneinfo = mapping->second;
+        if(zoneinfo.ownerID != ownName[0]) return "权限不足";
+        for(auto it : zoneinfo.spaceBicInfo){
+            if (it->spaceName == spacename){
+                spaceuuid = it->spaceID;
+                break;
+            }
+        }
+        if(spaceuuid.empty()){
+            std::cerr << "空间名不存在，请确认空间名称正确！" << std::endl;
+            return "空间名不存在，请确认空间名称正确！";
+        }
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    SpaceRequest req;
+    req.spaceID = spaceuuid;
+    req.newSpaceName = newspacename;
+    string response = client->rpc->post_request(client->get_manager(), "/space/rename", req.serialize());
+    return response;
+}
+
 std::string ClientIPC::dospaceusage(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::vector<std::string> spacenames = ipcreq.spacenames;
     std::vector<std::string> spaceuuids;
 
@@ -302,7 +377,62 @@ std::string ClientIPC::dospaceusage(IPCreq &ipcreq) {
     SpaceRequest req;
     req.spaceIDs = spaceuuids;
 
-    string response = client->rpc->post_request(client->get_manager(), "/zone/mapdeduct", req.serialize());//TODO：修改按需选择管理节点
+    string response = client->rpc->post_request(client->get_manager(), "/space/spaceusagecheck", req.serialize());//TODO：修改按需选择管理节点
+    return response;
+    
+    // if (!result) return "success";
+    // else return std::strerror(result);
+}
+
+std::string ClientIPC::dospaceusage_admin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string zonename = ipcreq.zonename;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::vector<std::string> spacenames = ipcreq.spacenames;
+    std::vector<std::string> spaceuuids;
+
+
+    //获取区域信息
+    int ret = GetZoneInfo(ownID[0]);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        Zone zoneinfo = mapping->second;
+        for(const auto &m : spacenames){
+            bool found = false;
+            for(const auto it : zoneinfo.spaceBicInfo){
+                if (it->spaceName == m){
+                    spaceuuids.push_back(it->spaceID);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found){
+                std::cerr << "空间名" << m << "不存在，请确认空间名称正确！" << std::endl;
+                return "空间名"+m+"不存在，请确认空间名称正确！";
+            }
+        }
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    SpaceRequest req;
+    req.spaceIDs = spaceuuids;
+
+    string response = client->rpc->post_request(client->get_manager(), "/space/spaceusagecheck", req.serialize());//TODO：修改按需选择管理节点
     return response;
     
     // if (!result) return "success";
@@ -313,6 +443,7 @@ std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::string spacename = ipcreq.spacename;
     int newspacesize = ipcreq.newspacesize;
     std::string spaceuuid;
@@ -353,8 +484,8 @@ std::string ClientIPC::dospacesizechange(IPCreq &ipcreq) {
     CenterInfo mycenter;
     mycenter.deserialize(centerinfo);
     char url[256];
-    snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
-    string response = client->rpc->post_request(string(url), "/space/changesize", req.serialize());
+    //snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
+    string response = client->rpc->post_request(client->get_manager(), "/space/changesizeapply", req.serialize());
     int result;
     json_decode(response, result);
     if (!result) return "success";
@@ -398,32 +529,39 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq) {
         req.ownerID = ownID;
         req.spaceName = spacename;
         req.spaceSize = spacesize;
-        req.spacePathInfo = spaceurl;
         if (space.hostCenterName == "")
         {
-            string res;
             auto centers = client->optNode->getNode(1);
-            for(int i = 0; i < centers.size(); i++)
-            {
-                auto center = centers[i];
-                char url[256];
-                snprintf(url, 256, "http://%s:%s", center.ip_addr.c_str(), center.port.c_str());
-                space.hostCenterName = center.location;
-                req.spacePathInfo = space.serialize();
-                string response = client->rpc->post_request(string(url), "/zone/mapadd", req.serialize());
-                int result;
-                json_decode(response, result);
-                if (!result) 
-                {
-                    res = "success";
-                    break;
-                }
-                else
-                {
-                    res = std::strerror(result);
-                } 
-            }
-            return res;
+            auto center = centers[0];
+            space.hostCenterName = center.location;
+            space.hostCenterID = center.center_id;
+            req.spacePathInfo = space.serialize();
+            string response = client->rpc->post_request(client->get_manager(), "/zone/mapaddapply", req.serialize());
+            int result;
+            json_decode(response, result);
+            if (!result) return "success";
+            else return std::strerror(result); 
+            // for(int i = 0; i < centers.size(); i++)
+            // {
+            //     auto center = centers[i];
+            //     char url[256];
+            //     snprintf(url, 256, "http://%s:%s", center.ip_addr.c_str(), center.port.c_str());
+            //     space.hostCenterName = center.location;
+            //     req.spacePathInfo = space.serialize();
+            //     string response = client->rpc->post_request(string(url), "/zone/mapaddapply", req.serialize());
+            //     int result;
+            //     json_decode(response, result);
+            //     if (!result) 
+            //     {
+            //         res = "success";
+            //         break;
+            //     }
+            //     else
+            //     {
+            //         res = std::strerror(result);
+            //     } 
+            // }
+            // return res;
         }
         else
         {
@@ -433,9 +571,11 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq) {
             std::string centerid = client->optNode->getmapIdName(space.hostCenterName);
             if (centerid == "fail") return "no such center";
             else{
-                char url[256];
-                snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
-                string response = client->rpc->post_request(string(url), "/zone/mapadd", req.serialize());
+                // char url[256];
+                // snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
+                space.hostCenterID = centerid;
+                req.spacePathInfo = space.serialize();
+                string response = client->rpc->post_request(client->get_manager(), "/zone/mapaddapply", req.serialize());
                 int result;
                 json_decode(response, result);
                 if (!result) return "success";
@@ -450,6 +590,7 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
 
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::vector<std::string> spacenames = ipcreq.spacenames;
     std::vector<std::string> spaceuuids;
     std::string zoneuuid;
@@ -497,11 +638,84 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq) {
     else return std::strerror(result);
 }
 
-std::string ClientIPC::dozoneadd(IPCreq &ipcreq) {
+std::string ClientIPC::domapdeduct_admin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+
+    std::string zonename = ipcreq.zonename;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::vector<std::string> spacenames = ipcreq.spacenames;
+    std::vector<std::string> spaceuuids;
+    std::string zoneuuid;
+
+    //获取区域信息
+
+    int ret = GetZoneInfo(ownID[0]);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        Zone zoneinfo = mapping->second;
+        zoneuuid = zoneinfo.zoneID;
+        for(const auto &m : spacenames){
+            bool found = false;
+            for(const auto it : zoneinfo.spaceBicInfo){
+                if (it->spaceName == m){
+                    spaceuuids.push_back(it->spaceID);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found){
+                std::cerr << "空间名" << m << "不存在，请确认空间名称正确！" << std::endl;
+                return "空间名"+m+"不存在，请确认空间名称正确！";
+            }
+        }
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    ZoneRequest req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID[0];
+    req.spaceID = spaceuuids;
+
+    string response = client->rpc->post_request(client->get_manager(), "/zone/mapdeduct", req.serialize());//TODO：修改按需选择管理节点
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);
+}
+
+std::string ClientIPC::dozoneadd_admin(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
-    std::string ownID = ipcreq.ownID;
-    std::vector<std::string> memID = ipcreq.memID;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::vector<std::string> memID;
+    bool tm2 = client->user->getMemberID(ipcreq.memName, memID);
+    if(!tm2){
+        std::cerr << "未获得对应成员信息，请确认信息正确！" << std::endl;
+        return "未获得对应成员信息，请确认信息正确！";
+    }
     std::string spaceurl = ipcreq.spaceurl;
     Space space;
     space.deserialize(spaceurl);
@@ -511,7 +725,7 @@ std::string ClientIPC::dozoneadd(IPCreq &ipcreq) {
 
     ZoneRequest req;
     req.zoneName = zonename;
-    req.ownerID = ownID;
+    req.ownerID = ownID[0];
     req.memberID = memID;
     req.spacePathInfo = spaceurl;
 
@@ -527,9 +741,9 @@ std::string ClientIPC::dozoneadd(IPCreq &ipcreq) {
             std::string centerid = client->optNode->getmapIdName(space.hostCenterName);
             if (centerid == "fail") return "no such center";
             else{
-                char url[256];
-                snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
-                string response = client->rpc->post_request(string(url), "/zone/add", req.serialize());
+                // char url[256];
+                // snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
+                string response = client->rpc->post_request(client->get_manager(), "/zone/add", req.serialize());
                 int result;
                 json_decode(response, result);
                 if (!result) return "success";
@@ -544,6 +758,7 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::string zoneuuid;
 
     // TODO: 获取区域信息，并根据空间名获取空间UUID
@@ -564,6 +779,45 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq) {
     ZoneRequest req;
     req.zoneID = zoneuuid;
     req.ownerID = ownID;
+    string response = client->rpc->post_request(client->get_manager(), "/zone/cancel", req.serialize());//TODO：修改按需选择管理节点
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);
+}
+
+std::string ClientIPC::dozonecancel_admin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string zonename = ipcreq.zonename;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::string zoneuuid;
+
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ownID[0]);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        zoneuuid = mapping->second.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    ZoneRequest req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID[0];
     string response = client->rpc->post_request(client->get_manager(), "/zone/cancel", req.serialize());//TODO：修改按需选择管理节点
     int result;
     json_decode(response, result);
@@ -594,35 +848,43 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
     req.memberID = memID;
     req.spaceName = spacename;
     req.spaceSize = spacesize;
-    req.spacePathInfo = spaceurl;
+
 
 
     if (space.hostCenterName == "")
     {
-        string res;
         auto centers = client->optNode->getNode(1);
-        for(int i = 0; i < centers.size(); i++)
-        {
-            auto center = centers[i];
-            char url[256];
-            snprintf(url, 256, "http://%s:%s", center.ip_addr.c_str(), center.port.c_str());
-            space.hostCenterName = center.location;
-            req.spacePathInfo = space.serialize();
-            string response = client->rpc->post_request(string(url), "/zone/register", req.serialize());
-            int result;
-            json_decode(response, result);
-            cout << center.location << "  " << result << endl;
-            if (!result) 
-            {
-                res = "success";
-                break;
-            }
-            else
-            {
-                res = std::strerror(result);
-            } 
-        }
-        return res;
+        auto center = centers[0];
+        space.hostCenterName = center.location;
+        space.hostCenterID = center.center_id;
+        req.spacePathInfo = space.serialize();
+        string response = client->rpc->post_request(client->get_manager(), "/zone/registerapply", req.serialize());
+        int result;
+        json_decode(response, result);
+        if (!result) return "success";
+        else return std::strerror(result); 
+        // for(int i = 0; i < centers.size(); i++)
+        // {
+        //     auto center = centers[i];
+        //     char url[256];
+        //     snprintf(url, 256, "http://%s:%s", center.ip_addr.c_str(), center.port.c_str());
+        //     space.hostCenterName = center.location;
+        //     req.spacePathInfo = space.serialize();
+        //     string response = client->rpc->post_request(string(url), "/zone/registerapply", req.serialize());
+        //     int result;
+        //     json_decode(response, result);
+        //     cout << center.location << "  " << result << endl;
+        //     if (!result) 
+        //     {
+        //         res = "success";
+        //         break;
+        //     }
+        //     else
+        //     {
+        //         res = std::strerror(result);
+        //     } 
+        // }
+        // return res;
     }
     else
     {
@@ -632,13 +894,15 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
         std::string centerid = client->optNode->getmapIdName(space.hostCenterName);
         if (centerid == "fail") return "no such center";
         else{
-            char url[256];
-            snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
-            string response = client->rpc->post_request(string(url), "/zone/register", req.serialize());
+            // char url[256];
+            // snprintf(url, 256, "http://%s:%s", mycenter.centerIP[centerid].c_str(), mycenter.centerPort[centerid].c_str());
+            space.hostCenterID = centerid;
+            req.spacePathInfo = space.serialize();
+            string response = client->rpc->post_request(client->get_manager(), "/zone/registerapply", req.serialize());
             int result;
             json_decode(response, result);
             if (!result) return "success";
-            else return std::strerror(result);     
+            else return std::strerror(result);        
         }
     }
 }
@@ -647,6 +911,7 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::string newzonename = ipcreq.newzonename;
     std::string zoneuuid;
 
@@ -677,10 +942,53 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq) {
     else return std::strerror(result);    
 }
 
+std::string ClientIPC::dozonerename_admin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string zonename = ipcreq.zonename;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::string newzonename = ipcreq.newzonename;
+    std::string zoneuuid;
+
+        // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ownID[0]);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        zoneuuid = mapping->second.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+    // TODO: 构造间重命名请求
+
+    ZoneRequest req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID[0];
+    req.newZoneName = newzonename;
+    string response = client->rpc->post_request(client->get_manager(), "/zone/rename", req.serialize());
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);    
+}
+
 std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::vector<std::string> memID;
     bool tm = client->user->getMemberID(ipcreq.memName, memID);
     if(!tm){
@@ -715,10 +1023,57 @@ std::string ClientIPC::dozoneshare(IPCreq &ipcreq) {
     else return std::strerror(result);   
 }
 
+std::string ClientIPC::dozoneshare_admin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string zonename = ipcreq.zonename;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::vector<std::string> memID;
+    bool tm2 = client->user->getMemberID(ipcreq.memName, memID);
+    if(!tm2){
+        std::cerr << "未获得对应成员信息，请确认信息正确！" << std::endl;
+        return "未获得对应成员信息，请确认信息正确！";
+    }
+    std::string zoneuuid;
+
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ownID[0]);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        zoneuuid = mapping->second.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    ZoneRequest req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID[0];
+    req.memberID = memID;
+    string response = client->rpc->post_request(client->get_manager(), "/zone/share", req.serialize());
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);   
+}
+
 std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::vector<std::string> memID;
     bool tm = client->user->getMemberID(ipcreq.memName, memID);
     if(!tm){
@@ -753,10 +1108,72 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq) {
     else return std::strerror(result);   
 }
 
+std::string ClientIPC::dozonesharecancel_admin(IPCreq &ipcreq) {
+    // TODO: 提前准备的数据
+    std::string zonename = ipcreq.zonename;
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::vector<std::string> memID;
+    bool tm2 = client->user->getMemberID(ipcreq.memName, memID);
+    if(!tm2){
+        std::cerr << "未获得对应成员信息，请确认信息正确！" << std::endl;
+        return "未获得对应成员信息，请确认信息正确！";
+    }
+    std::string zoneuuid;
+
+    // TODO: 获取区域信息，并根据空间名获取空间UUID
+    int ret = GetZoneInfo(ownID[0]);
+    if(!ret){
+        std::cerr << "未获得对应区域信息，请确认账户信息正确！" << std::endl;
+        return "未获得对应区域信息，请确认账户信息正确！";
+    }
+
+    auto mapping = zonemap.find(zonename);
+    if(mapping !=  zonemap.end()) {
+        zoneuuid = mapping->second.zoneID;
+    } else{
+        std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
+        return "区域名不存在，请确认区域名称正确！";
+    }
+
+    ZoneRequest req;
+    req.zoneID = zoneuuid;
+    req.ownerID = ownID[0];
+    req.memberID = memID;
+    string response = client->rpc->post_request(client->get_manager(), "/zone/sharecancel", req.serialize());
+    int result;
+    json_decode(response, result);
+    if (!result) return "success";
+    else return std::strerror(result);   
+}
+
 std::string ClientIPC::dozonelist(IPCreq &ipcreq) {
     std::string ownID = client->user->getAccountID();
+    if(ownID == "") return "login first";
     std::string endpoint = client->get_manager();
     std::string inforesult = client->rpc->post_request(endpoint, "/zone/info", ownID);
+    return inforesult;
+}
+
+std::string ClientIPC::dozonelist_admin(IPCreq &ipcreq) {
+    if(ipcreq.ownName == "") return " no ownername";
+    std::vector<std::string> ownID;
+    std::vector<std::string> ownName;
+    ownName.push_back(ipcreq.ownName);
+    bool tm = client->user->getMemberID(ownName, ownID);
+    if(!tm){
+        std::cerr << "未获得对应主人信息，请确认信息正确！" << std::endl;
+        return "未获得对应主人信息，请确认信息正确！";
+    }
+    std::string endpoint = client->get_manager();
+    std::string inforesult = client->rpc->post_request(endpoint, "/zone/info", ownID[0]);
     return inforesult;
 }
 

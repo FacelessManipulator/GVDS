@@ -85,7 +85,7 @@ namespace hvs{
         // TODO: 空间位置选择接口
         auto [storid, hostid] = GetSpaceCreatePath(spaceSize, tmpm.hostCenterName, tmpm.storageSrcName);
         if(storid.empty() && hostid.empty()){
-            std::cerr << "SpaceCreate：存储资源选择失败！" << std::endl;
+            dout(10) << "SpaceCreate：存储资源选择失败！" << dendl;
             return "-3";
         }
         tmpm.storageSrcID = storid;// 资源聚合模块查找 TODO: 用户可能指定存储位置
@@ -103,10 +103,9 @@ namespace hvs{
         new_space.spaceID = tmp_uuid;
         std::string rootdir = localstoragepath + "/";
         rootdir += tmp_uuid; // TODO: 路径拼接，后期如果有子空间再修改；
-        std::cout << rootdir <<std::endl;
-        std::cout << tmp_uuid <<std::endl;
+        dout(10) << "rootdir" << rootdir <<dendl;
         int mkret = mkdir(rootdir.c_str(), 0770);
-        std::cout << mkret <<std::endl;
+
         if (mkret != 0 ) {
             perror("SpaceCreate");
             return "-2"; // 文件夹创建失败后，返回false字符串，用于之后的判断
@@ -114,7 +113,7 @@ namespace hvs{
         UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
         string m_value = p_usermodel->getLocalAccountinfo(ownerID, tmpm.hostCenterName); 
         if (m_value.compare("fail") == 0){
-            cout << "getLocalAccountinfo fail" << endl;
+            dout(10) << "getLocalAccountinfo fail" <<dendl;
             return "-4";
         }
         LocalAccountPair owner_localpair;
@@ -122,7 +121,7 @@ namespace hvs{
         //创建组
         std::string gp = groupname; 
         std::string group_cmd = "groupadd " + gp;
-        std::cout << group_cmd << std::endl;
+        dout(10) << group_cmd << dendl;
         system(group_cmd.c_str());
 
         //设置权限
@@ -150,6 +149,14 @@ namespace hvs{
         return new_space.spaceID;
     }
 
+    struct greaters
+    {
+        bool operator()(const int _Left, const int _Right) const
+        {
+            return (_Left > _Right);
+        }
+    };
+
     std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(int64_t spaceSize, std::string& hostCenterName, std::string& storageSrcName) {
         std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(storagebucket, hvs::DatastoreType::couchbase);
         auto storagePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
@@ -170,20 +177,31 @@ namespace hvs{
             query.erase(pos2, 6);
             query.insert(pos2, storageSrcName);
         }
-        // TODO: 默认使用第一个作为查找到的结果
         auto [vp, err] = storagePtr->n1ql(query);
         if(vp->size() == 0){
-            std::cerr << "GetSpaceCreatePath: 未查找到制定的存储ID，根据空间名和数据中心的名字！" << std::endl;
+            dout(10) << "GetSpaceCreatePath: 未查找到制定的存储ID，根据空间名和数据中心的名字！" << dendl;
             return {"", ""};
         }
-        std::vector<std::string>::iterator it = vp->begin();
-        std::string n1ql_result = *it;
-        std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
+
+        // 2019年08月11日 默认存储集群选择策略为：从查找到的所有 存储集群中选择剩余空间最多的集群，进行获取其 id 和 host_center_id
+        map<int, string, greaters> ma;
+
+        for(auto its = vp->begin(); its != vp->end(); ++its) {
+            std::string n1ql_result = *its;
+            std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
+            StorageResource storage;
+            storage.deserialize(tmp_value);
+            ma[storage.total_capacity-storage.assign_capacity] = tmp_value;
+        }
+        auto ite = ma.begin();
+//        std::vector<std::string>::iterator it = vp->begin();
+//        std::string n1ql_result = *it;
+//        std::string tmp_value = n1ql_result.substr(sizeof("{\"\":")+storagebucket.size()-1, n1ql_result.length()-(sizeof("{\"\":")+storagebucket.size())); // 处理返回的字符串问题
         StorageResource storage;
-        storage.deserialize(tmp_value);
+        storage.deserialize(ite->second); // 使用剩余存储空间最多的集群进行作为默认集群；
         hostCenterName = storage.host_center_name;
         storageSrcName = storage.storage_src_name;
-        // std::cerr << "SpaceCreatePath: " << tmp_value << std::endl;
+        // dout(10) << "SpaceCreatePath: " << tmp_value << dendl;
         // TODO: STOR- 这个标识后期需要修改，UUID格式要进行统一；
         return {"STOR-"+storage.storage_src_id, storage.host_center_id};
     }
@@ -196,7 +214,7 @@ namespace hvs{
         tmpm.deserialize(spacePathInfo);
         auto [storid, hostid] = GetSpaceCreatePath(0, tmpm.hostCenterName, tmpm.storageSrcName);
         if(storid.empty() && hostid.empty()){
-            std::cerr << "SpaceCheck：空间位置选择失败！" << std::endl;
+            dout(10) << "SpaceCheck：空间位置选择失败！" << dendl;
             return "false";
         }
         tmpm.hostCenterID = hostid; // 记录数据中心ID
@@ -220,7 +238,7 @@ namespace hvs{
             std::vector<std::string>::iterator it = vp->begin();
             std::string n1ql_result = *it;
             std::string tmp_value = n1ql_result.substr(14, n1ql_result.length() - 15);
-            std::cerr << "SpaceCheck: " << tmp_value << std::endl;
+            dout(10) << "SpaceCheck: " << tmp_value << dendl;
             tmps.deserialize(tmp_value);
             if (tmps.status) return "false";
             else {
@@ -245,10 +263,8 @@ namespace hvs{
             Space tmps;
             std::shared_ptr<hvs::Datastore> spacePtr =hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase);
             std::string tmps_key = *m;
-            std::cout << tmps_key << std::endl;
             auto[vs, err] = spacePtr->get(tmps_key);
             std::string tmps_value = *vs;
-            std::cout << tmps_value << std::endl;
             tmps.deserialize(tmps_value);
             tmps.status = false;
             tmps_value = tmps.serialize();
@@ -264,7 +280,7 @@ namespace hvs{
     }
 
     void SpaceServer::SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response){
-        std::cout << "====== start SpaceServer function: SpaceRenameRest ======"<< std::endl;
+        dout(10) << "====== start SpaceServer function: SpaceRenameRest ======"<< dendl;
         auto info = request.body();
 
         SpaceRequest req;
@@ -273,8 +289,7 @@ namespace hvs{
         std::string newSpaceName = req.newSpaceName;
 
 
-        std::cout << "info: " << info << std::endl;
-        std::cout <<req.newSpaceName << std::endl;
+        dout(10) << "info: " << info << dendl;
 
         int result_i = SpaceRename(spaceID, newSpaceName);
         std::string result;
@@ -283,7 +298,7 @@ namespace hvs{
         else result = "fail";
 
         response.send(Http::Code::Ok, result); //point
-        std::cout << "====== end SpaceServer function: SpaceRenameRest ======"<< std::endl;
+        dout(10) << "====== end SpaceServer function: SpaceRenameRest ======"<< dendl;
     }
 
     int SpaceServer::SpaceRename(std::string spaceID, std::string newSpaceName)
@@ -305,7 +320,7 @@ namespace hvs{
             std::string oldpath = localstoragepath+oldSpaceName;
             std::string newpath = localstoragepath+newSpaceName;
             if(oldpath == newpath){
-                std::cerr << "空间前后名称相同:" << oldpath << " -> " << newpath << std::endl;
+                dout(10) << "空间前后名称相同:" << oldpath << " -> " << newpath << dendl;
                 return 0;
             }
             //TODO: 修改目录名称，目前直接修改数据库表
@@ -418,15 +433,15 @@ namespace hvs{
     }
 
 
-    void SpaceServer::SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response){
-        std::cout << "====== start SpaceServer function: SpaceUsageRest ======"<< std::endl;
+    void SpaceServer::SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response){
+        dout(10) << "====== start SpaceServer function: SpaceUsageCheckRest ======"<< dendl;
         auto info = request.body();
 
         SpaceRequest req;
         req.deserialize(info);
         std::vector<std::string> spaceID = req.spaceIDs;
 
-        std::vector<int64_t> result_i = SpaceUsage(spaceID);
+        std::vector<int64_t> result_i = SpaceUsageCheck(spaceID);
         std::string result;
         if (!result_i.empty()){
             result = json_encode(result_i);
@@ -436,13 +451,13 @@ namespace hvs{
         }
 
         response.send(Http::Code::Ok, result); //point
-        std::cout << "====== end SpaceServer function: SpaceUsageRest ======"<< std::endl;
+        dout(10) << "====== end SpaceServer function: SpaceUsageCheckRest ======"<< dendl;
     }
 
-    std::vector<int64_t> SpaceServer::SpaceUsage(std::vector<std::string> spaceID){
+    std::vector<int64_t> SpaceServer::SpaceUsageCheck(std::vector<std::string> spaceID){
         std::vector<int64_t> res;
         string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
-        cout <<"localstoragepath: " << localstoragepath << endl;
+        dout(10) <<"localstoragepath: " << localstoragepath <<dendl;
 
         std::vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
         GetSpacePosition(result, spaceID);
@@ -455,7 +470,7 @@ namespace hvs{
         string c_key = "center_information";
         auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
         if (c_error){
-            cout << "authmodelserver: get center_information fail" << endl;
+            dout(10) << "authmodelserver: get center_information fail" <<dendl;
             return res;
         }
         CenterInfo mycenter;
@@ -476,15 +491,15 @@ namespace hvs{
             //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
             if(ManagerID == spacemeta.hostCenterID){ //本地
                 //调本地
-                int64_t spaceuse = SpaceUsageCheck(spacepath);
+                int64_t spaceuse = SpaceUsage(spacepath);
                 res.push_back(spaceuse);
             }
             else{ //远端
-                cout <<"发送到远端" << endl;
+                dout(10) <<"发送到远端" <<dendl;
                 string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
                 string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
                 
-                snprintf(url, 256, "http://%s:%s/space/spaceusagecheck", tmp_ip.c_str() ,tmp_port.c_str());
+                snprintf(url, 256, "http://%s:%s/space/spaceusage", tmp_ip.c_str() ,tmp_port.c_str());
 
                 auto response = client.post(url).body(spacepath).send();
                 dout(-1) << "Client Info: post request " << url << dendl;
@@ -494,7 +509,7 @@ namespace hvs{
                 response.then(
                     [&](Http::Response resp) {
                     //dout(-1) << "Manager Info: " << res.body() << dendl;
-                    std::cout << "Response code = " << resp.code() << std::endl;
+                    dout(10) << "Response code = " << resp.code() << dendl;
                     auto body = resp.body();
                     int64_t spaceuseage;
                     json_decode(body, spaceuseage);
@@ -505,7 +520,7 @@ namespace hvs{
 
                 //阻塞
                 fu.get();
-                cout << "fu.get()"<< endl;
+                dout(10) << "fu.get()"<<dendl;
             }
         }
 
@@ -516,17 +531,17 @@ namespace hvs{
         return res;
     }
 
-    void SpaceServer::SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response){
-        std::cout << "====== start SpaceServer function: SpaceUsageCheckRest ======"<< std::endl;
+    void SpaceServer::SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response){
+        dout(10) << "====== start SpaceServer function: SpaceUsageRest ======"<< dendl;
         std::string spacepath = request.body();
 
-        int64_t result_i = SpaceUsageCheck(spacepath);
+        int64_t result_i = SpaceUsage(spacepath);
         std::string result = json_encode(result_i);
         response.send(Http::Code::Ok, result); //point
-        std::cout << "====== end SpaceServer function: SpaceUsageCheckRest ======"<< std::endl;
+        dout(10) << "====== end SpaceServer function: SpaceUsageRest ======"<< dendl;
     }
 
-    int64_t SpaceServer::SpaceUsageCheck(std::string spacepath){
+    int64_t SpaceServer::SpaceUsage(std::string spacepath){
         int cmdsize = 150; // 默认命令的总长度不超过150个字符
         int bufsize = 200;
         char cmd[cmdsize];
@@ -544,7 +559,7 @@ namespace hvs{
         }
         fgets(buf, bufsize-1, fp);
         std::string cmdresult(buf);
-        // std::cout << "du 运行结果：" << cmdresult;
+        // dout(10) << "du 运行结果：" << cmdresult;
         // 下面进行根据获取的返回值解析容量大小
         int formal_size = 0;
         size_t start = 0;
@@ -554,9 +569,9 @@ namespace hvs{
         std::string size_str = cmdresult.substr(start+1, end-start-1);
         // 获取容量数字大小
         int unit = size_str.size()-1;
-        // std::cout  << size_str.substr(0, unit).c_str() << std::endl;
+        // dout(10)  << size_str.substr(0, unit).c_str() << dendl;
         sscanf(size_str.substr(0, unit).c_str(), "%d", &formal_size);
-        // std::cout << "解析后容量大小(数字):"<< formal_size << size_str[unit]<< std::endl;
+        // dout(10) << "解析后容量大小(数字):"<< formal_size << size_str[unit]<< dendl;
         // 根据容量后单位G,M,K统一转化为KB为单位的容量大小
         int64_t size = 0;
         if(size_str[unit] == 'G'){
@@ -569,28 +584,31 @@ namespace hvs{
             size = formal_size;
         }
         // 输出字符串形式的容量大小
-        // std::cout << "解析后容量大小(字符串):" << size_str << std::endl;
+        // dout(10) << "解析后容量大小(字符串):" << size_str << dendl;
         return size;
     }
 
     void SpaceServer::SpaceSizeChangeApplyRest(const Rest::Request& request, Http::ResponseWriter response){
-        std::cout << "====== start ZoneServer function: SpaceSizeChangeApplyRest ======"<< std::endl;
+        dout(10) << "====== start ZoneServer function: SpaceSizeChangeApplyRest ======"<< dendl;
         auto info = request.body();
 
-        std::cout << "info: " << info << std::endl;
+        dout(10) << "info: " << info << dendl;
 
         int result = SpaceSizeChangeApply(info);
         response.send(Http::Code::Ok, json_encode(result));
-        std::cout << "result: " <<result << std::endl;
-        std::cout << "====== end ZoneServer function: SpaceSizeChangeApplyRest ======"<< std::endl;
+        dout(10) << "====== end ZoneServer function: SpaceSizeChangeApplyRest ======"<< dendl;
     }
     int SpaceServer::SpaceSizeChangeApply(std::string apply)
     {
         std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
         boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
         const std::string uuid = boost::uuids::to_string(a_uuid);
-        std::string key = "SPsize-" + uuid;
-        int flag = applyPtr->set(key, apply);
+        std::string key = "spsiz-" + uuid;
+        struct_apply_info applyinfo;
+        applyinfo.id = key;
+        applyinfo.data = apply;
+        std::string value = applyinfo.serialize();
+        int flag = applyPtr->set(key, value);
         if(flag != 0)
         {
             return errno = EAGAIN;

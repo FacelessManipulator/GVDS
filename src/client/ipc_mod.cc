@@ -11,6 +11,7 @@
 #include "aggregation_struct.h"
 #include "hvs_struct.h"
 #include "client/clientuser/ClientAuth_struct.h"
+#include "client/zone_mod.h"
 
 
 #include <errno.h>
@@ -836,7 +837,7 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
 
                 string hvsID = client->user->getAccountID();
                 client->optNode->getAuthFromServer(hvsID);
-                //client->zone->GetZoneInfo(hvsID);
+                client->zone->GetZoneInfo(hvsID);
                 // //【接口示例】                
                 // cout << "getToken(): " << client->user->getToken() << endl;
                 // cout << "getAccountName(): " << client->user->getAccountName() << endl;

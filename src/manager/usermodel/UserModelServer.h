@@ -73,6 +73,10 @@ public:
     void bufferUserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     int bufferUserRegister(std::string apply);
 
+    //
+    void viewbufferListRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string viewbufferList(std::string hvsID);
+
     //删除请求记录
     void removeoneofApplyInfoRest(const Rest::Request& request, Http::ResponseWriter response);
 

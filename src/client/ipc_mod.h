@@ -57,6 +57,9 @@ namespace hvs{
         std::string dozonesharecancel_admin(IPCreq &ipcreq);
         std::string dozonelist(IPCreq &ipcreq);
         std::string dozonelist_admin(IPCreq &ipcreq);
+        std::string dolistapply(IPCreq &ipcreq);
+        std::string dosuggestion(IPCreq &ipcreq);
+        
         bool GetZoneInfo(std::string clientID);
 
 

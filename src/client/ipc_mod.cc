@@ -142,14 +142,21 @@ void ClientIPC::init() {
                 return dosearchcenter(ipcreq);
             }
             if(ipcreq.cmdname == "deletecenter"){
-                cout << "dodeletecenter here" <<endl;
                 return dodeletecenter(ipcreq);
             }
             //admin
             if(ipcreq.cmdname == "adminsignup"){
-                cout << "doadminsignup here" <<endl;
                 return doadminsignup(ipcreq);
             }
+            if(ipcreq.cmdname == "listapply"){
+                cout << "listapply here" <<endl;
+                return dolistapply(ipcreq);
+            }
+            if(ipcreq.cmdname == "suggestion"){
+                cout << "suggestion here" <<endl;
+                return dosuggestion(ipcreq);
+            }
+            
             
             
 
@@ -1538,6 +1545,102 @@ std::string ClientIPC::dodeletecenter(IPCreq &ipcreq){
 
     cout << "res :"<< res <<endl;
     return res;
+ }
+
+ std::string ClientIPC::dolistapply(IPCreq &ipcreq){
+    
+    string hvsID = client->user->getAccountID(); 
+    string endpoint = client->get_manager();   
+    string routepath = "/users/listapply";    
+    string res = client->rpc->post_request(endpoint, routepath, hvsID);
+
+    if(res == "1"){
+        return res;
+    }
+    else if(res == "33"){
+        return res;
+    }
+    else{
+        std::vector<std::string> my;
+        json_decode(res, my);
+
+        //先清空map
+        client->user->clearApply();
+        for(auto iter = my.begin(); iter!=my.end(); iter++){
+            std::string con = *iter;
+            struct_apply_info singel_content;
+            singel_content.deserialize(con);
+
+            client->user->setApply(singel_content.id, singel_content.data);
+        }
+        cout << "res: " << res << endl;
+        return res;
+    }
+    
+ }
+
+ std::string ClientIPC::dosuggestion(IPCreq &ipcreq){
+      // TODO: 提前准备的数据
+    string sug = ipcreq.sug;
+    string id = ipcreq.applyid;
+
+    string endpoint = client->get_manager();
+
+    if(sug == "reject"){
+        string routepath = "/users/removeapply";    
+        string res = client->rpc->post_request(endpoint, routepath, id);
+        if(res == "0"){
+            return "success";
+        }
+        else if(res =="1"){
+            return "fail";
+        }
+        else{
+            return "fail";
+        }
+    }
+    else if (sug == "agree"){
+        std::string tmp = id.substr(0,5);
+        string value = client->user->getApply(id);
+
+        std::cout << "tmp here :  " << tmp << std::endl;
+
+        std::string res;
+        std::string routepath;
+        std::string new_route, new_res;
+        if(tmp=="usign"){
+            routepath = "/users/registration";
+            res = client->rpc->post_request(endpoint, routepath, value);
+
+            new_route = "/users/removeapply";
+            new_res = client->rpc->post_request(endpoint, new_route, id);
+        }
+        else if(tmp=="zregi"){
+            routepath = "/zone/registercheck";
+            res = client->rpc->post_request(endpoint, routepath, value);
+
+            new_route = "/users/removeapply";
+            new_res = client->rpc->post_request(endpoint, new_route, id);
+        }
+        else if(tmp=="spadd"){
+            routepath = "/zone/mapaddcheck";
+            res = client->rpc->post_request(endpoint, routepath, value);
+
+            new_route = "/users/removeapply";
+            new_res = client->rpc->post_request(endpoint, new_route, id);
+        }
+        else if(tmp=="spsiz"){
+            routepath = "/space/changesize";
+            res = client->rpc->post_request(endpoint, routepath, value);
+
+            new_route = "/users/removeapply";
+            new_res = client->rpc->post_request(endpoint, new_route, id);
+        }
+        return res;
+    }
+    else{
+        return "input error";
+    }
  }
 
 }//namespace

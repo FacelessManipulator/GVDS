@@ -22,7 +22,6 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 #include "manager/usermodel/MD5.h"
 #include "hvs_struct.h"
 
-
 using namespace std;
 
 
@@ -61,6 +60,12 @@ void UserModelServer::router(Router& router){
     Routes::Post(router, "/users/adminregistration", Routes::bind(&UserModelServer::AdminUserRegisterRest, this));
     //新的用户账户注册接口
     Routes::Post(router, "/users/bufferuserregister", Routes::bind(&UserModelServer::bufferUserRegisterRest, this));
+    //
+    Routes::Post(router, "/users/listapply", Routes::bind(&UserModelServer::viewbufferListRest, this));
+    //删除apply_info 内容
+    Routes::Post(router, "/users/removeapply", Routes::bind(&UserModelServer::removeoneofApplyInfoRest, this));
+    
+    
 
 }
 
@@ -1340,6 +1345,11 @@ void UserModelServer::bufferUserRegisterRest(const Rest::Request& request, Http:
 
     std::cout << "info: " << info << std::endl;
 
+    //std::cout << "viewbufferList start ============" << endl;
+    //auto a = viewbufferList("15cdc484-5097-49ad-a02a-33ef359d8bea");
+    //cout << "a: " << a;
+    //std::cout << "viewbufferList end ============" << endl;
+
     int result = bufferUserRegister(info);
     response.send(Http::Code::Ok, json_encode(result));
     std::cout << "result: " <<result << std::endl;
@@ -1356,6 +1366,8 @@ int UserModelServer::bufferUserRegister(std::string apply){
     singel_content.id = key;
     singel_content.data = apply;
     string value = singel_content.serialize();
+    cout << "see_value: " << endl;
+    cout << value << endl;
 
     int flag = f5_dbPtr->set(key, value);
     if(flag != 0)
@@ -1366,15 +1378,19 @@ int UserModelServer::bufferUserRegister(std::string apply){
 }
 
 
-/* 
+
 //管理员查看apply_info中的请求
+//返回值：  "33"不是管理员 ，"1" 是失败    其他是成功(json_encode(my_apply);)
 void UserModelServer::viewbufferListRest(const Rest::Request& request, Http::ResponseWriter response){
     std::cout << "====== start UserModelServer function: viewbufferListRest ======"<< std::endl;
     auto info = request.body();
 
-    std::cout << "info: " << info << std::endl;
+    std::cout << "info: " << info << std::endl;  // 管理员id
     string data = viewbufferList(info);
+    cout << "data: " << data << endl;
+    response.send(Http::Code::Ok, data);
 
+    std::cout << "====== end UserModelServer function: viewbufferListRest ======"<< std::endl;
 }
 string UserModelServer::viewbufferList(std::string hvsID){
     //验证 hvsID是否管理员id
@@ -1382,12 +1398,36 @@ string UserModelServer::viewbufferList(std::string hvsID){
         return "33";// 不是管理员
     }
     std::shared_ptr<hvs::Datastore> f5_dbPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
+    auto applyPtr = static_cast<CouchbaseDatastore*>(f5_dbPtr.get());
+    
     //把bucket的数据库 的 所用 或者前5条 返回给客户端
+    std::string query = "select * from " + applybucket +" where meta().id like \"usign-%\" or meta().id like \"zregi-%\" or meta().id like \"spadd-%\" or meta().id like \"spsiz-%\" limit 5";
+    cout << "query: "<< query << endl;
+    auto [vp, err] = applyPtr->n1ql(query);
+    if(err!=0){
+        return "1";
+    }
+    //cout << "*vp: " <<endl;
+    //cout << *vp << endl;
+    //vector<vector<struct_apply_info> > my;
+    //json_decode(*vp, my);
+    vector<string> my_apply;
+    for(auto iter =vp->begin(); iter!=vp->end(); iter++){
+        string con = *iter;
+        int len = con.size();
+        string tmp = con.substr(sizeof("{\"test\":")-1, len-1);
+        cout << "tmp: " << tmp.substr(0, tmp.size()-1) << endl;
 
-    查询出了多条记录，如何一条一条的 添加进vector ？
-
+        my_apply.push_back(tmp.substr(0, tmp.size()-1));
+        //vector<struct_apply_info> inner_vec;
+        //json_decode(tmp, inner_vec);
+    }
+    string json_str = json_encode(my_apply);
+    //查询出了多条记录，如何一条一条的 添加进vector ？
+    cout << "json_str: " << json_str << endl;
+    return json_str;
 }
-*/
+
 //管理原 accept  客户端 调此接口，删除记录， 并发送到对应功能接口
 //管理员 refuse 客户端 调此接口，删除记录
 void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Http::ResponseWriter response){

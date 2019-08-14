@@ -319,5 +319,20 @@ public:
     struct_apply_info() = default;
 };
 
+//apply_info 的string vector
+class struct_apply_content : public hvs::JsonSerializer{
+public:
+    std::vector<std::string> applycontent;
+public:
+    void serialize_impl(){
+      put("applycontent", applycontent);
+    } 
+    void deserialize_impl(){
+      get("applycontent", applycontent);
+    }
+public:
+    struct_apply_content() = default;
+};
+
 
 }  // namespace hvs

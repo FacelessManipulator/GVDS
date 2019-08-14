@@ -72,6 +72,10 @@ namespace hvs{
         std::string centerPort; 
         std::string centerName;
 
+        //admin
+        std::string sug;  // 审批意见类型
+        std::string applyid;  // id
+
         //resource aggregation
         std::string storage_src_id;     // 存储资源UUID
         std::string storage_src_name;   // 存储资源名称
@@ -114,6 +118,9 @@ namespace hvs{
             put("centerIP", centerIP);
             put("centerPort", centerPort);
             put("centerName", centerName);
+
+            put("sug", sug);
+            put("applyid", applyid);
 
 
             //resource aggregation
@@ -158,6 +165,9 @@ namespace hvs{
             get("centerIP", centerIP);
             get("centerPort", centerPort);
             get("centerName", centerName);
+
+            get("sug", sug);
+            get("applyid", applyid);
 
             //resource aggregation
             get("storage_src_id", storage_src_id);

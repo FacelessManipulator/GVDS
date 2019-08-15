@@ -1617,22 +1617,49 @@ std::string ClientIPC::dodeletecenter(IPCreq &ipcreq){
         }
         else if(tmp=="zregi"){
             routepath = "/zone/registercheck";
-            res = client->rpc->post_request(endpoint, routepath, value);
-
+            std::string response = client->rpc->post_request(endpoint, routepath, value);
+            int result;
+            json_decode(response, result);
+            if (!result)
+            {
+                res = "success";
+            }
+            else
+            {
+                res = std::strerror(result);
+            }
             new_route = "/users/removeapply";
             new_res = client->rpc->post_request(endpoint, new_route, id);
         }
         else if(tmp=="spadd"){
             routepath = "/zone/mapaddcheck";
-            res = client->rpc->post_request(endpoint, routepath, value);
-
+            std::string response = client->rpc->post_request(endpoint, routepath, value);
+            int result;
+            json_decode(response, result);
+            if (!result)
+            {
+                res = "success";
+            }
+            else
+            {
+                res = std::strerror(result);
+            }
             new_route = "/users/removeapply";
             new_res = client->rpc->post_request(endpoint, new_route, id);
         }
         else if(tmp=="spsiz"){
             routepath = "/space/changesize";
-            res = client->rpc->post_request(endpoint, routepath, value);
-
+            std::string response = client->rpc->post_request(endpoint, routepath, value);
+            int result;
+            json_decode(response, result);
+            if (!result)
+            {
+                res = "success";
+            }
+            else
+            {
+                res = std::strerror(result);
+            }
             new_route = "/users/removeapply";
             new_res = client->rpc->post_request(endpoint, new_route, id);
         }

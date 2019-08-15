@@ -1446,6 +1446,15 @@ void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Htt
 }
 
 
+//管理新建 和 删除账户映射
+void UserModelServer::adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
+    std::cout << "====== start UserModelServer function: adminCreateAccountMappingconst ======"<< std::endl;
+    auto info = request.body();
+    std::cout << "info: " << info << std::endl;
+
+}
+
+
 //验证是否是管理员
 bool UserModelServer::validadminidentity(string hvsID){
     std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase);

@@ -73,7 +73,7 @@ public:
     void bufferUserRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     int bufferUserRegister(std::string apply);
 
-    //
+    //管理员查看 apply_info 数据库中内容
     void viewbufferListRest(const Rest::Request& request, Http::ResponseWriter response);
     std::string viewbufferList(std::string hvsID);
 
@@ -83,7 +83,8 @@ public:
     //验证身份是否为管理员
     bool validadminidentity(std::string hvsID);
 
-    //管理员查看 apply_info 数据库中内容
+    //管理员添加账户映射接口
+    void adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response);
     
 public:
     UserModelServer() : ManagerModule("user") {
@@ -99,9 +100,11 @@ public:
 
 private:
     bool addSCaccount();
+    //建立账户映射
     bool BuildAccountMapping_v2(std::string accountID);
     bool SubBuildAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
+    //删除账户映射
     bool RemoveAccountMapping_v2(std::string accountID);
     bool SubRemoveAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 

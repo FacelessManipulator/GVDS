@@ -12,6 +12,7 @@
 
 #include "manager/zone/ZoneServer.h"
 #include "manager/authmodel/AuthModelServer.h"
+#include "manager/usermodel/UserModelServer.h"
 #include "manager/usermodel/Account.h"
 #include "common/centerinfo.h"
 #include "common/json.h"
@@ -107,7 +108,8 @@ namespace hvs{
       }
       std::string tmp_value = *vp;
       tmp.deserialize(tmp_value);
-      if(tmp.ownerID == ownerID)//TODO:添加管理员ID
+      UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+      if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
       {
         tmp.zoneName = std::move(newZoneName);
         tmp.contains_spaceinfo = false;
@@ -153,7 +155,8 @@ namespace hvs{
       }
       std::string tmp_value = *vz;
       tmp.deserialize(tmp_value);
-      if(clientID == tmp.ownerID||std::find(tmp.memberID.begin(), tmp.memberID.end(), clientID) != tmp.memberID.end())//clientID是zone的成员或主人
+      UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+      if(clientID == tmp.ownerID||std::find(tmp.memberID.begin(), tmp.memberID.end(), clientID) != tmp.memberID.end() || p_usermodel->validadminidentity(clientID))//clientID是zone的成员或主人
       {
           if(isSubset(tmp.spaceID, spaceID))
           {
@@ -352,7 +355,8 @@ namespace hvs{
     }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
-    if(tmp.ownerID == ownerID)
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
     {
       //TODO:插入调用lbq模块
       AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
@@ -404,7 +408,8 @@ namespace hvs{
     if(!isSubset(tmp.memberID, memberID)){
         return errno = EINVAL;
     }
-    if(tmp.ownerID == ownerID)
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
     {
       //插入调用lbq模块
       AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
@@ -759,7 +764,8 @@ namespace hvs{
     }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
-    if(tmp.ownerID == ownerID)
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
     {
       AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
       if (tmp.memberID.empty())

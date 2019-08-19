@@ -78,10 +78,26 @@ void* ClientBufferQueue::entry() {
   pthread_mutex_unlock(&m_queue_mutex);
 }
 
-void ClientBufferQueue::done_one() {
+int ClientBufferQueue::get_spare_channel() {
+  // vector channel_loads is an readonly vector which may not need lock?
+  int channel_id = 0, min_load = channel_loads[0];
+  pthread_mutex_lock(&m_queue_mutex);
+  for(int i = 1; i < channel_loads.size(); i++) {
+    if (channel_loads[i] < min_load ) {
+        channel_id = i;
+        min_load = channel_loads[i];
+    }
+  }
+  channel_loads[channel_id]++;
+  pthread_mutex_unlock(&m_queue_mutex);
+  return channel_id;
+}
+
+void ClientBufferQueue::done_one(int channel_id) {
   pthread_mutex_lock(&m_queue_mutex);
   m_queue_mutex_holder = pthread_self();
   buf_onlink--;
+  channel_loads[channel_id]--;
   pthread_cond_broadcast(&m_cond_ioproxy);
   m_queue_mutex_holder = 0;
   pthread_mutex_unlock(&m_queue_mutex);

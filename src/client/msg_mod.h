@@ -19,13 +19,14 @@ class ClientRpc : public ClientModule {
  private:
   UDTClient udt_client;
   std::mutex rpc_mutex;
+  int multi_channel;
   std::unordered_map<std::string, std::shared_ptr<RpcClient>> rpc_clients;
   std::unordered_map<std::string, std::shared_ptr<ClientSession>> udt_clients;
   std::unordered_map<std::string, std::shared_ptr<Pistache::Http::Client>> rest_clients;
   std::unordered_map<std::string, Pistache::Http::CookieJar> rest_cookies;
 
-private:
-  std::shared_ptr<RpcClient> rpc_channel(std::shared_ptr<IOProxyNode> node, bool reconnect = false);
+public:
+  std::shared_ptr<RpcClient> rpc_channel(std::shared_ptr<IOProxyNode> node, bool reconnect = false, int channel_id = 0);
   std::shared_ptr<ClientSession> udt_channel(std::shared_ptr<IOProxyNode> node, bool reconnect = false);
   std::shared_ptr<Pistache::Http::Client> rest_channel(std::string endpoint);
   // auto handle the data write operation response

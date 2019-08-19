@@ -213,9 +213,9 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
       return -ENOENT;
     }
     auto retbuf = res->as<ioproxy_rpc_buffer>();
-    if (retbuf.error_code < 0) {
+    if (retbuf.error_code != 0) {
       // stat failed on remote server
-      return retbuf.error_code;
+      return -retbuf.error_code;
     }
     memcpy(buf, retbuf.buf.ptr, retbuf.buf.size);
     return retbuf.buf.size;

@@ -31,7 +31,11 @@ Processing::Processing(my_context ctx) : my_base(ctx) {
       boost::bind(&Client_scheduler::queue_event, &(worker.my_scheduler()),
                   worker.my_handle(), callback_event);
   ///> call **async** op processing function
-  node->rpc->async_call(worker.cur_buf->dest, "iop_write", callback, worker.cur_buf);
+  int channel_id = node->queue->get_spare_channel() + 1;
+  auto rpcc = node->rpc->rpc_channel(worker.cur_buf->dest, false, channel_id);
+  // the callback function could be used to trigger some event
+  rpcc->async_call( "iop_write", callback, worker.cur_buf);
+//  node->rpc->async_call(worker.cur_buf->dest, "iop_write", callback, worker.cur_buf);
 }
 
 

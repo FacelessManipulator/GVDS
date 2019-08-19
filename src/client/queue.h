@@ -28,6 +28,8 @@ class ClientBufferQueue : public ClientModule, Thread {
     isThread = true;
     m_max_buf = _config->get<int>("client.max_queue").value_or(1024);
     m_max_worker = _config->get<int>("client.onlink").value_or(1024);
+    multi_channel = _config->get<int>("client.multi_channel").value_or(1);
+    channel_loads.resize(multi_channel, 0);
     pthread_mutexattr_t mu_attr;
     pthread_mutexattr_init(&mu_attr);
     pthread_mutexattr_settype(&mu_attr, PTHREAD_MUTEX_RECURSIVE);
@@ -41,7 +43,8 @@ class ClientBufferQueue : public ClientModule, Thread {
   
   public:
   bool queue_buffer(std::shared_ptr<Buffer> buf, bool block = true);
-  void done_one();
+  void done_one(int channel_id = 0);
+  int get_spare_channel();
   bool add_idle_worker(ClientWorker* woker);
 
   ~ClientBufferQueue() override {
@@ -67,8 +70,10 @@ class ClientBufferQueue : public ClientModule, Thread {
   std::queue<std::shared_ptr<Buffer>> buf_waiting_line;
   int m_max_buf;  // the max number of op in ioproxy
   int m_max_worker;      // the max number of worker
+  int multi_channel;    // channel number
   std::atomic_long idle_worker_num;
   std::atomic_long buf_onlink;
+  std::vector<int> channel_loads;
 
  private:
   // thread saft variables

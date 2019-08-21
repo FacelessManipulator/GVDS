@@ -61,7 +61,7 @@ namespace hvs {
         return results;
     }
 
-    inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, int offset, int fd){
+    inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, off_t offset, int fd){
         std::string fullpath = hvsfs_fullpath(pathname);
         auto op = std::make_shared<IOProxyDataOP>();
         op->id = 1;
@@ -83,7 +83,7 @@ namespace hvs {
         }
     }
 
-    inline int ioproxy_write(const std::string pathname, ioproxy_rpc_buffer obuf,int size, int offset){
+    inline int ioproxy_write(const std::string pathname, ioproxy_rpc_buffer obuf,int size, off_t offset){
         std::string fullpath = hvsfs_fullpath(pathname);
         auto op = std::make_shared<IOProxyDataOP>();
         op->id = 2;
@@ -151,7 +151,7 @@ namespace hvs {
         }
     }
 
-    inline int ioproxy_truncate(const std::string path, int offset){
+    inline int ioproxy_truncate(const std::string path, off_t offset){
         std::string fullpath = hvsfs_fullpath(path);
         std::cout << "truncate: " << path << std::endl;
         auto op = std::make_shared<IOProxyDataOP>();

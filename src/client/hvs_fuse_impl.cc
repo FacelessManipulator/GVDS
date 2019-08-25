@@ -141,15 +141,30 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   }
 
   int retstat = 0;
-  auto ents = res->as<std::vector<ioproxy_rpc_dirent>>();
-  for (const ioproxy_rpc_dirent &ent : ents) {
-    if (filler(buf, ent.d_name.c_str(), nullptr, 0,
+  auto ents = res->as<std::vector<ioproxy_rpc_statbuffer>>();
+  for (const ioproxy_rpc_statbuffer &ent : ents) {
+    struct stat dirfilestat;
+    memset(&dirfilestat, 0, sizeof(struct stat));
+    dirfilestat.st_dev = static_cast<__dev_t>(ent.st_dev);
+    dirfilestat.st_ino = static_cast<__ino_t>(ent.st_ino);
+    dirfilestat.st_mode = static_cast<__mode_t>(ent.st_mode);
+    dirfilestat.st_nlink = static_cast<__nlink_t>(ent.st_nlink);
+    dirfilestat.st_uid = static_cast<__uid_t>(ent.st_uid);
+    dirfilestat.st_gid = static_cast<__gid_t>(ent.st_gid);
+    dirfilestat.st_rdev = static_cast<__dev_t>(ent.st_rdev);
+    dirfilestat.st_size = ent.st_size;
+    dirfilestat.st_atim.tv_nsec = ent.st_atim_tv_nsec;
+    dirfilestat.st_atim.tv_sec = ent.st_atim_tv_sec;
+    dirfilestat.st_mtim.tv_nsec = ent.st_mtim_tv_nsec;
+    dirfilestat.st_mtim.tv_sec = ent.st_mtim_tv_sec;
+    dirfilestat.st_ctim.tv_nsec = ent.st_ctim_tv_nsec;
+    dirfilestat.st_ctim.tv_sec = ent.st_ctim_tv_sec;
+    if (filler(buf, ent.d_name.c_str(), &dirfilestat, 0,
                static_cast<fuse_fill_dir_flags>(0)) != 0) {
       return -ENOMEM;
     }
     retstat = ent.error_code;
   }
-
   return retstat;
 }
 

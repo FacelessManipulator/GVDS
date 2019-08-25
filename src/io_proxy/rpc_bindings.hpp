@@ -131,9 +131,9 @@ namespace hvs {
         return 0;
     }
 
-    inline std::vector<ioproxy_rpc_dirent> ioproxy_readdir(const std::string pathname){
+    inline std::vector<ioproxy_rpc_statbuffer> ioproxy_readdir(const std::string pathname){
         std::string fullpath = hvsfs_fullpath(pathname);
-        std::vector<ioproxy_rpc_dirent> retvec;
+        std::vector<ioproxy_rpc_statbuffer> retvec;
         std::cout << "readdir: " << pathname << std::endl;
         auto op = std::make_shared<IOProxyMetadataOP>();
         op->id = 3;
@@ -143,10 +143,29 @@ namespace hvs {
         static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         if (op->error_code == 0) {
             for(dirent ent : op->dirvector){
-                retvec.emplace_back(ioproxy_rpc_dirent(&ent));
+                std::string dirfilename(ent.d_name); // 目录名称
+                std::string statfilefullpath = hvsfs_fullpath(pathname);
+                std::string statfilepath =  statfilefullpath +"/"+ dirfilename; // stat 文件的全局路径
+                auto op = std::make_shared<hvs::IOProxyMetadataOP>();
+                op->id = 0;
+                op->operation = hvs::IOProxyMetadataOP::stat;
+                op->path = statfilepath.c_str();
+                op->type = hvs::IO_PROXY_METADATA;
+                static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
+                if (op->error_code == 0) {
+                    ioproxy_rpc_statbuffer tmpstat(op->buf); //返回消息
+                    tmpstat.d_name = dirfilename;
+                    tmpstat.d_off = ent.d_off;
+                    retvec.emplace_back(tmpstat);
+                } else {
+                    ioproxy_rpc_statbuffer tmpstat(op->error_code);
+                    tmpstat.d_name = dirfilename;
+                    tmpstat.d_off = ent.d_off;
+                    retvec.emplace_back(tmpstat);
+                }
             }
         } else {
-            retvec.emplace_back(ioproxy_rpc_dirent(op->error_code));
+            retvec.emplace_back(ioproxy_rpc_statbuffer(op->error_code));
             return retvec;
         }
     }

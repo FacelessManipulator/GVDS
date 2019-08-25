@@ -28,6 +28,8 @@ struct ioproxy_rpc_statbuffer {
   int st_mtim_tv_sec;
   int st_ctim_tv_nsec;
   int st_ctim_tv_sec;
+  std::string d_name;
+  int d_off;
   ioproxy_rpc_statbuffer(struct stat* st) {
     error_code = 0;
     st_dev = static_cast<int>(st->st_dev);
@@ -54,7 +56,7 @@ struct ioproxy_rpc_statbuffer {
   MSGPACK_DEFINE_ARRAY(error_code, st_dev, st_ino, st_mode, st_nlink, st_uid,
                        st_gid, st_rdev, st_size, st_blksize, st_blocks,
                        st_atim_tv_nsec, st_atim_tv_sec, st_mtim_tv_nsec,
-                       st_mtim_tv_sec, st_ctim_tv_nsec, st_ctim_tv_sec)
+                       st_mtim_tv_sec, st_ctim_tv_nsec, st_ctim_tv_sec, d_name, d_off)
 };
 
 struct ioproxy_rpc_buffer {

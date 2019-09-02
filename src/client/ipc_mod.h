@@ -6,6 +6,7 @@
 
 #pragma once //HVSONE_IPC_MOD_H
 #include "client.h"
+#include <mutex>
 #include "ipc/IPCServer.hpp"
 #include <hvs_struct.h>
 #include "ipc_struct.h"
@@ -33,6 +34,7 @@ namespace hvs{
         friend class Client;
         std::shared_ptr<IPCServer> sp_ipcserver;
         std::unordered_map<std::string, Zone> zonemap; // 区域重命名使用
+        std::mutex mutex;
     
 
     private:

@@ -110,7 +110,7 @@ int main(int argc, char* argv[]){
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
         fu.get();              // 等待客户端返回结果
-        // sleep(1); // TODO: 等待客户端返回结果
+         // TODO: 等待客户端返回结果
         ipcClient.stop();
 
     } catch (std::exception &e) {

@@ -111,6 +111,14 @@ namespace hvs{
       UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
       if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
       {
+        std::string query = "select * from `"+zonebucket+"` where owner = \"" + ownerID + "\" and name = \"" + newZoneName + "\";";
+        //std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+        auto zonePtr2 = static_cast<CouchbaseDatastore*>(zonePtr.get());
+        auto [vp, err] = zonePtr2->n1ql(query);
+        if(vp->size() != 0) 
+        {
+          return errno = EINVAL;
+        }
         tmp.zoneName = std::move(newZoneName);
         tmp.contains_spaceinfo = false;
         if(zonePtr->set(zoneID, tmp.serialize()) != 0) return errno = EAGAIN;//插入报错

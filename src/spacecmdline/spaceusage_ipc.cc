@@ -79,12 +79,13 @@ int main(int argc, char* argv[]){
 //            char tmp[IPCMessage::max_body_length] = {0};
 //            std::memcpy(tmp, msg.body(), msg.body_length());
             std::string ipcresult (msg.body(), msg.body_length());
-            if (ipcresult == "fail"){
+            if (ipcresult.substr(0, 1) != "1"){
                 //std::cerr << "执行失败，请检查命令参数是否正确！详情请查看日志！" << std::endl;
-                std::cerr << "查询失败" << std::endl; // 执行结果
+                std::cerr << ipcresult << std::endl; // 执行结果
             } else {
                 std::vector<int64_t> result;
-                json_decode(ipcresult, result);
+                std::string ipcres = ipcresult.substr(1, ipcresult.length() - 1);
+                json_decode(ipcres, result);
                 for(int i = 0; i < spacenames.size(); i++)
                 {
                     std::cout << "空间名称：" << spacenames[i] << "空间已用容量：" << result[i] <<std::endl;
@@ -104,7 +105,7 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        sleep(1); // TODO: 等待客户端返回结果
+        fu.get(); // TODO: 等待客户端返回结果
         ipcClient.stop();
 
     } catch (std::exception &e) {

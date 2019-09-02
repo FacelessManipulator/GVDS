@@ -272,6 +272,9 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
         auto zoneinfo = mapping->second;
         if(zoneinfo.ownerID != ownName) return "权限不足";
         for(auto it : zoneinfo.spaceBicInfo){
+            if (it->spaceName == newspacename) return "已存在的空间名";
+        }
+        for(auto it : zoneinfo.spaceBicInfo){
             if (it->spaceName == spacename){
                 spaceuuid = it->spaceID;
                 break;
@@ -296,7 +299,10 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq) {
 std::string ClientIPC::dospacerename_admin(IPCreq &ipcreq) {
     // TODO: 提前准备的数据
     std::string zonename = ipcreq.zonename;
-    if(ipcreq.ownName == "") return " no ownername";
+    if(ipcreq.ownName == "")
+    {
+        return "no ownername";
+    }
     std::vector<std::string> ownID;
     std::vector<std::string> ownName;
     ownName.push_back(ipcreq.ownName);
@@ -308,7 +314,6 @@ std::string ClientIPC::dospacerename_admin(IPCreq &ipcreq) {
     std::string spacename = ipcreq.spacename;
     std::string newspacename = ipcreq.newspacename;
     std::string spaceuuid;
-
     // TODO: 获取区域信息，并根据空间名获取空间UUID
     int ret = GetZoneInfo(ownID[0]);
     if(!ret){
@@ -320,6 +325,9 @@ std::string ClientIPC::dospacerename_admin(IPCreq &ipcreq) {
     if(mapping !=  zonemap.end()) {
         auto zoneinfo = mapping->second;
         if(zoneinfo.ownerID != ownName[0]) return "权限不足";
+        for(auto it : zoneinfo.spaceBicInfo){
+            if (it->spaceName == newspacename) return "已存在的空间名";
+        }
         for(auto it : zoneinfo.spaceBicInfo){
             if (it->spaceName == spacename){
                 spaceuuid = it->spaceID;
@@ -385,7 +393,7 @@ std::string ClientIPC::dospaceusage(IPCreq &ipcreq) {
     req.spaceIDs = spaceuuids;
 
     string response = client->rpc->post_request(client->get_manager(), "/space/spaceusagecheck", req.serialize());//TODO：修改按需选择管理节点
-    return response;
+    return "1" + response;
     
     // if (!result) return "success";
     // else return std::strerror(result);
@@ -440,7 +448,7 @@ std::string ClientIPC::dospaceusage_admin(IPCreq &ipcreq) {
     req.spaceIDs = spaceuuids;
 
     string response = client->rpc->post_request(client->get_manager(), "/space/spaceusagecheck", req.serialize());//TODO：修改按需选择管理节点
-    return response;
+    return "1" + response;
     
     // if (!result) return "success";
     // else return std::strerror(result);
@@ -522,6 +530,10 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq) {
     auto mapping = zonemap.find(zonename);
     if(mapping !=  zonemap.end()) {
         zoneuuid = mapping->second.zoneID;
+        auto zoneinfo = mapping->second;
+        for(auto it : zoneinfo.spaceBicInfo){
+            if (it->spaceName == spacename) return "已存在的空间名";
+        }
     } else{
         std::cerr << "区域名不存在，请确认区域名称正确！" << std::endl;
         return "区域名不存在，请确认区域名称正确！";
@@ -865,6 +877,7 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq) {
         space.hostCenterName = center.location;
         space.hostCenterID = center.center_id;
         req.spacePathInfo = space.serialize();
+        std::cout << req.serialize() << std::endl;
         string response = client->rpc->post_request(client->get_manager(), "/zone/registerapply", req.serialize());
         int result;
         json_decode(response, result);
@@ -1196,9 +1209,12 @@ bool ClientIPC::GetZoneInfo(std::string clientID) {
     if(zoneinfores.empty()){
         return false;
     }
+    std::unordered_map<std::string, Zone> zonemap_new;
     for(const auto &it : zoneinfores) {
-        zonemap[it.zoneName] = it;
+        zonemap_new[it.zoneName] = it;
     }
+    std::lock_guard<std::mutex> lock(mutex);
+    zonemap.swap(zonemap_new);
     return true;
 }
 

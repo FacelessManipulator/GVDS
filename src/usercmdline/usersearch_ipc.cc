@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
     std::string cmdname = argv[0];
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("账户登录");
+        po::options_description command("账户信息查询");
         command.add_options()
                 ("user,u", po::value<std::string>(), "账户名")
                 ;

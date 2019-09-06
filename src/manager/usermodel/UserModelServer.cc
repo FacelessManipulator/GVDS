@@ -57,15 +57,19 @@ void UserModelServer::router(Router& router){
     Routes::Post(router, "/users/memberID", Routes::bind(&UserModelServer::getMemberIDRest, this));
 
     //管理员接口
+    //管理员注册
     Routes::Post(router, "/users/adminregistration", Routes::bind(&UserModelServer::AdminUserRegisterRest, this));
-    //新的用户账户注册接口
+    //新的用户账户注册接口，写如暂存区
     Routes::Post(router, "/users/bufferuserregister", Routes::bind(&UserModelServer::bufferUserRegisterRest, this));
-    //
+    //展示暂存区内容
     Routes::Post(router, "/users/listapply", Routes::bind(&UserModelServer::viewbufferListRest, this));
-    //删除apply_info 内容
+    //删除apply_info 内容   从暂存区删除
     Routes::Post(router, "/users/removeapply", Routes::bind(&UserModelServer::removeoneofApplyInfoRest, this));
+
+    //管理员 手动建立账户映射接口
+    Routes::Post(router, "/users/adcam", Routes::bind(&UserModelServer::adminCreateAccountMapping, this));
     
-    
+        
 
 }
 
@@ -1447,11 +1451,33 @@ void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Htt
 
 
 //管理新建 和 删除账户映射
+//客户端需先获取对应用户的hvsID，若获取不到，则有问题；获取到后  发生hvsID 和hostCenterName
+// 返回 0 是成功，1是失败  33是没有权限
 void UserModelServer::adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
     std::cout << "====== start UserModelServer function: adminCreateAccountMappingconst ======"<< std::endl;
     auto info = request.body();
-    std::cout << "info: " << info << std::endl;
+    std::cout << "info: " << info << std::endl;   //
 
+    struct_AdminAccountMap new_accountmap;
+    new_accountmap.deserialize(info);
+    // 若不是管理员，直接返回
+    if(!validadminidentity(new_accountmap.adhvsID)){
+        response.send(Http::Code::Ok, "33");// 不是管理员
+        return;
+    }
+
+    //一定要掉这个函数getLocalAccountinfo  不能使用 SubBuildAccountMapping_v2 ，因为后者的调用第一个参数有限制
+    //getLocalAccountinfo 在调用SubBuildAccountMapping_v2 时， 对第一个参数SCAccount 进行了反序列化
+    //但是账户注册时，账户映射 调用 在调用SubBuildAccountMapping_v2 时，并未对 第一个参数SCAccount 进行反序列化
+    //因此这里假如直接调用 SubBuildAccountMapping_v2 接口会有问题
+   
+    string ismapsuccess = getLocalAccountinfo(new_accountmap.hvsID, new_accountmap.hostCenterName);
+    if (ismapsuccess == "fail"){
+        response.send(Http::Code::Ok, "1");
+    }
+    else{
+        response.send(Http::Code::Ok, "0");
+    }
 }
 
 

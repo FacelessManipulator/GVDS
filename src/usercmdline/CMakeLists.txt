@@ -27,7 +27,10 @@ target_link_libraries(listapply hvscommon ${HVSCOMMOM_DEPENDS_ON})
 add_executable(suggestion suggestion.cc ../client/clientuser/ClientUser_struct.cc)
 target_link_libraries(suggestion hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
-install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel adminsignup suggestion
+add_executable(adcam adcreateaccountmap.cc ../client/clientuser/ClientUser_struct.cc)
+target_link_libraries(adcam hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel adminsignup suggestion adcam
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

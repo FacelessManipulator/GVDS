@@ -61,6 +61,7 @@ namespace hvs{
         std::string dozonelist_admin(IPCreq &ipcreq);
         std::string dolistapply(IPCreq &ipcreq);
         std::string dosuggestion(IPCreq &ipcreq);
+        std::string doadcam(IPCreq &ipcreq);
         
         bool GetZoneInfo(std::string clientID);
 

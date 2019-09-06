@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
 
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("账户登录");
+        po::options_description command("审批请求");
         command.add_options()
                 ("sug,s", po::value<std::string>(), "意见：[agree, reject]")
                 ("id,i", po::value<std::string>(), "请求id")

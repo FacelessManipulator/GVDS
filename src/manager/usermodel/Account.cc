@@ -106,6 +106,20 @@ void struct_AdminList::deserialize_impl(){
     get("namelist", namelist);
 }
 
+void struct_AdminAccountMap::serialize_impl(){
+    put("adhvsID", adhvsID);
+    put("hvsID", hvsID);
+    put("hostCenterName", hostCenterName);
+}
+
+void struct_AdminAccountMap::deserialize_impl(){
+    get("adhvsID", adhvsID);
+    get("hvsID", hvsID);
+    get("hostCenterName", hostCenterName);
+}
+
+
+
 // void struct_apply_info::serialize_impl(){
 //     put("id", id);
 //     put("data", data);

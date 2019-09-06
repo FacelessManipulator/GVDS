@@ -141,6 +141,18 @@ public:
     struct_AdminList() = default;
 };
 
+class struct_AdminAccountMap : public hvs::JsonSerializer{
+public:
+    std::string adhvsID;
+    std::string hvsID;
+    std::string hostCenterName;
+public:
+    void serialize_impl() override;
+    void deserialize_impl() override;
+public:
+    struct_AdminAccountMap() = default;
+};
+
 // //apply_info  数据库中结构
 // class struct_apply_info : public hvs::JsonSerializer{
 // public:

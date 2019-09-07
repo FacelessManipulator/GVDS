@@ -33,7 +33,13 @@ target_link_libraries(adcam hvscommon ${HVSCOMMOM_DEPENDS_ON})
 add_executable(aduam aduaccountmap.cc ../client/clientuser/ClientUser_struct.cc)
 target_link_libraries(aduam hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
-install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel adminsignup suggestion adcam aduam
+add_executable(adsearcham adsearchaccountmap.cc ../client/clientuser/ClientUser_struct.cc)
+target_link_libraries(adsearcham hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+add_executable(adseepool adseepool.cc ../client/clientuser/ClientUser_struct.cc)
+target_link_libraries(adseepool hvscommon ${HVSCOMMOM_DEPENDS_ON})
+
+install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel adminsignup suggestion adcam aduam adsearcham adseepool
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

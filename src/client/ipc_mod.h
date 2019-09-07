@@ -63,6 +63,8 @@ namespace hvs{
         std::string dosuggestion(IPCreq &ipcreq);
         std::string doadcam(IPCreq &ipcreq);
         std::string doaduam(IPCreq &ipcreq);
+        std::string doadsearcham(IPCreq &ipcreq);
+        std::string doadseepool(IPCreq &ipcreq);
         
         bool GetZoneInfo(std::string clientID);
 

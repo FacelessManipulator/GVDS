@@ -57,18 +57,23 @@ void UserModelServer::router(Router& router){
     Routes::Post(router, "/users/memberID", Routes::bind(&UserModelServer::getMemberIDRest, this));
 
     //管理员接口
-    //管理员注册
-    Routes::Post(router, "/users/adminregistration", Routes::bind(&UserModelServer::AdminUserRegisterRest, this));
-    //新的用户账户注册接口，写如暂存区
-    Routes::Post(router, "/users/bufferuserregister", Routes::bind(&UserModelServer::bufferUserRegisterRest, this));
-    //展示暂存区内容
-    Routes::Post(router, "/users/listapply", Routes::bind(&UserModelServer::viewbufferListRest, this));
-    //删除apply_info 内容   从暂存区删除
-    Routes::Post(router, "/users/removeapply", Routes::bind(&UserModelServer::removeoneofApplyInfoRest, this));
+    
+    Routes::Post(router, "/users/adminregistration", Routes::bind(&UserModelServer::AdminUserRegisterRest, this)); //管理员注册
+    
+    Routes::Post(router, "/users/bufferuserregister", Routes::bind(&UserModelServer::bufferUserRegisterRest, this)); //新的用户账户注册接口，写如暂存区
+    
+    Routes::Post(router, "/users/listapply", Routes::bind(&UserModelServer::viewbufferListRest, this)); //展示暂存区内容
+    
+    Routes::Post(router, "/users/removeapply", Routes::bind(&UserModelServer::removeoneofApplyInfoRest, this)); //删除apply_info 内容   从暂存区删除
 
-    //管理员 手动建立账户映射接口
-    Routes::Post(router, "/users/adcam", Routes::bind(&UserModelServer::adminCreateAccountMapping, this));
+    Routes::Post(router, "/users/adcam", Routes::bind(&UserModelServer::adminCreateAccountMapping, this)); //管理员 手动建立、删除 账户映射接口
     Routes::Post(router, "/users/aduam", Routes::bind(&UserModelServer::adminDelAccountMapping, this));
+    
+    Routes::Post(router, "/users/adsearcham", Routes::bind(&UserModelServer::adminSearchAccountMapping, this)); // 管理员 查询账户映射信息
+    //管理员查询 各个 超算账户池使用了
+    Routes::Post(router, "/users/adsearchpool", Routes::bind(&UserModelServer::adminSearchAccountPoolRest, this)); 
+    
+    
 
 }
 
@@ -100,7 +105,7 @@ bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &me
     cout << " enter getMemberID "<< endl;
     
     //获取每一个membername 对应的 hvsid
-     std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
 
@@ -1522,6 +1527,109 @@ void UserModelServer::adminDelAccountMapping(const Rest::Request& request, Http:
     }
 
 
+}
+
+//管理员账户映射查询
+//返回 33 权限不足;     1失败; 其他(SCAccount) 成功;
+void UserModelServer::adminSearchAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
+    std::cout << "====== start UserModelServer function: adminSearchAccountMapping ======"<< std::endl;
+    auto info = request.body();
+    std::cout << "info: " << info << std::endl;   //
+
+    struct_AdminAccountMap new_accountmap;
+    new_accountmap.deserialize(info);     //new_accountmap.hostCenterName 并没有用到，只是借用struct_AdminAccountMap 里的 adhvsID 和hvsID字段
+    // 若不是管理员，直接返回
+    if(!validadminidentity(new_accountmap.adhvsID)){
+        response.send(Http::Code::Ok, "33");// 不是管理员
+        return;
+    }
+
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
+
+    auto [pvalue_scuser, error] = f1_dbPtr->get(new_accountmap.hvsID);  //sc_account_info  key:uuid
+    if(error){
+        cout << "get sc_account_info fail."<< endl;
+        response.send(Http::Code::Ok, "1");// 失败
+        return;
+    }
+
+    // SCAccount person;
+    // person.deserialize(*pvalue_scuser);
+    response.send(Http::Code::Ok, *pvalue_scuser);// 成功
+
+}
+
+//管理员查看账户池的情况  
+void UserModelServer::adminSearchAccountPoolRest(const Rest::Request& request, Http::ResponseWriter response){
+    std::cout << "====== start UserModelServer function: adminSearchAccountPoolRest ======"<< std::endl;
+    auto info = request.body();
+    std::cout << "info: " << info << std::endl;  //info 是adhvsID
+
+    std::string data = adminSearchAccountPool(info);
+    response.send(Http::Code::Ok, data);
+}
+
+//管理员 各个 账户池 使用量查询
+//33 权限问题    1 失败  其他(struct_infoAccountPool)成功
+std::string UserModelServer::adminSearchAccountPool(std::string adhvsID){
+    if(!validadminidentity(adhvsID)){
+        return "33";
+    }
+
+    //获取account_info center_information中的超算中心名字，并以该名字作为key去查询 sc_account_info 中的超算池
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
+
+    auto [pvalue, error_0] = f0_dbPtr->get(c_key);   //c_key 在构造函数里
+    if(error_0){
+        cout << "get DB center_information fail" <<endl;
+        return "1";
+    }
+    CenterInfo mycenter;   //超算中心的信息 , 主要使用其中的名字信息
+    mycenter.deserialize(*pvalue);
+
+
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
+
+    struct_infoAccountPool acpool;   //返回给客户端的查询信息
+
+    bool tmp = false;// 防止不进入下面的循环
+    for(auto iter = mycenter.centerID.begin(); iter!= mycenter.centerID.end(); iter++){
+        std::string name = mycenter.centerName[*iter];
+        cout << "-------- name :" << name << endl;
+
+        auto [pv, pv_err] = f1_dbPtr->get(name);
+        if(pv_err){ //!=0
+            cout << "get DB centerName[sc_account_pool] fail" <<endl;
+            return "1"; //失败
+        }
+
+        AccountSCPool center_pool;
+        center_pool.deserialize(*pv);
+        int usecount = 0, unusecount = 0;
+        for(auto in_iter_ua = center_pool.unuse_account.begin(); in_iter_ua != center_pool.unuse_account.end(); in_iter_ua++){
+            unusecount++;
+        }
+        for(auto in_iter_a = center_pool.use_account.begin(); in_iter_a != center_pool.use_account.end(); in_iter_a++){
+            usecount++;
+        }
+
+        acpool.hostCenterName.push_back(name);
+        acpool.usecount[name] = usecount;
+        acpool.unusecount[name] = unusecount;
+        tmp = true;
+    }
+
+    if(!tmp){
+        cout << "no entry the circle" << endl;
+        return "1";// 查询失败
+    }
+    return acpool.serialize();
 }
 
 //验证是否是管理员

@@ -86,6 +86,13 @@ public:
     //管理员添加 、删除账户映射接口
     void adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response);
     void adminDelAccountMapping(const Rest::Request& request, Http::ResponseWriter response);
+
+    //管理员查看指定用户 账户映射情况
+    void adminSearchAccountMapping(const Rest::Request& request, Http::ResponseWriter response);
+    
+    //管理员查看账户池的情况  
+    void adminSearchAccountPoolRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::string adminSearchAccountPool(std::string adhvsID);
     
 public:
     UserModelServer() : ManagerModule("user") {

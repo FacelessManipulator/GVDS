@@ -119,6 +119,18 @@ void struct_AdminAccountMap::deserialize_impl(){
 }
 
 
+void struct_infoAccountPool::serialize_impl(){
+    put("hostCenterName", hostCenterName);
+    put("usecount", usecount);
+    put("unusecount", unusecount);
+}
+
+void struct_infoAccountPool::deserialize_impl(){
+    get("hostCenterName", hostCenterName);
+    get("usecount", usecount);
+    get("unusecount", unusecount);
+}
+
 
 // void struct_apply_info::serialize_impl(){
 //     put("id", id);

@@ -141,6 +141,7 @@ public:
     struct_AdminList() = default;
 };
 
+//管理员账户映射时 前后端json
 class struct_AdminAccountMap : public hvs::JsonSerializer{
 public:
     std::string adhvsID;
@@ -151,6 +152,19 @@ public:
     void deserialize_impl() override;
 public:
     struct_AdminAccountMap() = default;
+};
+
+//管理员 账户池 信息 前后端json
+class struct_infoAccountPool : public hvs::JsonSerializer{
+public:
+    std::vector<std::string> hostCenterName;
+    std::map<std::string, int> usecount;
+    std::map<std::string, int> unusecount;
+public:
+    void serialize_impl() override;
+    void deserialize_impl() override;
+public:
+    struct_infoAccountPool() = default;
 };
 
 // //apply_info  数据库中结构

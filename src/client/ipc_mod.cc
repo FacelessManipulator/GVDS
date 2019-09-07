@@ -158,7 +158,10 @@ void ClientIPC::init() {
                 cout << "doadcam here" <<endl;
                 return doadcam(ipcreq);
             }
-            
+            if(ipcreq.cmdname == "aduam"){
+                cout << "doaduam here" <<endl;
+                return doaduam(ipcreq);
+            }
             
             
 
@@ -1714,4 +1717,34 @@ std::string ClientIPC::doadcam(IPCreq &ipcreq){
     cout << "res :"<< res <<endl;
     return res;
 }
+
+std::string ClientIPC::doaduam(IPCreq &ipcreq){
+    string name = ipcreq.accountName;
+    string centername = ipcreq.centerName;
+
+    //获取 accountName 对应的hvsID
+    std::vector<std::string> vec_name;
+    vec_name.push_back(name);
+    std::vector<std::string> memID;
+    bool tmsuccess = client->user->getMemberID(vec_name, memID);
+    if(!tmsuccess){
+        std::cerr << "未获得对应账户信息，请确认信息正确！" << std::endl;
+        return "未获得对应账户信息，请确认信息正确！";
+    }
+
+    struct_AdminAccountMap new_accountmap;
+    new_accountmap.adhvsID = client->user->getAccountID();
+    cout << "memID[0] :"<< memID[0] <<endl;
+    new_accountmap.hvsID = memID[0];
+    new_accountmap.hostCenterName = centername;
+    string value = new_accountmap.serialize();
+
+    string endpoint = client->get_manager();   
+    string routepath = "/users/aduam";    
+    string res = client->rpc->post_request(endpoint, routepath, value);
+
+    cout << "res :"<< res <<endl;
+    return res;
+}
+
 }//namespace

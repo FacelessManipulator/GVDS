@@ -68,8 +68,7 @@ void UserModelServer::router(Router& router){
 
     //管理员 手动建立账户映射接口
     Routes::Post(router, "/users/adcam", Routes::bind(&UserModelServer::adminCreateAccountMapping, this));
-    
-        
+    Routes::Post(router, "/users/aduam", Routes::bind(&UserModelServer::adminDelAccountMapping, this));
 
 }
 
@@ -814,7 +813,7 @@ bool UserModelServer::SubBuildAccountMapping_old(SCAccount &person, string locat
 }
 */
 bool UserModelServer::RemoveAccountMapping_v2(string accountID){
-     std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
 
@@ -873,17 +872,21 @@ bool UserModelServer::SubRemoveAccountMapping_v2(SCAccount &person, string locat
     //每次for循环做的事
         //修改相应地区账户池，key1添加到unuse中，然后在use中删除该key1
         //删除该用户的映射
-    for(iter = person.centerName.begin(); iter != person.centerName.end(); iter++){
+    for(iter = person.centerName.begin(); iter != person.centerName.end(); ){ //这里不进行iter++
         if(*iter==location){ //每次只删除 指定的location地点
             string name = *iter;
-            string tmp_account = person.localaccount[name]; //是用户在 参数“location”这个地点的账户
-            string tmp_password = person.localpassword[name];
+            string tmp_account = person.localaccount[name]; //是用户在 参数“location”这个地点的账户  //test11
+            string tmp_password = person.localpassword[name];    // 123456
 
             somewhere.unuse_account[tmp_account] = tmp_password;//account  password
-            somewhere.use_account.erase(tmp_account);
+            somewhere.use_account.erase(tmp_account);  //test11
             
-            person.localaccount.erase(tmp_account);// 其实这步不做也行
-            person.localpassword.erase(tmp_account);
+            person.localaccount.erase(name);
+            person.localpassword.erase(name);
+            iter = person.centerName.erase(iter); //删除元素，返回值指向已删除元素的下一个位置
+        }
+        else{
+            iter++;
         }
     }
 
@@ -1454,7 +1457,7 @@ void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Htt
 //客户端需先获取对应用户的hvsID，若获取不到，则有问题；获取到后  发生hvsID 和hostCenterName
 // 返回 0 是成功，1是失败  33是没有权限
 void UserModelServer::adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start UserModelServer function: adminCreateAccountMappingconst ======"<< std::endl;
+    std::cout << "====== start UserModelServer function: adminCreateAccountMapping ======"<< std::endl;
     auto info = request.body();
     std::cout << "info: " << info << std::endl;   //
 
@@ -1480,6 +1483,46 @@ void UserModelServer::adminCreateAccountMapping(const Rest::Request& request, Ht
     }
 }
 
+//返回 33 权限不组 1 失败  0成功
+void UserModelServer::adminDelAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
+    std::cout << "====== start UserModelServer function: adminDelAccountMapping ======"<< std::endl;
+    auto info = request.body();
+    std::cout << "info: " << info << std::endl;   //
+
+    struct_AdminAccountMap new_accountmap;
+    new_accountmap.deserialize(info);
+    // 若不是管理员，直接返回
+    if(!validadminidentity(new_accountmap.adhvsID)){
+        response.send(Http::Code::Ok, "33");// 不是管理员
+        return;
+    }
+
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
+
+    auto [pvalue_scuser, error] = f1_dbPtr->get(new_accountmap.hvsID);  //sc_account_info  key:uuid
+    if(error){
+        cout << "get sc_account_info fail."<< endl;
+        response.send(Http::Code::Ok, "1");// 失败
+        return;
+    }
+
+    SCAccount person;
+    person.deserialize(*pvalue_scuser);
+
+    bool removeflag = SubRemoveAccountMapping_v2(person, new_accountmap.hostCenterName, f1_dbPtr);  //sc_account_pool  key（参数name）:Beijing,Shanghai...
+    if(!removeflag){
+        response.send(Http::Code::Ok, "1");// 失败
+        return;
+    }
+    else{
+        response.send(Http::Code::Ok, "0");// 成功
+        return;
+    }
+
+
+}
 
 //验证是否是管理员
 bool UserModelServer::validadminidentity(string hvsID){

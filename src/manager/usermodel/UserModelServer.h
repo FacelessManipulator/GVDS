@@ -83,8 +83,9 @@ public:
     //验证身份是否为管理员
     bool validadminidentity(std::string hvsID);
 
-    //管理员添加账户映射接口
+    //管理员添加 、删除账户映射接口
     void adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response);
+    void adminDelAccountMapping(const Rest::Request& request, Http::ResponseWriter response);
     
 public:
     UserModelServer() : ManagerModule("user") {

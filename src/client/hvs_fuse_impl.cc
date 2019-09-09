@@ -84,7 +84,8 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
-    return -ENETUNREACH;
+    //return -ENETUNREACH;
+    return -EPERM; // 当找不到远程路径时，说明当前的空间为不存在，返回无权限；
   }
 
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat", rpath);

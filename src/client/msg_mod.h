@@ -48,7 +48,7 @@ public:
 
   int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
   int write_data_async(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
-  std::unique_ptr<ioproxy_rpc_buffer> read_data(
+  std::shared_ptr<ioproxy_rpc_buffer> read_data(
       std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
   // WARNNING: the return result may be empty if request failed
   std::string post_request(const std::string& endpoint, const std::string& url,

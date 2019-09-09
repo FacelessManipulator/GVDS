@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <future>
 #include <atomic>
+#include <functional>
+#include "common/buffer.h"
 #include "io_proxy/rpc_types.h"
 #include "msg/udt_writer.h"
 
@@ -24,19 +26,25 @@ class ClientSession : public Thread {
   void do_read();
   // return the id to be waited
   int write(ioproxy_rpc_buffer& buffer);
+  void registe_handler(int id, std::function<void()> f) {
+    std::lock_guard<std::mutex> lock(session_lock);
+    auto_handler.insert(id);
+    handlers.insert(std::make_pair(id, f));
+  }
   void auto_handle(int id) {
     std::lock_guard<std::mutex> lock(session_lock);
     auto_handler.insert(id);
   }
   
-  std::unique_ptr<ioproxy_rpc_buffer> wait_op(int id);
+  std::shared_ptr<ioproxy_rpc_buffer> wait_op(int id);
+  int block_on_op(int id=-1);
 
  protected:
   std::shared_ptr<UDTWriter> writer;
 
  private:
-  std::unordered_map<int, std::future<std::unique_ptr<ioproxy_rpc_buffer>>> futures;
-  std::unordered_map<int, std::promise<std::unique_ptr<ioproxy_rpc_buffer>>> ready_promises;
+  std::unordered_map<int, std::shared_future<std::shared_ptr<ioproxy_rpc_buffer>>> futures;
+  std::unordered_map<int, std::promise<std::shared_ptr<ioproxy_rpc_buffer>>> ready_promises;
   UDTClient *parent;
   clmdep_msgpack::unpacker unpacker;
   UDTSOCKET socket_;
@@ -44,6 +52,7 @@ class ClientSession : public Thread {
   std::atomic_uint64_t seq_n;
   std::mutex session_lock;
   std::set<int> auto_handler;
+  std::map<int, std::function<void()>> handlers;
   friend class UDTClient;
 };
 }  // namespace hvs

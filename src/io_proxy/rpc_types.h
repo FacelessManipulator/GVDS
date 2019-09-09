@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "common/buffer.h"
+
 namespace hvs {
 struct ioproxy_rpc_statbuffer {
   int error_code;
@@ -109,6 +111,22 @@ struct ioproxy_rpc_buffer {
       oths_nonconst->buf.ptr = nullptr;
       oths_nonconst->buf.size = 0;
       oths_nonconst->finalize_buf = false;
+  };
+  ioproxy_rpc_buffer(Buffer& oths) {
+    // we treat left value copy as move semantic to support rpc
+//    ioproxy_rpc_buffer(std::move(oths));
+      this->is_read = false;
+      this->buf = oths.buf;
+      this->offset = oths.offset;
+      this->read_size = 0;
+      this->path = oths.path;
+      this->finalize_buf = true;
+      this->flags = 0;
+      // we have to provide a const function to rpclib
+      // and we also have to modify oths ptr to move ownership of memory
+      // const_cast is not a good chioce but pass the compile
+      oths.buf.ptr = nullptr;
+      oths.buf.size = 0;
   };
   ioproxy_rpc_buffer(const ioproxy_rpc_buffer&& oths) {
     this->error_code = oths.error_code;

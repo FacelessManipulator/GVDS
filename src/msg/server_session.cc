@@ -38,7 +38,7 @@ void ServerSession::do_read() {
   //   UDT::getsockopt(socket_, 0, UDT_RCVDATA, &rcv_size, &var_size);
   if (UDT::ERROR ==
       (rs = UDT::recv(socket_, unpacker.buffer(), default_buffer_size, 0))) {
-    dout(10) << "WARNING: recv error:" << UDT::getlasterror().getErrorMessage()
+    dout(-1) << "WARNING: recv error:" << UDT::getlasterror().getErrorMessage()
              << dendl;
     // maybe close session?
     m_stop = true;

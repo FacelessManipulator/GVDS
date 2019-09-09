@@ -23,8 +23,8 @@
 #include "client/fuse_mod.h"
 #include "client/graph_mod.h"
 #include "client/msg_mod.h"
-#include "client/zone_mod.h"
 #include "client/queue.h"
+#include "client/zone_mod.h"
 #include "context.h"
 #include "hvs_struct.h"
 #include "io_proxy/rpc_types.h"
@@ -235,27 +235,21 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
   _buffer.fid = fi->fh;
   _buffer.flags = fi->flags;
 
-  if (HVS_FUSE_DATA->fuse_client->use_udt) {
-    // UDT version
-    auto res = HVS_FUSE_DATA->client->rpc->write_data(iop, _buffer);
-    return res;
+  if (HVS_FUSE_DATA->fuse_client->async_mode) {
+    auto buf2q = std::make_shared<hvs::Buffer>(rpath, buf, offset, size);
+    buf2q->dest = iop;
+    HVS_FUSE_DATA->client->queue->queue_buffer(buf2q);
+    return size;
   } else {
-    if (HVS_FUSE_DATA->fuse_client->async_mode) {
-      auto buf2q = std::make_shared<hvs::Buffer>(rpath, buf, offset, size);
-      buf2q->dest = iop;
-      HVS_FUSE_DATA->client->queue->queue_buffer(buf2q);
-      return size;
-    } else {
-      // tcp version
-      auto res = HVS_FUSE_DATA->client->rpc->call(
-          iop, "ioproxy_write", rpath.c_str(), _buffer, size, offset);
-      if (!res.get()) {
-        // timeout exception raised
-        return -ENOENT;
-      }
-      auto retbuf = res->as<int>();
-      return retbuf;
+    // tcp version
+    auto res = HVS_FUSE_DATA->client->rpc->call(
+        iop, "ioproxy_write", rpath.c_str(), _buffer, size, offset);
+    if (!res.get()) {
+      // timeout exception raised
+      return -ENOENT;
     }
+    auto retbuf = res->as<int>();
+    return retbuf;
   }
   // write may failed on remote server
 }
@@ -426,6 +420,8 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
     return -ENOTSUP;
   }
 
+  std::future<bool> blk = HVS_FUSE_DATA->client->queue->block_on_last(siop);
+  blk.get();
   auto res =
       HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename", srpath, drpath);
   if (!res.get()) {

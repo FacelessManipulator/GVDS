@@ -17,4 +17,3 @@ fi
 
 cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/opt/hvs
 cmake --build build -j 4
-

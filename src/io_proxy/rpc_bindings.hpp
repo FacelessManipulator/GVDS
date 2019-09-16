@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <vector>
 #include <limits.h>
+#include "common/buffer.h"
 
 namespace hvs {
     inline std::string hvsfs_fullpath(const std::string& path_rel) {
@@ -72,7 +73,7 @@ namespace hvs {
         op->offset = offset;
         op->fid = fd;
         static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
-        if (op->error_code >= 0) {
+        if (op->error_code == 0) {
             ioproxy_rpc_buffer res(pathname.c_str(), op->release_obuf(), offset, size);
             res.finalize_buf = true;
             res.error_code = static_cast<int>(op->error_code);
@@ -97,11 +98,26 @@ namespace hvs {
         return op->error_code;
     }
 
+    inline int iop_write(const hvs::Buffer obuf){
+        std::string fullpath = hvsfs_fullpath(obuf.path);
+        auto op = std::make_shared<IOProxyDataOP>();
+        op->id = 2;
+        op->operation = IOProxyDataOP::write;
+        op->path = fullpath.c_str();
+        op->type = IO_PROXY_DATA;
+        op->size = static_cast<size_t>(obuf.buf.size);
+        op->offset = obuf.offset;
+        op->ibuf = obuf.buf.ptr;
+        static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
+        return op->error_code;
+    }
+
     inline int ioproxy_open(const std::string pathname, int flags){
         std::string fullpath = hvsfs_fullpath(pathname);
         std::cout << "open: " << fullpath.c_str() << std::endl;
-        // TODO: may have some secure issue if we default open an file in 0655
-        int fd = static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->fdm.open(fullpath, flags | O_RDWR, 0655);
+        // TODO: may have some secure issue if we default open an file in 0644
+        // 创建的文件的默认属性：rw-r--r--
+        int fd = static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->fdm.open(fullpath, flags | O_RDWR, 0644);
         return fd;
     }
 
@@ -319,6 +335,7 @@ namespace hvs {
         rpc_server->bind("ioproxy_stat", ioproxy_stat);
         rpc_server->bind("ioproxy_read", ioproxy_read);
         rpc_server->bind("ioproxy_write", ioproxy_write);
+        rpc_server->bind("iop_write", iop_write);
         rpc_server->bind("ioproxy_open", ioproxy_open);
         rpc_server->bind("ioproxy_close", ioproxy_close);
         rpc_server->bind("ioproxy_opendir", ioproxy_opendir);

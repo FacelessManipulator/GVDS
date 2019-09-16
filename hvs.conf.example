@@ -66,4 +66,7 @@ client = {
     data_port_begin = 9096;
     data_port_end = 9150;
     data_buffer = 1024000;
+    max_queue = 1500;
+    onlink = 1024;
+    async = true;
 };

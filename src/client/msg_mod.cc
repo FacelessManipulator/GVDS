@@ -14,23 +14,27 @@ void ClientRpc::stop() {
 }
 
 std::shared_ptr<RpcClient> ClientRpc::rpc_channel(
-    std::shared_ptr<IOProxyNode> node, bool reconnect) {
+    std::shared_ptr<IOProxyNode> node, bool reconnect, int channel_id) {
   // Found, already established connection, maybe out-of-date.
   // Currently we not mantain the exists connection.
+  string channel_key(node->uuid);
+  channel_key.append(to_string(channel_id));
   lock_guard<mutex> lock(rpc_mutex);
-  auto rpcc = rpc_clients.find(node->uuid);
+  auto rpcc = rpc_clients.find(channel_key);
 
   if (rpcc != rpc_clients.end()) {
     auto& rpc_client = rpcc->second;
     if(reconnect) {
-      rpc_clients[node->uuid].reset(new RpcClient(node->ip, node->rpc_port));
+      dout(-1) << "create new rpc client" << dendl;
+      auto newClient = make_shared<RpcClient>(node->ip, node->rpc_port);
+      rpc_clients[channel_key].swap(newClient);
     }
     return rpc_client;
   }
   // Just try create it
   // may cost a lot of moment
   auto rpcp = make_shared<RpcClient>(node->ip, node->rpc_port);
-  rpc_clients.try_emplace(node->uuid, rpcp);
+  rpc_clients.try_emplace(channel_key, rpcp);
   return rpcp;
 }
 

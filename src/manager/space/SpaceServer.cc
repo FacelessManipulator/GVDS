@@ -351,6 +351,7 @@ namespace hvs{
         response.send(Http::Code::Ok, json_encode(result)); //result;
     }
 
+    // 容量分配的粒度为 GB
     int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {
         if (newSpaceSize < 0) {
             return -1;
@@ -366,9 +367,13 @@ namespace hvs{
         std::string space_value = *vp;
         spacejson.deserialize(space_value);
         //查看本机当前空间占用的数据的文件夹的大小，默认为2GB TODO: 查询本本机空间节点占用容量
-        if (newSpaceSize <= 2) {
+        int64_t realsize = (SpaceUsage(spaceID));
+        int64_t realsizetoGB =  (realsize/(1000*1000)+1)/1; // 不够1GB向上取整，获取最终值，容量分配的粒度为GB
+
+        if (newSpaceSize <= realsizetoGB) {
             return -1;
         }
+
         if(newSpaceSize > spacejson.spaceSize){
             int ret = SpaceSizeAdd(spacejson.storageSrcID, newSpaceSize-spacejson.spaceSize);
             if(ret == 0){
@@ -432,7 +437,7 @@ namespace hvs{
         return 0;
     }
 
-
+    // 注意此接口查找的 文件的大小 返回的单位 以 KB 为单位返回，121000表示 121000KB 121MB 注意此处 KB 与 KiB的区别；
     void SpaceServer::SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response){
         dout(10) << "====== start SpaceServer function: SpaceUsageCheckRest ======"<< dendl;
         auto info = request.body();
@@ -456,14 +461,12 @@ namespace hvs{
 
     std::vector<int64_t> SpaceServer::SpaceUsageCheck(std::vector<std::string> spaceID){
         std::vector<int64_t> res;
-        string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
-        dout(10) <<"localstoragepath: " << localstoragepath <<dendl;
+        //string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
 
-        std::vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
-        GetSpacePosition(result, spaceID);
+        std::vector<Space> result; //里面存储每个空间的string信息 需要反序列化
+        GetSpacePosition(result, std::move(spaceID));
 
-        //+++++++
-        //---提前读取center_information信息----
+        //---提前读取center_information信息，为后面查找各中心信息做准备----
         std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
             hvs::CouchbaseDatastore(bucket_account_info));
         f0_dbPtr->init();
@@ -475,7 +478,6 @@ namespace hvs{
         }
         CenterInfo mycenter;
         mycenter.deserialize(*pcenter_value);
-        vector<string>::iterator c_iter;//???
         //--------------------
         Http::Client client;
         char url[256];
@@ -483,12 +485,12 @@ namespace hvs{
         auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
         client.init(opts);
         //----------------------
-        for (auto space_iter : result){ //for其实没有用，因为vector只有一个spaceID，即每次只删除一个spaceID
+        for (const auto &space_iter : result){ //对每个空间进行查询
             Space spacemeta = space_iter;
 
-            string spacepath = localstoragepath + "/" + spacemeta.spacePath;
+            // string spacepath = localstoragepath + "/" + spacemeta.spacePath;
+            string spacepath = spacemeta.spacePath;  //TODO：每个空间的local spacepath 各异，都不是一样的，具体路径在配置文件中配置；
 
-            //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
             if(ManagerID == spacemeta.hostCenterID){ //本地
                 //调本地
                 int64_t spaceuse = SpaceUsage(spacepath);
@@ -508,7 +510,6 @@ namespace hvs{
                 auto fu = prom.get_future();
                 response.then(
                     [&](Http::Response resp) {
-                    //dout(-1) << "Manager Info: " << res.body() << dendl;
                     dout(10) << "Response code = " << resp.code() << dendl;
                     auto body = resp.body();
                     int64_t spaceuseage;
@@ -517,37 +518,37 @@ namespace hvs{
                     prom.set_value(true);
                 },
                 Async::IgnoreException);
-
                 //阻塞
                 fu.get();
                 dout(10) << "fu.get()"<<dendl;
             }
         }
-
-        //++++++++
         client.shutdown();
-        //++++++++
-        //不需要记录数据库
+        //不需要记录数据库，查询容量完毕；
         return res;
     }
 
     void SpaceServer::SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response){
         dout(10) << "====== start SpaceServer function: SpaceUsageRest ======"<< dendl;
         std::string spacepath = request.body();
-
+        std::cout << "SpacePath:" << spacepath << std::endl;
         int64_t result_i = SpaceUsage(spacepath);
         std::string result = json_encode(result_i);
         response.send(Http::Code::Ok, result); //point
         dout(10) << "====== end SpaceServer function: SpaceUsageRest ======"<< dendl;
     }
 
-    int64_t SpaceServer::SpaceUsage(std::string spacepath){
+    int64_t SpaceServer::SpaceUsage(std::string spacepath){ // 检测出来的文件的大小以KB为单位返回；注意此接口中spacepath为相对本机的路径，比如 /tmp 就是 本机的 /tmp目录；
+        string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
+        dout(10) <<"localstoragepath: " << localstoragepath <<dendl;
+        spacepath = localstoragepath + "/" + spacepath;  // 获取全局根路径
+        std::cout <<"localstoragepath-spacepath: " << spacepath << std::endl;
         int cmdsize = 150; // 默认命令的总长度不超过150个字符
         int bufsize = 200;
         char cmd[cmdsize];
         char buf[bufsize];
-        memset(cmd, '\0', cmdsize);
-        memset(buf, '\0', bufsize);
+        memset(cmd, '\0', static_cast<size_t>(cmdsize));
+        memset(buf, '\0', static_cast<size_t>(bufsize));
         if(sprintf(cmd, "du -h -d 0 %s", spacepath.c_str()) <0 ){
             perror("sprintf()");
             return -1;
@@ -598,6 +599,7 @@ namespace hvs{
         response.send(Http::Code::Ok, json_encode(result));
         dout(10) << "====== end ZoneServer function: SpaceSizeChangeApplyRest ======"<< dendl;
     }
+
     int SpaceServer::SpaceSizeChangeApply(std::string apply)
     {
         std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);

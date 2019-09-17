@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
         ipcClient.stop();
 
     } catch (std::exception &e) {
-        std::cout << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 
 

@@ -1496,7 +1496,7 @@ std::string ClientIPC::dousercancel(IPCreq &ipcreq){
 
     string username = ipcreq.accountName; //账户名
     if(username != client->user->getAccountName() && !client->user->getAccountName().empty()){ //用户没有登录的时候是 false
-        return "client_input_error";
+        return "-2";
     }
     
     FEAuthModifygroupinfo FEgroup;

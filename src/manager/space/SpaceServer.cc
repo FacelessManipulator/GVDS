@@ -42,14 +42,22 @@ namespace hvs{
         {
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
+            if(err != 0){
+                std::cout << "GetSpacePosition-数据库错误：(可重试)" << err << std::endl;
+                return;
+            }
             std::string tmps_value = *vs;
             tmps.deserialize(tmps_value);
 
-            //TODO:资源聚合模块查询名字
+            // TODO:资源聚合模块查询名字
             // 已补充资源聚合模块查询接口
             StorageResource storage;
             std::shared_ptr<hvs::Datastore> storPtr =hvs::DatastoreFactory::create_datastore(storagebucket, hvs::DatastoreType::couchbase);
             auto [vp, serr] = storPtr->get(tmps.storageSrcID);
+            if(serr != 0){
+                std::cout << "GetSpacePosition-数据库错误：（可重试）" << serr << std::endl;
+                return;
+            }
             std::string stor_value = *vp;
             storage.deserialize(stor_value);
             result.emplace_back(tmps);
@@ -178,6 +186,10 @@ namespace hvs{
             query.insert(pos2, storageSrcName);
         }
         auto [vp, err] = storagePtr->n1ql(query);
+        if(err != 0){
+            std::cout << "GetSpaceCreatePath-数据库错误(可重试)：" << err << std::endl;
+            return {"", ""};
+        }
         if(vp->size() == 0){
             dout(10) << "GetSpaceCreatePath: 未查找到制定的存储ID，根据空间名和数据中心的名字！" << dendl;
             return {"", ""};
@@ -231,6 +243,10 @@ namespace hvs{
         query.erase(pos3, 12);
         query.insert(pos3, tmpm.spacePath);
         auto [vp, err] = spacePtr->n1ql(query);
+        if(err != 0){
+            std::cout << "SpaceCheck-数据库错误(可重试)：" << err << std::endl;
+            return "false";
+        }
         if (vp->size() != 1) return "false";
         else
         {
@@ -264,6 +280,10 @@ namespace hvs{
             std::shared_ptr<hvs::Datastore> spacePtr =hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase);
             std::string tmps_key = *m;
             auto[vs, err] = spacePtr->get(tmps_key);
+            if(err != 0){
+                std::cout << "SpaceDelete-数据库错误(可重试)：" << err << std::endl;
+                return 0;
+            }
             std::string tmps_value = *vs;
             tmps.deserialize(tmps_value);
             tmps.status = false;

@@ -608,7 +608,7 @@ namespace hvs{
     int64_t SpaceServer::SpaceUsage(std::string spacepath){ // 检测出来的文件的大小以KB为单位返回；注意此接口中spacepath为相对本机的路径，比如 /tmp 就是 本机的 /tmp目录；
         string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
         dout(10) <<"localstoragepath: " << localstoragepath <<dendl;
-        spacepath = localstoragepath + "/" + spacepath;  // 获取全局根路径
+        spacepath = localstoragepath + spacepath;  // 获取全局根路径
         dout(10) <<"localstoragepath-spacepath: " << spacepath << dendl;
         int cmdsize = 150; // 默认命令的总长度不超过150个字符
         int bufsize = 200;

@@ -93,7 +93,7 @@ int main(int argc, char* argv[]){
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             // 客户端输出服务端发送来的消息
             std::string ipcresult (msg.body(), msg.body_length());
-            if(ipcresult == "client_input_error"){
+            if(ipcresult == "-2"){
                 std::cout << "账户名输入错误" << std::endl;
             }else{
                 std::cout << ipcresult << std::endl;
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]){
         ipcClient.stop();
 
     } catch (std::exception &e) {
-        std::cout << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 
 }

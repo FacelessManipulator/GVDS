@@ -110,9 +110,9 @@ int main(int argc, char* argv[]){
         //fu.get(); // 阻塞等待，客户端命令返回；
 
         // TODO: 添加延迟，防止命令长时间等待
-        auto status = fu.wait_for(std::chrono::seconds(5));
+        auto status = fu.wait_for(std::chrono::seconds(20));
         if(status == std::future_status::timeout){
-            std::cout << "命令行执行5s，超时；请确认当前fuse client进程正在运行！" << std::endl;
+            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
             exit(-1);
         }else if(status == std::future_status::ready){
             ipcClient.stop();

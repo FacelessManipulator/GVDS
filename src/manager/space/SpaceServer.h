@@ -85,7 +85,8 @@ private:
     std::string spacebucket;
     std::string bucket_account_info;
     std::string localstoragepath; // 本机存储集群路径
-    std::string  applybucket;
+    std::string applybucket;
+    std::string space_prefix = "SPACE-";
 };
 
 //std::string md5(std::string strPlain);

@@ -88,7 +88,7 @@ int main(int argc, char* argv[]){
                 json_decode(ipcres, result);
                 for(int i = 0; i < spacenames.size(); i++)
                 {
-                    std::cout << "空间名称：" << spacenames[i] << "空间已用容量：" << result[i] <<std::endl;
+                    std::cout << "空间名称：" << spacenames[i] << "空间已用容量：" << result[i] << "K" <<std::endl;
                 }
             }
             prom.set_value(true);

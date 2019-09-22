@@ -115,8 +115,9 @@ namespace hvs {
     inline int ioproxy_open(const std::string pathname, int flags){
         std::string fullpath = hvsfs_fullpath(pathname);
         std::cout << "open: " << fullpath.c_str() << std::endl;
-        // TODO: may have some secure issue if we default open an file in 0655
-        int fd = static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->fdm.open(fullpath, flags | O_RDWR, 0655);
+        // TODO: may have some secure issue if we default open an file in 0644
+        // 创建的文件的默认属性：rw-r--r--
+        int fd = static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->fdm.open(fullpath, flags | O_RDWR, 0644);
         return fd;
     }
 

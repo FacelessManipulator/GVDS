@@ -178,7 +178,7 @@ int sync_io::srmdir(const char *path) {
 }
 
 int sync_io::screate(const char *path, mode_t mode) {
-    int ret = iop->fdm.create(path, 0655);
+    int ret = iop->fdm.create(path, mode); // 默认创建文件权限为 0644 rw-r--r--
     if (ret < 0){
         perror("sync_io create");
     }

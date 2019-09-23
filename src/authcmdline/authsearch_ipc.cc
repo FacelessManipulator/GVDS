@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
     std::string cmdname = argv[0];
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("账户登录");
+        po::options_description command("权限查询");
         command.add_options()
                 ("user,u", po::value<std::string>(), "账户名")
                 ;
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
         ipcClient.stop();
 
     } catch (std::exception &e) {
-        std::cout << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 
 

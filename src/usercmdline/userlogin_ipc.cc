@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
         po::options_description command("账户登录");
         command.add_options()
                 ("user,u", po::value<std::string>(), "账户名")
-                ("pass", po::value<std::string>(), "账户密码")
+                ("pass,p", po::value<std::string>(), "账户密码")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };

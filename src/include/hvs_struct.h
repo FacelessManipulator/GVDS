@@ -130,15 +130,18 @@ struct SpaceRequest : public hvs::JsonSerializer {
   enum SpaceRequestType {
     rename,
     sizeChange,
+    usage,
   };
 
  public:
   SpaceRequestType type;
   std::string spaceID;       //空间ID
+  std::vector<std::string> spaceIDs;
   int64_t newSpaceSize;      //空间容量
   std::string newSpaceName;  //区域名
   void serialize_impl() {
     put("UUID", spaceID);
+    put("UUIDs", spaceIDs);
     int t = type;
     put("type", t);
     put("newSpaceSize", newSpaceSize);
@@ -147,6 +150,7 @@ struct SpaceRequest : public hvs::JsonSerializer {
 
   void deserialize_impl() {
     get("UUID", spaceID);
+    get("UUIDs", spaceIDs);
     int t;
     get("type", t);
     type = static_cast<SpaceRequestType>(t);
@@ -296,5 +300,40 @@ struct ZoneRequest : public hvs::JsonSerializer {
     get("spacePathInfo", spacePathInfo);
   }
 };
+
+//apply_info  数据库中结构
+class struct_apply_info : public hvs::JsonSerializer{
+public:
+    std::string id;
+    std::string data;
+public:
+    void serialize_impl(){
+      put("id", id);
+      put("data", data);
+    } 
+    void deserialize_impl(){
+      get("id", id);
+      get("data", data);
+    }
+public:
+    struct_apply_info() = default;
+};
+
+//apply_info 的string vector
+class struct_apply_content : public hvs::JsonSerializer{
+public:
+    std::vector<std::string> applycontent;
+public:
+    void serialize_impl(){
+      put("applycontent", applycontent);
+    } 
+    void deserialize_impl(){
+      get("applycontent", applycontent);
+    }
+public:
+    struct_apply_content() = default;
+};
+
+
 
 }  // namespace hvs

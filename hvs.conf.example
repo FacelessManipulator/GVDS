@@ -1,6 +1,6 @@
 ip = "127.0.0.1";
 center_id = "1";
-manager_addr = "127.0.0.1";
+manager_addr = "192.168.3.44";
 manager_port = "9090";
 log = {
     path = "/opt/hvs/var/log/hvs.log";
@@ -14,6 +14,7 @@ bucket = {
     auth_info = "auth_info";
     zone_info = "zone_info";
     space_info = "space_info";
+    apply_info = "test";
 };
 
 // only ioproxy node need these settings

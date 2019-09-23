@@ -1,65 +1,66 @@
+// 管理员 各个 账户池 使用量查询
 //
-// Created by sy on 5/30/19.
+// Created by sy on 09/06/19.
 // 北航系统结构所-存储组
 //
 
 #include <iostream>
-#include "hvs_struct.h"
 #include <future>
 #include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
 
 // TODO: 添加的新头文件
-#include "client/ipc_struct.h"
+#include "client/clientuser/ClientUser_struct.h"
 #include "ipc/IPCClient.h"
+#include "client/ipc_struct.h"
 
+
+
+using namespace Pistache;
 using namespace hvs;
-
+//bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
- * zonecancel 命令行客户端
+ * zonerename 命令行客户端
  */
-
+//std::unordered_map<std::string, std::string> zonemap;
 
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[9] = {const_cast<char *>("zonecancel"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("34779"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000")};
-    char* demo2[2] = {const_cast<char *>("zonecancel"), const_cast<char *>("--help")};
+    // 1、用户登录
+    char* demo1[9] = {const_cast<char *>("adseepool")};
+    char* demo2[2] = {const_cast<char *>("adseepool"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
-    std::string zonename ;//= "syremotezone"; // 空间名称
-    std::string zoneuuid;
+    
 
     // TODO: 获取命令行信息
-    CmdLineProxy commandline(argc, argv);
+    // CmdLineProxy commandline(9, demo1);
+     CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
+    //std::string cmdname = "userlogin_ipc";
     std::string cmdname = argv[0];
+
+
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("区域注销模块");
+        po::options_description command("管理员查询各个账户池使用量情况");
         command.add_options()
-                ("zonename,z", po::value<std::string>(), "区域名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
-        if (sp_variables_map->count("zonename"))
-        {
-            zonename = (*sp_variables_map)["zonename"].as<std::string>();
-        }
     };
     commandline.start(); //开始解析命令行参数
 
     //TODO :判断是否有参数，如果没有，则报错
-    if (commandline.argc <= 1) {
-        std::cerr << "请输入命令参数！" << std::endl;
-        commandline.print_options();
-        exit(-1);
-    }
-
+    // if (commandline.argc <= 1) {
+    //     std::cerr << "请输入命令参数！" << std::endl;
+    //     commandline.print_options();
+    //     exit(-1);
+    // }
+    
     try{
         std::promise<bool> prom;
         auto fu = prom.get_future();
@@ -67,34 +68,37 @@ int main(int argc, char* argv[]){
         IPCClient ipcClient("127.0.0.1", 6666);
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             // 客户端输出服务端发送来的消息
-//            char tmp[IPCMessage::max_body_length] = {0};
-//            std::memcpy(tmp, msg.body(), msg.body_length());
             std::string ipcresult (msg.body(), msg.body_length());
-            std::cout << ipcresult << std::endl;
+            if(ipcresult == "1"){
+                std::cout << "账户池信息查询失败" << std::endl;
+            }
+            else if(ipcresult == "33"){
+                std::cout << "权限不足：无法查询账户池信息" << std::endl;
+            }
+            else{
+                std::cout << ipcresult << std::endl;   //正常信息
+            }
+        
             prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
         std::cout << "正在执行命令..." << std::endl;
 
-        // TODO: 构造请求结构体，并发送；
+
+         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "zonecancel";
-        ipcreq.zonename = zonename; // 空间名称
+        ipcreq.cmdname = "adseepool";
+       
+      
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        // TODO: 添加延迟，防止命令长时间等待
-        auto status = fu.wait_for(std::chrono::seconds(20));
-        if(status == std::future_status::timeout){
-            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
-            exit(-1);
-        }else if(status == std::future_status::ready){
-            ipcClient.stop();
-        }
+        fu.get();              // 等待客户端返回结果
+        // sleep(1); // TODO: 等待客户端返回结果
+        ipcClient.stop();
 
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;
     }
-    return 0;
 }

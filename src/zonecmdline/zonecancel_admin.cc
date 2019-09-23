@@ -14,23 +14,24 @@
 #include "ipc/IPCClient.h"
 
 using namespace hvs;
+
 /*
- * zonesharecancel 命令行客户端
+ * zonecancel 命令行客户端
  */
 
 
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[13] = {const_cast<char *>("zonesharecancel"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
+    char* demo1[9] = {const_cast<char *>("zonecancel"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
                        const_cast<char *>("-p"), const_cast<char *>("34779"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000"),
-                       const_cast<char *>("--member"), const_cast<char *>("111"), const_cast<char *>("--member"), const_cast<char *>("222")};
-    char* demo2[2] = {const_cast<char *>("zonesharecancel"), const_cast<char *>("--help")};
+                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000")};
+    char* demo2[2] = {const_cast<char *>("zonecancel"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
     std::string zonename ;//= "syremotezone"; // 空间名称
-    std::vector<std::string> memName;
+    std::string zoneuuid;
+    std::string ownername;
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
@@ -38,22 +39,22 @@ int main(int argc, char* argv[]){
     std::string cmdname = argv[0];
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("区域共享取消模块");
+        po::options_description command("区域注销模块");
         command.add_options()
+                ("ownername,w", po::value<std::string>(), "主人账户名")  
                 ("zonename,z", po::value<std::string>(), "区域名称")
-                ("member,m", po::value<std::vector<std::string>>(), "区域删除的成员")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
+        if (sp_variables_map->count("ownername"))
+        {
+            ownername = (*sp_variables_map)["ownername"].as<std::string>();
+        }
         if (sp_variables_map->count("zonename"))
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
-        }
-        if (sp_variables_map->count("member"))
-        {
-            memName = (*sp_variables_map)["member"].as<std::vector<std::string>>();
         }
     };
     commandline.start(); //开始解析命令行参数
@@ -83,9 +84,9 @@ int main(int argc, char* argv[]){
 
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "zonesharecancel";
+        ipcreq.cmdname = "zonecancel_admin";
+        ipcreq.ownName = ownername;
         ipcreq.zonename = zonename; // 空间名称
-        ipcreq.memName = memName;
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());

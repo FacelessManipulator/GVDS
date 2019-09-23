@@ -33,8 +33,8 @@ int main(int argc, char* argv[]){
     // TODO: 提前准备的数据
     std::string zonename ;//= "syremotezone"; 
     //std::string zoneuuid;
-    std::string ownID;// = "202"; 
-    std::vector<std::string> memID;// memberID
+    std::string ownername;// = "202"; 
+    std::vector<std::string> memname;// memberID
     Space spaceurl;
 
 
@@ -48,12 +48,12 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("管理员区域添加模块");
         command.add_options()
-                ("zonename", po::value<std::string>(), "区域名称")
-                ("id", po::value<std::string>(), "主人ID")
-                ("member", po::value<std::vector<std::string>>(), "区域成员")
-                ("center", po::value<std::string>(), "超算名称")
-                ("storage", po::value<std::string>(), "存储资源名称")
-                ("path", po::value<std::string>(), "空间路径")
+                ("zonename,z", po::value<std::string>(), "区域名称")
+                ("ownername,w", po::value<std::string>(), "主人账户名") 
+                ("member,m", po::value<std::vector<std::string>>(), "区域成员")
+                ("center,c", po::value<std::string>(), "超算名称")
+                ("storage,s", po::value<std::string>(), "存储资源名称")
+                ("path,p", po::value<std::string>(), "空间路径")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -63,13 +63,13 @@ int main(int argc, char* argv[]){
         {
             zonename = (*sp_variables_map)["zonename"].as<std::string>();
         }
-        if (sp_variables_map->count("id"))
+        if (sp_variables_map->count("ownername"))
         {
-            ownID = (*sp_variables_map)["id"].as<std::string>();
+            ownername = (*sp_variables_map)["ownername"].as<std::string>();
         }
         if (sp_variables_map->count("member"))
         {
-            memID = (*sp_variables_map)["member"].as<std::vector<std::string>>();
+            memname = (*sp_variables_map)["member"].as<std::vector<std::string>>();
         }
         if (sp_variables_map->count("center"))
         {
@@ -92,7 +92,11 @@ int main(int argc, char* argv[]){
         commandline.print_options();
         exit(-1);
     }
-
+    if (!CmdLineProxy::is_validate(zonename)) {
+        std::cerr << "包含非法字符" << std::endl;
+        commandline.print_options();
+        exit(-1);        
+    }
     try{
         std::promise<bool> prom;
         auto fu = prom.get_future();
@@ -111,18 +115,24 @@ int main(int argc, char* argv[]){
 
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "zoneadd";
+        ipcreq.cmdname = "zoneadd_admin";
         ipcreq.zonename = zonename; // 空间名称
-        ipcreq.ownID = ownID; // 用户ID
-        ipcreq.memID = memID;
+        ipcreq.ownName = ownername; // 用户ID
+        ipcreq.memName = memname;
         ipcreq.spaceurl = spaceurl.serialize();
 
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        fu.get(); // TODO: 等待客户端返回结果
-        ipcClient.stop();
+        // TODO: 添加延迟，防止命令长时间等待
+        auto status = fu.wait_for(std::chrono::seconds(20));
+        if(status == std::future_status::timeout){
+            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
+            exit(-1);
+        }else if(status == std::future_status::ready){
+            ipcClient.stop();
+        }
 
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;

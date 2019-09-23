@@ -5,9 +5,16 @@
 #include "context.h"
 #include "datastore/datastore.h"
 
+#include <pistache/client.h>
+#include <pistache/http.h>
+#include <pistache/net.h>
+#include <atomic>
+
 #include "manager/zone/ZoneServer.h"
 #include "manager/authmodel/AuthModelServer.h"
+#include "manager/usermodel/UserModelServer.h"
 #include "manager/usermodel/Account.h"
+#include "common/centerinfo.h"
 #include "common/json.h"
 
 bool isSubset(std::vector<std::string> v1, std::vector<std::string> v2)
@@ -62,8 +69,12 @@ namespace hvs{
     Routes::Post(router, "/zone/info", Routes::bind(&ZoneServer::GetZoneInfoRest, this));
     Routes::Post(router, "/zone/share", Routes::bind(&ZoneServer::ZoneShareRest, this));
     Routes::Post(router, "/zone/sharecancel", Routes::bind(&ZoneServer::ZoneShareCancelRest, this));
+    Routes::Post(router, "/zone/registerapply", Routes::bind(&ZoneServer::ZoneRegisterApplyRest, this));
+    Routes::Post(router, "/zone/registercheck", Routes::bind(&ZoneServer::ZoneRegisterCheckRest, this));
     Routes::Post(router, "/zone/register", Routes::bind(&ZoneServer::ZoneRegisterRest, this));
     Routes::Post(router, "/zone/cancel", Routes::bind(&ZoneServer::ZoneCancelRest, this));
+    Routes::Post(router, "/zone/mapaddapply", Routes::bind(&ZoneServer::MapAddApplyRest, this));
+    Routes::Post(router, "/zone/mapaddcheck", Routes::bind(&ZoneServer::MapAddCheckRest, this));
     Routes::Post(router, "/zone/mapadd", Routes::bind(&ZoneServer::MapAddRest, this));
     Routes::Post(router, "/zone/mapdeduct", Routes::bind(&ZoneServer::MapDeductRest, this));
     Routes::Post(router, "/zone/add", Routes::bind(&ZoneServer::ZoneAddRest, this));
@@ -71,7 +82,7 @@ namespace hvs{
 
   //区域重命名
   void ZoneServer::ZoneRenameRest(const Rest::Request& request, Http::ResponseWriter response){
-      std::cout << "====== start ZoneServer function: ZoneRenameRest ======"<< std::endl;
+      dout(10) << "====== start ZoneServer function: ZoneRenameRest ======"<< dendl;
       auto info = request.body();
 
       ZoneRequest req;
@@ -80,35 +91,52 @@ namespace hvs{
       std::string ownerID = req.ownerID;
       std::string newZoneName = req.newZoneName;
 
-      std::cout << "info: " << info << std::endl;
-      std::cout << "newZoneName: " << newZoneName << std::endl;
-
       int result = ZoneRename(zoneID, ownerID, newZoneName);
       response.send(Http::Code::Ok, json_encode(result));
-      std::cout << "====== end ZoneServer function: ZoneRenameRest ======"<< std::endl;
+      dout(10) << "====== end ZoneServer function: ZoneRenameRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneRename(std::string zoneID, std::string ownerID, std::string newZoneName)
   {
       Zone tmp;
-      std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+      std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
       zonePtr->init();
-      auto [vp, err] = zonePtr->get(zoneID);
+      auto [vp, err] = zonePtr->get(zone_prefix + zoneID);
+      if (err)
+      {
+        return EAGAIN;
+      }
       std::string tmp_value = *vp;
       tmp.deserialize(tmp_value);
-      if(tmp.ownerID == ownerID)
+      UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+      if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
       {
+        if (newZoneName.size() > 50)
+        {
+          newZoneName = newZoneName.substr(50);
+        }
+        char query[256];
+        snprintf(query, 256, 
+        "select UUID, name, owner, members, spaces from `%s` where owner = \"%s\" and name = \"%s\" and META().id like '%s%%'", 
+        zonebucket.c_str(), ownerID.c_str(), newZoneName.c_str(), zone_prefix.c_str());
+        //std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
+        auto zonePtr2 = static_cast<CouchbaseDatastore*>(zonePtr.get());
+        auto [vp, err] = zonePtr2->n1ql(string(query));
+        if(vp->size() != 0) 
+        {
+          return EINVAL;
+        }
         tmp.zoneName = std::move(newZoneName);
         tmp.contains_spaceinfo = false;
-        if(zonePtr->set(zoneID, tmp.serialize()) != 0) return errno = EAGAIN;//插入报错
+        if(zonePtr->set(zone_prefix + zoneID, tmp.serialize()) != 0) return EAGAIN;//插入报错
         else return 0;
       }
-      else return errno = EACCES;
+      else return EACCES;
    }
 
   //区域定位
   void ZoneServer::GetZoneLocateInfoRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: GetZoneLocateInfoRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: GetZoneLocateInfoRest ======"<< dendl;
     auto info = request.body();
 
     ZoneRequest req;
@@ -127,18 +155,23 @@ namespace hvs{
       result = "fail";
     }
     response.send(Http::Code::Ok, result);
-    std::cout << "====== end ZoneServer function: GetZoneLocateInfoRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: GetZoneLocateInfoRest ======"<< dendl;
   }
 
   bool ZoneServer::GetZoneLocateInfo(std::vector<Space> &result, std::string clientID, std::string zoneID, std::vector<std::string> spaceID)
   {
       Zone tmp;
-      std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+      std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
       zonePtr->init();
-      auto [vz, err] = zonePtr->get(zoneID);
+      auto [vz, err] = zonePtr->get(zone_prefix + zoneID);
+      if (err)
+      {
+        return false;
+      }
       std::string tmp_value = *vz;
       tmp.deserialize(tmp_value);
-      if(clientID == tmp.ownerID||std::find(tmp.memberID.begin(), tmp.memberID.end(), clientID) != tmp.memberID.end())//clientID是zone的成员或主人
+      UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+      if(clientID == tmp.ownerID||std::find(tmp.memberID.begin(), tmp.memberID.end(), clientID) != tmp.memberID.end() || p_usermodel->validadminidentity(clientID))//clientID是zone的成员或主人
       {
           if(isSubset(tmp.spaceID, spaceID))
           {
@@ -172,24 +205,34 @@ namespace hvs{
   bool ZoneServer::GetZoneInfo(std::vector<Zone> &result_z, std::string clientID)
   {
     //查找是owner的区域
-    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\";";
-    int pos = query.find("ownerID");
-    query.erase(pos, 7);
-    query.insert(pos, clientID);
-    std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore(accountbucket, hvs::DatastoreType::couchbase);
-    std::shared_ptr<hvs::Datastore> authPtr = hvs::DatastoreFactory::create_datastore(authbucket, hvs::DatastoreType::couchbase);
-    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
-    auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
-    auto [vp, err] = zonePtr->n1ql(query);
+    char query[256];
+    snprintf(query, 256, 
+    "select UUID, name, owner, members, spaces from `%s` where owner = \"%s\" and META().id like '%s%%'", 
+    zonebucket.c_str(), clientID.c_str(), zone_prefix.c_str());
 
+    std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore(accountbucket, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::Datastore> authPtr = hvs::DatastoreFactory::create_datastore(authbucket, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
+    auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
+    auto [vp, err] = zonePtr->n1ql(string(query));
+    if (err)
+    {
+      return false;
+    }
     //查找是member的区域
-    std::string query2 = "select * from `"+zonebucket+"` where \"clientID\" within members;";
-    int pos2 = query2.find("clientID");
-    query2.erase(pos2, 8);
-    query2.insert(pos2, clientID);
-    std::shared_ptr<hvs::Datastore> dbPtr2 = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    char query2[256];
+    snprintf(query2, 256, 
+    "select UUID, name, owner, members, spaces from `%s` where \"%s\" within members and META().id like '%s%%'", 
+    zonebucket.c_str(), clientID.c_str(), zone_prefix.c_str());
+
+
+    std::shared_ptr<hvs::Datastore> dbPtr2 = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
     auto zonePtr2 = static_cast<CouchbaseDatastore*>(dbPtr2.get());
-    auto [vp2, err2] = zonePtr2->n1ql(query2);
+    auto [vp2, err2] = zonePtr2->n1ql(string(query2));
+    if (err2)
+    {
+      return false;
+    }
 
     if(vp->size()==0 && vp2->size()==0) return false;
     else
@@ -198,8 +241,8 @@ namespace hvs{
       {
         Zone tmp;
         Zone tmp_zi;
-        std::string n1ql_result = *it;
-        std::string tmp_value = n1ql_result.substr(13, n1ql_result.length() - 14);
+
+        std::string tmp_value = *it;
         tmp.deserialize(tmp_value);
         tmp_zi.zoneID = tmp.zoneID;
         tmp_zi.zoneName = tmp.zoneName;
@@ -229,7 +272,16 @@ namespace hvs{
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
         tmp_server->GetSpaceInfo(result_s, tmp.spaceID);
         for(auto& result: result_s)
-          tmp_zi.spaceBicInfo.push_back(make_shared<Space>(result));
+        {
+          if (result.status == false)
+          {
+            continue;
+          }
+          else
+          {
+            tmp_zi.spaceBicInfo.push_back(make_shared<Space>(result));
+          } 
+        }
         for(auto& sp: tmp_zi.spaceBicInfo) {
           tmp_zi.spaceID.push_back(sp->spaceID);
         }
@@ -243,16 +295,16 @@ namespace hvs{
           tmp_zi.ownerAuth = auth.owner_read*4 + auth.owner_write*2 + auth.owner_exe;
           tmp_zi.groupAuth = auth.group_read*4 + auth.group_write*2 + auth.group_exe;
           tmp_zi.otherAuth = auth.other_read*4 + auth.other_write*2 + auth.other_exe;
+          result_z.push_back(tmp_zi);
         } 
-        result_z.push_back(tmp_zi);
+        else return false;
       }
 
       for (std::vector<std::string>::iterator it2 = vp2->begin(); it2 != vp2->end(); it2++)
       {
         Zone tmp2;
         Zone tmp_zi2;
-        std::string n1ql_result2 = *it2;
-        std::string tmp_value2 = n1ql_result2.substr(13, n1ql_result2.length() - 14);
+        std::string tmp_value2 = *it2;
         tmp2.deserialize(tmp_value2);
         tmp_zi2.zoneID = tmp2.zoneID;
         tmp_zi2.zoneName = tmp2.zoneName;
@@ -283,7 +335,16 @@ namespace hvs{
         SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
         tmp_server->GetSpaceInfo(result_s2, tmp2.spaceID);
         for(auto& result: result_s2)
-          tmp_zi2.spaceBicInfo.push_back(make_shared<Space>(result));
+        {
+          if (result.status == false)
+          {
+            continue;
+          }
+          else
+          {
+            tmp_zi2.spaceBicInfo.push_back(make_shared<Space>(result));
+          }    
+        }
         for(auto& sp: tmp_zi2.spaceBicInfo) {
           tmp_zi2.spaceID.push_back(sp->spaceID);
         }
@@ -297,8 +358,9 @@ namespace hvs{
           tmp_zi2.ownerAuth = auth.owner_read*4 + auth.owner_write*2 + auth.owner_exe;
           tmp_zi2.groupAuth = auth.group_read*4 + auth.group_write*2 + auth.group_exe;
           tmp_zi2.otherAuth = auth.other_read*4 + auth.other_write*2 + auth.other_exe;
+          result_z.push_back(tmp_zi2);
         } 
-        result_z.push_back(tmp_zi2);
+        else return false;
       }
       return true;
     }
@@ -307,25 +369,30 @@ namespace hvs{
 
   //区域共享
   void ZoneServer::ZoneShareRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneShareRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneShareRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
 
     int result = ZoneShare( req.zoneID,  req.ownerID,  req.memberID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneShareRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneShareRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneShare(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
   {
     Zone tmp;
-    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
     zonePtr->init();
-    auto [vp, err] = zonePtr->get(zoneID);
+    auto [vp, err] = zonePtr->get(zone_prefix + zoneID);
+    if (err)
+    {
+      return EAGAIN;
+    }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
-    if(tmp.ownerID == ownerID)
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
     {
       //TODO:插入调用lbq模块
       AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
@@ -341,42 +408,44 @@ namespace hvs{
         }
         tmp_value = tmp.serialize();
         tmp.contains_spaceinfo = false;
-        zonePtr->set(zoneID, tmp_value);
-        return 0;
+        int flag = zonePtr->set(zone_prefix + zoneID, tmp_value);
+        if(flag != 0) return EAGAIN;
+        else return 0;
       }
-      else return errno = EAGAIN;
+      else return EAGAIN;
     }
     else
-      return errno = EACCES;
+      return EACCES;
   }
 
   void ZoneServer::ZoneShareCancelRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneShareCancelRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneShareCancelRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
 
     int result = ZoneShareCancel(req.zoneID, req.ownerID, req.memberID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneShareCancelRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneShareCancelRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID)
   {
     Zone tmp;
-    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
     zonePtr->init();
-    auto [vp, err] = zonePtr->get(zoneID);
+    auto [vp, err] = zonePtr->get(zone_prefix + zoneID);
     if(err != 0){
-        std::cerr << "未找到对应的区域" << std::endl;
-        return errno = ENOENT;
+        dout(10) << "未找到对应的区域" << dendl;
+        return ENOENT;
     }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
     if(!isSubset(tmp.memberID, memberID)){
-        return errno = EINVAL;
+        return EINVAL;
     }
-    if(tmp.ownerID == ownerID)
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
     {
       //插入调用lbq模块
       AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
@@ -401,47 +470,107 @@ namespace hvs{
         }
         tmp_value = tmp.serialize();
         tmp.contains_spaceinfo = false;
-        zonePtr->set(zoneID, tmp_value);
-        return 0;
+        int flag = zonePtr->set(zone_prefix + zoneID, tmp_value);
+        if(flag != 0) return EAGAIN;
+        else return 0;
       }
-      else return errno = EAGAIN;
+      else return EAGAIN;
     }
-    else return errno = EACCES;
+    else return EACCES;
   }
 
-  //区域注册
+  //区域注册--管理员通过审批后调用
+  void ZoneServer::ZoneRegisterCheckRest(const Rest::Request& request, Http::ResponseWriter response){
+    dout(10) << "====== start ZoneServer function: ZoneRegisterCheckRest ======"<< dendl;
+    auto info = request.body();
+    ZoneRequest req;
+    req.deserialize(info);
+    Space tmpm;
+    tmpm.deserialize(req.spacePathInfo);
+    if (ManagerID == tmpm.hostCenterID || tmpm.hostCenterID == "")
+    {
+      int result = ZoneRegister(req.zoneName, req.ownerID, req.memberID, req.spaceName, req.spaceSize, req.spacePathInfo);
+      response.send(Http::Code::Ok, json_encode(result));
+    }
+    else
+    {
+        std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+            hvs::CouchbaseDatastore(accountbucket));
+        f0_dbPtr->init();
+        string c_key = "center_information";
+        auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+        if (c_error){
+            dout(10) << "authmodelserver: get center_information fail" << dendl;
+            errno = EAGAIN;
+            response.send(Http::Code::Ok, json_encode(errno));
+            return;
+        }
+        CenterInfo mycenter;
+        mycenter.deserialize(*pcenter_value);
+
+        Http::Client client;
+        char url[256];
+
+        auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+        client.init(opts);
+
+        string tmp_ip = mycenter.centerIP[tmpm.hostCenterID];
+        string tmp_port = mycenter.centerPort[tmpm.hostCenterID];
+        
+        snprintf(url, 256, "http://%s:%s/zone/register", tmp_ip.c_str() ,tmp_port.c_str());
+
+        auto response2 = client.post(url).body(info).send();
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
+        response2.then(
+            [&](Http::Response resp) {
+            //dout(-1) << "Manager Info: " << res.body() << dendl;
+            dout(10) << "Response code = " << resp.code() << dendl;
+            auto body = resp.body();
+            response.send(Http::Code::Ok, body);
+            prom.set_value(true);
+        },
+        Async::IgnoreException);
+
+        //阻塞
+        fu.get();
+        client.shutdown();
+
+    }
+    
+    dout(10) << "====== end ZoneServer function: ZoneRegisterCheckRest ======"<< dendl;
+  }
+  //跨域调用的接口
   void ZoneServer::ZoneRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneRegisterRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneRegisterRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
     //std::string globalManageNodeInfo =req.globalManageNodeInfo;客户端判断
 
-    std::cout << "info: " << info << std::endl;
+    dout(10) << "info: " << info << dendl;
 
     int result = ZoneRegister(req.zoneName, req.ownerID, req.memberID, req.spaceName, req.spaceSize, req.spacePathInfo);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneRegisterRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneRegisterRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneRegister(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
       std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
   {
 
-    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
     auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     //插入判断，加的这个区域是否已经存在
-    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
-    int pos = query.find("ownerID");
-    query.erase(pos, 7);
-    query.insert(pos, ownerID);
-    int pos2 = query.find("zonename");
-    query.erase(pos2, 8);
-    query.insert(pos2, zoneName);
-    auto [vp, err] = zonePtr->n1ql(query);
+    char query[256];
+    snprintf(query, 256, 
+    "select UUID, name, owner, members, spaces from `%s` where owner = \"%s\" and name = \"%s\" and META().id like '%s%%'", 
+    zonebucket.c_str(), ownerID.c_str(), zoneName.c_str(), zone_prefix.c_str());
+
+    auto [vp, err] = zonePtr->n1ql(string(query));
     if(vp->size() != 0) 
     {
-      return errno = EINVAL;
+      return EINVAL;
     }
     else{        
       Zone tmp;
@@ -455,18 +584,25 @@ namespace hvs{
       //2、TODO：调用权限模块
       SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端模块
       std::string res_sc = tmp_server->SpaceCreate(std::move(spaceName), ownerID, memberID, spaceSize, std::move(spacePathInfo), groupname);
-      std::cout << res_sc <<std::endl;
       if (res_sc == "-1")
       {
-        return errno = ENOSPC;
+        return  ENOSPC;
       }
       if (res_sc == "-2")
       {
-        return errno = EAGAIN;
+        return  EAGAIN;
       }
       if (res_sc == "-3")
       {
-        return errno = ENOENT;
+        return  ENOENT;
+      }
+      if (res_sc == "-4")
+      {
+        return EACCES;
+      }
+      if (res_sc == "-5")
+      {
+        return EINVAL;
       }
       else
       {
@@ -475,11 +611,10 @@ namespace hvs{
         tmp.ownerID = ownerID;
         tmp.memberID = memberID;
         tmp.spaceID.emplace_back(spaceID);
-        std::cout << tmp.zoneName <<std::endl;
         tmp.contains_spaceinfo = false;
-        if (tmp.zoneName == "") return errno = EAGAIN;
-        dbPtr->set(tmp.zoneID, tmp.serialize());
-
+        if (tmp.zoneName == "") return EAGAIN;
+        int flag = dbPtr->set(zone_prefix + tmp.zoneID, tmp.serialize());
+        if (flag != 0) return EAGAIN;
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
         int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
         if(res_za == 0)
@@ -494,17 +629,19 @@ namespace hvs{
             if(memadd == 0) return 0;
             else
             {
-              std::cerr << "ZoneRegister:添加成员失败！" << std::endl;
-              std::cout << "1" <<std::endl;
-              return errno = EAGAIN;
+              dout(10) << "ZoneRegister:添加成员失败！" << dendl;
+              dbPtr->remove(zone_prefix + tmp.zoneID);
+              tmp_server->SpaceDelete(tmp.spaceID);
+              return EAGAIN;
             } 
           }
         }
         else
         {
-          std::cerr << "ZoneRegister:添加初始权限失败！" << std::endl;
-          std::cout << "2" <<std::endl;
-          return errno = EAGAIN;
+          dout(10) << "ZoneRegister:添加初始权限失败！" << dendl;
+          dbPtr->remove(zone_prefix + tmp.zoneID);
+          tmp_server->SpaceDelete(tmp.spaceID);
+          return EAGAIN;
         }
       }
     }
@@ -512,7 +649,7 @@ namespace hvs{
 
   //管理员区域添加
   void ZoneServer::ZoneAddRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneAddRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneAddRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
@@ -521,24 +658,22 @@ namespace hvs{
     int result = ZoneAdd(req.zoneName, req.ownerID, req.memberID, req.spacePathInfo);
 
     response.send(Http::Code::Ok, json_encode(result)); //point
-    std::cout << "====== end ZoneServer function: ZoneAddRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneAddRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneAdd(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
       std::string spacePathInfo)
   {
     Zone tmp;
-    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
     auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     //插入判断，加的这个区域是否已经存在
-    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
-    int pos = query.find("ownerID");
-    query.erase(pos, 7);
-    query.insert(pos, ownerID);
-    int pos2 = query.find("zonename");
-    query.erase(pos2, 8);
-    query.insert(pos2, zoneName);
-    auto [vp, err] = zonePtr->n1ql(query);
+    char query[256];
+    snprintf(query, 256, 
+    "select UUID, name, owner, members, spaces from `%s` where owner = \"%s\" and name = \"%s\" and META().id like '%s%%'", 
+    zonebucket.c_str(), ownerID.c_str(), zoneName.c_str(), zone_prefix.c_str());
+
+    auto [vp, err] = zonePtr->n1ql(string(query));
 
     if(vp->size() == 0)
     {
@@ -546,7 +681,7 @@ namespace hvs{
       std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
       if (res_sc == "false")
       {
-        return errno = EINVAL;
+        return EINVAL;
       }
       else
       {
@@ -560,13 +695,14 @@ namespace hvs{
         tmp.spaceID.emplace_back(spaceID);
 
         tmp.contains_spaceinfo = false;
-        dbPtr->set(tmp.zoneID, tmp.serialize());
+        int flag = dbPtr->set(zone_prefix + tmp.zoneID, tmp.serialize());
+        if (flag != 0) return EAGAIN;
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
-        int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);
+        int res_za = p_auth->ZonePermissionAdd(tmp.zoneID, tmp.ownerID);//设置数据库失败 
         if(res_za == 0)
         {
           std::vector<std::string> mem;
-          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, mem);
+          int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, mem);//数据库读取失败、账户建立失败
           if (spacesyne ==0)
           {
             if(tmp.memberID.empty())
@@ -575,25 +711,31 @@ namespace hvs{
             }
             else
             {            
-              int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);
+              int memadd = p_auth->ZoneMemberAdd(tmp.zoneID, tmp.ownerID, tmp.memberID);//数据库读取失败、权限设置失败
               if(memadd == 0) return 0;
               else
               {
-                std::cerr << "ZoneAdd:添加成员失败！" << std::endl;
-                return errno = EAGAIN;
+                dout(10) << "ZoneAdd:添加成员失败！" << dendl;
+                dbPtr->remove(zone_prefix + tmp.zoneID);
+                tmp_server->SpaceDelete(tmp.spaceID);
+                return EAGAIN;
               } 
             }
           }
           else
           {
-            std::cerr << "ZoneAdd:空间权限同步失败" << std::endl;
-            return errno = EAGAIN;
+            dout(10) << "ZoneAdd:空间权限同步失败" << dendl;
+            dbPtr->remove(zone_prefix + tmp.zoneID);
+            tmp_server->SpaceDelete(tmp.spaceID);
+            return EAGAIN;
           }
         }
         else
         {
-          std::cerr << "ZoneAdd:添加初始权限失败！" << std::endl;
-          return errno = EAGAIN;
+          dout(10) << "ZoneAdd:添加初始权限失败！" << dendl;
+          dbPtr->remove(zone_prefix + tmp.zoneID);
+          tmp_server->SpaceDelete(tmp.spaceID);
+          return EAGAIN;
         }
       }
     }
@@ -603,59 +745,62 @@ namespace hvs{
       std::string res_sc = tmp_server->SpaceCheck(ownerID, memberID, std::move(spacePathInfo));
       if (res_sc == "false")
       {
-        return errno = EINVAL;
+        return EINVAL;
       }
       else
       {
         std::string spaceID = res_sc;
         std::vector<std::string>::iterator it = vp->begin();
-        std::string n1ql_result = *it;
-        std::string tmp_value = n1ql_result.substr(13, n1ql_result.length() - 14);
+        std::string tmp_value = *it;
         tmp.deserialize(tmp_value);
         tmp.spaceID.emplace_back(spaceID);
         tmp.contains_spaceinfo = false;
-        dbPtr->set(tmp.zoneID, tmp.serialize());
+        int flag2 = dbPtr->set(zone_prefix + tmp.zoneID, tmp.serialize());
+        if (flag2 != 0) return EAGAIN;
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
         int spacesyne = p_auth->SpacePermissionSyne(spaceID, tmp.zoneID, ownerID, memberID);
         if(spacesyne == 0) return 0;
         else
         {
-          std::cerr << "ZoneAdd:空间权限同步失败！" << std::endl;
-          return errno = EAGAIN;
+          dout(10) << "ZoneAdd:空间权限同步失败！" << dendl;
+          std::vector<std::string> wrongspace;
+          wrongspace.emplace_back(spaceID);
+          tmp_server->SpaceDelete(wrongspace);
+          tmp.spaceID.pop_back();
+          dbPtr->set(zone_prefix + tmp.zoneID, tmp.serialize());
+          return EAGAIN;
         }
       }
     }
-    else return errno = EAGAIN;
+    else return EINVAL;
   }
 
 
   //区域注销
   void ZoneServer::ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: ZoneCancelRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: ZoneCancelRest ======"<< dendl;
     auto info = request.body();
-    std::cout << info << std::endl;
+    dout(10) << info << dendl;
     ZoneRequest req;
     req.deserialize(info);
 
-   std::cout << "req.zoneID: " << req.zoneID << std::endl;
-   std::cout << "req.ownerID: " << req.ownerID << std::endl;
-
     int result = ZoneCancel(req.zoneID, req.ownerID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "====== end ZoneServer function: ZoneCancelRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: ZoneCancelRest ======"<< dendl;
   }
 
   int ZoneServer::ZoneCancel(std::string zoneID, std::string ownerID)
   {
     Zone tmp;
-    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
-    auto [vp, err] = zonePtr->get(zoneID);
+    std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
+    auto [vp, err] = zonePtr->get(zone_prefix + zoneID);
     if( err != 0 ){
-      return errno = ENOENT;
+      return ENOENT;
     }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
-    if(tmp.ownerID == ownerID)
+    UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
+    if(tmp.ownerID == ownerID || p_usermodel->validadminidentity(ownerID))//TODO:添加管理员ID
     {
       AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
       if (tmp.memberID.empty())
@@ -670,7 +815,7 @@ namespace hvs{
             if(spaceauthdel == 0) continue;
             else
             {
-              std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+              dout(10) << "空间权限删除失败！" << dendl;
               spaceauthfault = 1;
               break;
             }
@@ -680,14 +825,14 @@ namespace hvs{
             SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
             if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
             {
-              zonePtr->remove(zoneID);
+              zonePtr->remove(zone_prefix + zoneID);
               return 0;
             }
-            else return errno = EAGAIN;
+            else return EAGAIN;
           }
-          else return errno = EAGAIN;
+          else return EAGAIN;
         }
-        else return errno = EAGAIN;
+        else return EAGAIN;
       }
       else
       {
@@ -707,52 +852,116 @@ namespace hvs{
               } 
               else
               {
-                std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+                dout(10) << "MapDeduct:空间权限删除失败！" << dendl;
                 spaceauthfault = 1;
                 break;
               }
             }
             if(spaceauthfault == 0)
             {
-              std::cout << "spaceauthfault" << spaceauthfault << std::endl;
               SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
               if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
               {
-                zonePtr->remove(zoneID);
+                zonePtr->remove(zone_prefix + zoneID);
                 return 0;
               }
-              else return errno = EAGAIN;
+              else return EAGAIN;
             }
-            else return errno = EAGAIN;
+            else return EAGAIN;
           }
-          else return errno = EAGAIN;
+          else return EAGAIN;
         }
-        else return errno = EAGAIN;
+        else return EAGAIN;
       }
     }
-    else return errno = EACCES;
+    else return EACCES;
   }
 
-  //区域映射编辑
+  //区域映射编辑--管理员通过审批后调用
+  void ZoneServer::MapAddCheckRest(const Rest::Request& request, Http::ResponseWriter response){
+    dout(10) << "====== start ZoneServer function: MapAddCheckRest ======"<< dendl;
+    auto info = request.body();
+    ZoneRequest req;
+    req.deserialize(info);
+    Space tmpm;
+    tmpm.deserialize(req.spacePathInfo);
+    if (ManagerID == tmpm.hostCenterID || tmpm.hostCenterID == "")
+    {
+      int result = MapAdd(req.zoneID, req.ownerID, req.spaceName, req.spaceSize, req.spacePathInfo);
+      response.send(Http::Code::Ok, json_encode(result)); //point
+    }
+    else
+    {
+        std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+            hvs::CouchbaseDatastore(accountbucket));
+        f0_dbPtr->init();
+        string c_key = "center_information";
+        auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
+        if (c_error){
+            dout(10) << "authmodelserver: get center_information fail" << dendl;
+            errno = EAGAIN;
+            response.send(Http::Code::Ok, json_encode(errno));
+            return;
+        }
+        CenterInfo mycenter;
+        mycenter.deserialize(*pcenter_value);
+
+        Http::Client client;
+        char url[256];
+
+        auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
+        client.init(opts);
+
+        string tmp_ip = mycenter.centerIP[tmpm.hostCenterID];
+        string tmp_port = mycenter.centerPort[tmpm.hostCenterID];
+        
+        snprintf(url, 256, "http://%s:%s/zone/mapadd", tmp_ip.c_str() ,tmp_port.c_str());
+
+        auto response2 = client.post(url).body(info).send();
+        std::promise<bool> prom;
+        auto fu = prom.get_future();
+        response2.then(
+            [&](Http::Response resp) {
+            //dout(-1) << "Manager Info: " << res.body() << dendl;
+            dout(10) << "Response code = " << resp.code() << dendl;
+            auto body = resp.body();
+            response.send(Http::Code::Ok, body);
+            prom.set_value(true);
+        },
+        Async::IgnoreException);
+
+        //阻塞
+        fu.get();
+        client.shutdown();
+
+    }
+    
+    dout(10) << "====== end ZoneServer function: MapAddCheckRest ======"<< dendl;
+  }
+  //跨域调用接口
   void ZoneServer::MapAddRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: MapAddRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: MapAddRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
     //std::string globalManageNodeInfo =req.globalManageNodeInfo;客户端判断
-     std::cout << "info: " << info << std::endl;
+     dout(10) << "info: " << info << dendl;
     int result = MapAdd(req.zoneID, req.ownerID, req.spaceName, req.spaceSize, req.spacePathInfo);
 
     response.send(Http::Code::Ok, json_encode(result)); //point
-    std::cout << "====== end ZoneServer function: MapAddRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: MapAddRest ======"<< dendl;
   }
 
   int ZoneServer::MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo)
   {
     Zone tmp;
-    std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
-    std::string tmp_key = zoneID;
+    std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
+    std::string tmp_key = zone_prefix + zoneID;
     auto [vp, err] = zonePtr->get(tmp_key);
+    if (err)
+    {
+      return EAGAIN;
+    }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
     std::vector<Space> tmps;
@@ -762,14 +971,13 @@ namespace hvs{
     tmp_server->GetSpacePosition(tmps, tmp.spaceID);
     for(std::vector<Space>::iterator m = tmps.begin(); m != tmps.end(); m++)
     {
-      std::cout << (*m).hostCenterName << std::endl;
       if ((*m).hostCenterName == spaceurl.hostCenterName)
       {
-        return errno = EINVAL;
+        return EINVAL;
       } 
       else if ((*m).spaceName == spaceName)
       {
-        return errno = EINVAL;
+        return EINVAL;
       } 
       else 
       {
@@ -786,15 +994,23 @@ namespace hvs{
       std::string res_sc = tmp_server->SpaceCreate(spaceName, ownerID, memberID, spaceSize, spacePathInfo, groupname);
       if (res_sc == "-1")
       {
-        return errno = ENOSPC;
+        return ENOSPC;
       }
       if (res_sc == "-2")
       {
-        return errno = EAGAIN;
+        return EAGAIN;
       }
       if (res_sc == "-3")
       {
-        return errno = ENOENT;
+        return ENOENT;
+      }
+      if (res_sc == "-4")
+      {
+        return EACCES;
+      }
+      if (res_sc == "-5")
+      {
+        return EINVAL;
       }
       else
       {
@@ -802,38 +1018,47 @@ namespace hvs{
         std::string spaceID = res_sc;
         tmp.spaceID.emplace_back(spaceID);
         tmp.contains_spaceinfo = false;
-        zonePtr->set(tmp_key, tmp.serialize());
+        int flag = zonePtr->set(tmp_key, tmp.serialize());
+        if (flag != 0) return EAGAIN;
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
         int spacesyne = p_auth->SpacePermissionSyne(spaceID, zoneID, ownerID, tmp.memberID);
         if(spacesyne == 0) return 0;
         else
         {
-          std::cerr << "MapAdd:空间权限同步失败！" << std::endl;
-          return errno = EAGAIN;
+          dout(10) << "MapAdd:空间权限同步失败！" << dendl;
+          std::vector<std::string> wrongspace;
+          wrongspace.emplace_back(spaceID);
+          tmp_server->SpaceDelete(wrongspace);
+          tmp.spaceID.pop_back();
+          zonePtr->set(tmp_key, tmp.serialize());
+          return EAGAIN;
         }
       }
     }
   }
 
   void ZoneServer::MapDeductRest(const Rest::Request& request, Http::ResponseWriter response){
-    std::cout << "====== start ZoneServer function: MapDeductRest ======"<< std::endl;
+    dout(10) << "====== start ZoneServer function: MapDeductRest ======"<< dendl;
     auto info = request.body();
     ZoneRequest req;
     req.deserialize(info);
 
-    std::cout << "info: " << info << std::endl;
+    dout(10) << "info: " << info << dendl;
 
     int result = MapDeduct(req.zoneID, req.ownerID, req.spaceID);
     response.send(Http::Code::Ok, json_encode(result));
-    std::cout << "result: " <<result << std::endl;
-    std::cout << "====== end ZoneServer function: MapDeductRest ======"<< std::endl;
+    dout(10) << "====== end ZoneServer function: MapDeductRest ======"<< dendl;
   }
 
   int ZoneServer::MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID)
   {
     Zone tmp;
-    std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
-    auto [vp, err] = zonePtr->get(zoneID);
+    std::shared_ptr<hvs::Datastore> zonePtr =hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
+    auto [vp, err] = zonePtr->get(zone_prefix + zoneID);
+    if (err)
+    {
+      return EAGAIN;
+    }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
     if(tmp.ownerID == ownerID)
@@ -848,7 +1073,7 @@ namespace hvs{
           if(spaceauthdel == 0) continue;
           else
           {
-            std::cerr << "MapDeduct:空间权限删除失败！" << std::endl;
+            dout(10) << "MapDeduct:空间权限删除失败！" << dendl;
             spaceauthfault = 1;
             break;
           }
@@ -874,14 +1099,87 @@ namespace hvs{
             }
           }
           tmp.contains_spaceinfo = false;
-          zonePtr->set(zoneID, tmp.serialize());
+          int flag = zonePtr->set(zone_prefix + zoneID, tmp.serialize());
+          if (flag != 0) return EAGAIN;
           return 0;
         }
-        else return errno = EAGAIN;
+        else return EAGAIN;
       }
-      else return errno = EINVAL;
+      else return EINVAL;
     }
-    else return errno = EACCES;
+    else return EACCES;
+  }
+
+  void ZoneServer::ZoneRegisterApplyRest(const Rest::Request& request, Http::ResponseWriter response){
+    dout(10) << "====== start ZoneServer function: ZoneRegisterApplyRest ======"<< dendl;
+    auto info = request.body();
+
+    dout(10) << "info: " << info << dendl;
+
+    int result = ZoneRegisterApply(info);
+    response.send(Http::Code::Ok, json_encode(result));
+    dout(10) << "====== end ZoneServer function: ZoneRegisterApplyRest ======"<< dendl;
+  }
+  int ZoneServer::ZoneRegisterApply(std::string apply)
+  {
+    std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase, true);
+    boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+    const std::string uuid = boost::uuids::to_string(a_uuid);
+    std::string key = "zregi-" + uuid;
+    struct_apply_info applyinfo;
+    applyinfo.id = key;
+    ZoneRequest req;
+    req.deserialize(apply);
+    if (req.zoneName.size() > 50)//限制长度为50
+    {
+      req.zoneName = req.zoneName.substr(50);
+    }
+    if (req.spaceName.size() > 50)//限制长度为50
+    {
+      req.spaceName = req.spaceName.substr(50);
+    }    
+    applyinfo.data = req.serialize();
+    std::string value = applyinfo.serialize();
+    int flag = applyPtr->set(key, value);
+    if(flag != 0)
+    {
+      return EAGAIN;
+    }
+    else return 0;
+  }
+
+  void ZoneServer::MapAddApplyRest(const Rest::Request& request, Http::ResponseWriter response){
+    dout(10) << "====== start ZoneServer function: MapAddApplyRest ======"<< dendl;
+    auto info = request.body();
+
+    dout(10) << "info: " << info << dendl;
+
+    int result = MapAddApply(info);
+    response.send(Http::Code::Ok, json_encode(result));
+    dout(10) << "====== end ZoneServer function: MapAddApplyRest ======"<< dendl;
+  }
+  int ZoneServer::MapAddApply(std::string apply)
+  {
+    std::shared_ptr<hvs::Datastore> applyPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase, true);
+    boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+    const std::string uuid = boost::uuids::to_string(a_uuid);
+    std::string key = "spadd-" + uuid;
+    struct_apply_info applyinfo;
+    applyinfo.id = key;
+    ZoneRequest req;
+    req.deserialize(apply);
+    if (req.spaceName.size() > 50)//限制长度为50
+    {
+      req.spaceName = req.spaceName.substr(50);
+    }    
+    applyinfo.data = req.serialize();
+    std::string value = applyinfo.serialize();
+    int flag = applyPtr->set(key, value);
+    if(flag != 0)
+    {
+      return EAGAIN;
+    }
+    else return 0;
   }
 
 }//namespace hvs

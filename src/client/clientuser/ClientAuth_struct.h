@@ -2,7 +2,6 @@
 #define CLIENTAUTH_H
 
 #include "common/JsonSerializer.h"
-#include "datastore/datastore.h"
 #include "context.h"
 #include <map>  
 

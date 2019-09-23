@@ -71,7 +71,7 @@ int main(int argc, char* argv[]){
         exit(-1);
     }
     if (!CmdLineProxy::is_validate(newzonename)) {
-        std::cerr << "名称包含非法字符" << std::endl;
+        std::cerr << "包含非法字符" << std::endl;
         commandline.print_options();
         exit(-1);        
     }

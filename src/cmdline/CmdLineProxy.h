@@ -30,7 +30,7 @@ public:
     void start(); // 配置好解析函数后，就可以开始运行，可以开始运行；
     void test();
     static inline bool is_validate(const std::string& dest) {
-        static std::set<char> invalidate{'#','@','$','%','^','&','*','~','`','/','|'};
+        static std::set<char> invalidate{'!','#','@','$','%','^','&','*','~','`','/','|'};
         for(auto i:dest) {
             if(invalidate.count(i)) return false;
         }

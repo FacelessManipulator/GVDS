@@ -76,7 +76,11 @@ int main(int argc, char* argv[]){
         commandline.print_options();
         exit(-1);
     }
-
+    if (!CmdLineProxy::is_validate(newzonename)) {
+        std::cerr << "包含非法字符" << std::endl;
+        commandline.print_options();
+        exit(-1);        
+    }
     try{
         std::promise<bool> prom;
         auto fu = prom.get_future();

@@ -6,7 +6,7 @@
 #include <iostream>
 #include "hvs_struct.h"
 #include <future>
-#include <pistache/client.h>
+//#include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
 
 // TODO: 添加的新头文件

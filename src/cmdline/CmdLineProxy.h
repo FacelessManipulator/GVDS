@@ -16,6 +16,7 @@
 #include <memory>
 #include <functional>
 #include <map> // 创建 map， 进行注册解析函数和执行函数
+#include <set>
 namespace  po =  boost::program_options;
 /*
  * 命令行参数的优先级:
@@ -28,6 +29,13 @@ public:
     ~CmdLineProxy();
     void start(); // 配置好解析函数后，就可以开始运行，可以开始运行；
     void test();
+    static inline bool is_validate(const std::string& dest) {
+        static std::set<char> invalidate{'#','@','$','%','^','&','*','~','`','/','|'};
+        for(auto i:dest) {
+            if(invalidate.count(i)) return false;
+        }
+        return true;
+    }
 private:
     void set_global_description();
     void set_command_description();

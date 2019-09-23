@@ -111,6 +111,7 @@ public:
     std::string bucket_auth_info;
     std::string bucket_account_info;
     std::string zonebucket;
+    std::string  zone_prefix = "ZONE-";
 };
 
 

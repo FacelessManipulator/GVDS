@@ -1569,7 +1569,7 @@ std::string ClientIPC::dodeletecenter(IPCreq &ipcreq){
     string routepath = "/mconf/deleteCenter";    
     string res = client->rpc->post_request(endpoint, routepath, value);
 
-    cout << "res :"<< res <<endl;
+    //cout << "res :"<< res <<endl;
     return res;
  }
 
@@ -1599,7 +1599,7 @@ std::string ClientIPC::dodeletecenter(IPCreq &ipcreq){
 
             client->user->setApply(singel_content.id, singel_content.data);
         }
-        cout << "res: " << res << endl;
+        //cout << "res: " << res << endl;
         return res;
     }
     
@@ -1721,7 +1721,7 @@ std::string ClientIPC::doadcam(IPCreq &ipcreq){
     string routepath = "/users/adcam";    
     string res = client->rpc->post_request(endpoint, routepath, value);
 
-    cout << "res :"<< res <<endl;
+    //cout << "res :"<< res <<endl;
     return res;
 }
 
@@ -1741,7 +1741,7 @@ std::string ClientIPC::doaduam(IPCreq &ipcreq){
 
     struct_AdminAccountMap new_accountmap;
     new_accountmap.adhvsID = client->user->getAccountID();
-    cout << "memID[0] :"<< memID[0] <<endl;
+    //cout << "memID[0] :"<< memID[0] <<endl;
     new_accountmap.hvsID = memID[0];
     new_accountmap.hostCenterName = centername;
     string value = new_accountmap.serialize();
@@ -1750,7 +1750,7 @@ std::string ClientIPC::doaduam(IPCreq &ipcreq){
     string routepath = "/users/aduam";    
     string res = client->rpc->post_request(endpoint, routepath, value);
 
-    cout << "res :"<< res <<endl;
+    //cout << "res :"<< res <<endl;
     return res;
 }
 
@@ -1778,7 +1778,7 @@ std::string ClientIPC::doadsearcham(IPCreq &ipcreq){
     string routepath = "/users/adsearcham";    
     string res = client->rpc->post_request(endpoint, routepath, value);
 
-    cout << "res :"<< res <<endl;
+    //cout << "res :"<< res <<endl;
     return res;
 }
 
@@ -1789,7 +1789,7 @@ std::string ClientIPC::doadseepool(IPCreq &ipcreq){
     string routepath = "/users/adsearchpool";    
     string res = client->rpc->post_request(endpoint, routepath, adhvsID);
 
-    cout << "res :"<< res <<endl;
+    //cout << "res :"<< res <<endl;
     return res;
 }
 

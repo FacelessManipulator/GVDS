@@ -110,11 +110,11 @@ private:
     bool addSCaccount();
     //建立账户映射
     bool BuildAccountMapping_v2(std::string accountID);
-    bool SubBuildAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
+    bool SubBuildAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::Datastore> f1_dbPtr);
 
     //删除账户映射
     bool RemoveAccountMapping_v2(std::string accountID);
-    bool SubRemoveAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
+    bool SubRemoveAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::Datastore> f1_dbPtr);
 
     //不使用了////
     // bool SubBuildAccountMapping_old(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
@@ -125,6 +125,7 @@ private:
 
     //检测本地是否存在账户，否则建立账户映射失败
     bool existlocalaccount(std::string valid);
+    bool auth_token(const Rest::Request& request);
 
 private:
 
@@ -139,7 +140,7 @@ private:
 
 std::string md5(std::string strPlain);
 void printCookies(const Http::Request& req);
-bool auth_token(const Rest::Request& request);
+
 
 }// namespace hvs
 

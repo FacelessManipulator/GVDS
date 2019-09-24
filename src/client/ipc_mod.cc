@@ -1280,9 +1280,9 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq) {
                 client->user->setToken(mtoken);
                 client->user->setAccountName(myaccount.accountName);
 
-                // cout << "body: " << body << endl;
-                // cout << "body.substr(2): " << body.substr(2) << endl;
-                // cout << "body.substr(0,1): " << body.substr(0,1) << endl;
+                cout << "body: " << body << endl;
+                cout << "body.substr(2): " << body.substr(2) << endl;
+                cout << "body.substr(0,1): " << body.substr(0,1) << endl;
 
                 client->user->setAccountID(body.substr(2));
 

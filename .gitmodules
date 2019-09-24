@@ -4,7 +4,7 @@
 	url = ../pistache.git
 [submodule "third-party/libcouchbase"]
 	path = third-party/libcouchbase
-	url = ../libcouchbase.git
+	url = https://github.com/couchbase/libcouchbase.git
 [submodule "third-party/rapidjson"]
 	path = third-party/rapidjson
 	url = https://github.com/Tencent/rapidjson.git

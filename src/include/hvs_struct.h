@@ -127,14 +127,7 @@ struct Space : public hvs::JsonSerializer {
 };
 
 struct SpaceRequest : public hvs::JsonSerializer {
-  enum SpaceRequestType {
-    rename,
-    sizeChange,
-    usage,
-  };
-
  public:
-  SpaceRequestType type;
   std::string spaceID;       //空间ID
   std::vector<std::string> spaceIDs;
   int64_t newSpaceSize;      //空间容量
@@ -142,8 +135,6 @@ struct SpaceRequest : public hvs::JsonSerializer {
   void serialize_impl() {
     put("UUID", spaceID);
     put("UUIDs", spaceIDs);
-    int t = type;
-    put("type", t);
     put("newSpaceSize", newSpaceSize);
     put("newSpaceName", newSpaceName);
   }
@@ -151,9 +142,6 @@ struct SpaceRequest : public hvs::JsonSerializer {
   void deserialize_impl() {
     get("UUID", spaceID);
     get("UUIDs", spaceIDs);
-    int t;
-    get("type", t);
-    type = static_cast<SpaceRequestType>(t);
     get("newSpaceSize", newSpaceSize);
     get("newSpaceName", newSpaceName);
   }
@@ -247,18 +235,8 @@ struct Zone : public hvs::JsonSerializer {
 };
 
 struct ZoneRequest : public hvs::JsonSerializer {
-  enum ZoneRequestType {
-    rename,
-    locateInfo,
-    share,
-    registe,
-    cancel,
-    mapadd,
-    mapdeduct
-  };
 
  public:
-  ZoneRequestType type;
   std::string zoneID;  //空间ID
   std::string clientID;
   std::vector<std::string> memberID;  //区域成员ID，UUID
@@ -271,8 +249,6 @@ struct ZoneRequest : public hvs::JsonSerializer {
   std::string spacePathInfo;
   void serialize_impl() {
     put("UUID", zoneID);
-    int t = type;
-    put("type", t);
     put("clientID", clientID);
     put("memberID", memberID);
     put("spaceID", spaceID);
@@ -286,9 +262,6 @@ struct ZoneRequest : public hvs::JsonSerializer {
 
   void deserialize_impl() {
     get("UUID", zoneID);
-    int t;
-    get("type", t);
-    type = static_cast<ZoneRequestType>(t);
     get("clientID", clientID);
     get("memberID", memberID);
     get("spaceID", spaceID);

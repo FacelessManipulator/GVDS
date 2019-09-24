@@ -76,12 +76,6 @@ void ClientGraph::fresh_ioproxy() {
       graph_mutex.unlock();
       dout(10) << "INFO: get " << ioproxy_list.size()
                << " ioproxy from manager." << dendl;
-    } else {
-        dout(-1) << "ERROR: cannot connect to [ " <<
-                endpoint.center_id << ", " <<
-                endpoint.location << ", " <<
-                endpoint.ip_addr << "]. " <<
-                dendl;
     }
   }
 }

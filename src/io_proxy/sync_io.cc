@@ -37,7 +37,7 @@ int sync_io::sclose(int fd, struct OP* op) {
 
 ssize_t sync_io::sread(int fd, void *buf, size_t count, off_t offset, OP* op) {
     ssize_t ret = pread(fd, buf, count, offset); // 该操作是原子操作
-    op->error_code = static_cast<int>(ret);
+    op->error_code = 0;
     if (ret == -1){
         perror("sync_io sread");
         op->error_code = -errno;
@@ -49,8 +49,8 @@ ssize_t sync_io::sread(const std::string& path, void *buf, size_t count, off_t o
     int fd = iop->fdm.open(path, op->open_flags | O_RDWR, 0655);
 //    int fd = op->fid;
     op->error_code = 0;
-    if(fd == -1){
-        op->error_code = -errno;
+    if(fd < 0){
+        op->error_code = -fd;
     }
     ssize_t ret = sread(fd, buf, count, offset, op);
     return ret;
@@ -169,7 +169,7 @@ int sync_io::srmdir(const char *path) {
 }
 
 int sync_io::screate(const char *path, mode_t mode) {
-    int ret = iop->fdm.create(path, 0655);
+    int ret = iop->fdm.create(path, mode); // 默认创建文件权限为 0644 rw-r--r--
     if (ret < 0){
         perror("sync_io create");
     }

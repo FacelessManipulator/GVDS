@@ -79,6 +79,7 @@ void CmdLineProxy::do_global_decode() {
         cmdline_print(e.what());
         cmdline_print("参数中出现不支持项目！请仔细阅读使用说明！");
         std::cout << *cmdline_options << std::endl;
+        exit(-1); // 命令行参数中出现非法参数时，需要输出帮助，并停止执行;
     }
 }
 

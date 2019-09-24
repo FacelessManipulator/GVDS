@@ -27,6 +27,7 @@ class ClientFuse : public ClientModule {
 
  public:
   bool use_udt;
+  bool async_mode;
 
  public:
   ClientFuse(const char* name, Client* cli) : ClientModule(name, cli) {

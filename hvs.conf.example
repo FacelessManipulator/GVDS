@@ -45,7 +45,7 @@ manager = {
 
 // only manager node need these settings
 couchbase = {
-    address = "192.168.10.83";
+    address = "10.134.150.195";
     user = "dev";
     password = "buaaica";
     bucket = "test";
@@ -65,4 +65,7 @@ client = {
     data_port_begin = 9096;
     data_port_end = 9150;
     data_buffer = 1024000;
+    max_queue = 1500;
+    onlink = 1024;
+    async = true;
 };

@@ -51,19 +51,31 @@ public:
     void SpaceRenameRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceRename(std::string spaceID, std::string newSpaceName);
 
-    //空间缩放模块：空间缩放接口
+    //空间缩放模块：空间缩放申请接口
+    void SpaceSizeChangeApplyRest(const Rest::Request& request, Http::ResponseWriter response);
+    int SpaceSizeChangeApply(std::string apply); 
+
+    //空间缩放模块：空间缩放接口--管理员调用
     void SpaceSizeChangeRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceSizeChange(std::string spaceID, int64_t newSpaceSize);
     int SpaceSizeAdd(std::string StorageID, int64_t newSpaceSize);
     int SpaceSizeDeduct(std::string StorageID, int64_t newSpaceSize);
 
+    //空间容量查询
+    void SpaceUsageCheckRest(const Rest::Request& request, Http::ResponseWriter response);
+    std::vector<int64_t> SpaceUsageCheck(std::vector<std::string> spaceID); 
+    void SpaceUsageRest(const Rest::Request& request, Http::ResponseWriter response);
+    int64_t SpaceUsage(std::string spacepath); 
+    string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("manager.id"));  //TODO标识所述超算，当前超算的标识
  //--------------------------------------------
 public:
     SpaceServer() : ManagerModule("space") {
         auto _config = HvsContext::get_context()->_config;
         spacebucket = _config->get<std::string>("bucket.space_info").value_or("space_info");
         storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
+        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
         localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
+        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
     };
     ~SpaceServer() = default;
 
@@ -71,7 +83,10 @@ public:
 private:
     std::string storagebucket;
     std::string spacebucket;
+    std::string bucket_account_info;
     std::string localstoragepath; // 本机存储集群路径
+    std::string applybucket;
+    std::string space_prefix = "SPACE-";
 };
 
 //std::string md5(std::string strPlain);

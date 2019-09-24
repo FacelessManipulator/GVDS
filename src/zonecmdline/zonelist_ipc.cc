@@ -103,8 +103,14 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        fu.get();// TODO: 等待客户端返回结果
-        ipcClient.stop();
+        // TODO: 添加延迟，防止命令长时间等待
+        auto status = fu.wait_for(std::chrono::seconds(20));
+        if(status == std::future_status::timeout){
+            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
+            exit(-1);
+        }else if(status == std::future_status::ready){
+            ipcClient.stop();
+        }
 
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;

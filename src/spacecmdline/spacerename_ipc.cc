@@ -6,7 +6,7 @@
 #include <iostream>
 #include "hvs_struct.h"
 #include <future>
-#include <pistache/client.h>
+//#include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
 
 // TODO: 添加的新头文件
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("空间重命名模块");
         command.add_options()
-                ("zonename", po::value<std::string>(), "区域名称")
+                ("zonename,z", po::value<std::string>(), "区域名称")
                 ("oldname,o", po::value<std::string>(), "空间旧名称")
                 ("newname,n", po::value<std::string>(), "空间新名称")
                 ;
@@ -74,7 +74,11 @@ int main(int argc, char* argv[]){
         commandline.print_options();
         exit(-1);
     }
-
+    if (!CmdLineProxy::is_validate(newspacename)) {
+        std::cerr << "包含非法字符" << std::endl;
+        commandline.print_options();
+        exit(-1);        
+    }
     try{
         std::promise<bool> prom;
         auto fu = prom.get_future();
@@ -110,9 +114,9 @@ int main(int argc, char* argv[]){
         //fu.get(); // 阻塞等待，客户端命令返回；
 
         // TODO: 添加延迟，防止命令长时间等待
-        auto status = fu.wait_for(std::chrono::seconds(5));
+        auto status = fu.wait_for(std::chrono::seconds(20));
         if(status == std::future_status::timeout){
-            std::cout << "命令行执行5s，超时；请确认当前fuse client进程正在运行！" << std::endl;
+            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
             exit(-1);
         }else if(status == std::future_status::ready){
             ipcClient.stop();

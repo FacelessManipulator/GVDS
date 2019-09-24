@@ -71,10 +71,9 @@ bool ResAggregation_MGR::list(const Rest::Request &req, Http::ResponseWriter res
     snprintf(query, 256,
              "select assign_capacity,host_center_id,host_center_name,mgs_address,state, "
              "storage_src_id, storage_src_name, total_capacity"
-             " from `%s` where SUBSTR(META().id,0,%d) == '%s' order by "
+             " from `%s` where META().id like '%s%%' order by "
              "META().id",
-             bucket.c_str(), StorageResource::prefix().length(),
-             StorageResource::prefix().c_str());
+             bucket.c_str(), StorageResource::prefix().c_str());
   }
   else //查询id对应资源
   {

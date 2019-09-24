@@ -6,6 +6,7 @@
 
 #pragma once //HVSONE_IPC_MOD_H
 #include "client.h"
+#include <mutex>
 #include "ipc/IPCServer.hpp"
 #include <hvs_struct.h>
 #include "ipc_struct.h"
@@ -33,21 +34,38 @@ namespace hvs{
         friend class Client;
         std::shared_ptr<IPCServer> sp_ipcserver;
         std::unordered_map<std::string, Zone> zonemap; // 区域重命名使用
+        std::mutex mutex;
     
 
     private:
         // TODO: 客户端具体处理函数
         std::string dospacerename(IPCreq &ipcreq); // 处理客户端函数
+        std::string dospacerename_admin(IPCreq &ipcreq);
         std::string dospacesizechange(IPCreq &ipcreq);
+        std::string dospaceusage(IPCreq &ipcreq);
+        std::string dospaceusage_admin(IPCreq &ipcreq);
         std::string domapadd(IPCreq &ipcreq);
         std::string domapdeduct(IPCreq &ipcreq);
-        std::string dozoneadd(IPCreq &ipcreq);
+        std::string domapdeduct_admin(IPCreq &ipcreq);
+        std::string dozoneadd_admin(IPCreq &ipcreq);
         std::string dozonecancel(IPCreq &ipcreq);
+        std::string dozonecancel_admin(IPCreq &ipcreq);
         std::string dozoneregister(IPCreq &ipcreq);
         std::string dozonerename(IPCreq &ipcreq);
+        std::string dozonerename_admin(IPCreq &ipcreq);
         std::string dozoneshare(IPCreq &ipcreq);
+        std::string dozoneshare_admin(IPCreq &ipcreq);
         std::string dozonesharecancel(IPCreq &ipcreq);
+        std::string dozonesharecancel_admin(IPCreq &ipcreq);
         std::string dozonelist(IPCreq &ipcreq);
+        std::string dozonelist_admin(IPCreq &ipcreq);
+        std::string dolistapply(IPCreq &ipcreq);
+        std::string dosuggestion(IPCreq &ipcreq);
+        std::string doadcam(IPCreq &ipcreq);
+        std::string doaduam(IPCreq &ipcreq);
+        std::string doadsearcham(IPCreq &ipcreq);
+        std::string doadseepool(IPCreq &ipcreq);
+        
         bool GetZoneInfo(std::string clientID);
 
 
@@ -74,6 +92,7 @@ namespace hvs{
         std::string dosearchcenter(IPCreq &ipcreq);
         std::string dodeletecenter(IPCreq &ipcreq);
         
+        std::string doadminsignup(IPCreq &ipcreq);
     };
 }
 

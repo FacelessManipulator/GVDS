@@ -59,6 +59,17 @@ std::string ClientUser::getAccountID(){
     return this->accountID;
 }
 
+void ClientUser::setApply(std::string id, std::string data){
+    this->apply_id_data[id] = data;
+}
+std::string ClientUser::getApply(std::string id){
+    //这里可以加下输错检测
+    return this->apply_id_data[id];
+}
+
+void ClientUser::clearApply(){
+    this->apply_id_data.clear();
+}
 
     //输入member的vector<string> name , 返回一个vector<string> id;
 bool ClientUser::getMemberID(std::vector<std::string> memberName, std::vector<std::string> &memberID){

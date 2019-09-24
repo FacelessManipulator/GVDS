@@ -12,58 +12,52 @@
 // TODO: 添加的新头文件
 #include "client/ipc_struct.h"
 #include "ipc/IPCClient.h"
+#include <errno.h>
 
 using namespace hvs;
+
 /*
- * zonesharecancel 命令行客户端
+ * zonerename 命令行客户端
  */
 
 
 
 int main(int argc, char* argv[]){
     // TODO: 1.获取账户登录信息 2.检索区域信息 3. 提交空间重命名申请
-    char* demo1[13] = {const_cast<char *>("zonesharecancel"), const_cast<char *>("--ip"), const_cast<char *>("192.168.10.219"),
-                       const_cast<char *>("-p"), const_cast<char *>("34779"), const_cast<char *>("--zonename"),
-                       const_cast<char *>("compute-zonetest2"), const_cast<char *>("--id"), const_cast<char *>("000"),
-                       const_cast<char *>("--member"), const_cast<char *>("111"), const_cast<char *>("--member"), const_cast<char *>("222")};
-    char* demo2[2] = {const_cast<char *>("zonesharecancel"), const_cast<char *>("--help")};
+    char* demo1[11] = {const_cast<char *>("zonerename"), const_cast<char *>("--ip"), const_cast<char *>("192.168.5.222"),
+                       const_cast<char *>("-p"), const_cast<char *>("49069"), const_cast<char *>("--zonename"),
+                       const_cast<char *>("zonetest"), const_cast<char *>("--id"), const_cast<char *>("127"),
+                       const_cast<char *>("-n"), const_cast<char *>("zonetest2")};
+    char* demo2[2] = {const_cast<char *>("zonerename"), const_cast<char *>("--help")};
 
     // TODO: 提前准备的数据
+    std::string ip ;//= "127.0.0.1";
+    int port ;//= 55107;
     std::string zonename ;//= "syremotezone"; // 空间名称
-    std::vector<std::string> memName;
+    std::string newzonename;// = "BUAABUAA";
+    std::string ownername;
+
+
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
-    std::string cmdname = argv[0];
+    std::string cmdname = argv[0];//"zonerename";
     // TODO：设置当前命令行解析函数
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
-        po::options_description command("区域共享取消模块");
+        po::options_description command("区域查询模块");
         command.add_options()
-                ("zonename,z", po::value<std::string>(), "区域名称")
-                ("member,m", po::value<std::vector<std::string>>(), "区域删除的成员")
-                ;
+            ("ownername,w", po::value<std::string>(), "主人账户名");  
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
     // TODO： 解析命令行参数，进行赋值
     commandline.cmd_do_func_map[cmdname] =  [&](std::shared_ptr<po::variables_map> sp_variables_map)->void {
-        if (sp_variables_map->count("zonename"))
+        if (sp_variables_map->count("ownername"))
         {
-            zonename = (*sp_variables_map)["zonename"].as<std::string>();
-        }
-        if (sp_variables_map->count("member"))
-        {
-            memName = (*sp_variables_map)["member"].as<std::vector<std::string>>();
+            ownername = (*sp_variables_map)["ownername"].as<std::string>();
         }
     };
     commandline.start(); //开始解析命令行参数
-
-    //TODO :判断是否有参数，如果没有，则报错
-    if (commandline.argc <= 1) {
-        std::cerr << "请输入命令参数！" << std::endl;
-        commandline.print_options();
-        exit(-1);
-    }
 
     try{
         std::promise<bool> prom;
@@ -75,7 +69,29 @@ int main(int argc, char* argv[]){
 //            char tmp[IPCMessage::max_body_length] = {0};
 //            std::memcpy(tmp, msg.body(), msg.body_length());
             std::string ipcresult (msg.body(), msg.body_length());
-            std::cout << ipcresult << std::endl;
+            if (ipcresult == "fail")
+            {
+                std::cout << "没有对应区域" << std::endl;
+            }
+            else
+            {
+                std::vector<Zone> res;
+                json_decode(ipcresult, res);
+                for(auto &it : res){
+                    std::cout << "区域名称:" << it.zoneName << std::endl;
+                    std::cout << "区域主人:" << it.ownerID << std::endl;
+                    for(auto &m : it.memberID){
+                        std::cout << "区域成员:" << m << std::endl;
+                    }
+                    for(auto s : it.spaceBicInfo){
+                        std::cout << "空间名称:" << s->spaceName << std::endl;
+                        std::cout << "空间容量:" << s->spaceSize << std::endl;
+                        std::cout << "空间所在地:" << s->hostCenterName << std::endl;
+                    }
+                    std::cout << "=============================" << std::endl;
+                }
+            }
+
             prom.set_value(true);
         });
         ipcClient.run(); // 停止的时候调用stop 函数
@@ -83,9 +99,12 @@ int main(int argc, char* argv[]){
 
         // TODO: 构造请求结构体，并发送；
         IPCreq ipcreq;
-        ipcreq.cmdname = "zonesharecancel";
-        ipcreq.zonename = zonename; // 空间名称
-        ipcreq.memName = memName;
+        ipcreq.cmdname = "zonelist_admin";
+        ipcreq.ownName = ownername;
+
+
+
+
 
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());

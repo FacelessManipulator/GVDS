@@ -50,7 +50,31 @@ public:
     void ZoneShareCancelRest(const Rest::Request& request, Http::ResponseWriter response);
     int ZoneShareCancel(std::string zoneID, std::string ownerID, std::vector<std::string> memberID);
 
+    //区域注册模块:区域申请接口
+    void ZoneRegisterApplyRest(const Rest::Request& request, Http::ResponseWriter response);
+    int ZoneRegisterApply(std::string apply);
+
+    //区域注销模块：区域注销接口 复查
+    void ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response);
+    int ZoneCancel(std::string zoneID, std::string ownerID);
+
+    //映射编辑模块：区域映射增加申请接口
+    void MapAddApplyRest(const Rest::Request& request, Http::ResponseWriter response);
+    int MapAddApply(std::string apply);    
+
+    //映射编辑模块：区域映射删除接口 复查
+    void MapDeductRest(const Rest::Request& request, Http::ResponseWriter response);
+    int MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID);
+
+//只由管理员调用的接口
+
+    //映射编辑模块：区域映射增加接口 复查
+    void MapAddCheckRest(const Rest::Request& request, Http::ResponseWriter response);
+    void MapAddRest(const Rest::Request& request, Http::ResponseWriter response);
+    int MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
+
     //区域注册模块：区域注册接口 复查
+    void ZoneRegisterCheckRest(const Rest::Request& request, Http::ResponseWriter response);
     void ZoneRegisterRest(const Rest::Request& request, Http::ResponseWriter response);
     int ZoneRegister(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
                      std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
@@ -60,17 +84,7 @@ public:
     int ZoneAdd(std::string zoneName, std::string ownerID, std::vector<std::string> memberID,
                      std::string spacePathInfo);
 
-    //区域注销模块：区域注销接口 复查
-    void ZoneCancelRest(const Rest::Request& request, Http::ResponseWriter response);
-    int ZoneCancel(std::string zoneID, std::string ownerID);
-
-    //映射编辑模块：区域映射增加接口 复查
-    void MapAddRest(const Rest::Request& request, Http::ResponseWriter response);
-    int MapAdd(std::string zoneID, std::string ownerID, std::string spaceName, int64_t spaceSize, std::string spacePathInfo);
-
-    //映射编辑模块：区域映射删除接口 复查
-    void MapDeductRest(const Rest::Request& request, Http::ResponseWriter response);
-    int MapDeduct(std::string zoneID, std::string ownerID, std::vector<std::string> spaceID);
+    string ManagerID = *(HvsContext::get_context()->_config->get<std::string>("manager.id"));
 
  //--------------------------------------------
 public:
@@ -79,6 +93,7 @@ public:
         zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
         accountbucket = _config->get<std::string>("bucket.account_info").value_or("account_info");
         authbucket = _config->get<std::string>("bucket.auth_info").value_or("auth_info");
+        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
     };
     ~ZoneServer() = default;
 
@@ -86,6 +101,8 @@ private:
     std::string  zonebucket;
     std::string  accountbucket;
     std::string  authbucket;
+    std::string  applybucket;
+    std::string  zone_prefix = "ZONE-";
 };
 
 }// namespace hvs

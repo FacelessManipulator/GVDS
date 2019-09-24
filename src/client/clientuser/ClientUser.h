@@ -35,6 +35,10 @@ public:
     void setAccountID(std::string m);
     std::string getAccountID();
 
+    void setApply(std::string id, std::string data);
+    std::string getApply(std::string id);
+    void clearApply();
+
     //输入member的vector<string> name , 返回一个vector<string> id;
     bool getMemberID(std::vector<std::string> memberName, std::vector<std::string> &memberID);
  
@@ -45,6 +49,8 @@ private:
     std::string mtoken = "1";
     std::string accountName;
     std::string accountID;
+
+    std::map<std::string, std::string> apply_id_data;
 
 };
 

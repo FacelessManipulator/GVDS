@@ -46,10 +46,10 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("映射增加模块");
         command.add_options()
-                ("zonename", po::value<std::string>(), "区域名称")
-                ("spacename", po::value<std::string>(), "空间名称")
-                ("spacesize", po::value<int64_t>(), "空间大小")
-                ("center", po::value<std::string>(), "超算名称")
+                ("zonename,z", po::value<std::string>(), "区域名称")
+                ("spacename,s", po::value<std::string>(), "空间名称")
+                ("size", po::value<int64_t>(), "空间大小")
+                ("center,c", po::value<std::string>(), "超算名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -63,9 +63,9 @@ int main(int argc, char* argv[]){
         {
             spacename = (*sp_variables_map)["spacename"].as<std::string>();
         }
-        if (sp_variables_map->count("spacesize"))
+        if (sp_variables_map->count("size"))
         {
-            spacesize = (*sp_variables_map)["spacesize"].as<int64_t>();
+            spacesize = (*sp_variables_map)["size"].as<int64_t>();
         }
         if (sp_variables_map->count("center"))
         {
@@ -80,7 +80,11 @@ int main(int argc, char* argv[]){
         commandline.print_options();
         exit(-1);
     }
-
+    if (!CmdLineProxy::is_validate(spacename)) {
+        std::cerr << "包含非法字符" << std::endl;
+        commandline.print_options();
+        exit(-1);        
+    }
     try{
         std::promise<bool> prom;
         auto fu = prom.get_future();
@@ -108,8 +112,14 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        fu.get(); // TODO: 等待客户端返回结果
-        ipcClient.stop();
+        // TODO: 添加延迟，防止命令长时间等待
+        auto status = fu.wait_for(std::chrono::seconds(20));
+        if(status == std::future_status::timeout){
+            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
+            exit(-1);
+        }else if(status == std::future_status::ready){
+            ipcClient.stop();
+        }
 
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;

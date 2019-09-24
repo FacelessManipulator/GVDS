@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("区域重命名模块");
         command.add_options()
-                ("zonename", po::value<std::string>(), "区域名称")
+                ("zonename,z", po::value<std::string>(), "区域名称")
                 ("newname,n", po::value<std::string>(), "区域新名称")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
@@ -70,7 +70,11 @@ int main(int argc, char* argv[]){
         commandline.print_options();
         exit(-1);
     }
-
+    if (!CmdLineProxy::is_validate(newzonename)) {
+        std::cerr << "包含非法字符" << std::endl;
+        commandline.print_options();
+        exit(-1);        
+    }
     try{
         std::promise<bool> prom;
         auto fu = prom.get_future();
@@ -100,8 +104,14 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        fu.get();// TODO: 等待客户端返回结果
-        ipcClient.stop();
+        // TODO: 添加延迟，防止命令长时间等待
+        auto status = fu.wait_for(std::chrono::seconds(20));
+        if(status == std::future_status::timeout){
+            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
+            exit(-1);
+        }else if(status == std::future_status::ready){
+            ipcClient.stop();
+        }
 
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;

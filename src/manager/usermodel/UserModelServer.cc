@@ -30,11 +30,11 @@ using namespace std;
 //f0_dbPtr     account_info
         //f2_dbPtr     token_info       key:mtoken
         //f1_dbPtr     account_map_id   key: account
-        //f0_dbPtr     account_info     key: uuid
+        //f0_dbPtr     account_info     key: uuid   只有这种需要加 USER- 前缀
 
 //f1_dbPtr   sc_account_info
         //f3_dbPtr     sc_account_pool    key:Beijing  Shanghai Guangzhou Changsha Jinan
-        //f4_dbPtr     sc_account_info    key:uuid
+        //f4_dbPtr     sc_account_info    key:uuid                      //这种需要加   SCUSER- 前缀
 
 //f5_dbPtr  apply_info
 

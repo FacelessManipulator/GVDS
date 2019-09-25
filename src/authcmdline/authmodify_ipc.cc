@@ -118,9 +118,21 @@ int main(int argc, char* argv[]){
         // TODO: 发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        fu.get();
-        // sleep(1); // TODO: 等待客户端返回结果
-        ipcClient.stop();
+        // fu.get();
+        // // sleep(1); // TODO: 等待客户端返回结果
+        // ipcClient.stop();
+        // TODO: 添加延迟，防止命令长时间等待
+        auto status = fu.wait_for(std::chrono::seconds(20));
+        if(status == std::future_status::timeout){
+            std::cout << "命令行执行20s，超时；请确认当前fuse client进程正在运行！" << std::endl;
+            exit(-1);
+        }else if(status == std::future_status::ready){
+            ipcClient.stop();
+        }
+        else{
+            //std::future_status::deferred; future<int> result = async(std::launch::deferred, myThread); 这种方式才会触发！
+            //std::cout << "deferred!" << std::endl;
+        }
 
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;

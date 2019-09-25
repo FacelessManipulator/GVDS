@@ -104,6 +104,9 @@ public:
         bucket_auth_info = _config->get<std::string>("bucket.auth_info").value_or("auth_info");
         bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
         zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
+        zone_prefix = "ZONE-";
+        auth_prefix = "AUTH-";
+        user_prefix = "USER-";
     };
     ~AuthModelServer() {};
 public:
@@ -111,7 +114,9 @@ public:
     std::string bucket_auth_info;
     std::string bucket_account_info;
     std::string zonebucket;
-    std::string  zone_prefix = "ZONE-";
+    std::string zone_prefix;
+    std::string auth_prefix;
+    std::string user_prefix;
 };
 
 

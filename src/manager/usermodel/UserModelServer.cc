@@ -206,7 +206,7 @@ string UserModelServer::UserRegister(Account &person){
     dout(10)<<person_key<<dendl;
     dout(10)<<person_value<<dendl;
     
-    int flag = f0_dbPtr->set(person_key, person_value);
+    int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
     if (flag != 0){
         dout(10) << "Registration fail: DB[account_info] write fail;" << dendl;
         return "Registration fail";
@@ -310,7 +310,7 @@ bool UserModelServer::UserLogin(std::string account, std::string pass, std::stri
     //auto [pPass, error_1] = f0_dbPtr->get(key, path);   *pPass输出带引号
     //tmp
     //使用获取的id查询数据库中密码，并比较
-    auto [pvalue_2, error_2] = f0_dbPtr->get(key);
+    auto [pvalue_2, error_2] = f0_dbPtr->get(user_prefix + key);
     if(error_2){
         dout(10) << "DB[account_info]: No such account" <<dendl;
         return false;
@@ -388,7 +388,7 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
     std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
 
     //判断key是否存在
-    auto [pvalue, error] = f0_dbPtr->get(key);
+    auto [pvalue, error] = f0_dbPtr->get(user_prefix + key);
     if (error){
         is_get_success = false;
         return "SearchFail";
@@ -440,7 +440,7 @@ string UserModelServer::modifyUserinfo(Account &person){
 
     std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
     
-    int flag = f0_dbPtr->set(person_key, person_value);
+    int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
     if (flag != 0){
         dout(10) << "Modify fail: DB[account_info] update fail" << dendl;
         return "Modify fail";
@@ -543,7 +543,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     // f0_dbPtr->init();
     std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
 
-    auto [pvalue, error] = f0_dbPtr->get(uuid);
+    auto [pvalue, error] = f0_dbPtr->get(user_prefix + uuid);
     if(error){
         is_cancel_success = false;
         dout(10) << "access to db[account_info] fail" << dendl;
@@ -828,7 +828,7 @@ bool UserModelServer::RemoveAccountMapping_v2(string accountID){
     // f1_dbPtr->init();
     std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
 
-    auto [pvalue_scuser, error] = f1_dbPtr->get(accountID);  //sc_account_info  key:uuid
+    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + accountID);  //sc_account_info  key:uuid
     if(error){
         dout(10) << "get sc_account_info fail."<< dendl;
         return false;
@@ -915,7 +915,7 @@ bool UserModelServer::SubRemoveAccountMapping_v2(SCAccount &person, string locat
     }    
     
     string value2 = person.serialize();
-    int flag2 = f1_dbPtr->set(person.accountID, value2);   //sc_account_info
+    int flag2 = f1_dbPtr->set(sc_user_prefix + person.accountID, value2);   //sc_account_info
     if (flag2 != 0){
         dout(10)<< "remove map fail: DB[sc_account_info] update fail"<<dendl;
         return false;
@@ -1002,7 +1002,7 @@ bool UserModelServer::SubBuildAccountMapping_v2(SCAccount &person, string locati
     }    
 
     string person_value = person.serialize();
-    int flag2 = f1_dbPtr->set(person.accountID, person_value); //sc_account_info
+    int flag2 = f1_dbPtr->set(sc_user_prefix + person.accountID, person_value); //sc_account_info
     if (flag2 != 0){
         dout(10)<< "map fail: DB[sc_account_info] update fail"<<dendl;
         return false;
@@ -1024,7 +1024,7 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
 
     std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
     //是否存在此ownerid
-    auto [pvalue, error] = f1_dbPtr->get(ownerID);
+    auto [pvalue, error] = f1_dbPtr->get(sc_user_prefix + ownerID);
     if(error){
 
         dout(10) << "fail" << dendl;
@@ -1346,7 +1346,7 @@ string UserModelServer::AdminUserRegister(Account &person){
     //     hvs::CouchbaseDatastore(bucket_account_info));
     // f0_dbPtr->init();
     
-    int flag = f0_dbPtr->set(person_key, person_value);
+    int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
     if (flag != 0){
         dout(10) << "Registration fail: DB[account_info] write fail;" << dendl;
         return "Registration fail";
@@ -1519,7 +1519,7 @@ void UserModelServer::adminDelAccountMapping(const Rest::Request& request, Http:
     // f1_dbPtr->init();
     std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
 
-    auto [pvalue_scuser, error] = f1_dbPtr->get(new_accountmap.hvsID);  //sc_account_info  key:uuid
+    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + new_accountmap.hvsID);  //sc_account_info  key:uuid
     if(error){
         dout(10) << "get sc_account_info fail."<< dendl;
         response.send(Http::Code::Ok, "1");// 失败
@@ -1562,7 +1562,7 @@ void UserModelServer::adminSearchAccountMapping(const Rest::Request& request, Ht
     // f1_dbPtr->init();
     std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
 
-    auto [pvalue_scuser, error] = f1_dbPtr->get(new_accountmap.hvsID);  //sc_account_info  key:uuid
+    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + new_accountmap.hvsID);  //sc_account_info  key:uuid
     if(error){
         dout(10) << "get sc_account_info fail."<< dendl;
         response.send(Http::Code::Ok, "1");// 失败

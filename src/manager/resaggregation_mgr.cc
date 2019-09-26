@@ -83,7 +83,8 @@ bool ResAggregation_MGR::list(const Rest::Request &req, Http::ResponseWriter res
   if (!err)
   {
     vector<shared_ptr<StorageResource>> rstlists(iop_infos->size());
-    for(int i = 0; i < iop_infos->size(); i++) {
+    for (int i = 0; i < iop_infos->size(); i++)
+    {
       json_decode(iop_infos->at(i), rstlists[i]);
     }
     auto reslist_str = json_encode(rstlists);
@@ -142,7 +143,7 @@ bool ResAggregation_MGR::update(const Rest::Request &req, Http::ResponseWriter r
     return false;
   }
 
-  auto cbd = static_cast<CouchbaseDatastore *>(dbPtr.get());
+  //--- auto cbd = static_cast<CouchbaseDatastore *>(dbPtr.get());
   auto [vp, err] = dbPtr->get(storage_res->key());
   if (err)
   {
@@ -152,7 +153,32 @@ bool ResAggregation_MGR::update(const Rest::Request &req, Http::ResponseWriter r
   //dbPtr->set(storage_res->key(), storage_res->json_value());
   //err = cbd->insert(storage_res->key(), storage_res->json_value());
   usleep(100000); // may take 100ms to be effective
-  if (!(dbPtr->set(storage_res->key(), storage_res->json_value())))
+  // int error=1000;
+  std::shared_ptr<hvs::StorageResource> storRe;
+
+  json_decode(*vp, storRe);
+  // res.send(Code::Accepted,"Debug:"+storRe->json_value());
+  // return true;
+  // storage_res->storage_src_id;   // 存储资源UUID
+  // storage_res->storage_src_name; // 存储资源名称
+  // storage_res->host_center_id;   // 存储资源所在超算中心UUID
+  // storage_res->host_center_name; // 存储资源所在超算中心名称
+  // storage_res->total_capacity;   // 存储资源空间容量大小
+  // storage_res->assign_capacity;  // 已经分配空间容量大小
+  // storage_res->mgs_address;      // 存储资源MGS地址
+  // storage_res->state;            // 存储资源状态
+
+  //检查是否修改如果修改存储资源的某个值，则进行改动
+  storRe->storage_src_id = (storage_res->storage_src_id.c_str()[0] != '#') ? storage_res->storage_src_id : storRe->storage_src_id;
+  storRe->storage_src_name = (storage_res->storage_src_name.c_str()[0] != '#') ? storage_res->storage_src_name : storRe->storage_src_name;
+  storRe->host_center_id = (storage_res->host_center_id.c_str()[0] != '#') ? storage_res->host_center_id : storRe->host_center_id;
+  storRe->host_center_name = (storage_res->host_center_name.c_str()[0] != '#') ? storage_res->host_center_name : storRe->host_center_name;
+  storRe->total_capacity = (storage_res->total_capacity != -1) ? storage_res->total_capacity : storRe->total_capacity;
+  storRe->assign_capacity = (storage_res->assign_capacity != -1) ? storage_res->assign_capacity : storRe->assign_capacity;
+  storRe->mgs_address = (storage_res->mgs_address.c_str()[0] != '#') ? storage_res->mgs_address : storRe->mgs_address;
+  storRe->state = (storage_res->state != -1) ? storage_res->state : storRe->state;
+
+  if (!(dbPtr->set(storage_res->key(), storRe->json_value())))
   {
     res.send(Code::Accepted, "ok");
     return true;

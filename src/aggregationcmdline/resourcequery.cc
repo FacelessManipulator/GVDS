@@ -27,6 +27,17 @@ int main(int argc, char *argv[])
     char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
 
     string storage_src_id = ""; // 存储资源UUID
+
+    //检查非法字符输入
+    for (int i = 1; i < argc; i++)
+    {
+        if (!CmdLineProxy::is_validate(argv[i]))
+        {
+            cerr << "输入非法字符" << endl;
+            return 0;
+        }
+    }
+
     CmdLineProxy commandline(argc, argv);
     string cmdname = argv[0];
     // TODO：设置当前命令行解析函数
@@ -67,7 +78,7 @@ int main(int argc, char *argv[])
             {
                 vector<StorageResource> lists;
                 json_decode(ipcresult, lists);
-               
+
                 for (auto qres : lists)
                 {
                     string resstate = "";
@@ -116,9 +127,16 @@ int main(int argc, char *argv[])
         ipcreq.storage_src_id = storage_src_id;
 
         // 发送
-        auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str()); 
+        auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); // 传递一个消息；
-        fu.get();              // TODO: 等待客户端返回结果
+
+        //等待客户端返回结果，超时则终止请求
+        auto status = fu.wait_for(std::chrono::seconds(3));
+        if (status == std::future_status::timeout)
+        {
+            cerr << "操作失败，请求超时！" << endl;
+        }
+
         ipcClient.stop();
     }
     catch (exception &e)

@@ -247,7 +247,7 @@ namespace hvs{
         tmp_zi.zoneID = tmp.zoneID;
         tmp_zi.zoneName = tmp.zoneName;
         //id赋值name
-        auto [own, oerr] = accountPtr->get(tmp.ownerID);
+        auto [own, oerr] = accountPtr->get(user_prefix + tmp.ownerID);
         if (!oerr)
         {
           Account owner;
@@ -259,7 +259,7 @@ namespace hvs{
         //memberid赋值
         for (std::vector<std::string>::iterator m = tmp.memberID.begin(); m != tmp.memberID.end(); m++)
         {
-          auto [mem, merr] = accountPtr->get(*m);
+          auto [mem, merr] = accountPtr->get(user_prefix + *m);
           if (!merr)
           {
             Account member;
@@ -287,7 +287,7 @@ namespace hvs{
         }
         //加权限
 
-        auto [au, auerr] = authPtr->get(tmp.zoneID);
+        auto [au, auerr] = authPtr->get(auth_prefix + tmp.zoneID);
         if(!auerr)
         {
           Auth auth;
@@ -309,7 +309,7 @@ namespace hvs{
         tmp_zi2.zoneID = tmp2.zoneID;
         tmp_zi2.zoneName = tmp2.zoneName;
         //id赋值name
-        auto [own, oerr] = accountPtr->get(tmp2.ownerID);
+        auto [own, oerr] = accountPtr->get(user_prefix + tmp2.ownerID);
         if (!oerr)
         {
           Account owner;
@@ -321,7 +321,7 @@ namespace hvs{
         //memberid赋值
         for (std::vector<std::string>::iterator m = tmp2.memberID.begin(); m != tmp2.memberID.end(); m++)
         {
-          auto [mem, merr] = accountPtr->get(*m);
+          auto [mem, merr] = accountPtr->get(user_prefix + *m);
           if (!merr)
           {
             Account member;
@@ -350,7 +350,7 @@ namespace hvs{
         }
         //加权限
 
-        auto [au, auerr] = authPtr->get(tmp2.zoneID);
+        auto [au, auerr] = authPtr->get(auth_prefix + tmp2.zoneID);
         if(!auerr)
         {
           Auth auth;

@@ -103,6 +103,8 @@ private:
     std::string  authbucket;
     std::string  applybucket;
     std::string  zone_prefix = "ZONE-";
+    std::string  user_prefix = "USER-";
+    std::string  auth_prefix = "AUTH-";
 };
 
 }// namespace hvs

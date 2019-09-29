@@ -391,7 +391,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
         cout << "authmodelserver: zone search fail" << endl;
         return -1;
@@ -507,7 +507,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
         cout << "authmodelserver: zone search fail" << endl;
         return -1;
@@ -652,7 +652,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
         cout << "authmodelserver: zone search fail" << endl;
         return -1;
@@ -996,7 +996,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
         cout << "authmodelserver: auth modify fail" << endl;
         return -1;

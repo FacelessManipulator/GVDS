@@ -98,7 +98,7 @@ int ClientRpc::write_data_async(std::shared_ptr<IOProxyNode> node,
   return buf.buf.size;
 }
 
-unique_ptr<ioproxy_rpc_buffer> ClientRpc::read_data(
+shared_ptr<ioproxy_rpc_buffer> ClientRpc::read_data(
     std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf) {
   // TODO: We assume RpcClient can concurently call
   auto udtc = udt_channel(node);

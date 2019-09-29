@@ -34,14 +34,24 @@ int main(int argc, char *argv[])
 
     char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
 
-    string storage_src_id = "";   // 存储资源UUID
-    string storage_src_name = ""; // 存储资源名称
-    string host_center_id = "";   // 存储资源所在超算中心UUID
-    string host_center_name = ""; // 存储资源所在超算中心名称
-    int64_t total_capacity = 0;   // 存储资源空间容量大小
-    int64_t assign_capacity = 0;  // 存储资源已分配空间容量大小
-    string mgs_address = "";      // 存储资源MGS地址
-    int state = 1;                // 存储资源状态
+    string storage_src_id = "#default";   // 存储资源UUID
+    string storage_src_name = "#default"; // 存储资源名称
+    string host_center_id = "#default";   // 存储资源所在超算中心UUID
+    string host_center_name = "#default"; // 存储资源所在超算中心名称
+    int64_t total_capacity = -1;          // 存储资源空间容量大小
+    int64_t assign_capacity = -1;         // 存储资源已分配空间容量大小
+    string mgs_address = "#default";      // 存储资源MGS地址
+    int state = -1;                       // 存储资源状态
+
+    //检查非法字符输入
+    for (int i = 1; i < argc; i++)
+    {
+        if (!CmdLineProxy::is_validate(argv[i]))
+        {
+            cerr << "输入非法字符" << endl;
+            return 0;
+        }
+    }
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
@@ -108,10 +118,29 @@ int main(int argc, char *argv[])
         ipcreq.assign_capacity = assign_capacity;
         ipcreq.mgs_address = mgs_address;
         ipcreq.state = state;
+
+        if (!(ipcreq.storage_src_id[0] != '#' && ipcreq.storage_src_name[0] != '#' &&
+              (ipcreq.host_center_id[0] != '#' || ipcreq.host_center_name[0] != '#') && //输入超算中心id或name皆可，不过若两者皆有，则二者需指向同一超算中心
+              ipcreq.total_capacity != -1 &&
+              ipcreq.assign_capacity != -1 &&
+              ipcreq.mgs_address[0] != '#' &&
+              ipcreq.state != -1))
+        {
+            cerr << "请完整的命令参数！" << endl;
+            commandline.print_options();
+            exit(-1);
+        }
+
         //发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); //传递一个消息
-        fu.get();              //等待客户端返回结果
+
+        //等待客户端返回结果，超时则终止请求
+        auto status = fu.wait_for(std::chrono::seconds(3));
+        if (status == std::future_status::timeout)
+        {
+            cerr << "操作失败，请求超时！" << endl;
+        }
         ipcClient.stop();
     }
     catch (exception &e)

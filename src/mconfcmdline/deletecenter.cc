@@ -40,6 +40,7 @@ int main(int argc, char* argv[]){
     // CmdLineProxy commandline(9, demo1);
      CmdLineProxy commandline(argc, argv);
 //    CmdLineProxy commandline(2, demo2);
+    //std::string cmdname = "userlogin_ipc";
     std::string cmdname = argv[0];
 
 

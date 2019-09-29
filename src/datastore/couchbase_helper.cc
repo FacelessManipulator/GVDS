@@ -102,7 +102,7 @@ int hvs::CouchbaseDatastore::upsert_sub(const std::string& key,
                                   const std::string& subdoc) {
   Couchbase::SubdocResponse rs = client->upsert_sub(key, path, subdoc);
   if (!rs.status().success()) {
-    dout(5) << "ERROR: Couchbase helper couldn't get kv pair " << key.c_str()
+    dout(5) << "ERROR: Couchbase helper couldn't set kv pair " << key.c_str()
             << ", Reason: " << rs.status().description() << dendl;
   }
   return rs.status().errcode();

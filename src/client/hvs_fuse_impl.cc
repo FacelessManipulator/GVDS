@@ -23,8 +23,8 @@
 #include "client/fuse_mod.h"
 #include "client/graph_mod.h"
 #include "client/msg_mod.h"
-#include "client/zone_mod.h"
 #include "client/queue.h"
+#include "client/zone_mod.h"
 #include "context.h"
 #include "hvs_struct.h"
 #include "io_proxy/rpc_types.h"
@@ -142,15 +142,30 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   }
 
   int retstat = 0;
-  auto ents = res->as<std::vector<ioproxy_rpc_dirent>>();
-  for (const ioproxy_rpc_dirent &ent : ents) {
-    if (filler(buf, ent.d_name.c_str(), nullptr, 0,
+  auto ents = res->as<std::vector<ioproxy_rpc_statbuffer>>();
+  for (const ioproxy_rpc_statbuffer &ent : ents) {
+    struct stat dirfilestat;
+    memset(&dirfilestat, 0, sizeof(struct stat));
+    dirfilestat.st_dev = static_cast<__dev_t>(ent.st_dev);
+    dirfilestat.st_ino = static_cast<__ino_t>(ent.st_ino);
+    dirfilestat.st_mode = static_cast<__mode_t>(ent.st_mode);
+    dirfilestat.st_nlink = static_cast<__nlink_t>(ent.st_nlink);
+    dirfilestat.st_uid = static_cast<__uid_t>(ent.st_uid);
+    dirfilestat.st_gid = static_cast<__gid_t>(ent.st_gid);
+    dirfilestat.st_rdev = static_cast<__dev_t>(ent.st_rdev);
+    dirfilestat.st_size = ent.st_size;
+    dirfilestat.st_atim.tv_nsec = ent.st_atim_tv_nsec;
+    dirfilestat.st_atim.tv_sec = ent.st_atim_tv_sec;
+    dirfilestat.st_mtim.tv_nsec = ent.st_mtim_tv_nsec;
+    dirfilestat.st_mtim.tv_sec = ent.st_mtim_tv_sec;
+    dirfilestat.st_ctim.tv_nsec = ent.st_ctim_tv_nsec;
+    dirfilestat.st_ctim.tv_sec = ent.st_ctim_tv_sec;
+    if (filler(buf, ent.d_name.c_str(), &dirfilestat, 0,
                static_cast<fuse_fill_dir_flags>(0)) != 0) {
       return -ENOMEM;
     }
     retstat = ent.error_code;
   }
-
   return retstat;
 }
 
@@ -236,27 +251,21 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
   _buffer.fid = fi->fh;
   _buffer.flags = fi->flags;
 
-  if (HVS_FUSE_DATA->fuse_client->use_udt) {
-    // UDT version
-    auto res = HVS_FUSE_DATA->client->rpc->write_data(iop, _buffer);
-    return res;
+  if (HVS_FUSE_DATA->fuse_client->async_mode) {
+    auto buf2q = std::make_shared<hvs::Buffer>(rpath, buf, offset, size);
+    buf2q->dest = iop;
+    HVS_FUSE_DATA->client->queue->queue_buffer(buf2q);
+    return size;
   } else {
-    if (HVS_FUSE_DATA->fuse_client->async_mode) {
-      auto buf2q = std::make_shared<hvs::Buffer>(rpath, buf, offset, size);
-      buf2q->dest = iop;
-      HVS_FUSE_DATA->client->queue->queue_buffer(buf2q);
-      return size;
-    } else {
-      // tcp version
-      auto res = HVS_FUSE_DATA->client->rpc->call(
-          iop, "ioproxy_write", rpath.c_str(), _buffer, size, offset);
-      if (!res.get()) {
-        // timeout exception raised
-        return -ENOENT;
-      }
-      auto retbuf = res->as<int>();
-      return retbuf;
+    // tcp version
+    auto res = HVS_FUSE_DATA->client->rpc->call(
+        iop, "ioproxy_write", rpath.c_str(), _buffer, size, offset);
+    if (!res.get()) {
+      // timeout exception raised
+      return -ENOENT;
     }
+    auto retbuf = res->as<int>();
+    return retbuf;
   }
   // write may failed on remote server
 }
@@ -427,6 +436,8 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
     return -ENOTSUP;
   }
 
+  std::future<bool> blk = HVS_FUSE_DATA->client->queue->block_on_last(siop);
+  blk.get();
   auto res =
       HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename", srpath, drpath);
   if (!res.get()) {

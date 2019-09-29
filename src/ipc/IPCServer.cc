@@ -52,11 +52,13 @@ public:
     }
 
     ~IPCSession() override {
-        std::cout << "Session-Client: " << socket_.remote_endpoint().address() << ":" << socket_.remote_endpoint().port() << " closed!"<< std::endl;
+        std::cout << "Session-Client: " << addr << ":" << po << " closed!"<< std::endl; // 处理析构时的段错误
     }
 
     void start(){
         std::cout << "Session-Client: " << socket_.remote_endpoint().address() << ":" << socket_.remote_endpoint().port() << std::endl;
+        addr =  socket_.remote_endpoint().address();
+        po = socket_.remote_endpoint().port();
         task_collection_.join(shared_from_this());
         do_read_header(); // 处理消息头
     }
@@ -136,6 +138,8 @@ private:
     IPCTaskCollection& task_collection_; // 展示当前已经连接的所有任务
     ipc_message_queue write_msgs_;
     tcp::socket socket_;
+    boost::asio::ip::address addr;  // 添加此变量，避免了命令行提前退出导致的客户端段错误，从而导致hvs_client 崩溃
+    unsigned short po; // 添加此变量，避免了命令行提前退出导致的客户端段错误，从而导致hvs_client 崩溃 此变量将在析构函数中再次被使用！
     IPCSessionWorker session_worker_;
 };
 

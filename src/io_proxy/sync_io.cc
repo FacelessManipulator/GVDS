@@ -61,22 +61,31 @@ ssize_t sync_io::swrite(int fd, const void *buf, size_t count, off_t offset, str
     op->error_code = static_cast<int>(ret);
     if(ret == -1){
         op->error_code = -errno;
-        dout(-1) << "write error: " << op->error_code << " res: " << strerror(op->error_code) << dendl;
+        dout(-1) << "write error: " << op->error_code << " res: " << strerror(-op->error_code) << dendl;
     }
     return ret;
 }
 
 ssize_t sync_io::swrite(const std::string& path, const void *buf, size_t count, off_t offset, struct OP* op) {
     // TODO: there shouldn't have default flags and mode
+    bool success = false;
+    while(!success) {
     int fd = iop->fdm.open(path, op->open_flags | O_RDWR, 0655);
     op->error_code = 0;
-    if (fd == -1){
-        dout(-1) << "sync_io swrite open "<< path << dendl;
-        op->error_code = -errno;
-        return -errno;
+    if (fd < 0){
+        dout(-1) << "sync_io swrite open error: "<< path << strerror(-fd) << dendl;
+        op->error_code = -fd;
+        // we cannot automatic fix this error
+        return fd;
     } else {
         ssize_t ret = swrite(fd, buf, count, offset, op);
+        if(op->error_code == -EBADF) {
+            iop->fdm.expire(path);
+            continue;
+        }
+        success = true;
         return ret; // 调用上面针对 fd 的写接口
+    }
     }
 }
 

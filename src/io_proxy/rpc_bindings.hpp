@@ -61,7 +61,7 @@ namespace hvs {
         return results;
     }
 
-    inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, int offset, int fd){
+    inline ioproxy_rpc_buffer ioproxy_read(const std::string pathname, int size, off_t offset, int fd){
         std::string fullpath = hvsfs_fullpath(pathname);
         auto op = std::make_shared<IOProxyDataOP>();
         op->id = 1;
@@ -83,7 +83,7 @@ namespace hvs {
         }
     }
 
-    inline int ioproxy_write(const std::string pathname, ioproxy_rpc_buffer obuf,int size, int offset){
+    inline int ioproxy_write(const std::string pathname, ioproxy_rpc_buffer obuf,int size, off_t offset){
         std::string fullpath = hvsfs_fullpath(pathname);
         auto op = std::make_shared<IOProxyDataOP>();
         op->id = 2;
@@ -132,9 +132,9 @@ namespace hvs {
         return 0;
     }
 
-    inline std::vector<ioproxy_rpc_dirent> ioproxy_readdir(const std::string pathname){
+    inline std::vector<ioproxy_rpc_statbuffer> ioproxy_readdir(const std::string pathname){
         std::string fullpath = hvsfs_fullpath(pathname);
-        std::vector<ioproxy_rpc_dirent> retvec;
+        std::vector<ioproxy_rpc_statbuffer> retvec;
         std::cout << "readdir: " << pathname << std::endl;
         auto op = std::make_shared<IOProxyMetadataOP>();
         op->id = 3;
@@ -144,15 +144,34 @@ namespace hvs {
         static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
         if (op->error_code == 0) {
             for(dirent ent : op->dirvector){
-                retvec.emplace_back(ioproxy_rpc_dirent(&ent));
+                std::string dirfilename(ent.d_name); // 目录名称
+                std::string statfilefullpath = hvsfs_fullpath(pathname);
+                std::string statfilepath =  statfilefullpath +"/"+ dirfilename; // stat 文件的全局路径
+                auto op = std::make_shared<hvs::IOProxyMetadataOP>();
+                op->id = 0;
+                op->operation = hvs::IOProxyMetadataOP::stat;
+                op->path = statfilepath.c_str();
+                op->type = hvs::IO_PROXY_METADATA;
+                static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->queue_and_wait(op);
+                if (op->error_code == 0) {
+                    ioproxy_rpc_statbuffer tmpstat(op->buf); //返回消息
+                    tmpstat.d_name = dirfilename;
+                    tmpstat.d_off = ent.d_off;
+                    retvec.emplace_back(tmpstat);
+                } else {
+                    ioproxy_rpc_statbuffer tmpstat(op->error_code);
+                    tmpstat.d_name = dirfilename;
+                    tmpstat.d_off = ent.d_off;
+                    retvec.emplace_back(tmpstat);
+                }
             }
         } else {
-            retvec.emplace_back(ioproxy_rpc_dirent(op->error_code));
+            retvec.emplace_back(ioproxy_rpc_statbuffer(op->error_code));
             return retvec;
         }
     }
 
-    inline int ioproxy_truncate(const std::string path, int offset){
+    inline int ioproxy_truncate(const std::string path, off_t offset){
         std::string fullpath = hvsfs_fullpath(path);
         std::cout << "truncate: " << path << std::endl;
         auto op = std::make_shared<IOProxyDataOP>();

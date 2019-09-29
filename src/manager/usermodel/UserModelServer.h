@@ -103,6 +103,8 @@ public:
         applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
         c_key = "center_information";
         adminlist = "adminwhitelist";
+        user_prefix = "USER-";
+        sc_user_prefix = "SCUSER-";
     };
     ~UserModelServer() {};
 
@@ -134,6 +136,8 @@ private:
     std::string applybucket;
     std::string c_key;
     std::string adminlist;
+    std::string user_prefix;
+    std::string sc_user_prefix;
 
 };
 

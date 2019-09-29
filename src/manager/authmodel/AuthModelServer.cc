@@ -314,7 +314,7 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
         hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
-    int f1_flag = f3_dbPtr->set(zoneID, value);
+    int f1_flag = f3_dbPtr->set(auth_prefix + zoneID, value);
     if (f1_flag != 0){
         cout << "fail" << endl;
         return -1;
@@ -341,11 +341,11 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
     // ZoneID = "123";
 
     //1、根据zoneid 获取区域的权限 
-    std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_auth_info));
-    f3_dbPtr->init();
-
-    auto [pvalue, error] = f3_dbPtr->get(zoneID);
+    // std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+    //     hvs::CouchbaseDatastore(bucket_auth_info));
+    // f3_dbPtr->init();
+    std::shared_ptr<hvs::Datastore> f3_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_auth_info, hvs::DatastoreType::couchbase, true);
+    auto [pvalue, error] = f3_dbPtr->get(auth_prefix + zoneID);
     if(error){
         cout << "fail" << endl;
         return -1;
@@ -955,7 +955,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
         hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
-    auto [pvalue, error] = f3_dbPtr->get(zoneID);
+    auto [pvalue, error] = f3_dbPtr->get(auth_prefix + zoneID);
     if(error){
         cout << "fail" << endl;
         return -1;
@@ -1123,7 +1123,7 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
         person.group_write = pw;
         person.group_exe = pe;
         string m_value = person.serialize();
-        int f3_f = f3_dbPtr->set(zoneID, m_value);
+        int f3_f = f3_dbPtr->set(auth_prefix + zoneID, m_value);
         if (f3_f != 0){
             cout << "fail" << endl;
             return_flag = -1;
@@ -1215,7 +1215,7 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
 
     string hvsname;
     std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase);
-    auto [own, oerr] = accountPtr->get(hvsID);
+    auto [own, oerr] = accountPtr->get(user_prefix + hvsID);
     if (!oerr)
     {
           Account owner;
@@ -1258,7 +1258,7 @@ int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, s
                                         string &ownergroupR, string &ownergroupW, string &ownergroupE){
     
     //2.1.1查询在每个区域中是主人 还是 成员
-    if(myzone.ownerID.compare(hvsID)==0){
+    if(myzone.ownerID.compare(hvsID)==0){   // myzone.ownerID 这块比较特殊 存的其实是 name 因此这块就是比较name
         identity = "1";
     }
     else{
@@ -1271,7 +1271,7 @@ int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, s
         hvs::CouchbaseDatastore(bucket_auth_info));
     f3_dbPtr->init();
 
-    auto [pvalue, error] = f3_dbPtr->get(myzone.zoneID);
+    auto [pvalue, error] = f3_dbPtr->get(auth_prefix + myzone.zoneID);
     if(error){
         cout << "fail" << endl;
         return -1;

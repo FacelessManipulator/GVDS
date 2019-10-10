@@ -91,10 +91,17 @@ int main(int argc, char* argv[]){
             } else {
                 std::vector<int64_t> result;
                 std::string ipcres = ipcresult.substr(1, ipcresult.length() - 1);
-                json_decode(ipcres, result);
-                for(int i = 0; i < spacenames.size(); i++)
+                if (ipcres == "fail")
                 {
-                    std::cout << "空间名称：" << spacenames[i] << "空间已用容量：" << result[i] << "K" <<std::endl;
+                    std::cout << "空间容量查询失败,请联系管理员或稍后重试" << std::endl;
+                }
+                else
+                {
+                    json_decode(ipcres, result);
+                    for(int i = 0; i < spacenames.size(); i++)
+                    {
+                        std::cout << "空间名称：" << spacenames[i] << "空间已用容量：" << result[i] << "K" <<std::endl;
+                    }
                 }
             }
             prom.set_value(true);

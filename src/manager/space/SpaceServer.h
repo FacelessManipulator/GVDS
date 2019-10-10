@@ -55,6 +55,9 @@ public:
     void SpaceSizeChangeApplyRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceSizeChangeApply(std::string apply); 
 
+    void SpaceNumberRest(const Rest::Request& request, Http::ResponseWriter response);
+    int SpaceNumber(std::string hostCenterName);
+
     //空间缩放模块：空间缩放接口--管理员调用
     void SpaceSizeChangeRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceSizeChange(std::string spaceID, int64_t newSpaceSize);

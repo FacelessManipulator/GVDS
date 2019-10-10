@@ -375,7 +375,8 @@ std::string ClientIPC::dospacerename(IPCreq &ipcreq)
     req.spaceID = spaceuuid;
     req.newSpaceName = newspacename;
     string response = client->rpc->post_request(client->get_manager(), "/space/rename", req.serialize());
-    return response;
+    if(response == "success") return response;
+    else return response + "空间不存在或访问数据库失败";
 }
 
 std::string ClientIPC::dospacerename_admin(IPCreq &ipcreq)
@@ -441,7 +442,8 @@ std::string ClientIPC::dospacerename_admin(IPCreq &ipcreq)
     req.spaceID = spaceuuid;
     req.newSpaceName = newspacename;
     string response = client->rpc->post_request(client->get_manager(), "/space/rename", req.serialize());
-    return response;
+    if(response == "success") return response;
+    else return response + "空间不存在或访问数据库失败";
 }
 
 std::string ClientIPC::dospaceusage(IPCreq &ipcreq)
@@ -627,7 +629,7 @@ std::string ClientIPC::dospacesizechange(IPCreq &ipcreq)
     if (!result)
         return "success";
     else
-        return "fail"; //std::strerror(result);
+        return "数据库连接失败，请重试"; //std::strerror(result);
 }
 
 std::string ClientIPC::domapadd(IPCreq &ipcreq)
@@ -693,28 +695,7 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq)
             if (!result)
                 return "success";
             else
-                return std::strerror(result);
-            // for(int i = 0; i < centers.size(); i++)
-            // {
-            //     auto center = centers[i];
-            //     char url[256];
-            //     snprintf(url, 256, "http://%s:%s", center.ip_addr.c_str(), center.port.c_str());
-            //     space.hostCenterName = center.location;
-            //     req.spacePathInfo = space.serialize();
-            //     string response = client->rpc->post_request(string(url), "/zone/mapaddapply", req.serialize());
-            //     int result;
-            //     json_decode(response, result);
-            //     if (!result)
-            //     {
-            //         res = "success";
-            //         break;
-            //     }
-            //     else
-            //     {
-            //         res = std::strerror(result);
-            //     }
-            // }
-            // return res;
+                return "数据库连接失败，请重试";
         }
         else
         {
@@ -736,7 +717,7 @@ std::string ClientIPC::domapadd(IPCreq &ipcreq)
                 if (!result)
                     return "success";
                 else
-                    return std::strerror(result);
+                    return "数据库连接失败，请重试";
             }
         }
     }
@@ -803,8 +784,15 @@ std::string ClientIPC::domapdeduct(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+    else if( result==11 )
+        return "数据库连接失败或空间权限删除失败请重试";
+	else if (result == 22)
+		return "空间名不存在";
+	else if (result == 13)
+		return "并非区域主人无权删除空间";
     else
-        return std::strerror(result);
+        return "未知错误";
+    
 }
 
 std::string ClientIPC::domapdeduct_admin(IPCreq &ipcreq)
@@ -876,8 +864,14 @@ std::string ClientIPC::domapdeduct_admin(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+    else if( result==11 )
+        return "数据库连接失败或空间权限删除失败请重试";
+	else if (result == 22)
+		return "空间名不存在";
+	else if (result == 13)
+		return "并非区域主人无权删除空间";
     else
-        return std::strerror(result);
+        return "未知错误";
 }
 
 std::string ClientIPC::dozoneadd_admin(IPCreq &ipcreq)
@@ -937,8 +931,13 @@ std::string ClientIPC::dozoneadd_admin(IPCreq &ipcreq)
                 json_decode(response, result);
                 if (!result)
                     return "success";
+                else if (result == 22)
+                    return "未在实际路径中找到相应空间或数据库中存在多个同命名的区域";
+				else if (result == 11)
+					return "数据库连接失败或权限添加失败请重试或联系管理员";
                 else
-                    return std::strerror(result);
+                    return "未知错误";
+                
             }
         }
     }
@@ -980,8 +979,14 @@ std::string ClientIPC::dozonecancel(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+	else if (result == 11)
+		return "数据库连接失败或权限删除失败请重试或联系管理员";
+	else if (result == 13)
+		return "不是管理员或区域主人，没有权限删除区域信息";
+	else if (result == 2)
+		return "未找到对应区域信息";
     else
-        return std::strerror(result);
+        return "未知错误";
 }
 
 std::string ClientIPC::dozonecancel_admin(IPCreq &ipcreq)
@@ -1028,8 +1033,14 @@ std::string ClientIPC::dozonecancel_admin(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+	else if (result == 11)
+		return "数据库连接失败或权限删除失败请重试或联系管理员";
+	else if (result == 13)
+		return "不是管理员或区域主人，没有权限删除区域信息";
+	else if (result == 2)
+		return "未找到对应区域信息";
     else
-        return std::strerror(result);
+        return "未知错误";
 }
 
 std::string ClientIPC::dozoneregister(IPCreq &ipcreq)
@@ -1045,6 +1056,10 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq)
     {
         std::cerr << "未获得对应成员信息，请确认信息正确！" << std::endl;
         return "未获得对应成员信息，请确认信息正确！";
+    }
+    for(std::vector<std::string>::iterator it = memID.begin(); it != memID.end(); it++)
+    {
+        if(*it == ownID) return "不能见区域主人作为成员添加";
     }
     std::string spacename = ipcreq.spacename;
     int64_t spacesize = ipcreq.spacesize;
@@ -1073,29 +1088,7 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq)
         if (!result)
             return "success";
         else
-            return std::strerror(result);
-        // for(int i = 0; i < centers.size(); i++)
-        // {
-        //     auto center = centers[i];
-        //     char url[256];
-        //     snprintf(url, 256, "http://%s:%s", center.ip_addr.c_str(), center.port.c_str());
-        //     space.hostCenterName = center.location;
-        //     req.spacePathInfo = space.serialize();
-        //     string response = client->rpc->post_request(string(url), "/zone/registerapply", req.serialize());
-        //     int result;
-        //     json_decode(response, result);
-        //     cout << center.location << "  " << result << endl;
-        //     if (!result)
-        //     {
-        //         res = "success";
-        //         break;
-        //     }
-        //     else
-        //     {
-        //         res = std::strerror(result);
-        //     }
-        // }
-        // return res;
+            return "数据库连接失败，请重试";
     }
     else
     {
@@ -1117,7 +1110,7 @@ std::string ClientIPC::dozoneregister(IPCreq &ipcreq)
             if (!result)
                 return "success";
             else
-                return std::strerror(result);
+                return "数据库连接失败，请重试";
         }
     }
 }
@@ -1161,8 +1154,14 @@ std::string ClientIPC::dozonerename(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+    else if( result==11 )
+        return "数据库连接失败请重试";
+	else if (result == 22)
+		return "已存在同名区域";
+	else if (result == 13)
+		return "并非区域主人无权重命名";
     else
-        return std::strerror(result);
+        return "未知错误";
 }
 
 std::string ClientIPC::dozonerename_admin(IPCreq &ipcreq)
@@ -1212,8 +1211,14 @@ std::string ClientIPC::dozonerename_admin(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+    else if( result==11 )
+        return "数据库连接失败请重试";
+	else if (result == 22)
+		return "已存在同名区域";
+	else if (result == 13)
+		return "并非区域主人或管理员无权重命名";
     else
-        return std::strerror(result);
+        return "未知错误";
 }
 
 std::string ClientIPC::dozoneshare(IPCreq &ipcreq)
@@ -1260,8 +1265,12 @@ std::string ClientIPC::dozoneshare(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+	else if (result == 11)
+		return "数据库连接失败或区域成员权限添加失败请重试或联系管理员";
+	else if (result == 13)
+		return "非区域主人或管理员，无权进行区域共享";
     else
-        return std::strerror(result);
+        return "未知错误";
 }
 
 std::string ClientIPC::dozoneshare_admin(IPCreq &ipcreq)
@@ -1316,8 +1325,12 @@ std::string ClientIPC::dozoneshare_admin(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
+	else if (result == 11)
+		return "数据库连接失败或区域成员权限添加失败请重试或联系管理员";
+	else if (result == 13)
+		return "非区域主人或管理员，无权进行区域共享";
     else
-        return std::strerror(result);
+        return "未知错误";
 }
 
 std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq)
@@ -1364,8 +1377,14 @@ std::string ClientIPC::dozonesharecancel(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
-    else
-        return std::strerror(result);
+	else if (result == 11)
+		return "数据库连接失败或区域成员权限删除失败请重试或联系管理员";
+	else if (result == 13)
+		return "非区域主人或管理员，无权进行区域共享取消";
+	else if (result == 22)
+		return "某个要删除的成员并非区域成员";
+	else
+       return "未知错误";
 }
 
 std::string ClientIPC::dozonesharecancel_admin(IPCreq &ipcreq)
@@ -1420,8 +1439,14 @@ std::string ClientIPC::dozonesharecancel_admin(IPCreq &ipcreq)
     json_decode(response, result);
     if (!result)
         return "success";
-    else
-        return std::strerror(result);
+	else if (result == 11)
+		return "数据库连接失败或区域成员权限删除失败请重试或联系管理员";
+	else if (result == 13)
+		return "非区域主人或管理员，无权进行区域共享取消";
+	else if (result == 22)
+		return "某个要删除的成员并非区域成员";
+	else
+       return "未知错误";
 }
 
 std::string ClientIPC::dozonelist(IPCreq &ipcreq)
@@ -1924,10 +1949,31 @@ std::string ClientIPC::dosuggestion(IPCreq &ipcreq)
             {
                 res = "success";
             }
+            else if(result==11)
+            {
+                res = "数据库连接失败或空间目录创建失败或权限添加失败请重试";
+            }
+			else if (result == 22)
+			{
+				res = "区域名已存在或区域名、空间名、空间容量为空";
+			}
+			else if (result == 28)
+			{
+				res = "分配容量失败，存储资源容量不足";
+			}
+			else if (result == 2)
+			{
+				res = "存储资源选择失败,未找到相关存储资源";
+			}
+			else if (result == 13)
+			{
+				res = "获取区域账户映射信息失败";
+			}
             else
             {
-                res = std::strerror(result);
+                res = "未知错误";
             }
+            
             new_route = "/users/removeapply";
             new_res = client->rpc->post_request(endpoint, new_route, id);
         }
@@ -1941,9 +1987,29 @@ std::string ClientIPC::dosuggestion(IPCreq &ipcreq)
             {
                 res = "success";
             }
+            else if(result==11)
+            {
+                res = "数据库连接失败或空间目录创建失败或权限同步失败请重试";
+            }
+			else if (result == 22)
+			{
+				res = "空间已存在或同一区域在一个中心不能有两个空间或空间名、空间容量为空";
+			}
+			else if (result == 28)
+			{
+				res = "分配容量失败，存储资源容量不足";
+			}
+			else if (result == 2)
+			{
+				res = "存储资源选择失败,未找到相关存储资源";
+			}
+			else if (result == 13)
+			{
+				res = "获取区域账户映射信息失败";
+			}
             else
             {
-                res = std::strerror(result);
+                res = "未知错误";
             }
             new_route = "/users/removeapply";
             new_res = client->rpc->post_request(endpoint, new_route, id);
@@ -1958,9 +2024,21 @@ std::string ClientIPC::dosuggestion(IPCreq &ipcreq)
             {
                 res = "success";
             }
+			else if (result == 11)
+			{
+				res = "数据库连接失败";
+			}
+			else if (result == 22)
+			{
+				res = "空间容量缩小过多";
+			}
+			else if (result == 28)
+			{
+				res = "分配容量失败，存储资源容量不足";
+			}
             else
             {
-                res = std::strerror(result);
+                res = "未知错误";
             }
             new_route = "/users/removeapply";
             new_res = client->rpc->post_request(endpoint, new_route, id);

@@ -437,7 +437,7 @@ namespace hvs{
     auto [vp, err] = zonePtr->get(zone_prefix + zoneID);
     if(err != 0){
         dout(10) << "未找到对应的区域" << dendl;
-        return ENOENT;
+        return EAGAIN;
     }
     std::string tmp_value = *vp;
     tmp.deserialize(tmp_value);
@@ -612,7 +612,7 @@ namespace hvs{
         tmp.memberID = memberID;
         tmp.spaceID.emplace_back(spaceID);
         tmp.contains_spaceinfo = false;
-        if (tmp.zoneName == "") return EAGAIN;
+        if (tmp.zoneName == "") return EINVAL;
         int flag = dbPtr->set(zone_prefix + tmp.zoneID, tmp.serialize());
         if (flag != 0) return EAGAIN;
         AuthModelServer *p_auth = static_cast<AuthModelServer*>(mgr->get_module("auth").get());
@@ -630,7 +630,8 @@ namespace hvs{
             else
             {
               dout(10) << "ZoneRegister:添加成员失败！" << dendl;
-              dbPtr->remove(zone_prefix + tmp.zoneID);
+              int flag = dbPtr->remove(zone_prefix + tmp.zoneID);
+              if(flag != 0) return EAGAIN;
               tmp_server->SpaceDelete(tmp.spaceID);
               return EAGAIN;
             } 
@@ -639,7 +640,8 @@ namespace hvs{
         else
         {
           dout(10) << "ZoneRegister:添加初始权限失败！" << dendl;
-          dbPtr->remove(zone_prefix + tmp.zoneID);
+          int flag = dbPtr->remove(zone_prefix + tmp.zoneID);
+          if(flag != 0) return EAGAIN;
           tmp_server->SpaceDelete(tmp.spaceID);
           return EAGAIN;
         }
@@ -674,7 +676,10 @@ namespace hvs{
     zonebucket.c_str(), ownerID.c_str(), zoneName.c_str(), zone_prefix.c_str());
 
     auto [vp, err] = zonePtr->n1ql(string(query));
-
+    if(err != 0){
+        dout(10) << "数据库连接失败" << dendl;
+        return EAGAIN;
+    }
     if(vp->size() == 0)
     {
       SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());//获取空间服务端
@@ -716,7 +721,8 @@ namespace hvs{
               else
               {
                 dout(10) << "ZoneAdd:添加成员失败！" << dendl;
-                dbPtr->remove(zone_prefix + tmp.zoneID);
+                int flag = dbPtr->remove(zone_prefix + tmp.zoneID);
+                if(flag != 0) return EAGAIN;
                 tmp_server->SpaceDelete(tmp.spaceID);
                 return EAGAIN;
               } 
@@ -725,7 +731,8 @@ namespace hvs{
           else
           {
             dout(10) << "ZoneAdd:空间权限同步失败" << dendl;
-            dbPtr->remove(zone_prefix + tmp.zoneID);
+            int flag = dbPtr->remove(zone_prefix + tmp.zoneID);
+            if(flag != 0) return EAGAIN;
             tmp_server->SpaceDelete(tmp.spaceID);
             return EAGAIN;
           }
@@ -733,7 +740,8 @@ namespace hvs{
         else
         {
           dout(10) << "ZoneAdd:添加初始权限失败！" << dendl;
-          dbPtr->remove(zone_prefix + tmp.zoneID);
+          int flag = dbPtr->remove(zone_prefix + tmp.zoneID);
+          if(flag != 0) return EAGAIN;
           tmp_server->SpaceDelete(tmp.spaceID);
           return EAGAIN;
         }
@@ -795,6 +803,10 @@ namespace hvs{
     std::shared_ptr<hvs::Datastore> zonePtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
     auto [vp, err] = zonePtr->get(zone_prefix + zoneID);
     if( err != 0 ){
+      return EAGAIN;
+    }
+    if(vp->size() == 0)
+    {
       return ENOENT;
     }
     std::string tmp_value = *vp;
@@ -825,7 +837,8 @@ namespace hvs{
             SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
             if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
             {
-              zonePtr->remove(zone_prefix + zoneID);
+              int flag = zonePtr->remove(zone_prefix + zoneID);
+              if(flag != 0) return EAGAIN;
               return 0;
             }
             else return EAGAIN;
@@ -862,7 +875,8 @@ namespace hvs{
               SpaceServer* tmp_server = dynamic_cast<SpaceServer*>(mgr->get_module("space").get());
               if(tmp_server->SpaceDelete(tmp.spaceID) == 0)
               {
-                zonePtr->remove(zone_prefix + zoneID);
+                int flag = zonePtr->remove(zone_prefix + zoneID);
+                if(flag != 0) return EAGAIN;
                 return 0;
               }
               else return EAGAIN;

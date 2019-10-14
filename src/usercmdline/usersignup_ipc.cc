@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
         po::options_description command("账户注册");
         command.add_options()
                 ("user,u", po::value<std::string>(), "账户名")
-                ("pass", po::value<std::string>(), "密码")
+                ("pass,p", po::value<std::string>(), "密码")
                 ("email,e", po::value<std::string>(), "邮箱")
                 ("phone", po::value<std::string>(), "电话")
                 ("ad", po::value<std::string>(), "地址")
@@ -96,6 +96,11 @@ int main(int argc, char* argv[]){
 
     if (commandline.argc <= 1) {
         std::cerr << "请输入命令参数！" << std::endl;
+        commandline.print_options();
+        exit(-1);
+    }
+    if(username=="--pass"|| username=="-p" || username==""){
+        std::cerr << "请输入正确参数！" << std::endl;
         commandline.print_options();
         exit(-1);
     }

@@ -205,9 +205,19 @@ void ClientIPC::init()
             }
             if (ipcreq.cmdname == "adseepool")
             {
-                cout << "doadseepool here" << endl;
                 return doadseepool(ipcreq);
             }
+            if (ipcreq.cmdname == "adauthsearch")
+            {
+                return doadauthsearch(ipcreq);
+            }
+            if (ipcreq.cmdname == "adauthmodify")
+            {
+                cout << "doadauthmodify here" << endl;
+                return doadauthmodify(ipcreq);
+            }
+
+   
 
             //resource register
             if (ipcreq.cmdname == "resourceregister")
@@ -1732,6 +1742,10 @@ std::string ClientIPC::douserexit(IPCreq &ipcreq)
     string endpoint = client->get_manager();
     string routepath = "/users/exit/" + client->user->getAccountID(); ///users/search/用戶id
     string res = client->rpc->get_request(endpoint, routepath);
+    if (res == "0"){
+        client->user->setAccountName("100");
+        client->user->setAccountID("200");
+    }
 
     return res;
 }
@@ -1765,7 +1779,7 @@ std::string ClientIPC::doauthsearch(IPCreq &ipcreq)
     std::string hvsID = client->user->getAccountID(); //在服务端产生
 
     //权限查询
-    std::string return_value = "authsearch success";
+    //std::string return_value = "authsearch success";
     string endpoint = client->get_manager();
     string routepath = "/auth/search";
     string res = client->rpc->post_request(endpoint, routepath, hvsID);
@@ -2153,6 +2167,92 @@ std::string ClientIPC::doadseepool(IPCreq &ipcreq)
 
     cout << "res :" << res << endl;
     return res;
+}
+
+std::string ClientIPC::doadauthsearch(IPCreq &ipcreq)
+{
+    // TODO: 提前准备的数据
+    string name = ipcreq.accountName;     //管理员要查询的 用户的账户名
+    
+    //获取 name 对应的hvsID
+    std::vector<std::string> vec_name;
+    vec_name.push_back(name);
+    std::vector<std::string> memID;
+    bool tmsuccess = client->user->getMemberID(vec_name, memID);
+    if (!tmsuccess)
+    {
+        std::cerr << "未获得对应账户信息，请确认信息正确！" << std::endl;
+        return "-1";
+    }
+
+    string hvsID = memID[0];
+
+    // if (username != client->user->getAccountName() && !client->user->getAccountName().empty())
+    // { //用户没有登录的时候是 false
+    //     return "client_input_error";
+    // }
+    // std::string hvsID = client->user->getAccountID(); //在服务端产生
+
+    //获取用户hvsID成功
+    //权限查询
+    //std::string return_value = "authsearch success";
+    string endpoint = client->get_manager();
+    string routepath = "/auth/search";
+    string res = client->rpc->post_request(endpoint, routepath, hvsID);
+
+    return res;
+}
+
+
+std::string ClientIPC::doadauthmodify(IPCreq &ipcreq)
+{
+    // TODO: 提前准备的数据
+
+    string name = ipcreq.accountName; //账户名
+    // if (username != client->user->getAccountName() && !client->user->getAccountName().empty())
+    // { //用户没有登录的时候是 false
+    //     return "-2";
+    // }
+
+    //获取 name 对应的hvsID
+    std::vector<std::string> vec_name;
+    vec_name.push_back(name);
+    std::vector<std::string> memID;
+    bool tmsuccess = client->user->getMemberID(vec_name, memID);
+    if (!tmsuccess)
+    {
+        std::cerr << "未获得对应账户信息，请确认信息正确！" << std::endl;
+        return "未获得对应账户信息，请确认信息正确！";
+    }
+
+    FEAuthModifygroupinfo FEgroup;
+    FEgroup.hvsID = memID[0]; //hvsID
+    FEgroup.zonename = ipcreq.zonename;
+    FEgroup.modify_groupauth = ipcreq.changeauth;
+
+    string value = FEgroup.serialize();
+
+    string endpoint = client->get_manager();
+    string routepath = "/auth/modify";
+    string res = client->rpc->post_request(endpoint, routepath, value);
+
+    // //++++++
+    // //修改完要获取最新权限
+    // string hvsID = client->user->getAccountID();
+    // client->optNode->getAuthFromServer(hvsID);
+    // //++++++
+    if (res == "-1")
+    {
+        return "modify auth fail";
+    }
+    else if (res == "33")
+    {
+        return "Verification failed, access denied";
+    }
+    else
+    { //返回9
+        return "modify auth success";
+    }
 }
 
 } // namespace hvs

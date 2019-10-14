@@ -30,7 +30,7 @@
 #include "io_proxy/rpc_types.h"
 
 extern bool zonechecker_run;
-
+#define FUSE_DEBUG_LEVEL 25
 #define HVS_FUSE_DATA \
   ((struct ::hvs::ClientFuseData *)fuse_get_context()->private_data)
 
@@ -88,6 +88,7 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
     return -EPERM; // 当找不到远程路径时，说明当前的空间为不存在，返回无权限；
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat", rpath);
   if (!res.get()) {
     // timeout exception raised
@@ -115,6 +116,7 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   stbuf->st_mtim.tv_sec = retbuf.st_mtim_tv_sec;
   stbuf->st_ctim.tv_nsec = retbuf.st_ctim_tv_nsec;
   stbuf->st_ctim.tv_sec = retbuf.st_ctim_tv_sec;
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retbuf.error_code;
 }
 
@@ -128,6 +130,7 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     return HVS_FUSE_DATA->client->zone->readdir(path, buf, filler);
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
 
   // not exists
@@ -150,6 +153,7 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     }
     retstat = ent.error_code;
   }
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
 
   return retstat;
 }
@@ -168,6 +172,7 @@ int hvsfs_open(const char *path, struct fuse_file_info *fi) {
   if (!iop) {
     return -ENOENT;
   }
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_open",
                                               rpath.c_str(), fi->flags);
   if (!res.get()) {
@@ -175,6 +180,7 @@ int hvsfs_open(const char *path, struct fuse_file_info *fi) {
     return -ENOENT;
   }
   retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   if (retstat > 0) {
     fi->fh = retstat;
     return 0;
@@ -273,6 +279,7 @@ int hvsfs_access(const char *path, int mode) {
   if (!iop) {
     return -ENOENT;
   }
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_access",
                                               rpath.c_str(), mode);
   if (!res.get()) {
@@ -280,6 +287,7 @@ int hvsfs_access(const char *path, int mode) {
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retstat;
 }
 
@@ -344,6 +352,7 @@ int hvsfs_mkdir(const char *path, mode_t mode) {
     return -ENOENT;
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_mkdir",
                                               rpath.c_str(), mode);
   if (!res.get()) {
@@ -351,6 +360,7 @@ int hvsfs_mkdir(const char *path, mode_t mode) {
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retstat;
 }
 
@@ -361,12 +371,14 @@ int hvsfs_unlink(const char *path) {
     return -ENOENT;
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_unlink", rpath);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retstat;
 }
 
@@ -384,12 +396,14 @@ int hvsfs_rmdir(const char *path) {
     return -ENOENT;
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_rmdir", rpath);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retstat;
 }
 
@@ -427,6 +441,7 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
     return -ENOTSUP;
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename", srpath, drpath);
   if (!res.get()) {
@@ -434,6 +449,7 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retstat;
 }
 
@@ -462,6 +478,7 @@ int hvsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
     return -ENOENT;
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chmod", rpath, mode);
   if (!res.get()) {
@@ -469,6 +486,7 @@ int hvsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retstat;
 }
 
@@ -485,6 +503,7 @@ int hvsfs_chown(const char *path, uid_t uid, gid_t gid,
     return -ENOENT;
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chown", rpath, uid, gid);
   if (!res.get()) {
@@ -492,6 +511,7 @@ int hvsfs_chown(const char *path, uid_t uid, gid_t gid,
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   return retstat;
 }
 
@@ -509,7 +529,7 @@ int hvsfs_flush(const char *, struct fuse_file_info *) {
 
 int hvsfs_release(const char *, struct fuse_file_info *) {
   int retstat = 0;
-
+  sleep(1);
   return retstat;
 }
 
@@ -537,13 +557,16 @@ int hvsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
     return -ENOENT;
   }
 
+  dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+  sleep(1);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;
   }
   auto retstat = res->as<int>();
+  dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
   return retstat;
 }
 

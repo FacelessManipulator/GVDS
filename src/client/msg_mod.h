@@ -19,7 +19,7 @@ class ClientRpc : public ClientModule {
  private:
   UDTClient udt_client;
   std::mutex rpc_mutex;
-  int multi_channel;
+  std::atomic_int multi_channel;
   std::unordered_map<std::string, std::shared_ptr<RpcClient>> rpc_clients;
   std::unordered_map<std::string, std::shared_ptr<ClientSession>> udt_clients;
   std::unordered_map<std::string, std::shared_ptr<Pistache::Http::Client>> rest_clients;
@@ -64,7 +64,7 @@ std::shared_ptr<RPCLIB_MSGPACK::object_handle> ClientRpc::call(
     std::shared_ptr<IOProxyNode> node, std::string const& func_name,
     Args... args) {
   // TODO: We assume RpcClient can concurently call
-  auto rpcc = rpc_channel(node);
+  auto rpcc = rpc_channel(node, false, multi_channel++%10);
   auto res = rpcc->call(func_name, args...);
   if (!res) {
     // timeout? try reconnect

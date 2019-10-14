@@ -6,7 +6,7 @@ namespace hvs {
 
 void RestServer::init(size_t thr) {
   auto opts = Http::Endpoint::options().threads(thr).flags(
-      Tcp::Options::InstallSignalHandler);
+      Tcp::Options::InstallSignalHandler).flags(Tcp::Options::ReuseAddr);
   httpEndpoint->init(opts);
 }
 

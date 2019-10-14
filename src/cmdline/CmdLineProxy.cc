@@ -64,6 +64,7 @@ void CmdLineProxy::do_global_decode() {
         }
         if (sp_variables_map->count("version")) {
             std::cout << "主程序版本: " << this->version << std::endl;
+            exit(0);
             return;
         }
 

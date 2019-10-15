@@ -1428,8 +1428,8 @@ string UserModelServer::viewbufferList(std::string hvsID){
     auto applyPtr = static_cast<CouchbaseDatastore*>(f5_dbPtr.get());
     
     //把bucket的数据库 的 所用 或者前5条 返回给客户端
-    std::string query = "select * from " + applybucket +" where meta().id like \"usign-%\" or meta().id like \"zregi-%\" or meta().id like \"spadd-%\" or meta().id like \"spsiz-%\" limit 5";
-    dout(-1) << "query: "<< query << dendl;
+    std::string query = "select id,data from " + applybucket +" where meta().id like \"usign-%\" or meta().id like \"zregi-%\" or meta().id like \"spadd-%\" or meta().id like \"spsiz-%\" limit 5";
+    dout(10) << "query: "<< query << dendl;
     auto [vp, err] = applyPtr->n1ql(query);
     if(err!=0){
         return "1";
@@ -1438,21 +1438,21 @@ string UserModelServer::viewbufferList(std::string hvsID){
     //dout(-1) << *vp << dendl;
     //vector<vector<struct_apply_info> > my;
     //json_decode(*vp, my);
-    vector<string> my_apply;
-    for(auto iter =vp->begin(); iter!=vp->end(); iter++){
-        string con = *iter;
-        int len = con.size();
-        string tmp = con.substr(sizeof("{\"test\":")-1, len-1);
-        dout(-1) << "tmp: " << tmp.substr(0, tmp.size()-1) << dendl;
+    // vector<string> my_apply;
+    // for(auto iter =vp->begin(); iter!=vp->end(); iter++){
+    //     string con = *iter;
+    //     int len = con.size();
+    //     string tmp = con.substr(sizeof("{\"test\":")-1, len-1);
+    //     dout(10) << "tmp: " << tmp.substr(0, tmp.size()-1) << dendl;
 
-        my_apply.push_back(tmp.substr(0, tmp.size()-1));
-        //vector<struct_apply_info> inner_vec;
-        //json_decode(tmp, inner_vec);
-    }
-    string json_str = json_encode(my_apply);
+    //     my_apply.push_back(tmp.substr(0, tmp.size()-1));
+    //     //vector<struct_apply_info> inner_vec;
+    //     //json_decode(tmp, inner_vec);
+    // }
+    // string json_str = json_encode(my_apply);
     //查询出了多条记录，如何一条一条的 添加进vector ？
-    dout(-1) << "json_str: " << json_str << dendl;
-    return json_str;
+    // dout(10) << "json_str: " << json_str << dendl;
+    return json_encode(*vp);
 }
 
 //管理原 accept  客户端 调此接口，删除记录， 并发送到对应功能接口

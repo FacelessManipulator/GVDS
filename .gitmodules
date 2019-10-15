@@ -4,13 +4,13 @@
 	url = ../pistache.git
 [submodule "third-party/libcouchbase"]
 	path = third-party/libcouchbase
-	url = https://github.com/couchbase/libcouchbase.git
+	url = ../libcouchbase.git
 [submodule "third-party/rapidjson"]
 	path = third-party/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
+	url = ../rapidjson.git
 [submodule "third-party/googletest"]
 	path = third-party/googletest
-	url = https://github.com/google/googletest.git
+	url = ../googletest.git
 [submodule "third-party/rpclib"]
 	path = third-party/rpclib
 	url = ../rpclib.git
@@ -21,7 +21,7 @@
 	ignore = dirty
 [submodule "third-party/libconfig"]
 	path = third-party/libconfig
-	url = https://github.com/hyperrealm/libconfig.git
+	url = ../libconfig.git
 [submodule "third-party/udt4"]
 	path = third-party/udt4
 	url = ../udt.git

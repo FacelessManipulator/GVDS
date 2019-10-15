@@ -45,7 +45,7 @@ public:
 public:
     Mconf() : ManagerModule("mconf") {
       auto _config = HvsContext::get_context()->_config;
-      bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
+      bucket_account_info = _config->get<std::string>("manager.bucket").value_or("test");
       
       key = "center_information";
     };

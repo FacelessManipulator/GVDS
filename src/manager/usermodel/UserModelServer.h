@@ -97,10 +97,10 @@ public:
 public:
     UserModelServer() : ManagerModule("user") {
         auto _config = HvsContext::get_context()->_config;
-        zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
-        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
-        bucket_sc_account_info = _config->get<std::string>("bucket.sc_account_info").value_or("sc_account_info");
-        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
+        zonebucket = _config->get<std::string>("manager.bucket").value_or("test");
+        bucket_account_info = _config->get<std::string>("manager.bucket").value_or("test");
+        bucket_sc_account_info = _config->get<std::string>("manager.bucket").value_or("test");
+        applybucket = _config->get<std::string>("manager.bucket").value_or("test");
         c_key = "center_information";
         adminlist = "adminwhitelist";
         user_prefix = "USER-";

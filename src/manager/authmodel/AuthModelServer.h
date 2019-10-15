@@ -101,9 +101,9 @@ public:
     AuthModelServer() : ManagerModule("auth") {
         //aaaaa = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
         auto _config = HvsContext::get_context()->_config;
-        bucket_auth_info = _config->get<std::string>("bucket.auth_info").value_or("auth_info");
-        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
-        zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
+        bucket_auth_info = _config->get<std::string>("manager.bucket").value_or("test");
+        bucket_account_info = _config->get<std::string>("manager.bucket").value_or("test");
+        zonebucket = _config->get<std::string>("manager.bucket").value_or("test");
         zone_prefix = "ZONE-";
         auth_prefix = "AUTH-";
         user_prefix = "USER-";

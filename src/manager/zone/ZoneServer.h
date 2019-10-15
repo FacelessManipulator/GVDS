@@ -90,10 +90,10 @@ public:
 public:
     ZoneServer() : ManagerModule("zone") {
         auto _config = HvsContext::get_context()->_config;
-        zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
-        accountbucket = _config->get<std::string>("bucket.account_info").value_or("account_info");
-        authbucket = _config->get<std::string>("bucket.auth_info").value_or("auth_info");
-        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
+        zonebucket = _config->get<std::string>("manager.bucket").value_or("test");
+        accountbucket = _config->get<std::string>("manager.bucket").value_or("test");
+        authbucket = _config->get<std::string>("manager.bucket").value_or("test");
+        applybucket = _config->get<std::string>("manager.bucket").value_or("test");
     };
     ~ZoneServer() = default;
 

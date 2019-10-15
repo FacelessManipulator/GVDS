@@ -10,7 +10,7 @@ using namespace Pistache::Http;
 void ResAggregation_MGR::start()
 {
   auto _config = HvsContext::get_context()->_config;
-  auto _bn = _config->get<std::string>("couchbase.bucket");
+  auto _bn = _config->get<std::string>("manager.bucket");
   bucket = _bn.value_or("test"); // use test bucket or predefined
 }
 

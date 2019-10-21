@@ -1839,9 +1839,8 @@ std::string ClientIPC::domodifycenter(IPCreq &ipcreq)
 
     string value = FEcenter.serialize();
 
-    string ip = *(HvsContext::get_context()->_config->get<std::string>("manager_addr"));
-    string port = *(HvsContext::get_context()->_config->get<std::string>("manager_port"));
-    string url = "http://" + ip + ":" + port; //http://localhost:9090
+    string addr = *(HvsContext::get_context()->_config->get<std::string>("manager_addr"));
+    string url = "http://" + addr; //http://localhost:9090
 
     //string endpoint = client->get_manager();
     string routepath = "/mconf/addCenter";

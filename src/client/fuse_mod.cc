@@ -7,14 +7,14 @@ using namespace std;
 void ClientFuse::start() {
   // read config and compose the argv
   auto _config = HvsContext::get_context()->_config;
-  auto mp = _config->get<string>("fuse.mountpoint");
-  auto foreground = _config->get<bool>("fuse.foreground");
-  auto debug = _config->get<bool>("fuse.debug");
-  auto multithread = _config->get<bool>("fuse.multithread");
-  auto auto_unmount = _config->get<bool>("fuse.auto_unmount");
-  use_udt = _config->get<bool>("fuse.use_udt").value_or(false);
+  auto mp = _config->get<string>("client.mountpoint");
+  auto foreground = _config->get<bool>("client.foreground");
+  auto debug = _config->get<bool>("client.debug");
+  auto multithread = _config->get<bool>("client.multithread");
+  auto auto_unmount = _config->get<bool>("client.auto_unmount");
+  use_udt = _config->get<bool>("client.use_udt").value_or(false);
   async_mode = _config->get<bool>("client.async").value_or(false);
-  snprintf(workers_argv, 32, "max_idle_threads=%u", _config->get<unsigned int>("fuse.workers").value_or(10));
+  snprintf(workers_argv, 32, "max_idle_threads=%u", _config->get<unsigned int>("client.fuse_workers").value_or(10));
   memcpy(mountpoint, mp.value_or("/mnt/hvs").c_str(), mp.value_or("/mnt/hvs").size());
   char *options[] = {
       const_cast<char *>("hvs_client"), const_cast<char *>("-f"),

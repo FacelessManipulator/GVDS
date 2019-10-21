@@ -4,6 +4,7 @@
 #include <string>
 #include "hvs_struct.h"
 #include "manager.h"
+#include "monitor_counter.hpp"
 
 namespace hvs {
 class IOProxy_MGR : public ManagerModule, public Thread {
@@ -15,6 +16,7 @@ class IOProxy_MGR : public ManagerModule, public Thread {
  private:
   std::string bucket;
   std::map<std::string, std::shared_ptr<IOProxyNode>> live_ioproxy;
+  std::map<std::string, MonitorSpeed> iop_stat;
 
  protected:
   virtual void* entry() override;
@@ -28,8 +30,10 @@ class IOProxy_MGR : public ManagerModule, public Thread {
   bool list(const Rest::Request& request, Http::ResponseWriter response);
   bool del(const Rest::Request& request, Http::ResponseWriter response);
   bool update(const Rest::Request& request, Http::ResponseWriter response);
+  bool detail(const Rest::Request& request, Http::ResponseWriter response);
 
- private:
+
+private:
   std::shared_ptr<IOProxyNode> parse_request(const Rest::Request& request);
   void init_ioproxy_list();
 

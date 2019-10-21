@@ -39,7 +39,7 @@ target_link_libraries(adsearcham boost_system pthread boost_program_options)
 add_executable(adseepool adseepool.cc ../client/clientuser/ClientUser_struct.cc ../ipc/IPCClient.cc ../common/JsonSerializer.cc ../cmdline/CmdLineProxy.cc)
 target_link_libraries(adseepool boost_system pthread boost_program_options)
 
-install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel adminsignup suggestion adcam aduam adsearcham adseepool
+install(TARGETS userlogin usersearch usersignup usermodify userexit usercancel adminsignup suggestion adcam aduam adsearcham adseepool listapply
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

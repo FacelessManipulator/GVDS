@@ -5,9 +5,9 @@ using namespace std;
 
 RpcServer* hvs::init_rpcserver() {
   auto _config = HvsContext::get_context()->_config;
-  auto ip = _config->get<string>("rpc.ip").value_or("0.0.0.0");
-  auto port = _config->get<int>("rpc.port");
-  auto workers = _config->get<int>("rpc.workers");
+  auto ip = _config->get<string>("ioproxy.ip").value_or("0.0.0.0");
+  auto port = _config->get<int>("ioproxy.rpc_port");
+  auto workers = _config->get<int>("ioproxy.rpc_workers");
   if (!port || *port <= 0 || *port >= 65535) {
     dout(-1) << "ERROR: invaild rpc port, should be ungisned number" << dendl;
   } else if (!workers || *workers <= 0) {
@@ -25,8 +25,8 @@ RpcServer* hvs::init_rpcserver() {
 RpcClient::RpcClient(const std::string address, const unsigned port)
     : _address(address), _port(port) {
   auto _config = HvsContext::get_context()->_config;
-  auto timeout = _config->get<int>("rpc.timeout");
-  auto retry = _config->get<int>("rpc.retry");
+  auto timeout = _config->get<int>("ioproxy.rpc_timeout");
+  auto retry = _config->get<int>("ioproxy.rpc_retry");
   if (!timeout && *timeout <= 0) {
     dout(-1) << "ERROR: invaild rpc timeout, should bigger than 0." << dendl;
   } else if (!retry && *retry < 1) {

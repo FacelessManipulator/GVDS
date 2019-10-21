@@ -25,8 +25,8 @@ void RestServer::shutdown() {
 
 RestServer* init_rest() {
   auto _config = HvsContext::get_context()->_config;
-  auto rest_port = _config->get<int>("rest.port");
-  auto rest_thread = _config->get<int>("rest.thread_num");
+  auto rest_port = _config->get<int>("manager.port");
+  auto rest_thread = _config->get<int>("manager.thread_num");
   auto ip = _config->get<std::string>("ip");
   if (!rest_port) {
     std::cerr << "restserver error: invalid port." << std::endl;

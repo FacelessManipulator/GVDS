@@ -81,17 +81,10 @@ public:
       std::shared_ptr<IOProxyNode> node, std::string const &func_name, std::function<void()> f,
       Args... args);
 
-<<<<<<< HEAD
-  int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer &buf);
-  int write_data_async(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer &buf);
-  std::unique_ptr<ioproxy_rpc_buffer> read_data(
-      std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer &buf);
-=======
   int write_data(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
   int write_data_async(std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
   std::shared_ptr<ioproxy_rpc_buffer> read_data(
       std::shared_ptr<IOProxyNode> node, ioproxy_rpc_buffer& buf);
->>>>>>> 1e8732ba1fbc5d5fac9fe26ac437798f2d11aa3b
   // WARNNING: the return result may be empty if request failed
   std::string post_request(const std::string &endpoint, const std::string &url,
                            const std::string &data = "");
@@ -107,11 +100,7 @@ std::shared_ptr<RPCLIB_MSGPACK::object_handle> ClientRpc::call(
     Args... args)
 {
   // TODO: We assume RpcClient can concurently call
-<<<<<<< HEAD
   auto rpcc = rpc_channel(node,false,getMinLoadCNumber());
-=======
-  auto rpcc = rpc_channel(node, false, multi_channel++%10);
->>>>>>> 1e8732ba1fbc5d5fac9fe26ac437798f2d11aa3b
   auto res = rpcc->call(func_name, args...);
   if (!res)
   {

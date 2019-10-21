@@ -26,7 +26,6 @@ void IOProxy_MGR::stop() {
 
 void* IOProxy_MGR::entry() {
   while (!m_stop) {
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     dout(15) << "ioproxy mgr check heart beat." << dendl;
     for (auto iop_iter : live_ioproxy) {
       auto iop = iop_iter.second;
@@ -47,6 +46,7 @@ void* IOProxy_MGR::entry() {
         iop->status = IOProxyNode::Stopped;
       }
     }
+    std::this_thread::sleep_for(std::chrono::seconds(10));
   }
 }
 
@@ -122,8 +122,7 @@ void IOProxy_MGR::init_ioproxy_list() {
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
   char query[256];
   snprintf(query, 256,
-           "select uuid,data_port,ip,name,rpc_port from `%s` where META().id like '%s' order by "
-           "META().id",
+           "select uuid,data_port,ip,name,rpc_port,cid from `%s` where META().id like '%s%%'",
            bucket.c_str(), IOProxyNode::prefix().c_str());
   auto [iop_infos_p, err] = cbd->n1ql(string(query));
   for(auto info : *iop_infos_p) {

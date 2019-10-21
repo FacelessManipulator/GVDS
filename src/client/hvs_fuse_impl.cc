@@ -539,7 +539,6 @@ int hvsfs_flush(const char *, struct fuse_file_info *) {
 
 int hvsfs_release(const char *, struct fuse_file_info *) {
   int retstat = 0;
-  sleep(1);
   return retstat;
 }
 
@@ -570,7 +569,6 @@ int hvsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
   dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
-  sleep(1);
   if (!res.get()) {
     // timeout exception raised
     return -ENOENT;

@@ -50,7 +50,7 @@ void IOMonitor::stop() {
 }
 
 void* IOMonitor::entry() {
-    while(m_stop) {
+    while(!m_stop) {
         // we don't need lock here cuz inconsistency could be tolerant
         ms->flush_speed(FRESH_MILLISECONDS);
         usleep(FRESH_MILLISECONDS*1000);

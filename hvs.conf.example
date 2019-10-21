@@ -40,6 +40,7 @@ client = {
     foreground = true;
     debug = false;
     multithread = true;
+    multi_channel = 1;
     fuse_workers = 10;
     auto_unmount = true;
     use_udt = false;

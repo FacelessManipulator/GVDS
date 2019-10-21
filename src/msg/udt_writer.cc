@@ -73,7 +73,7 @@ bool UDTWriter::_write_unsafe(std::queue<clmdep_msgpack::sbuffer> *q) {
       // send circle in case of the lack of udt buffer
       unsigned long sent = 0, total = data.size();
       while (sent < total) {
-        long ss = UDT::send(socket_, data.data(), data.size(), 0);
+        long ss = UDT::send(socket_, data.data()+sent, data.size()-sent, 0);
         if (ss == UDT::ERROR) {
           dout(5) << "WARNING: send error occured: "
                   << UDT::getlasterror().getErrorMessage() << dendl;

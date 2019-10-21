@@ -30,6 +30,9 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
   std::shared_ptr<IOProxyNode> iop;
   std::string centerID = space->hostCenterID;
   graph_mutex.lock_shared();
+  if(ioproxy_list.count(centerID) == 0 || !ioproxy_list[centerID]) {
+    return {nullptr, rpath};
+  }
   for (const auto& ioproxy : *(ioproxy_list[centerID])) {
     if (ioproxy.second->status == IOProxyNode::Running) {
         iop = ioproxy.second;

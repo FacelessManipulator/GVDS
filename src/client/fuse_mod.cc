@@ -19,7 +19,7 @@ void ClientFuse::start() {
   char *options[] = {
       const_cast<char *>("hvs_client"), const_cast<char *>("-f"),
       const_cast<char *>("-d"),         const_cast<char *>("-s"),
-      const_cast<char *>("-o"),         const_cast<char *>("auto_unmount,max_read=524288"),
+      const_cast<char *>("-o"),         const_cast<char *>("auto_unmount,max_read=524288,allow_other"),
   };
   fuse_argv[fuse_argc] = options[0];
   fuse_argc++;

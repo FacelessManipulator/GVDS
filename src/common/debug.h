@@ -12,7 +12,7 @@
 #define dout(v)                                          \
   do {                                                   \
     auto _cct = hvs::HvsContext::get_context();          \
-    hvs::EntryPtr _dout_e = _cct->_log->create_entry(v); \
+    hvs::EntryPtr _dout_e = _cct->_log->create_entry(v, __FUNCTION__); \
     std::ostream *_dout = &_dout_e->get_ostream();       \
   *_dout
 

@@ -58,7 +58,7 @@ void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http:
     //rest要做的事情：（1）获取ownerID对应的本地账户名字（2）获取每个成员对应的本地账户名
     //              （3）设置相应权限
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     SelfAuthSpaceInfo auth_space;
     auth_space.deserialize(info);
@@ -73,7 +73,7 @@ void AuthModelServer::self_AuthmemberaddRest(const Rest::Request& request, Http:
         response.send(Http::Code::Ok, "-1"); //point
     }
 
-    dout(10) << "====== end AuthModelServer function: self_AuthmemberaddRest ======"<< dendl;
+    dout(-1) << "====== end AuthModelServer function: self_AuthmemberaddRest ======"<< dendl;
 }
 int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
 
@@ -89,7 +89,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
     string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); // 确认是否hostCenterName匹配
     if (value.compare("fail") == 0){
-        dout(10) << "SpacePermissionSyne fail" << dendl;
+        dout(-1) << "SpacePermissionSyne fail" << dendl;
         return -1;
     }
     LocalAccountPair localpair;
@@ -102,7 +102,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
         // 确认是否hostCenterName匹配
         string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
         if (m_value.compare("fail") == 0){
-            dout(10) << "SpacePermissionSyne fail" << dendl;
+            dout(-1) << "SpacePermissionSyne fail" << dendl;
             return -1;
         }
         LocalAccountPair member_localpair;
@@ -111,7 +111,7 @@ int AuthModelServer::self_Authmemberadd(SelfAuthSpaceInfo &auth_space){
         //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
         //   usermod -a -G localpair.localaccount member_localpair.localaccount
         string cmd = "usermod -a -G " + gp + " " + member_localpair.localaccount;
-        dout(10) << "cmd :" << cmd << dendl;
+        dout(-1) << "cmd :" << cmd << dendl;
         system(cmd.c_str()); 
     }// for
 
@@ -125,7 +125,7 @@ void AuthModelServer::self_AuthmemberdelRest(const Rest::Request& request, Http:
     //rest要做的事情：（1）获取ownerID对应的本地账户名字（2）获取每个成员对应的本地账户名
     //              （3）设置相应权限
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     SelfAuthSpaceInfo auth_space;
     auth_space.deserialize(info);
@@ -140,7 +140,7 @@ void AuthModelServer::self_AuthmemberdelRest(const Rest::Request& request, Http:
         response.send(Http::Code::Ok, "-1"); //point
     }
 
-    dout(10) << "====== end AuthModelServer function: self_AuthmemberdelRest ======"<< dendl;
+    dout(-1) << "====== end AuthModelServer function: self_AuthmemberdelRest ======"<< dendl;
 }
 int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
     
@@ -156,7 +156,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
     string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); // 确认是否hostCenterName匹配
     if (value.compare("fail") == 0){
-        dout(10) << "SpacePermissionSyne fail" << dendl;
+        dout(-1) << "SpacePermissionSyne fail" << dendl;
         return -1;
     }
     LocalAccountPair localpair;
@@ -169,7 +169,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
         // 确认是否hostCenterName匹配
         string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
         if (m_value.compare("fail") == 0){
-            dout(10) << "member delete fail" << dendl;
+            dout(-1) << "member delete fail" << dendl;
             return -1;
         }
         LocalAccountPair member_localpair;
@@ -178,7 +178,7 @@ int AuthModelServer::self_Authmemberdel(SelfAuthSpaceInfo &auth_space){
         //1.2将test1从testowner同名的组中删除    gpasswd testowner -d test222
         //      gpasswd localpair.localaccount -d member_localpair.localaccount
         string cmd = "gpasswd " + gp + " -d " + member_localpair.localaccount;
-        dout(10) << "cmd:" << cmd << dendl;
+        dout(-1) << "cmd:" << cmd << dendl;
         system(cmd.c_str()); 
     }// for
 
@@ -190,7 +190,7 @@ void AuthModelServer::self_AuthgroupmodifyRest(const Rest::Request& request, Htt
     //rest中：hvsID对应的本地ID
             //chmod 7修改值0 spaceID
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     AuthModifygroupinfo groupinfo;
     groupinfo.deserialize(info);
@@ -205,7 +205,7 @@ void AuthModelServer::self_AuthgroupmodifyRest(const Rest::Request& request, Htt
         response.send(Http::Code::Ok, "-1"); //point
     }
 
-    dout(10) << "====== end AuthModelServer function: self_AuthgroupmodifyRest ======"<< dendl;
+    dout(-1) << "====== end AuthModelServer function: self_AuthgroupmodifyRest ======"<< dendl;
 
 }
 int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
@@ -224,35 +224,35 @@ int AuthModelServer::self_Authgroupmodify(AuthModifygroupinfo &groupinfo){
     // UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
     // string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName); //TODO 确认是否hostCenterName匹配
     // if (value.compare("fail") == 0){
-    //     dout(10) << "self_Authgroupmodify fail" << dendl;
+    //     dout(-1) << "self_Authgroupmodify fail" << dendl;
     //     return -1;
     // }
     // LocalAccountPair localpair;
     // localpair.deserialize(value);  //localpair.localaccount 这个是账户名
 
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
-        dout(10) <<"localstoragepath: " << localstoragepath << dendl;
+        dout(-1) <<"localstoragepath: " << localstoragepath << dendl;
     string spacepath = localstoragepath + "/" + spacemeta.spacePath; //这个可能不是最终的路径，需确认
-        dout(10) << "final path :" << spacepath << dendl;
+        dout(-1) << "final path :" << spacepath << dendl;
 
     //示例chmod 777 filename
     string cmd = "chmod " + groupinfo.au_person + groupinfo.au_group + groupinfo.au_other + " " + spacepath;
-        dout(10) << "cmd:" << cmd << dendl;
+        dout(-1) << "cmd:" << cmd << dendl;
     system(cmd.c_str());
 
     return 0;
 }
 
 void AuthModelServer::self_AuthSPDRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "=========enter：self_AuthSPDRest============" << dendl;
+    dout(-1) << "=========enter：self_AuthSPDRest============" << dendl;
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     SelfSPD mySPD;
     mySPD.deserialize(info);
 
     int flag = self_AuthSPD(mySPD);
-    dout(10) << "flag: " << flag <<dendl;
+    dout(-1) << "flag: " << flag <<dendl;
      if(flag == 0){
         dout(-1) << "success" << dendl;
         response.send(Http::Code::Ok, "0");;
@@ -261,21 +261,21 @@ void AuthModelServer::self_AuthSPDRest(const Rest::Request& request, Http::Respo
         dout(-1) << "fail" << dendl;
         response.send(Http::Code::Ok, "-1"); //point
     }
-    dout(10) << "=========end：self_AuthSPDRest============"<< dendl;
+    dout(-1) << "=========end：self_AuthSPDRest============"<< dendl;
 }
 
 int AuthModelServer::self_AuthSPD(SelfSPD &mySPD){
     
-    dout(10) << "=========enter：self_AuthSPD============" << dendl;
+    dout(-1) << "=========enter：self_AuthSPD============" << dendl;
     Space spacemeta;
     spacemeta.deserialize(mySPD.spaceinformation);
 
     //设置root 删除组
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
-        dout(10) <<"localstoragepath: " << localstoragepath << dendl;
+        dout(-1) <<"localstoragepath: " << localstoragepath << dendl;
 
     string spacepath = localstoragepath + "/" + spacemeta.spacePath;
-    dout(10) << "final path: " << spacepath << dendl;
+    dout(-1) << "final path: " << spacepath << dendl;
 
     //root的gid、uid为0
     if(chown(spacepath.c_str(), 0, 0) == -1){
@@ -283,10 +283,10 @@ int AuthModelServer::self_AuthSPD(SelfSPD &mySPD){
     }
 
     string group_cmd = "groupdel " + mySPD.gp;
-    dout(10) << "group_cmd: " << group_cmd << dendl;
+    dout(-1) << "group_cmd: " << group_cmd << dendl;
     system(group_cmd.c_str());
 
-    dout(10) << "=========end：self_AuthSPD============" << dendl;
+    dout(-1) << "=========end：self_AuthSPD============" << dendl;
     return 0;
 
 }
@@ -310,15 +310,13 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
     
     string value = person.serialize();
 
-    // std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_auth_info));
-    // f3_dbPtr->init();
+    std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_auth_info));
+    f3_dbPtr->init();
 
-    std::shared_ptr<hvs::Datastore> f3_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_auth_info, hvs::DatastoreType::couchbase, true);
-
-    int f1_flag = f3_dbPtr->set(zoneID, value);
+    int f1_flag = f3_dbPtr->set(auth_prefix + zoneID, value);
     if (f1_flag != 0){
-        dout(10) << "fail" << dendl;
+        dout(-1) << "fail" << dendl;
         return -1;
     }
 
@@ -328,10 +326,10 @@ int AuthModelServer::ZonePermissionAdd(std::string zoneID, std::string ownerID){
 //1.2 空间权限同步接口  :: 被空间创建模块调用 :: 查询空间所属区域的权限，设置空间为此权限,并且查询组员，同步设置组员权限
 //一次只设置一个空间，不涉及跨超算调用【因此此接口已完成，不用再次修改】
 int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID, std::string ownerID, std::vector<std::string> memberID){
-    dout(10) << "=======start: SpacePermissionSyne=======" << dendl;
+    dout(-1) << "=======start: SpacePermissionSyne=======" << dendl;
 
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
-    dout(10) <<"localstoragepath: " << localstoragepath << dendl;
+    dout(-1) <<"localstoragepath: " << localstoragepath << dendl;
 
     // string ZoneID;
     // //调用sy的接口,获取空间对应的区域；
@@ -347,9 +345,9 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
     //     hvs::CouchbaseDatastore(bucket_auth_info));
     // f3_dbPtr->init();
     std::shared_ptr<hvs::Datastore> f3_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_auth_info, hvs::DatastoreType::couchbase, true);
-    auto [pvalue, error] = f3_dbPtr->get(zoneID);
+    auto [pvalue, error] = f3_dbPtr->get(auth_prefix + zoneID);
     if(error){
-        dout(10) << "fail" << dendl;
+        dout(-1) << "fail" << dendl;
         return -1;
     }
 
@@ -383,25 +381,25 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         auth_sum_other += 1;
     string au_other = to_string(auth_sum_other);
 
-    dout(10) << "111" << dendl;
+    dout(-1) << "111" << dendl;
     //2、根据区域权限设置空间的权限
         //2.1 获取ownerid 对应的的本地账户(空间所在地)test1;
     UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
     // 根据空间获取hostCenterName 值
         //2.1.1查询区域信息,获取区域对应空间信息
-    dout(10) << "112.1" << dendl;
+    dout(-1) << "112.1" << dendl;
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
-        dout(10) << "authmodelserver: zone search fail" << dendl;
+        dout(-1) << "authmodelserver: zone search fail" << dendl;
         return -1;
     }
-    dout(10) << "112.2" << dendl;
+    dout(-1) << "112.2" << dendl;
     Zone zone_content;
     zone_content.deserialize(*pzone_value);  //为了获取zone_content.spaceID 一个vector
-    dout(10) << "112" << dendl;
+    dout(-1) << "112" << dendl;
         //2.1.2获取每个空间对应的超算
     vector<Space> result; //里面存储每个空间的string信息 需要饭序列化
     SpaceServer *p_space = static_cast<SpaceServer*>(mgr->get_module("space").get());
@@ -409,7 +407,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
     p_space->GetSpacePosition(result, zone_content.spaceID);
         dout(-1) << "end: recall GetSpacePosition" << dendl;
     
-    dout(10) << "113" << dendl;
+    dout(-1) << "113" << dendl;
     for (auto& space_iter : result) {
         Space spacemeta = space_iter;
 
@@ -419,13 +417,13 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
 
         //测试时假设是Shanghai
         string hostCenterName = spacemeta.hostCenterName;
-        dout(10) <<"spacemeta.hostCenterName: " << spacemeta.hostCenterName << dendl;
+        dout(-1) <<"spacemeta.hostCenterName: " << spacemeta.hostCenterName << dendl;
         //string hostCenterName ="Shanghai";
-        dout(10) <<"test hostCenterName: " << hostCenterName << dendl;
+        dout(-1) <<"test hostCenterName: " << hostCenterName << dendl;
 
         string value = p_usermodel->getLocalAccountinfo(ownerID, hostCenterName);
         if (value.compare("fail") == 0){
-            dout(10) << "SpacePermissionSyne fail" << dendl;
+            dout(-1) << "SpacePermissionSyne fail" << dendl;
             return -1;
         }
         LocalAccountPair localpair;
@@ -434,8 +432,8 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
             //2.2 更改文件夹所属用户和组chown -R test1:test1 空间名
         //获取物理路径 spacepath值 
         string spacepath = localstoragepath + "/" + spacemeta.spacePath; //这个可能不是最终的路径，需确认TODO
-        dout(10) << "localstoragepath : " << localstoragepath <<dendl; 
-        dout(10) << "final path :" << spacepath << dendl;
+        dout(-1) << "localstoragepath : " << localstoragepath <<dendl; 
+        dout(-1) << "final path :" << spacepath << dendl;
         //TODO  获取账户名(localpair.localaccount)和组名（localpair.localaccount）的uid、gid
         // int uid;
         // int gid;
@@ -446,22 +444,22 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         //（1）创建组    //重复创建不影响
         string gp = zoneID.substr(0, 9);
         string g_cmd = "groupadd " + gp;
-        dout(10) << "g_cmd: " << g_cmd <<dendl;
+        dout(-1) << "g_cmd: " << g_cmd <<dendl;
         system(g_cmd.c_str());
 
         //（2）设置全 （拥有者:组）权限
         string chown_cmd = "chown -R " + localpair.localaccount + ":" + gp + " " + spacepath;
-        dout(10) << chown_cmd << dendl;
+        dout(-1) << chown_cmd << dendl;
         system(chown_cmd.c_str());
             //（3）2.3 设置权限：chmod （au_person）(au_group)(au_other) 文件名      chmod 777 filename
         string tmp_str = au_person + au_group + au_other;
         //  注意确认这块设置权限是否有问题
         // if (chmod(spacepath.c_str(), 0770) == -1){ //TODO    tmp_int=770 这块参数类型有问题，要0770才正常
-        //     dout(10) << "chmod fail";
+        //     dout(-1) << "chmod fail";
         //     return -1;
         // }
         string chmod_cmd = "chmod " + tmp_str + " " + spacepath;
-        dout(10) << chmod_cmd << dendl;
+        dout(-1) << chmod_cmd << dendl;
         system(chmod_cmd.c_str());
         //TODO 设置组员权限
             //获取组成员hvsID 对应的本地账户    【localpair.localaccount】
@@ -470,7 +468,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
         for(m_iter = memberID.begin(); m_iter != memberID.end(); m_iter++){
                 string m_value = p_usermodel->getLocalAccountinfo(*m_iter, hostCenterName); 
                 if (m_value.compare("fail") == 0){
-                    dout(10) << "SpacePermissionSyne fail" << dendl;
+                    dout(-1) << "SpacePermissionSyne fail" << dendl;
                     return -1;
                 }
                 LocalAccountPair member_localpair;
@@ -478,7 +476,7 @@ int AuthModelServer::SpacePermissionSyne(std::string spaceID, std::string zoneID
                 //1.2将test1加入与testowner同名的组中 usermod -a -G testowner test1
                 //   usermod -a -G localpair.localaccount member_localpair.localaccount
                 string cmd = "usermod -a -G " + gp + " " + member_localpair.localaccount;
-                dout(10) << "cmd :" << cmd << dendl;
+                dout(-1) << "cmd :" << cmd << dendl;
                 system(cmd.c_str()); 
         }
 
@@ -509,9 +507,9 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
-        dout(10) << "authmodelserver: zone search fail" << dendl;
+        dout(-1) << "authmodelserver: zone search fail" << dendl;
         return -1;
     }
 
@@ -536,7 +534,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
     string c_key = "center_information";
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
     if (c_error){
-        dout(10) << "authmodelserver: get center_information fail" << dendl;
+        dout(-1) << "authmodelserver: get center_information fail" << dendl;
         return -1;
     }
     CenterInfo mycenter;
@@ -559,7 +557,7 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         Space spacemeta = space_iter;
 
         string hostCenterName = spacemeta.hostCenterName;
-        dout(10) << "hostCenterName: " << hostCenterName << dendl;
+        dout(-1) << "hostCenterName: " << hostCenterName << dendl;
 
         //++++++++++++++++++++++++++++++++++++
         //获取hostCenterName，并进行判断，向对应超算中心发出请求,包含又发送到本超算的restful请求
@@ -583,11 +581,11 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
         }
         else //远端
         { 
-            dout(10) << "发送到远端"<<dendl;
+            dout(-1) << "发送到远端"<<dendl;
             string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
             string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
-            dout(10) << tmp_ip << dendl;
-            dout(10) << tmp_port << dendl;
+            dout(-1) << tmp_ip << dendl;
+            dout(-1) << tmp_port << dendl;
 
         
             //TODO 注意端口是否正确
@@ -600,13 +598,13 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
             auto fu = prom.get_future();
             response.then(
             [&](Http::Response res) {
-                dout(10) << "Response code = " << res.code() << dendl;
+                dout(-1) << "Response code = " << res.code() << dendl;
                 auto body = res.body();
                 if (!body.empty()){
-                    dout(10) << "Response body = " << body << dendl;
+                    dout(-1) << "Response body = " << body << dendl;
                     //your code write here
                     if (body != "0"){
-                        dout(10) << "body != 0, fail " << dendl;
+                        dout(-1) << "body != 0, fail " << dendl;
                         return_flag = -1;
                     }
 
@@ -634,17 +632,17 @@ int AuthModelServer::ZoneMemberAdd(string zoneID, string ownerID, vector<string>
 //2、权限删除模块
 //2.1 区域权限删除接口     ::被区域注销模块调用::删除相应权限,删除数据库中权限记录，无需知道ownerid
 int AuthModelServer::ZonePermissionDeduct(string zoneID, string OwnerID){
-    // std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_auth_info));
-    // f3_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f3_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_auth_info, hvs::DatastoreType::couchbase, true);
-    int flag = f3_dbPtr->remove(zoneID);
+    std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_auth_info));
+    f3_dbPtr->init();
+
+    int flag = f3_dbPtr->remove(auth_prefix + zoneID);
     if(flag){
-        dout(10) << "remove auth fail" <<dendl;
+        dout(-1) << "remove auth fail" <<dendl;
         return -1;
     }
     else{
-        dout(10) << "remove auth success" << dendl;
+        dout(-1) << "remove auth success" << dendl;
         return 0;
     }
 }
@@ -654,9 +652,9 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
-        dout(10) << "authmodelserver: zone search fail" << dendl;
+        dout(-1) << "authmodelserver: zone search fail" << dendl;
         return -1;
     }
 
@@ -681,7 +679,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
     string c_key = "center_information";
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
     if (c_error){
-        dout(10) << "authmodelserver: get center_information fail" << dendl;
+        dout(-1) << "authmodelserver: get center_information fail" << dendl;
         return -1;
     }
     CenterInfo mycenter;
@@ -728,11 +726,11 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
         }
         else //远端
         { 
-            dout(10) <<"发送到远端" << dendl;
+            dout(-1) <<"发送到远端" << dendl;
             string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
             string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
-            dout(10) << tmp_ip << dendl;
-            dout(10) << tmp_port << dendl;
+            dout(-1) << tmp_ip << dendl;
+            dout(-1) << tmp_port << dendl;
 
 
             //TODO 注意端口是否正确  
@@ -747,13 +745,13 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
             response.then(
                 [&](Http::Response res) {
                 //dout(-1) << "Manager Info: " << res.body() << dendl;
-                dout(10) << "Response code = " << res.code() << dendl;
+                dout(-1) << "Response code = " << res.code() << dendl;
                 auto body = res.body();
                 if (!body.empty()){
-                    dout(10) << "Response body = " << body << dendl;
+                    dout(-1) << "Response body = " << body << dendl;
                     //your code write here
                     if (body != "0"){
-                        dout(10) << "body != 0, fail " << dendl;
+                        dout(-1) << "body != 0, fail " << dendl;
                         return_flag = -1;
                     }
 
@@ -782,7 +780,7 @@ int AuthModelServer::ZoneMemberDel(string zoneID, string ownerID, vector<string>
 //这个也不跨超算，因此不用rest，【不用更改】 //这是因为在客户端就判断好了在哪个管理节点--宋尧
 int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
     string localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
-    dout(10) <<"localstoragepath: " << localstoragepath << dendl;
+    dout(-1) <<"localstoragepath: " << localstoragepath << dendl;
 
     vector<string> tmp_vec_spaceID;
     tmp_vec_spaceID.push_back(spaceID);
@@ -802,7 +800,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
     string c_key = "center_information";
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
     if (c_error){
-        dout(10) << "authmodelserver: get center_information fail" << dendl;
+        dout(-1) << "authmodelserver: get center_information fail" << dendl;
         return -1;
     }
     CenterInfo mycenter;
@@ -834,15 +832,15 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
         //TODO (这个是否是最终路径，要确认) 获取空间物理路径  直接把拥有者和组改成root //chown -R root:root 文件名
         if(ManagerID == spacemeta.hostCenterID){ //本地
             if(self_AuthSPD(mySPD) != 0){
-                dout(10)<< "删除空间权限失败" << dendl;
+                dout(-1)<< "删除空间权限失败" << dendl;
                 return_flag = -1;
             }
             else{
-                dout(10)<< "删除空间权限成功" << dendl;
+                dout(-1)<< "删除空间权限成功" << dendl;
             }
         }
         else{ //远端
-            dout(10) <<"发送到远端" << dendl;
+            dout(-1) <<"发送到远端" << dendl;
             string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
             string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
             
@@ -856,13 +854,13 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
             response.then(
                 [&](Http::Response res) {
                 //dout(-1) << "Manager Info: " << res.body() << dendl;
-                dout(10) << "Response code = " << res.code() << dendl;
+                dout(-1) << "Response code = " << res.code() << dendl;
                 auto body = res.body();
                 if (!body.empty()){
-                    dout(10) << "Response body = " << body << dendl;
+                    dout(-1) << "Response body = " << body << dendl;
                     //your code write here
                     if (body != "0"){
-                        dout(10) << "body != 0, fail " << dendl;
+                        dout(-1) << "body != 0, fail " << dendl;
                         return_flag = -1;
                     }
 
@@ -873,7 +871,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
 
             //阻塞
             fu.get();
-            dout(10) << "fu.get()"<< dendl;
+            dout(-1) << "fu.get()"<< dendl;
         }
     }
 
@@ -891,7 +889,7 @@ int AuthModelServer::SpacePermissionDelete(string spaceID, string zoneID){
 //3、权限修改模块，提供一个rest api，让前端调用  //  这个等其他的测试都通过再写吧，否则没意义【流程参考A4纸上的】
 // 返回33权限， 0成功，-1失败
 void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start AuthModelServer function: AuthModifyRest ======"<< dendl;
+    dout(-1) << "====== start AuthModelServer function: AuthModifyRest ======"<< dendl;
     // bool valid = auth_token(request);
     // if (!valid){
     //     response.send(Http::Code::Unauthorized, "33");
@@ -899,7 +897,7 @@ void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::Respons
     // }
 
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     FEAuthModifygroupinfo FEgroup;
     FEgroup.deserialize(info);
@@ -914,50 +912,55 @@ void AuthModelServer::AuthModifyRest(const Rest::Request& request, Http::Respons
         response.send(Http::Code::Ok, "-1"); //point
     }
 
-    dout(10) << "====== end AuthModelServer function: AuthModifyRest ======"<< dendl;
+    dout(-1) << "====== end AuthModelServer function: AuthModifyRest ======"<< dendl;
 
 }
 
 int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_groupauth){
-    dout(10) << "enter AuthModify"<< dendl;
+    dout(-1) << "enter AuthModify"<< dendl;
     //1、  获取hvsID 对应的 zoneID  以及权限   (根据hvsID 和 zonename 如何获取到一个zoneID？)
    
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore(zonebucket));
-    zonePtr->init();
+    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase, true);
+    auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
 
     string ownerID = hvsID;
-    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\" and name = \"zonename\";";
-   
-    int pos = query.find("ownerID");
-    query.erase(pos, 7);
-    query.insert(pos, ownerID);
-    int pos2 = query.find("zonename");
-    query.erase(pos2, 8);
-    query.insert(pos2, zonename);
-    dout(10) << "******" <<query << "--"<< dendl;
-    auto [vp, err] = zonePtr->n1ql(query);
+
+/////////////////
+//////
+    char query[256];
+    snprintf(query, 256, 
+    "select UUID, name, owner, members, spaces from `%s` where owner = \"%s\" and name = \"%s\"", 
+    zonebucket.c_str(), ownerID.c_str(), zonename.c_str());
+
+    cout << "aaaaaa: " << string(query) << endl;
+    auto [vp, err] = zonePtr->n1ql(string(query));
     if(vp->size() == 0) {
-        dout(10) << "find zoneID fail" << dendl;
+        dout(-1) << "find zoneID fail" << dendl;
         return -1;
     }
 
     Zone tmp;
     std::vector<std::string>::iterator it = vp->begin();   //查询结果只有一个，就是对应owner 的 zoneID
     std::string n1ql_result = *it;
-    std::string tmp_value = n1ql_result.substr(13, n1ql_result.length() - 14);
-    tmp.deserialize(tmp_value);
+    //std::string tmp_value = n1ql_result.substr(13, n1ql_result.length() - 14);
+    tmp.deserialize(n1ql_result);
         
     std::string zoneID = tmp.zoneID;
-    dout(10) << "****zoneID: " << zoneID << dendl;
+    dout(-1) << "****zoneID: " << zoneID << dendl;
 
+/////////////////
+
+
+///////////////////////
 
     //1.5 获取这个区域对应的组权限
-    std::shared_ptr<hvs::Datastore> f3_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_auth_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_auth_info));
+    f3_dbPtr->init();
 
-    auto [pvalue, error] = f3_dbPtr->get(zoneID);
+    auto [pvalue, error] = f3_dbPtr->get(auth_prefix + zoneID);
     if(error){
-        dout(10) << "fail" << dendl;
+        dout(-1) << "fail" << dendl;
         return -1;
     }
 
@@ -996,9 +999,9 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
     std::shared_ptr<hvs::CouchbaseDatastore> zone_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
         hvs::CouchbaseDatastore(zonebucket));
     zone_dbPtr->init();
-    auto [pzone_value, zone_error] = zone_dbPtr->get(zoneID);
+    auto [pzone_value, zone_error] = zone_dbPtr->get(zone_prefix + zoneID);
     if (zone_error){
-        dout(10) << "authmodelserver: auth modify fail" << dendl;
+        dout(-1) << "authmodelserver: auth modify fail" << dendl;
         return -1;
     }
 
@@ -1021,10 +1024,10 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
         hvs::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
     //string c_key = "center_information";
-    dout(10) << "c_key : " << c_key << dendl;
+    dout(-1) << "c_key : " << c_key << dendl;
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
     if (c_error){
-        dout(10) << "authmodelserver: get center_information fail" << dendl;
+        dout(-1) << "authmodelserver: get center_information fail" << dendl;
         return -1;
     }
     CenterInfo mycenter;
@@ -1060,17 +1063,17 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
 
         if(ManagerID == spacemeta.hostCenterID){ //本地
             if(self_Authgroupmodify(groupinfo) != 0){
-                dout(10)<< "修改权限失败" << dendl;
+                dout(-1)<< "修改权限失败" << dendl;
                 return_flag = -1;
             }
         }
         else
         {
-            dout(10) << "发送到远端"<<dendl;
+            dout(-1) << "发送到远端"<<dendl;
             string tmp_ip = mycenter.centerIP[spacemeta.hostCenterID];
             string tmp_port = mycenter.centerPort[spacemeta.hostCenterID];
-            dout(10) << tmp_ip << dendl;
-            dout(10) << tmp_port << dendl;
+            dout(-1) << tmp_ip << dendl;
+            dout(-1) << tmp_port << dendl;
 
 
             //TODO 注意端口是否正确  
@@ -1089,13 +1092,13 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
             response.then(
             [&](Http::Response res) {
                 //dout(-1) << "Manager Info: " << res.body() << dendl;
-                dout(10) << "Response code = " << res.code() << dendl;
+                dout(-1) << "Response code = " << res.code() << dendl;
                 auto body = res.body();
                 if (!body.empty()){
-                    dout(10) << "Response body = " << body << dendl;
+                    dout(-1) << "Response body = " << body << dendl;
                     //your code write here
                     if (body != "0"){
-                        dout(10) << "body != 0, fail " << dendl;
+                        dout(-1) << "body != 0, fail " << dendl;
                         return_flag = -1;
                     }
             }
@@ -1123,9 +1126,9 @@ int AuthModelServer::AuthModify(string hvsID, string zonename, string modify_gro
         person.group_write = pw;
         person.group_exe = pe;
         string m_value = person.serialize();
-        int f3_f = f3_dbPtr->set(zoneID, m_value);
+        int f3_f = f3_dbPtr->set(auth_prefix + zoneID, m_value);
         if (f3_f != 0){
-            dout(10) << "fail" << dendl;
+            dout(-1) << "fail" << dendl;
             return_flag = -1;
         }
     }
@@ -1169,16 +1172,16 @@ void AuthModelServer::transform_auth(std::string &modify_groupauth, int &pr, int
 //4、权限查询模块  
 //失败返回 33, fail 正常值；
 void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start AuthModelServer function: AuthSearchModelRest ======"<< dendl;
+    dout(-1) << "====== start AuthModelServer function: AuthSearchModelRest ======"<< dendl;
     // bool valid = auth_token(request);
     // if (!valid){
-    //     dout(10) << "aaa here?" << dendl;
+    //     dout(-1) << "aaa here?" << dendl;
     //     response.send(Http::Code::Unauthorized, "33");
     //     return;
     // }
 
     auto info = request.body();
-    dout(10) << "info: " <<info << dendl;  //hvsid
+    dout(-1) << "info: " <<info << dendl;  //hvsid
 
     string m_info = info;
     string data = AuthSearchModel(m_info);
@@ -1189,21 +1192,21 @@ void AuthModelServer::AuthSearchModelRest(const Rest::Request& request, Http::Re
         response.send(Http::Code::Ok, data); // data 在C++客户端使用AuthSearch 返序列化
     }
    
-    dout(10) << "====== end AuthModelServer function: AuthSearchModelRest ======"<< dendl;
+    dout(-1) << "====== end AuthModelServer function: AuthSearchModelRest ======"<< dendl;
 }
 
 
 string AuthModelServer::AuthSearchModel(string &hvsID){
-     dout(10) << "enter AuthSearchModel"<< dendl;
+     dout(-1) << "enter AuthSearchModel"<< dendl;
     //1、查询hvsid对应的所有区域ID
     vector<Zone> result_z;
     ZoneServer *p_zone = static_cast<ZoneServer*>(mgr->get_module("zone").get());
-        dout(10) << "start: p_zone->GetZoneInfo" << dendl;
+        dout(-1) << "start: p_zone->GetZoneInfo" << dendl;
     bool result_b = p_zone->GetZoneInfo(result_z, hvsID);//sy函数
-        dout(10) << "end: p_zone->GetZoneInfo" << dendl;
+        dout(-1) << "end: p_zone->GetZoneInfo" << dendl;
     //string result;
     if( !result_b ){
-        dout(10) << "get zoneID info fail" <<dendl;
+        dout(-1) << "get zoneID info fail" <<dendl;
         return "fail";
     }
 
@@ -1215,7 +1218,7 @@ string AuthModelServer::AuthSearchModel(string &hvsID){
 
     string hvsname;
     std::shared_ptr<hvs::Datastore> accountPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase);
-    auto [own, oerr] = accountPtr->get(hvsID);
+    auto [own, oerr] = accountPtr->get(user_prefix + hvsID);
     if (!oerr)
     {
           Account owner;
@@ -1258,7 +1261,7 @@ int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, s
                                         string &ownergroupR, string &ownergroupW, string &ownergroupE){
     
     //2.1.1查询在每个区域中是主人 还是 成员
-    if(myzone.ownerID.compare(hvsID)==0){
+    if(myzone.ownerID.compare(hvsID)==0){   // myzone.ownerID 这块比较特殊 存的其实是 name 因此这块就是比较name
         identity = "1";
     }
     else{
@@ -1267,11 +1270,13 @@ int AuthModelServer::subAuthSearchModel(Zone &myzone, string hvsID, string &r, s
     }
 
     //2.1.2然后获取相应身份的权限数据
-    std::shared_ptr<hvs::Datastore> f3_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_auth_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f3_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_auth_info));
+    f3_dbPtr->init();
 
-    auto [pvalue, error] = f3_dbPtr->get(myzone.zoneID);
+    auto [pvalue, error] = f3_dbPtr->get(auth_prefix + myzone.zoneID);
     if(error){
-        dout(10) << "fail" << dendl;
+        dout(-1) << "fail" << dendl;
         return -1;
     }
 

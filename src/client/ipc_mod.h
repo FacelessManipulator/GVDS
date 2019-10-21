@@ -65,6 +65,8 @@ namespace hvs{
         std::string doaduam(IPCreq &ipcreq);
         std::string doadsearcham(IPCreq &ipcreq);
         std::string doadseepool(IPCreq &ipcreq);
+        std::string doadauthsearch(IPCreq &ipcreq);
+        std::string doadauthmodify(IPCreq &ipcreq);
         
         bool GetZoneInfo(std::string clientID);
 
@@ -93,6 +95,7 @@ namespace hvs{
         std::string dodeletecenter(IPCreq &ipcreq);
         
         std::string doadminsignup(IPCreq &ipcreq);
+
     };
 }
 

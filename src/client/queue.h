@@ -43,6 +43,7 @@ class ClientBufferQueue : public ClientModule, Thread {
   
   public:
   bool queue_buffer(std::shared_ptr<Buffer> buf, bool block = true);
+  std::future<bool> block_on_last(std::shared_ptr<IOProxyNode> iop);
   void done_one(int channel_id = 0);
   int get_spare_channel();
   bool add_idle_worker(ClientWorker* woker);

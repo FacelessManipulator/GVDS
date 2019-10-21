@@ -32,6 +32,7 @@ namespace hvs{
        Routes::Post(router, "/space/changesize", Routes::bind(&SpaceServer::SpaceSizeChangeRest, this));
        Routes::Post(router, "/space/spaceusage", Routes::bind(&SpaceServer::SpaceUsageRest, this));
        Routes::Post(router, "/space/spaceusagecheck", Routes::bind(&SpaceServer::SpaceUsageCheckRest, this));
+       Routes::Post(router, "/space/spacenumber", Routes::bind(&SpaceServer::SpaceNumberRest, this));
     }
 
     void SpaceServer::GetSpacePosition(std::vector<Space> &result, std::vector<std::string> spaceID)
@@ -370,7 +371,7 @@ namespace hvs{
     // 容量分配的粒度为 GB
     int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {
         if (newSpaceSize < 0) {
-            return -1;
+            return EINVAL;
         }
         //查找空间表中当前空间,判断当前是否能缩放空间，是增大空间还是减少空间。
         Space spacejson;
@@ -378,7 +379,7 @@ namespace hvs{
         auto [vp, err] = spaceptr->get(space_prefix + spaceID); // 通过spaceID获取到描述空间的json数据；
         if(err)
         {
-            return -1;
+            return EAGAIN;
         }
         std::string space_value = *vp;
         spacejson.deserialize(space_value);
@@ -391,7 +392,7 @@ namespace hvs{
         auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
         if (c_error){
             dout(10) << "authmodelserver: get center_information fail" <<dendl;
-            return -1;
+            return EAGAIN;
         }
         CenterInfo mycenter;
         mycenter.deserialize(*pcenter_value);
@@ -439,7 +440,7 @@ namespace hvs{
         int64_t realsizetoGB =  (realsize/(1000*1000)+1)/1; // 不够1GB向上取整，获取最终值，容量分配的粒度为GB
 
         if (newSpaceSize <= realsizetoGB) {
-            return -1;
+            return EINVAL;
         }
 
         if(newSpaceSize > spacejson.spaceSize){
@@ -447,7 +448,7 @@ namespace hvs{
             if(ret == 0){
                 spacejson.spaceSize = newSpaceSize;
                 int flag = spaceptr->set(space_prefix + spaceID, spacejson.serialize());
-                if (flag != 0) return -1;
+                if (flag != 0) return EAGAIN;
             }
             return ret;
         }else if (newSpaceSize < spacejson.spaceSize){
@@ -455,7 +456,7 @@ namespace hvs{
             if(ret == 0){
                 spacejson.spaceSize = newSpaceSize;
                 int flag2 = spaceptr->set(space_prefix + spaceID, spacejson.serialize());
-                if (flag2 != 0) return -1;
+                if (flag2 != 0) return EAGAIN;
             }
             return ret;
         }else{
@@ -469,17 +470,17 @@ namespace hvs{
         auto [vp, err] = storptr->get(StorageID);
         if(err)
         {
-            return -1;
+            return EAGAIN;
         }
         std::string stor_value = *vp;
         storage.deserialize(stor_value);
         if (storage.assign_capacity+add_size > storage.total_capacity){
-            return -1;
+            return ENOSPC;
         } else {
             //设置当前新的容量；
             storage.assign_capacity = storage.assign_capacity+add_size;
             int flag = storptr->set(StorageID, storage.serialize()); // 容量改变，并重新存储到数据库中；
-            if (flag != 0) return -1;
+            if (flag != 0) return EAGAIN;
         }
         return 0;
     }
@@ -490,17 +491,17 @@ namespace hvs{
         auto [vp, err] = storptr->get(StorageID);
         if(err)
         {
-            return -1;
+            return EAGAIN;
         }
         std::string stor_value = *vp;
         storage.deserialize(stor_value);
         if (storage.assign_capacity-deduct_size < 0){
-            return -1;
+            return EINVAL;
         } else{
             //设置当前新的容量；
             storage.assign_capacity = storage.assign_capacity-deduct_size;
             int flag = storptr->set(StorageID, storage.serialize()); // 容量改变，并重新存储到数据库中；
-            if (flag != 0) return -1;
+            if (flag != 0) return EAGAIN;
         }
         return 0;
     }
@@ -686,4 +687,30 @@ namespace hvs{
         else return 0;
     }
 
+    void SpaceServer::SpaceNumberRest(const Rest::Request& request, Http::ResponseWriter response){
+        dout(10) << "====== start ZoneServer function: SpaceNumberRest ======"<< dendl;
+        auto info = request.body();
+
+        dout(10) << "info: " << info << dendl;
+
+        int result = SpaceNumber(info);
+        response.send(Http::Code::Ok, json_encode(result));
+        dout(10) << "====== end ZoneServer function: SpaceNumberRest ======"<< dendl;
+    }
+
+    int SpaceServer::SpaceNumber(std::string hostCenterName)
+    {
+        Space tmps;
+        std::shared_ptr<hvs::Datastore> dbPtr =hvs::DatastoreFactory::create_datastore(spacebucket, hvs::DatastoreType::couchbase, true);
+        auto spacePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
+        char query[256];
+        snprintf(query, 256, 
+        "select UUID, name, capcity, SC_UUID, Storage_UUID, root_location, hostCenterName, storageSrcName, Status from `%s` where hostCenterName = \"%s\" "
+        "and META().id like '%s%%'", 
+        spacebucket.c_str(), hostCenterName.c_str(), space_prefix.c_str());
+
+        auto [vp, err] = spacePtr->n1ql(string(query));
+        if(err != 0) return EAGAIN;
+        else return vp->size();
+    }
 }//namespace hvs

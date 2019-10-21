@@ -34,14 +34,24 @@ int main(int argc, char *argv[])
 
     char *demo2[2] = {const_cast<char *>(cmdtitle.c_str()), const_cast<char *>("--help")};
 
-    string storage_src_id = "";   // 存储资源UUID
-    string storage_src_name = ""; // 存储资源名称
-    string host_center_id = "";   // 存储资源所在超算中心UUID
-    string host_center_name = ""; // 存储资源所在超算中心名称
-    int64_t total_capacity = 0;   // 存储资源空间容量大小
-    int64_t assign_capacity = 0;  // 存储资源已分配空间容量大小
-    string mgs_address = "";      // 存储资源MGS地址
-    int state = 1;                // 存储资源状态
+    string storage_src_id = "#default";   // 存储资源UUID
+    string storage_src_name = "#default"; // 存储资源名称
+    string host_center_id = "#default";   // 存储资源所在超算中心UUID
+    string host_center_name = "#default"; // 存储资源所在超算中心名称
+    int64_t total_capacity = -1;   // 存储资源空间容量大小
+    int64_t assign_capacity = -1;  // 存储资源已分配空间容量大小
+    string mgs_address = "#default";      // 存储资源MGS地址
+    int state = -1;                // 存储资源状态
+
+    //检查非法字符输入
+    for (int i = 1; i < argc; i++)
+    {
+        if (!CmdLineProxy::is_validate(argv[i]))
+        {
+            cerr << "输入非法字符" << endl;
+            exit(-1);
+        }
+    }
 
     // TODO: 获取命令行信息
     CmdLineProxy commandline(argc, argv);
@@ -71,10 +81,23 @@ int main(int argc, char *argv[])
             state = (*res_variables_map)["st"].as<int>();
     };
     commandline.start();
+    
+
     if (commandline.argc <= 1)
     {
-        cerr << "请输入命令参数！" << endl;
+        cerr << "命令行消息: 请输入命令参数！" << endl;
         commandline.print_options();
+        exit(-1);
+    }
+    else if(commandline.argc<7)
+    {
+        cerr << "命令行消息: 请输入足够的参数，至少包含一个种操作！" << endl;
+        commandline.print_options();
+        exit(-1);
+    }
+    else if((storage_src_id.c_str()[0]=='#'&&storage_src_name.c_str()[0]=='#')||(host_center_id.c_str()[0]=='#'&&host_center_name.c_str()[0]=='#'))
+    {
+        cerr<<"命令行消息: 请输入存储资源名称或其UUID 和 超算中心的名称或UUID"<<endl;
         exit(-1);
     }
 
@@ -108,11 +131,17 @@ int main(int argc, char *argv[])
         ipcreq.assign_capacity = assign_capacity;
         ipcreq.mgs_address = mgs_address;
         ipcreq.state = state;
-
         //发送
         auto msg = IPCMessage::make_message_by_charstring(ipcreq.serialize().c_str());
         ipcClient.write(*msg); //传递一个消息
-        fu.get();              //等待客户端返回结果
+
+        //等待客户端返回结果，超时则终止请求
+        auto status = fu.wait_for(std::chrono::seconds(3));
+        if (status == std::future_status::timeout)
+        {
+            cerr << "操作失败，请求超时！" << endl;
+        }
+
         ipcClient.stop();
     }
     catch (exception &e)

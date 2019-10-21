@@ -2,6 +2,8 @@
 #include <future>
 #include <mutex>
 #include "client/client_worker.h"
+#include "client/fuse_mod.h"
+#include "client/msg_mod.h"
 
 using namespace std;
 using namespace hvs;
@@ -58,6 +60,28 @@ bool ClientBufferQueue::queue_buffer(std::shared_ptr<Buffer> buf, bool block) {
   m_queue_mutex_holder = 0;
   pthread_mutex_unlock(&m_queue_mutex);
   return true;
+}
+
+std::future<bool> ClientBufferQueue::block_on_last(std::shared_ptr<IOProxyNode> iop) {
+  auto prom = std::make_shared<std::promise<bool>>();
+  auto fu = prom->get_future();
+  if(buf_onlink == 0) {
+    prom->set_value(true);
+    return move(fu);
+  }
+  bool use_udt = client->fuse->use_udt;
+  auto msg_mod = client->rpc;
+  std::function<void()> callback = [prom, use_udt, iop, msg_mod](){
+    if (use_udt) {
+      auto udtc = msg_mod->udt_channel(iop, false);
+      prom->set_value(udtc->block_on_op() == 0);
+    }
+  };
+  auto fake_buf = make_shared<Buffer>();
+  fake_buf->callback = callback;
+  fake_buf->path="";
+  queue_buffer(fake_buf, false);
+  return std::move(fu);
 }
 
 void* ClientBufferQueue::entry() {

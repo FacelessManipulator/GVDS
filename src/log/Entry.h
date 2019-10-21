@@ -26,7 +26,7 @@ class Entry {
       : m_stamp(s), m_thread(t), m_prio(level) {
     m_stream_p = std::make_shared<std::stringstream>(std::stringstream());
     if (prefix) {
-      *m_stream_p << prefix;
+      *m_stream_p << prefix << ' ';
     }
   }
   ~Entry() = default;

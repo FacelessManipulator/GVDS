@@ -78,9 +78,9 @@ void UserModelServer::router(Router& router){
 }
 
 void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::ResponseWriter response){
-     dout(10) << "====== start UserModelServer function: getMemberIDRest ======"<< dendl;
+     dout(-1) << "====== start UserModelServer function: getMemberIDRest ======"<< dendl;
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     //反序列化
     vector<string> memberName;
@@ -90,29 +90,28 @@ void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::Respon
     vector<string> memberID;
     bool flag = getMemberID(memberName, memberID);
     if(flag){
-        dout(10) << "get getMemberIDRest success" << dendl;
+        dout(-1) << "get getMemberIDRest success" << dendl;
         string json_str = json_encode(memberID); //序列号 返回
         response.send(Http::Code::Ok, json_str);
     }
     else{
-        dout(10) << "get getMemberIDRest fail" << dendl;
+        dout(-1) << "get getMemberIDRest fail" << dendl;
         response.send(Http::Code::Ok, "fail");
     }
-    dout(10) << "====== end UserModelServer function: getMemberIDRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: getMemberIDRest ======"<< dendl;
 }
 
 bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &memberID){
-    dout(10) << " enter getMemberID "<< dendl;
+    dout(-1) << " enter getMemberID "<< dendl;
     
     //获取每一个membername 对应的 hvsid
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
 
     
     for(int i=0; i<memberName.size(); i++){
-        dout(10) << "memberName[i]: " << memberName[i] << dendl;
+        dout(-1) << "memberName[i]: " << memberName[i] << dendl;
         auto [pvalue, error_0] = f0_dbPtr->get(memberName[i]);
         if(error_0 != 0){  
             return false;
@@ -129,10 +128,10 @@ bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &me
 
 //账户注册
 void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: UserRegisterRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: UserRegisterRest ======"<< dendl;
 
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
     //Account person("lbq", "123456", "78910", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang");
 /*
     Account person("lbq", "123456", "456", "XXXXXX@163.com", "15012349876", "xueyuanlu",  "Beihang", "has");
@@ -148,23 +147,21 @@ void UserModelServer::UserRegisterRest(const Rest::Request& request, Http::Respo
 
     string result = UserRegister(person);
 
-    dout(10)<<"result:"<<result<<dendl;
+    dout(-1)<<"result:"<<result<<dendl;
     response.send(Http::Code::Ok, result); //point
-    dout(10) << "====== end UserModelServer function: UserRegisterRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: UserRegisterRest ======"<< dendl;
 }
 
 
 string UserModelServer::UserRegister(Account &person){
-    dout(10) << "enter UserRegister ======"<< dendl;
+    dout(-1) << "enter UserRegister ======"<< dendl;
 
     //std::string person_key = person.accountID;
     //检查是否存在key，不存在，则进行下面代码开始注册，存在则返回注册失败
     
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
     
     auto [pvalue, error_0] = f0_dbPtr->get(person.accountName);
     if(error_0 == 0){  
@@ -189,26 +186,30 @@ string UserModelServer::UserRegister(Account &person){
     
     int f1_flag = f0_dbPtr->set(pari_key, pair_value);
     if (f1_flag != 0){
-        dout(10) << "Registration fail: DB[account_map_id] write fail;" << dendl;
+        dout(-1) << "Registration fail: DB[account_map_id] write fail;" << dendl;
         return "Registration fail";
     }
 
     //sc_accounut_pool取出并调整,   sc_account_info写入
     bool buildmap = BuildAccountMapping_v2(person.accountID);
     if(!buildmap){
-        dout(10) << "buildmap fail" << dendl;
+        dout(-1) << "buildmap fail" << dendl;
         return "Registration fail";
     }
 
     //写入account_info表
     std::string person_value = person.serialize();  //json
 
-    dout(10)<<person_key<<dendl;
-    dout(10)<<person_value<<dendl;
+    dout(-1)<<person_key<<dendl;
+    dout(-1)<<person_value<<dendl;
+   
+    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+    //     hvs::CouchbaseDatastore(bucket_account_info));
+    // f0_dbPtr->init();
     
-    int flag = f0_dbPtr->set(person_key, person_value);
+    int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
     if (flag != 0){
-        dout(10) << "Registration fail: DB[account_info] write fail;" << dendl;
+        dout(-1) << "Registration fail: DB[account_info] write fail;" << dendl;
         return "Registration fail";
     }
     else{
@@ -224,12 +225,12 @@ string UserModelServer::UserRegister(Account &person){
 //账户登录
 //登录成功，返回：token   失败：-1 ，成功：uuid；
 void UserModelServer::UserLoginRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: UserLoginRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: UserLoginRest ======"<< dendl;
     //=====
     printCookies(request);
     //=====
     auto info = request.body(); 
-    dout(10) << info << dendl;   //账户名，密码
+    dout(-1) << info << dendl;   //账户名，密码
     
     //解析账户名密码
     AccountPass acc_pass;
@@ -243,11 +244,9 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
         //md5
         string origin_str = acc_pass.accountName + acc_pass.Password; //再加上url以及时间等等信息
         string mtoken = md5(origin_str);
-        // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        //     hvs::CouchbaseDatastore(bucket_account_info));
-        // f0_dbPtr->init();
-
-        std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+        std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+            hvs::CouchbaseDatastore(bucket_account_info));
+        f0_dbPtr->init();
         string value ="1";
         int login_flag = f0_dbPtr->set(mtoken, value);
         if (login_flag != 0){
@@ -268,27 +267,27 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
     }
 
     //auto pmtoken = response.headers().get("Token");
-    //dout(10) << "pmtoken: " << pmtoken <<dendl;
-    //dout(10) << "*pmtoken: " << *pmtoken <<dendl;
+    //dout(-1) << "pmtoken: " << pmtoken <<dendl;
+    //dout(-1) << "*pmtoken: " << *pmtoken <<dendl;
    
 
-    dout(10)<<"====== end UserModelServer function: UserLoginRest ======"<<dendl;    
+    dout(-1)<<"====== end UserModelServer function: UserLoginRest ======"<<dendl;    
 }
 
 bool UserModelServer::UserLogin(std::string account, std::string pass, std::string &userID, std::string &identity){
-    dout(10) << "enter UserLogin"<< dendl;
+    dout(-1) << "enter UserLogin"<< dendl;
     //AccountPair中实现新类，只存账户名，和id，这两个信息
     //查询账户名对应的id，作为数据库查询的key
 
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+
+    f0_dbPtr->init();
 
     //获取account对应的id    [若数据库没有此key，则返回登录失败的代码]
     auto [pvalue, error_0] = f0_dbPtr->get(account);
     if(error_0){
-        dout(10) << "DB[account_map_id]: No such account" <<dendl;
+        dout(-1) << "DB[account_map_id]: No such account" <<dendl;
         return false;
     }
     AccountPair login_acc_pair;
@@ -310,9 +309,9 @@ bool UserModelServer::UserLogin(std::string account, std::string pass, std::stri
     //auto [pPass, error_1] = f0_dbPtr->get(key, path);   *pPass输出带引号
     //tmp
     //使用获取的id查询数据库中密码，并比较
-    auto [pvalue_2, error_2] = f0_dbPtr->get(key);
+    auto [pvalue_2, error_2] = f0_dbPtr->get(user_prefix + key);
     if(error_2){
-        dout(10) << "DB[account_info]: No such account" <<dendl;
+        dout(-1) << "DB[account_info]: No such account" <<dendl;
         return false;
     }
 
@@ -327,8 +326,8 @@ bool UserModelServer::UserLogin(std::string account, std::string pass, std::stri
     } 
 
     else{
-        dout(10)<<"pass = " << pass <<dendl;
-        dout(10) <<"tmp.Password = " << tmp.Password << dendl;
+        dout(-1)<<"pass = " << pass <<dendl;
+        dout(-1) <<"tmp.Password = " << tmp.Password << dendl;
         string result = "login fail";
         return false;
     }
@@ -339,7 +338,7 @@ bool UserModelServer::UserLogin(std::string account, std::string pass, std::stri
 //账户信息查询
 //返回33权限，-1失败，正常值；
 void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: getUserinfoRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: getUserinfoRest ======"<< dendl;
 
     // bool valid = auth_token(request);
     // if (!valid){
@@ -360,11 +359,11 @@ void UserModelServer::getUserinfoRest(const Rest::Request& request, Http::Respon
         response.send(Http::Code::Ok, "-1"); //point
     }
     
-    dout(10) << "====== end UserModelServer function: getUserinfoRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: getUserinfoRest ======"<< dendl;
 }
 
 string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
-    dout(10) << "enter getUserinfo"<< dendl;
+    dout(-1) << "enter getUserinfo"<< dendl;
     /*
     map<string, string> usermap;
 
@@ -382,19 +381,18 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
     */
     string key = uuid;
 
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
 
     //判断key是否存在
-    auto [pvalue, error] = f0_dbPtr->get(key);
+    auto [pvalue, error] = f0_dbPtr->get(user_prefix + key);
     if (error){
         is_get_success = false;
         return "SearchFail";
     }
 
-    dout(10)<<"pvalue:"<< *pvalue <<dendl;
+    dout(-1)<<"pvalue:"<< *pvalue <<dendl;
     return *pvalue;
 
 }
@@ -402,7 +400,7 @@ string UserModelServer::getUserinfo(string uuid, bool &is_get_success){
 
 // 返回33权限，应有结果；
 void UserModelServer::modifyUserinfoRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: modifyUserinfoRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: modifyUserinfoRest ======"<< dendl;
 
     // bool valid = auth_token(request);
     // if (!valid){
@@ -411,38 +409,36 @@ void UserModelServer::modifyUserinfoRest(const Rest::Request& request, Http::Res
     // }
 
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     Account person;
     person.deserialize(info);  
 
     string result = modifyUserinfo(person);
 
-    dout(10)<<"result:"<<result<<dendl;
+    dout(-1)<<"result:"<<result<<dendl;
     response.send(Http::Code::Ok, result); //point
 
-    dout(10) << "====== end UserModelServer function: modifyUserinfoRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: modifyUserinfoRest ======"<< dendl;
 }
 
 string UserModelServer::modifyUserinfo(Account &person){
-    dout(10) << "enter modifyUserinfo"<< dendl;
+    dout(-1) << "enter modifyUserinfo"<< dendl;
 
     //更新account_info表
     string person_key = person.accountID;
     string person_value = person.serialize();  //json
 
-    dout(10) << person_key << dendl;
-    dout(10) << person_value << dendl;
+    dout(-1) << person_key << dendl;
+    dout(-1) << person_value << dendl;
    
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info)); 
-    // f0_dbPtr->init();
-
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info)); 
+    f0_dbPtr->init();
     
-    int flag = f0_dbPtr->set(person_key, person_value);
+    int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
     if (flag != 0){
-        dout(10) << "Modify fail: DB[account_info] update fail" << dendl;
+        dout(-1) << "Modify fail: DB[account_info] update fail" << dendl;
         return "Modify fail";
     }
     else{
@@ -453,7 +449,7 @@ string UserModelServer::modifyUserinfo(Account &person){
 
 //返回：33权限，字符串-1失败, 正常值；
 void UserModelServer::exitUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: exitUserAccountRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: exitUserAccountRest ======"<< dendl;
 
     // bool valid = auth_token(request);
     // if (!valid){
@@ -467,7 +463,7 @@ void UserModelServer::exitUserAccountRest(const Rest::Request& request, Http::Re
     std::string mtoken;
     auto cookies = request.cookies();
     for (const auto& c: cookies) {
-        //dout(10) << c.name << " = " << c.value << dendl;
+        //dout(-1) << c.name << " = " << c.value << dendl;
         name = c.name;
         mtoken = c.value;
     }
@@ -482,18 +478,16 @@ void UserModelServer::exitUserAccountRest(const Rest::Request& request, Http::Re
         response.send(Http::Code::Ok, "-1"); //point
     }
     
-    dout(10) << "====== end UserModelServer function: exitUserAccountRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: exitUserAccountRest ======"<< dendl;
 }
 
 
 string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_success){
-    dout(10) << "enter exitUserAccount"<< dendl;
+    dout(-1) << "enter exitUserAccount"<< dendl;
     
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));//token
-    // f0_dbPtr->init();
-
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));//token
+    f0_dbPtr->init();
 
     int flag = f0_dbPtr->remove(mtoken);
     if(flag == 0){
@@ -512,7 +506,7 @@ string UserModelServer::exitUserAccount(std::string mtoken , bool &is_exit_succe
 //彻底注销虚拟数据空间用户
 //返回33权限，失败：-1，-2，成功：正常结果
 void UserModelServer::cancellationUserAccountRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: cancellationUserAccountRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: cancellationUserAccountRest ======"<< dendl;
 
     // bool valid = auth_token(request);
     // if (!valid){
@@ -531,38 +525,52 @@ void UserModelServer::cancellationUserAccountRest(const Rest::Request& request, 
         response.send(Http::Code::Ok, data); //point
     }
     
-    dout(10) << "====== end UserModelServer function: cancellationUserAccountRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: cancellationUserAccountRest ======"<< dendl;
 }
 
 string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_success){
-    dout(10) << "enter cancellationUserAccount"<< dendl;
+    dout(-1) << "enter cancellationUserAccount"<< dendl;
 
     //获取用户信息
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
 
-    auto [pvalue, error] = f0_dbPtr->get(uuid);
+    auto [pvalue, error] = f0_dbPtr->get(user_prefix + uuid);
     if(error){
         is_cancel_success = false;
-        dout(10) << "access to db[account_info] fail" << dendl;
+        dout(-1) << "access to db[account_info] fail" << dendl;
         return "-1";
     }
     Account hvsperson;
     hvsperson.deserialize(*pvalue);
 
     //TODO判断区域是否注销完毕sy
-    std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\";";
-    int pos = query.find("ownerID");
-    query.erase(pos, 7);
-    query.insert(pos, uuid);
+    // std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\";";
+    // int pos = query.find("ownerID");
+    // query.erase(pos, 7);
+    // query.insert(pos, uuid);
+    // std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    // auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
+    // auto [vp, err] = zonePtr->n1ql(query);
+    // if(vp->size() != 0){
+    //     is_cancel_success = false;
+    //     dout(-1) << "User cancellation fail, your Zone is not cancal success" << dendl;
+    //     return "-2";
+    // }
+
+    //TODO判断区域是否注销完毕sy
+    string ownerID = uuid;
+    char query[256];
+    snprintf(query, 256, 
+    "select * from `%s` where owner = \"%s\"", 
+    zonebucket.c_str(), ownerID.c_str());
     std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
     auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
-    auto [vp, err] = zonePtr->n1ql(query);
+    auto [vp, err] = zonePtr->n1ql(string(query));
     if(vp->size() != 0){
         is_cancel_success = false;
-        dout(10) << "User cancellation fail, your Zone is not cancal success" << dendl;
+        dout(-1) << "User cancellation fail, your Zone is not cancal success" << dendl;
         return "-2";
     }
 
@@ -570,20 +578,18 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     bool is_remove_acc = RemoveAccountMapping_v2(uuid);
     if(!is_remove_acc){
         is_cancel_success = false;
-        dout(10) << "Account map remove fail" << dendl;
+        dout(-1) << "Account map remove fail" << dendl;
         return "-1";
     }
 
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info));  
-    // f1_dbPtr->init();
-
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
      
-    int flag = f1_dbPtr->remove(uuid);
+    int flag = f1_dbPtr->remove(sc_user_prefix + uuid);
     if(flag){
         is_cancel_success = false;
-        dout(10) << "Remove account fail" << dendl;
+        dout(-1) << "Remove account fail" << dendl;
         return "-1";
     }
 
@@ -594,15 +600,15 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     int acc_map_id_flag = f0_dbPtr->remove(hvsperson.accountName);
     if(acc_map_id_flag){
         is_cancel_success = false;
-        dout(10) << "when db[account_map_id] remove, fail" << dendl;
+        dout(-1) << "when db[account_map_id] remove, fail" << dendl;
         return "-1";
     }
 
     //删除account_info
-    int acc_info_flag = f0_dbPtr->remove(uuid);
+    int acc_info_flag = f0_dbPtr->remove(user_prefix + uuid);
     if(acc_info_flag){
         is_cancel_success = false;
-        dout(10) << "when db[account_map_id] remove, fail" << dendl;
+        dout(-1) << "when db[account_map_id] remove, fail" << dendl;
         return "-1";
     }
 
@@ -613,11 +619,13 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
  /* 
 bool UserModelServer::RemoveAccountMapping_old(string accountID){
 
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
 
     auto [pvalue_scuser, error] = f1_dbPtr->get(accountID);  //sc_account_info  key:uuid
     if(error){
-        dout(10) << "get sc_account_info fail."<< dendl;
+        dout(-1) << "get sc_account_info fail."<< dendl;
         return false;
     }
 
@@ -641,13 +649,13 @@ bool UserModelServer::RemoveAccountMapping_old(string accountID){
 
 //删除一个用户指定地区(location)的［所有］账户映射
 bool UserModelServer::SubRemoveAccountMapping_old(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
-    dout(10) << "location " << location << dendl;
+    dout(-1) << "location " << location << dendl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);    //sc_account_pool  key:Beijing,Shanghai...
     if (error){
-        dout(10) << "get "<< location << " err"<<dendl;
+        dout(-1) << "get "<< location << " err"<<dendl;
         return false;
     }
-    //dout(10) << *pvalue_location <<dendl;
+    //dout(-1) << *pvalue_location <<dendl;
 
     AccountSCPool somewhere;
     somewhere.deserialize(*pvalue_location);
@@ -701,21 +709,21 @@ bool UserModelServer::SubRemoveAccountMapping_old(SCAccount &person, string loca
     string value1 = somewhere.serialize();
     int flag1 = f1_dbPtr->set(location, value1);  //sc_account_pool
     if (flag1 != 0){
-        dout(10)<< "remove map fail: DB[sc_account_pool] update fail"<< dendl;
+        dout(-1)<< "remove map fail: DB[sc_account_pool] update fail"<< dendl;
         return false;
     }
     else{
-        dout(10)<< "remove map success: DB[sc_account_pool] update success" << dendl;
+        dout(-1)<< "remove map success: DB[sc_account_pool] update success" << dendl;
     }    
     
     string value2 = person.serialize();
     int flag2 = f1_dbPtr->set(person.accountID, value2);   //sc_account_info
     if (flag2 != 0){
-        dout(10)<< "remove map fail: DB[sc_account_info] update fail"<<dendl;
+        dout(-1)<< "remove map fail: DB[sc_account_info] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<< "removeAccountMapping success: DB[sc_account_info] update success" << dendl;
+        dout(-1)<< "removeAccountMapping success: DB[sc_account_info] update success" << dendl;
         return true;
     }    
 
@@ -728,8 +736,10 @@ bool UserModelServer::BuildAccountMapping_old(string accountID){
     
     SCAccount person(accountID);
 
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
-
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
+    
     //账户映射算法，选一个地点进行映射，目前是默认Beijing，如果不做算法，这里就直接映射5个就完事了（直接把下面四个//取消）
     //参数是数据库中的key，因此不能换，这里要做转换， if ... key = "Beijing"
     bool beijing = SubBuildAccountMapping(person, "Beijing", f1_dbPtr);   //sc_account_pool
@@ -752,19 +762,19 @@ bool UserModelServer::BuildAccountMapping_old(string accountID){
 //建立给定地区(location)的用户的［1个］账户映射，即调用Beijing两次，则在Beijing建立2个账户映射; 删除是直接删除给定地区的所有账户映射，若想只删除给定地区的其中一个账户，则需再自定函数实现
 bool UserModelServer::SubBuildAccountMapping_old(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
     
-    dout(10) << "location " << location << dendl;
+    dout(-1) << "location " << location << dendl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);
     if (error){
-        dout(10) << "get "<< location << " err"<<dendl;
+        dout(-1) << "get "<< location << " err"<<dendl;
         return false;
     }
     
-    dout(10) << *pvalue_location <<dendl;
+    dout(-1) << *pvalue_location <<dendl;
 
     AccountSCPool somewhere;
     somewhere.deserialize(*pvalue_location);
     if(somewhere.unuse_account.empty()){
-        dout(10) << location <<" .unuse_account is empty , no local account can be used to build accountmap. Fail. " << dendl;
+        dout(-1) << location <<" .unuse_account is empty , no local account can be used to build accountmap. Fail. " << dendl;
         return false;
     }
     map<string, string>::iterator iter;
@@ -773,23 +783,23 @@ bool UserModelServer::SubBuildAccountMapping_old(SCAccount &person, string locat
 
     if(!location.compare("Beijing")){
         person.Beijing_account[iter->first] = iter->second; //account   password
-        dout(10) << "confirm Beijing" <<dendl;
+        dout(-1) << "confirm Beijing" <<dendl;
     }
     else if(!location.compare("Shanghai")){
         person.Shanghai_account[iter->first] = iter->second;   
-        dout(10) << "confirm Shanghai" <<dendl;
+        dout(-1) << "confirm Shanghai" <<dendl;
     }
     else if(!location.compare("Guangzhou")){
         person.Guangzhou_account[iter->first] = iter->second;  
-        dout(10) << "confirm Guangzhou" <<dendl;
+        dout(-1) << "confirm Guangzhou" <<dendl;
     }
     else if(!location.compare("Changsha")){
         person.Changsha_account[iter->first] = iter->second; 
-        dout(10) << "confirm Changsha" <<dendl;
+        dout(-1) << "confirm Changsha" <<dendl;
     }
     else if(!location.compare("Jinan")){
         person.Jinan_account[iter->first] = iter->second;   
-        dout(10) << "confirm Jinan" <<dendl;
+        dout(-1) << "confirm Jinan" <<dendl;
     }
     //add to use
     somewhere.use_account[iter->first] = iter->second;
@@ -800,37 +810,36 @@ bool UserModelServer::SubBuildAccountMapping_old(SCAccount &person, string locat
     string value = somewhere.serialize();   //sc_account_pool
     int flag = f1_dbPtr->set(location, value);
     if (flag != 0){
-        dout(10)<< "map fail: DB[sc_account_pool] update fail"<< dendl;
+        dout(-1)<< "map fail: DB[sc_account_pool] update fail"<< dendl;
         return false;
     }
     else{
-        dout(10)<< "map success: DB[sc_account_pool] update success" << dendl;
+        dout(-1)<< "map success: DB[sc_account_pool] update success" << dendl;
     }    
 
-    //dout(10) << person.Changsha_account.size() <<dendl;
+    //dout(-1) << person.Changsha_account.size() <<dendl;
     string person_value = person.serialize();
 
     int flag2 = f1_dbPtr->set(person.accountID, person_value); //sc_account_info
     if (flag2 != 0){
-        dout(10)<< "map fail: DB[sc_account_info] update fail"<<dendl;
+        dout(-1)<< "map fail: DB[sc_account_info] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<< "BuildAccountMapping success: DB[sc_account_info] update success" << dendl;
+        dout(-1)<< "BuildAccountMapping success: DB[sc_account_info] update success" << dendl;
         return true;
     }    
     
 }
 */
 bool UserModelServer::RemoveAccountMapping_v2(string accountID){
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info));  
-    // f1_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
 
-    auto [pvalue_scuser, error] = f1_dbPtr->get(accountID);  //sc_account_info  key:uuid
+    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + accountID);  //sc_account_info  key:uuid
     if(error){
-        dout(10) << "get sc_account_info fail."<< dendl;
+        dout(-1) << "get sc_account_info fail."<< dendl;
         return false;
     }
 
@@ -839,16 +848,14 @@ bool UserModelServer::RemoveAccountMapping_v2(string accountID){
 
     //删除受hostCenterName影响
     //获取超算信息，for 每一个超算，调用删除映射子函数
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
     
-    dout(10) << "c_key: " << c_key << dendl;
+    dout(-1) << "c_key: " << c_key << dendl;
     auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
     if (c_error){
-        dout(10) << "authmodelserver: get center_information fail" << dendl;
+        dout(-1) << "authmodelserver: get center_information fail" << dendl;
         return -1;
     }
     CenterInfo mycenter;
@@ -868,15 +875,15 @@ bool UserModelServer::RemoveAccountMapping_v2(string accountID){
 }
 
 //删除一个用户指定地区(location)的账户映射，每次只删除一个地点
-bool UserModelServer::SubRemoveAccountMapping_v2(SCAccount &person, string location, shared_ptr<hvs::Datastore> f1_dbPtr){
+bool UserModelServer::SubRemoveAccountMapping_v2(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
     //获取对应账户池
-    dout(10) << "location " << location << dendl;
+    dout(-1) << "location " << location << dendl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);    //sc_account_pool  key:Beijing,Shanghai...
     if (error){
-        dout(10) << "get "<< location << " err"<<dendl;
+        dout(-1) << "get "<< location << " err"<<dendl;
         return false;
     }
-    //dout(10) << *pvalue_location <<dendl;
+    //dout(-1) << *pvalue_location <<dendl;
 
     AccountSCPool somewhere;
     somewhere.deserialize(*pvalue_location);
@@ -907,21 +914,21 @@ bool UserModelServer::SubRemoveAccountMapping_v2(SCAccount &person, string locat
     string value1 = somewhere.serialize();
     int flag1 = f1_dbPtr->set(location, value1);  //sc_account_pool
     if (flag1 != 0){
-        dout(10)<< "remove map fail: DB[sc_account_pool] update fail"<< dendl;
+        dout(-1)<< "remove map fail: DB[sc_account_pool] update fail"<< dendl;
         return false;
     }
     else{
-        dout(10)<< "remove map success: DB[sc_account_pool] update success" << dendl;
+        dout(-1)<< "remove map success: DB[sc_account_pool] update success" << dendl;
     }    
     
     string value2 = person.serialize();
-    int flag2 = f1_dbPtr->set(person.accountID, value2);   //sc_account_info
+    int flag2 = f1_dbPtr->set(sc_user_prefix + person.accountID, value2);   //sc_account_info
     if (flag2 != 0){
-        dout(10)<< "remove map fail: DB[sc_account_info] update fail"<<dendl;
+        dout(-1)<< "remove map fail: DB[sc_account_info] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<< "removeAccountMapping success: DB[sc_account_info] update success" << dendl;
+        dout(-1)<< "removeAccountMapping success: DB[sc_account_info] update success" << dendl;
         return true;
     }    
 
@@ -931,10 +938,9 @@ bool UserModelServer::SubRemoveAccountMapping_v2(SCAccount &person, string locat
 bool UserModelServer::BuildAccountMapping_v2(string accountID){
     SCAccount person(accountID);
     
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info));  
-    // f1_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
 
     //账户映射算法，选一个地点进行映射，目前是默认Beijing，如果不做算法，这里就直接映射5个就完事了（直接把下面四个//取消）
     //参数是数据库中的key，因此不能换，这里要做转换， if ... key = "Beijing"
@@ -952,20 +958,20 @@ bool UserModelServer::BuildAccountMapping_v2(string accountID){
    }
 }
 //建立给定地区(location)的用户的［1个］账户映射，即调用Beijing两次，为防止在Beijing 覆盖之前的本地账户，因此这块加判断，每个地区只能建立一个本地账户
-bool UserModelServer::SubBuildAccountMapping_v2(SCAccount &person, string location, shared_ptr<hvs::Datastore> f1_dbPtr){
+bool UserModelServer::SubBuildAccountMapping_v2(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
     //获取对应账户池
-    dout(10) << "location " << location << dendl;
+    dout(-1) << "location " << location << dendl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);
     if (error){
-        dout(10) << "get "<< location << " err"<<dendl;
+        dout(-1) << "get "<< location << " err"<<dendl;
         return false;
     }
-    //dout(10) << *pvalue_location <<dendl;
+    //dout(-1) << *pvalue_location <<dendl;
 
     AccountSCPool somewhere;
     somewhere.deserialize(*pvalue_location);
     if(somewhere.unuse_account.empty()){
-        dout(10) << location <<" .unuse_account is empty , no local account can be used to build accountmap. Fail. " << dendl;
+        dout(-1) << location <<" .unuse_account is empty , no local account can be used to build accountmap. Fail. " << dendl;
         return false;
     }
 
@@ -977,7 +983,7 @@ bool UserModelServer::SubBuildAccountMapping_v2(SCAccount &person, string locati
         //没有账户则建立账户
     for(auto item : person.centerName){
         if(item == location){
-            dout(10) << "already exist local account，can not create new one" << dendl;
+            dout(-1) << "already exist local account，can not create new one" << dendl;
             return true; //这里返回true， 毕竟有账户
         }
     }
@@ -994,21 +1000,21 @@ bool UserModelServer::SubBuildAccountMapping_v2(SCAccount &person, string locati
     string value = somewhere.serialize();   //sc_account_pool
     int flag = f1_dbPtr->set(location, value);
     if (flag != 0){
-        dout(10)<< "map fail: DB[sc_account_pool] update fail"<< dendl;
+        dout(-1)<< "map fail: DB[sc_account_pool] update fail"<< dendl;
         return false;
     }
     else{
-        dout(10)<< "map success: DB[sc_account_pool] update success" << dendl;
+        dout(-1)<< "map success: DB[sc_account_pool] update success" << dendl;
     }    
 
     string person_value = person.serialize();
-    int flag2 = f1_dbPtr->set(person.accountID, person_value); //sc_account_info
+    int flag2 = f1_dbPtr->set(sc_user_prefix + person.accountID, person_value); //sc_account_info
     if (flag2 != 0){
-        dout(10)<< "map fail: DB[sc_account_info] update fail"<<dendl;
+        dout(-1)<< "map fail: DB[sc_account_info] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<< "BuildAccountMapping success: DB[sc_account_info] update success" << dendl;
+        dout(-1)<< "BuildAccountMapping success: DB[sc_account_info] update success" << dendl;
         return true;
     }    
 
@@ -1018,16 +1024,15 @@ bool UserModelServer::SubBuildAccountMapping_v2(SCAccount &person, string locati
 
 //账户映射接口，返回指定超算本地账户的账户名，密码
 string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterName){
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info));
-    // f1_dbPtr->init();
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));
+    f1_dbPtr->init();
 
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
     //是否存在此ownerid
-    auto [pvalue, error] = f1_dbPtr->get(ownerID);
+    auto [pvalue, error] = f1_dbPtr->get(sc_user_prefix + ownerID);
     if(error){
 
-        dout(10) << "fail" << dendl;
+        dout(-1) << "fail" << dendl;
         return "fail";
     }
 
@@ -1055,15 +1060,14 @@ string UserModelServer::getLocalAccountinfo(string ownerID, string hostCenterNam
 /* 在某个地方先调用写，完成sc_account_pool表
     bool tmp = addSCaccount();
     if(tmp){
-        dout(10) << "**** addSCaccount finish******" <<dendl;
+        dout(-1) << "**** addSCaccount finish******" <<dendl;
     }
 */
 //这个里面确定了账户池的key，如果要改，可以在这改
 bool UserModelServer::addSCaccount(){
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info)); 
-    // f1_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info)); 
+    f1_dbPtr->init();
 
     //Beijing
     AccountSCPool Beijing;
@@ -1107,11 +1111,11 @@ bool UserModelServer::addSCaccount(){
 
     int flag1 = f1_dbPtr->set(key1, value1);
     if (flag1 != 0){
-        dout(10)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
+        dout(-1)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<<"add Beijing success"<<dendl;
+        dout(-1)<<"add Beijing success"<<dendl;
     }  
 
 
@@ -1140,11 +1144,11 @@ bool UserModelServer::addSCaccount(){
 
     int flag2 = f1_dbPtr->set(key2, value2);
     if (flag2 != 0){
-        dout(10)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
+        dout(-1)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<<"add Shanghai success"<<dendl;
+        dout(-1)<<"add Shanghai success"<<dendl;
     }  
 
     //Guangzhou   
@@ -1172,11 +1176,11 @@ bool UserModelServer::addSCaccount(){
 
     int flag3 = f1_dbPtr->set(key3, value3);
     if (flag3 != 0){
-        dout(10)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
+        dout(-1)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<<"add Guangzhou success"<<dendl;
+        dout(-1)<<"add Guangzhou success"<<dendl;
     }  
 
 
@@ -1205,11 +1209,11 @@ bool UserModelServer::addSCaccount(){
 
     int flag4 = f1_dbPtr->set(key4, value4);
     if (flag4 != 0){
-        dout(10)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
+        dout(-1)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<<"add Changsha success"<<dendl;
+        dout(-1)<<"add Changsha success"<<dendl;
     }  
 
     //Jinan
@@ -1237,11 +1241,11 @@ bool UserModelServer::addSCaccount(){
 
     int flag5 = f1_dbPtr->set(key5, value5);
     if (flag5 != 0){
-        dout(10)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
+        dout(-1)<< "set fail: DB[sc_account_pool] update fail"<<dendl;
         return false;
     }
     else{
-        dout(10)<<"add Jinan success"<<dendl;
+        dout(-1)<<"add Jinan success"<<dendl;
     }  
 
     return true;
@@ -1254,32 +1258,31 @@ bool UserModelServer::addSCaccount(){
 //管理员账户注册：和原账户注册逻辑基本一致，只是多了记录 adminwhitelist 这个操作
 //返回值 与 原先注册接口相比 无变化 不要改vue客户端
 void UserModelServer::AdminUserRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: AdminUserRegisterRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: AdminUserRegisterRest ======"<< dendl;
 
     auto info = request.body();
-    dout(10) << info << dendl;
+    dout(-1) << info << dendl;
 
     Account person;
     person.deserialize(info);  
 
     string result = AdminUserRegister(person);
 
-    dout(10)<<"result:"<<result<<dendl;
+    dout(-1)<<"result:"<<result<<dendl;
     response.send(Http::Code::Ok, result); //point
-    dout(10) << "====== end UserModelServer function: AdminUserRegisterRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: AdminUserRegisterRest ======"<< dendl;
 }
 
 
 string UserModelServer::AdminUserRegister(Account &person){
-    dout(10) << "enter UserRegister ======"<< dendl;
+    dout(-1) << "enter UserRegister ======"<< dendl;
 
     //std::string person_key = person.accountID;
     //检查是否存在key，不存在，则进行下面代码开始注册，存在则返回注册失败
     
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
     
     auto [pvalue, error_0] = f0_dbPtr->get(person.accountName);
     if(error_0 == 0){  
@@ -1304,7 +1307,7 @@ string UserModelServer::AdminUserRegister(Account &person){
     
     int f1_flag = f0_dbPtr->set(pari_key, pair_value);
     if (f1_flag != 0){
-        dout(10) << "Registration fail: DB[account_map_id] write fail;" << dendl;
+        dout(-1) << "Registration fail: DB[account_map_id] write fail;" << dendl;
         return "Registration fail";
     }
 
@@ -1312,7 +1315,7 @@ string UserModelServer::AdminUserRegister(Account &person){
     // 管理员账户不用建立本地账户映射
     // bool buildmap = BuildAccountMapping_v2(person.accountID);
     // if(!buildmap){
-    //     dout(10) << "buildmap fail" << dendl;
+    //     dout(-1) << "buildmap fail" << dendl;
     //     return "Registration fail";
     // }
 
@@ -1331,7 +1334,7 @@ string UserModelServer::AdminUserRegister(Account &person){
     string admin_value = tmp_list.serialize();
     int admin_flag = f0_dbPtr->set(adminlist, admin_value);
     if(admin_flag!=0){
-        dout(10) << "Registration fail: DB[account_info] write fail;" << dendl;
+        dout(-1) << "Registration fail: DB[account_info] write fail;" << dendl;
         return "Registration fail";
     }
    
@@ -1339,16 +1342,16 @@ string UserModelServer::AdminUserRegister(Account &person){
     //写入account_info表
     std::string person_value = person.serialize();  //json
 
-    dout(10)<<person_key<<dendl;
-    dout(10)<<person_value<<dendl;
+    dout(-1)<<person_key<<dendl;
+    dout(-1)<<person_value<<dendl;
    
     // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
     //     hvs::CouchbaseDatastore(bucket_account_info));
     // f0_dbPtr->init();
     
-    int flag = f0_dbPtr->set(person_key, person_value);
+    int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
     if (flag != 0){
-        dout(10) << "Registration fail: DB[account_info] write fail;" << dendl;
+        dout(-1) << "Registration fail: DB[account_info] write fail;" << dendl;
         return "Registration fail";
     }
     else{
@@ -1364,20 +1367,20 @@ string UserModelServer::AdminUserRegister(Account &person){
 //用户注册请求先写入apply_info 数据库，管理员同意后，再调原来的账户注册接口。
 // "0" 是请求成功   "11"是请求失败
 void UserModelServer::bufferUserRegisterRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: bufferUserRegister ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: bufferUserRegister ======"<< dendl;
     auto info = request.body();
 
-    dout(10) << "info: " << info << dendl;
+    dout(-1) << "info: " << info << dendl;
 
-    //dout(10) << "viewbufferList start ============" << dendl;
+    //dout(-1) << "viewbufferList start ============" << dendl;
     //auto a = viewbufferList("15cdc484-5097-49ad-a02a-33ef359d8bea");
-    //dout(10) << "a: " << a;
-    //dout(10) << "viewbufferList end ============" << dendl;
+    //dout(-1) << "a: " << a;
+    //dout(-1) << "viewbufferList end ============" << dendl;
 
     int result = bufferUserRegister(info);
     response.send(Http::Code::Ok, json_encode(result));
-    dout(10) << "result: " <<result << dendl;
-    dout(10) << "====== end UserModelServer function: bufferUserRegister ======"<< dendl;
+    dout(-1) << "result: " <<result << dendl;
+    dout(-1) << "====== end UserModelServer function: bufferUserRegister ======"<< dendl;
 }
 
 int UserModelServer::bufferUserRegister(std::string apply){
@@ -1390,8 +1393,8 @@ int UserModelServer::bufferUserRegister(std::string apply){
     singel_content.id = key;
     singel_content.data = apply;
     string value = singel_content.serialize();
-    dout(10) << "see_value: " << dendl;
-    dout(10) << value << dendl;
+    dout(-1) << "see_value: " << dendl;
+    dout(-1) << value << dendl;
 
     int flag = f5_dbPtr->set(key, value);
     if(flag != 0)
@@ -1406,15 +1409,15 @@ int UserModelServer::bufferUserRegister(std::string apply){
 //管理员查看apply_info中的请求
 //返回值：  "33"不是管理员 ，"1" 是失败    其他是成功(json_encode(my_apply);)
 void UserModelServer::viewbufferListRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: viewbufferListRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: viewbufferListRest ======"<< dendl;
     auto info = request.body();
 
-    dout(10) << "info: " << info << dendl;  // 管理员id
+    dout(-1) << "info: " << info << dendl;  // 管理员id
     string data = viewbufferList(info);
-    dout(10) << "data: " << data << dendl;
+    dout(-1) << "data: " << data << dendl;
     response.send(Http::Code::Ok, data);
 
-    dout(10) << "====== end UserModelServer function: viewbufferListRest ======"<< dendl;
+    dout(-1) << "====== end UserModelServer function: viewbufferListRest ======"<< dendl;
 }
 string UserModelServer::viewbufferList(std::string hvsID){
     //验证 hvsID是否管理员id
@@ -1425,39 +1428,39 @@ string UserModelServer::viewbufferList(std::string hvsID){
     auto applyPtr = static_cast<CouchbaseDatastore*>(f5_dbPtr.get());
     
     //把bucket的数据库 的 所用 或者前5条 返回给客户端
-    std::string query = "select * from " + applybucket +" where meta().id like \"usign-%\" or meta().id like \"zregi-%\" or meta().id like \"spadd-%\" or meta().id like \"spsiz-%\" limit 5";
+    std::string query = "select id,data from " + applybucket +" where meta().id like \"usign-%\" or meta().id like \"zregi-%\" or meta().id like \"spadd-%\" or meta().id like \"spsiz-%\" limit 5";
     dout(10) << "query: "<< query << dendl;
     auto [vp, err] = applyPtr->n1ql(query);
     if(err!=0){
         return "1";
     }
-    //dout(10) << "*vp: " <<dendl;
-    //dout(10) << *vp << dendl;
+    //dout(-1) << "*vp: " <<dendl;
+    //dout(-1) << *vp << dendl;
     //vector<vector<struct_apply_info> > my;
     //json_decode(*vp, my);
-    vector<string> my_apply;
-    for(auto iter =vp->begin(); iter!=vp->end(); iter++){
-        string con = *iter;
-        int len = con.size();
-        string tmp = con.substr(sizeof("{\"test\":")-1, len-1);
-        dout(10) << "tmp: " << tmp.substr(0, tmp.size()-1) << dendl;
+    // vector<string> my_apply;
+    // for(auto iter =vp->begin(); iter!=vp->end(); iter++){
+    //     string con = *iter;
+    //     int len = con.size();
+    //     string tmp = con.substr(sizeof("{\"test\":")-1, len-1);
+    //     dout(10) << "tmp: " << tmp.substr(0, tmp.size()-1) << dendl;
 
-        my_apply.push_back(tmp.substr(0, tmp.size()-1));
-        //vector<struct_apply_info> inner_vec;
-        //json_decode(tmp, inner_vec);
-    }
-    string json_str = json_encode(my_apply);
+    //     my_apply.push_back(tmp.substr(0, tmp.size()-1));
+    //     //vector<struct_apply_info> inner_vec;
+    //     //json_decode(tmp, inner_vec);
+    // }
+    // string json_str = json_encode(my_apply);
     //查询出了多条记录，如何一条一条的 添加进vector ？
-    dout(10) << "json_str: " << json_str << dendl;
-    return json_str;
+    // dout(10) << "json_str: " << json_str << dendl;
+    return json_encode(*vp);
 }
 
 //管理原 accept  客户端 调此接口，删除记录， 并发送到对应功能接口
 //管理员 refuse 客户端 调此接口，删除记录
 void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: removeoneofApplyInfoRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: removeoneofApplyInfoRest ======"<< dendl;
     auto info = request.body();
-    dout(10) << "info: " << info << dendl;
+    dout(-1) << "info: " << info << dendl;
 
     std::shared_ptr<hvs::Datastore> f5_dbPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
     int flag = f5_dbPtr->remove(info);
@@ -1474,9 +1477,9 @@ void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Htt
 //客户端需先获取对应用户的hvsID，若获取不到，则有问题；获取到后  发生hvsID 和hostCenterName
 // 返回 0 是成功，1是失败  33是没有权限
 void UserModelServer::adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: adminCreateAccountMapping ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: adminCreateAccountMapping ======"<< dendl;
     auto info = request.body();
-    dout(10) << "info: " << info << dendl;   //
+    dout(-1) << "info: " << info << dendl;   //
 
     struct_AdminAccountMap new_accountmap;
     new_accountmap.deserialize(info);
@@ -1502,9 +1505,9 @@ void UserModelServer::adminCreateAccountMapping(const Rest::Request& request, Ht
 
 //返回 33 权限不组 1 失败  0成功
 void UserModelServer::adminDelAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: adminDelAccountMapping ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: adminDelAccountMapping ======"<< dendl;
     auto info = request.body();
-    dout(10) << "info: " << info << dendl;   //
+    dout(-1) << "info: " << info << dendl;   //
 
     struct_AdminAccountMap new_accountmap;
     new_accountmap.deserialize(info);
@@ -1514,14 +1517,13 @@ void UserModelServer::adminDelAccountMapping(const Rest::Request& request, Http:
         return;
     }
 
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info));  
-    // f1_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
 
-    auto [pvalue_scuser, error] = f1_dbPtr->get(new_accountmap.hvsID);  //sc_account_info  key:uuid
+    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + new_accountmap.hvsID);  //sc_account_info  key:uuid
     if(error){
-        dout(10) << "get sc_account_info fail."<< dendl;
+        dout(-1) << "get sc_account_info fail."<< dendl;
         response.send(Http::Code::Ok, "1");// 失败
         return;
     }
@@ -1545,9 +1547,9 @@ void UserModelServer::adminDelAccountMapping(const Rest::Request& request, Http:
 //管理员账户映射查询
 //返回 33 权限不足;     1失败; 其他(SCAccount) 成功;
 void UserModelServer::adminSearchAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: adminSearchAccountMapping ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: adminSearchAccountMapping ======"<< dendl;
     auto info = request.body();
-    dout(10) << "info: " << info << dendl;   //
+    dout(-1) << "info: " << info << dendl;   //
 
     struct_AdminAccountMap new_accountmap;
     new_accountmap.deserialize(info);     //new_accountmap.hostCenterName 并没有用到，只是借用struct_AdminAccountMap 里的 adhvsID 和hvsID字段
@@ -1557,14 +1559,13 @@ void UserModelServer::adminSearchAccountMapping(const Rest::Request& request, Ht
         return;
     }
 
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info));  
-    // f1_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
 
-    auto [pvalue_scuser, error] = f1_dbPtr->get(new_accountmap.hvsID);  //sc_account_info  key:uuid
+    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + new_accountmap.hvsID);  //sc_account_info  key:uuid
     if(error){
-        dout(10) << "get sc_account_info fail."<< dendl;
+        dout(-1) << "get sc_account_info fail."<< dendl;
         response.send(Http::Code::Ok, "1");// 失败
         return;
     }
@@ -1577,9 +1578,9 @@ void UserModelServer::adminSearchAccountMapping(const Rest::Request& request, Ht
 
 //管理员查看账户池的情况  
 void UserModelServer::adminSearchAccountPoolRest(const Rest::Request& request, Http::ResponseWriter response){
-    dout(10) << "====== start UserModelServer function: adminSearchAccountPoolRest ======"<< dendl;
+    dout(-1) << "====== start UserModelServer function: adminSearchAccountPoolRest ======"<< dendl;
     auto info = request.body();
-    dout(10) << "info: " << info << dendl;  //info 是adhvsID
+    dout(-1) << "info: " << info << dendl;  //info 是adhvsID
 
     std::string data = adminSearchAccountPool(info);
     response.send(Http::Code::Ok, data);
@@ -1593,34 +1594,33 @@ std::string UserModelServer::adminSearchAccountPool(std::string adhvsID){
     }
 
     //获取account_info center_information中的超算中心名字，并以该名字作为key去查询 sc_account_info 中的超算池
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
-    // f0_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_account_info));
+    f0_dbPtr->init();
 
     auto [pvalue, error_0] = f0_dbPtr->get(c_key);   //c_key 在构造函数里
     if(error_0){
-        dout(10) << "get DB center_information fail" <<dendl;
+        dout(-1) << "get DB center_information fail" <<dendl;
         return "1";
     }
     CenterInfo mycenter;   //超算中心的信息 , 主要使用其中的名字信息
     mycenter.deserialize(*pvalue);
 
 
-    // std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_sc_account_info));  
-    // f1_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f1_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_sc_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    f1_dbPtr->init();
+
     struct_infoAccountPool acpool;   //返回给客户端的查询信息
 
     bool tmp = false;// 防止不进入下面的循环
     for(auto iter = mycenter.centerID.begin(); iter!= mycenter.centerID.end(); iter++){
         std::string name = mycenter.centerName[*iter];
-        dout(10) << "-------- name :" << name << dendl;
+        dout(-1) << "-------- name :" << name << dendl;
 
         auto [pv, pv_err] = f1_dbPtr->get(name);
         if(pv_err){ //!=0
-            dout(10) << "get DB centerName[sc_account_pool] fail" <<dendl;
+            dout(-1) << "get DB centerName[sc_account_pool] fail" <<dendl;
             return "1"; //失败
         }
 
@@ -1641,7 +1641,7 @@ std::string UserModelServer::adminSearchAccountPool(std::string adhvsID){
     }
 
     if(!tmp){
-        dout(10) << "no entry the circle" << dendl;
+        dout(-1) << "no entry the circle" << dendl;
         return "1";// 查询失败
     }
     return acpool.serialize();
@@ -1693,7 +1693,7 @@ bool UserModelServer::existlocalaccount(string valid){
                         front++;
                     }
                     front++;
-                    // dout(10) << "tmp_str: " << tmp_str << dendl;
+                    // dout(-1) << "tmp_str: " << tmp_str << dendl;
                     my.push_back(tmp_str);
                 }
                 //printf("aaaaaa %c ",buffer[i]);
@@ -1701,17 +1701,17 @@ bool UserModelServer::existlocalaccount(string valid){
             
             for(int j=0; j<my.size(); j++){
                 if(valid==my[j]){
-                    dout(10) << "my:" << my[j] << dendl;
-                    dout(10) << "返回成功" << dendl;
+                    dout(-1) << "my:" << my[j] << dendl;
+                    dout(-1) << "返回成功" << dendl;
                     return true;
                 }
             }
-            dout(10) << "返回失败" << dendl;
+            dout(-1) << "返回失败" << dendl;
             return false;
         }
         else
         {
-            dout(10) << "返回失败" << dendl;
+            dout(-1) << "返回失败" << dendl;
             return false;
 
         }
@@ -1719,7 +1719,7 @@ bool UserModelServer::existlocalaccount(string valid){
         
     }
     else{
-        dout(10) << "返回失败" <<dendl;
+        dout(-1) << "返回失败" <<dendl;
         return false;
     }
 }
@@ -1748,31 +1748,30 @@ string md5(string strPlain){
 
 void printCookies(const Http::Request& req) {
     auto cookies = req.cookies();
-    dout(10) << "Cookies: [" << dendl;
+    dout(-1) << "Cookies: [" << dendl;
     const std::string indent(4, ' ');
     for (const auto& c: cookies) {
-        dout(10) << indent << c.name << " = " << c.value << dendl;
+        dout(-1) << indent << c.name << " = " << c.value << dendl;
     }
-    dout(10) << "]" << dendl;
+    dout(-1) << "]" << dendl;
 }
 
 
-bool UserModelServer::auth_token(const Rest::Request& request){
-    dout(10) << "function: auth_token"<< dendl;
+bool auth_token(const Rest::Request& request){
+    dout(-1) << "function: auth_token"<< dendl;
     printCookies(request);
     
     std::string name;
     std::string mtoken;
     auto cookies = request.cookies();
     for (const auto& c: cookies) {
-        //dout(10) << c.name << " = " << c.value << dendl;
+        //dout(-1) << c.name << " = " << c.value << dendl;
         name = c.name;
         mtoken = c.value;
     }
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore("account_info"));
-    // f0_dbPtr->init();
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
+        hvs::CouchbaseDatastore("account_info"));
+    f0_dbPtr->init();
 
    
     auto [vp, err] = f0_dbPtr->get(mtoken);

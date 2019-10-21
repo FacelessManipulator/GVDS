@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "rpc/client.h"
 #include "hvs_struct.h"
 
@@ -8,6 +9,7 @@ struct Buffer {
   unsigned long offset;
   std::string path;
   std::shared_ptr<IOProxyNode> dest;
+  std::function<void()> callback;
   // prevent error write
   Buffer() : offset(0), path("/dev/null") {}
   Buffer(const std::string& p, const char* b, unsigned long off, unsigned long size) : path(p), offset(off) {

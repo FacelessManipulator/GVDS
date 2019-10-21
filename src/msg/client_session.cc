@@ -42,9 +42,9 @@ int ClientSession::write(ioproxy_rpc_buffer &buffer) {
   clmdep_msgpack::pack(data, buffer);
   // move sem, zero copy
   // send the resp back
-  promise<std::unique_ptr<ioproxy_rpc_buffer>> ready_promise;
+  promise<std::shared_ptr<ioproxy_rpc_buffer>> ready_promise;
 
-  future<std::unique_ptr<ioproxy_rpc_buffer>> ready_future = ready_promise.get_future();
+  future<std::shared_ptr<ioproxy_rpc_buffer>> ready_future = ready_promise.get_future();
   session_lock.lock();
   futures[buffer.id] = move(ready_future);
   ready_promises[buffer.id] = move(ready_promise);
@@ -53,22 +53,42 @@ int ClientSession::write(ioproxy_rpc_buffer &buffer) {
   return buffer.id;
 }
 
-std::unique_ptr<ioproxy_rpc_buffer> ClientSession::wait_op(int id) {
+std::shared_ptr<ioproxy_rpc_buffer> ClientSession::wait_op(int id) {
   session_lock.lock();
   auto it = futures.find(id);
   if (it == futures.end()) {
     session_lock.unlock();
     return nullptr;
   }
-  future<std::unique_ptr<ioproxy_rpc_buffer>> ft = move(it->second);
+  shared_future<std::shared_ptr<ioproxy_rpc_buffer>> ft = it->second;
   futures.erase(id);
   session_lock.unlock();
   auto status = ft.wait_for(chrono::seconds(10));
   if(status != future_status::ready)
     return nullptr;
   else {
-    unique_ptr<ioproxy_rpc_buffer> res = ft.get();
+    shared_ptr<ioproxy_rpc_buffer> res = ft.get();
     return res;
+  }
+}
+
+int ClientSession::block_on_op(int id) {
+  // if id==-1, wait until last op finished
+  if(id == -1)
+    id = seq_n-1;
+  session_lock.lock();
+  auto it = futures.find(id);
+  if (it == futures.end()) {
+    session_lock.unlock();
+    return 0;
+  }
+  shared_future<std::shared_ptr<ioproxy_rpc_buffer>> ft = it->second;
+  session_lock.unlock();
+  auto status = ft.wait_for(chrono::seconds(10));
+  if(status != future_status::ready)
+    return -ETIMEDOUT;
+  else {
+    return 0;
   }
 }
 
@@ -114,16 +134,20 @@ void ClientSession::do_read() {
           // error duplicated msg?
           continue;
         } else {
-          promise<unique_ptr<ioproxy_rpc_buffer>> pm = move(it->second);
+          promise<shared_ptr<ioproxy_rpc_buffer>> pm = move(it->second);
           ready_promises.erase(it);
           if(auto_handler.count(buf.id)) {
             auto ft = futures.find(buf.id);
             if(ft != futures.end())
               futures.erase(ft);
+            auto callback = handlers.find(buf.id);
+            if(callback != handlers.end()) {
+              callback->second();
+            }
             // TODO: Should we handle the write state inline? such as resend the error write?
             // usually, resend still cause errors. Error should be prevented in open or stat call.
           } else {
-            pm.set_value(make_unique<ioproxy_rpc_buffer>(move(buf)));
+            pm.set_value(make_shared<ioproxy_rpc_buffer>(move(buf)));
           }
         }
       } catch (exception &e) {

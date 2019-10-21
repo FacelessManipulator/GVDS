@@ -97,12 +97,14 @@ public:
 public:
     UserModelServer() : ManagerModule("user") {
         auto _config = HvsContext::get_context()->_config;
-        zonebucket = _config->get<std::string>("bucket.zone_info").value_or("zone_info");
-        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
-        bucket_sc_account_info = _config->get<std::string>("bucket.sc_account_info").value_or("sc_account_info");
-        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
+        zonebucket = _config->get<std::string>("manager.bucket").value_or("test");
+        bucket_account_info = _config->get<std::string>("manager.bucket").value_or("test");
+        bucket_sc_account_info = _config->get<std::string>("manager.bucket").value_or("test");
+        applybucket = _config->get<std::string>("manager.bucket").value_or("test");
         c_key = "center_information";
         adminlist = "adminwhitelist";
+        user_prefix = "USER-";
+        sc_user_prefix = "SCUSER-";
     };
     ~UserModelServer() {};
 
@@ -110,11 +112,11 @@ private:
     bool addSCaccount();
     //建立账户映射
     bool BuildAccountMapping_v2(std::string accountID);
-    bool SubBuildAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::Datastore> f1_dbPtr);
+    bool SubBuildAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
     //删除账户映射
     bool RemoveAccountMapping_v2(std::string accountID);
-    bool SubRemoveAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::Datastore> f1_dbPtr);
+    bool SubRemoveAccountMapping_v2(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
 
     //不使用了////
     // bool SubBuildAccountMapping_old(SCAccount &person, std::string location, std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr);
@@ -125,7 +127,6 @@ private:
 
     //检测本地是否存在账户，否则建立账户映射失败
     bool existlocalaccount(std::string valid);
-    bool auth_token(const Rest::Request& request);
 
 private:
 
@@ -135,12 +136,14 @@ private:
     std::string applybucket;
     std::string c_key;
     std::string adminlist;
+    std::string user_prefix;
+    std::string sc_user_prefix;
 
 };
 
 std::string md5(std::string strPlain);
 void printCookies(const Http::Request& req);
-
+bool auth_token(const Rest::Request& request);
 
 }// namespace hvs
 

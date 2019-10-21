@@ -55,6 +55,9 @@ public:
     void SpaceSizeChangeApplyRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceSizeChangeApply(std::string apply); 
 
+    void SpaceNumberRest(const Rest::Request& request, Http::ResponseWriter response);
+    int SpaceNumber(std::string hostCenterName);
+
     //空间缩放模块：空间缩放接口--管理员调用
     void SpaceSizeChangeRest(const Rest::Request& request, Http::ResponseWriter response);
     int SpaceSizeChange(std::string spaceID, int64_t newSpaceSize);
@@ -71,11 +74,11 @@ public:
 public:
     SpaceServer() : ManagerModule("space") {
         auto _config = HvsContext::get_context()->_config;
-        spacebucket = _config->get<std::string>("bucket.space_info").value_or("space_info");
-        storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("couchbase.bucket"));
-        bucket_account_info = _config->get<std::string>("bucket.account_info").value_or("account_info");
+        spacebucket = _config->get<std::string>("manager.bucket").value_or("test");
+        storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>("manager.bucket"));
+        bucket_account_info = _config->get<std::string>("manager.bucket").value_or("test");
         localstoragepath = *(HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
-        applybucket = _config->get<std::string>("bucket.apply_info").value_or("apply_info");
+        applybucket = _config->get<std::string>("manager.bucket").value_or("test");
     };
     ~SpaceServer() = default;
 

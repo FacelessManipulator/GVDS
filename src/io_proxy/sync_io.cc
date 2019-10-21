@@ -115,6 +115,7 @@ int sync_io::sreaddir(const char *path, IOProxyMetadataOP *op) {
     if (de == nullptr) {
         perror("sync_io sreaddir");
         op->error_code = -errno;
+        closedir(dp);
         return op->error_code;
     }
     do {
@@ -122,6 +123,7 @@ int sync_io::sreaddir(const char *path, IOProxyMetadataOP *op) {
         errno = 0;
     } while ((de = readdir(dp)) != nullptr);
     op->error_code = -errno;
+    closedir(dp);
     return -op->error_code;
 }
 

@@ -44,6 +44,7 @@ class RpcServer {
       _server.reset();
     }
   }
+  rpc::server* native() {return _server.get();}
 
  public:
   const std::string ip;

@@ -10,7 +10,7 @@ using namespace Pistache::Http;
 
 void IOProxy_MGR::start() {
   auto _config = HvsContext::get_context()->_config;
-  auto _bn = _config->get<std::string>("couchbase.bucket");
+  auto _bn = _config->get<std::string>("manager.bucket");
   bucket = _bn.value_or("test");  // use test bucket or predefined
   init_ioproxy_list();
   m_stop = false;
@@ -33,7 +33,10 @@ void* IOProxy_MGR::entry() {
       try {
         auto res = mgr->rpc->call(iop, "ioproxy_heartbeat");
         if (res) {
-          int status = res->as<int>();
+          auto ms_str = res->as<std::string>();
+          MonitorSpeed ms;
+          ms.deserialize(ms_str);
+          iop_stat[iop->uuid] = ms;
           iop->status = IOProxyNode::Running;
         } else {
           iop->status = IOProxyNode::Stopped;
@@ -49,6 +52,7 @@ void* IOProxy_MGR::entry() {
 
 void IOProxy_MGR::router(Router& router) {
   Routes::Get(router, "/ioproxy", Routes::bind(&IOProxy_MGR::list, this));
+  Routes::Get(router, "/ioproxy/detail", Routes::bind(&IOProxy_MGR::detail, this));
   Routes::Get(router, "/ioproxy/:id", Routes::bind(&IOProxy_MGR::list, this));
   Routes::Post(router, "/ioproxy", Routes::bind(&IOProxy_MGR::add, this));
   Routes::Delete(router, "/ioproxy/:id", Routes::bind(&IOProxy_MGR::del, this));
@@ -76,6 +80,11 @@ bool IOProxy_MGR::add(const Rest::Request& req, Http::ResponseWriter res) {
 
 bool IOProxy_MGR::list(const Rest::Request& req, Http::ResponseWriter res) {
     res.send(Code::Ok, json_encode(live_ioproxy));
+    return true;
+}
+
+bool IOProxy_MGR::detail(const Rest::Request& req, Http::ResponseWriter res) {
+    res.send(Code::Ok, json_encode(iop_stat));
     return true;
 }
 
@@ -113,10 +122,9 @@ void IOProxy_MGR::init_ioproxy_list() {
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
   char query[256];
   snprintf(query, 256,
-           "select uuid,data_port,ip,name,rpc_port from `%s` where SUBSTR(META().id,0,%d) == '%s' order by "
+           "select uuid,data_port,ip,name,rpc_port from `%s` where META().id like '%s' order by "
            "META().id",
-           bucket.c_str(), IOProxyNode::prefix().length(),
-           IOProxyNode::prefix().c_str());
+           bucket.c_str(), IOProxyNode::prefix().c_str());
   auto [iop_infos_p, err] = cbd->n1ql(string(query));
   for(auto info : *iop_infos_p) {
     try {

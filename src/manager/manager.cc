@@ -17,8 +17,8 @@ bool Manager::start() {
   auto rest_port = _config->get<int>("manager.port");
   auto rest_thread = _config->get<int>("manager.thread_num");
   auto ip = _config->get<std::string>("ip");
-  auto _uuid = _config->get<std::string>("manager.id");
-  auto cid = _config->get<std::string>("center_id");
+  auto _uuid = _config->get<std::string>("manager.uid");
+  auto cid = _config->get<std::string>("manager.cid");
   if (!_uuid.has_value()) {
     dout(-1) << "ERROR: Manager UUID not found! Please use linux command UUID "
                 "to generate IO proxy's UUID and insert it into config file."

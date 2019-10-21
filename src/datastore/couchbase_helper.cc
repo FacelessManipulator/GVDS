@@ -36,9 +36,9 @@ int hvs::CouchbaseDatastore::init() {
 int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
   // format the connection string
   auto _config = hvs::HvsContext::get_context()->_config;
-  auto server_address = _config->get<std::string>("couchbase.address");
-  auto username = _config->get<std::string>("couchbase.user");
-  auto passwd = _config->get<std::string>("couchbase.password");
+  auto server_address = _config->get<std::string>("manager.couchbase_addr");
+  auto username = _config->get<std::string>("manager.couchbase_user");
+  auto passwd = _config->get<std::string>("manager.couchbase_passwd");
 
   if (!server_address) {
     dout(-1) << "ERROR: invalid couchbase address" << dendl;

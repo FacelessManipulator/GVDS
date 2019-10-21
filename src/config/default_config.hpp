@@ -16,31 +16,27 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("float", 3.14);
   _config->add("list", vector{1, 2, 3});
 
-  _config->add("ip", string("0.0.0.0"));
-  _config->add("manager_addr", string("127.0.0.1"));
-  _config->add("manager_port",string("9090"));
-  _config->add("center_id",string("1"));
+  _config->add("ip", string("127.0.0.1"));
+  _config->add("manager_addr", string("127.0.0.1:9090"));
+  _config->add("ioproxy.cid",string("1"));
 
   _config->add("log.path", string("/var/log/hvs.log"));
   _config->add("log.level", 10);
-  _config->add("rpc.port", 9092);
-  _config->add("rpc.workers", 6);
-  _config->add("rpc.timeout", 3000);
-  _config->add("rpc.retry", 3);
-  _config->add("couchbase.address", string("192.168.10.235"));
-  _config->add("couchbase.user", string("dev"));
-  _config->add("couchbase.password", string("buaaica"));
-  _config->add("rest.port", 9090);
-  _config->add("rest.thread_num", 10);
-  _config->add("couchbase.bucket", string("test"));
+  _config->add("ioproxy.rpc_port", 9092);
+  _config->add("ioproxy.rpc_workers", 6);
+  _config->add("ioproxy.rpc_timeout", 3000);
+  _config->add("ioproxy.rpc_retry", 3);
+  _config->add("manager.couchbase_addr", string("127.0.0.1"));
+  _config->add("manager.couchbase_user", string("dev"));
+  _config->add("manager.couchbase_passwd", string("buaaica"));
   
   // fuse config options
-  _config->add("fuse.mountpoint", string("/mnt/hvs"));
-  _config->add("fuse.foreground", true);
-  _config->add("fuse.debug", false);
-  _config->add("fuse.multithread", true);
-  _config->add("fuse.auto_unmount", true);
-  _config->add("fuse.use_udt", false);
+  _config->add("client.mountpoint", string("/mnt/hvs"));
+  _config->add("client.foreground", true);
+  _config->add("client.debug", false);
+  _config->add("client.multithread", true);
+  _config->add("client.auto_unmount", true);
+  _config->add("client.use_udt", false);
 
   // ioproxy config options
   _config->add("ioproxy.scher", 6);

@@ -13,6 +13,7 @@
 #include <vector>
 #include <limits.h>
 #include "common/buffer.h"
+#include "monitor_counter.hpp"
 
 namespace hvs {
     inline std::string hvsfs_fullpath(const std::string& path_rel) {
@@ -345,9 +346,10 @@ namespace hvs {
         return op->error_code;
     }
 
-    inline int ioproxy_heartbeat() {
+    inline std::string ioproxy_heartbeat() {
         dout(15) << "INFO: heartbeat from manager" << dendl;
-        return 1;
+        auto ms = static_cast<IOProxy*>(hvs::HvsContext::get_context()->node)->iom.getSpeed();
+        return ms->serialize();
     }
 
     inline void hvs_ioproxy_rpc_bind(RpcServer* rpc_server) {

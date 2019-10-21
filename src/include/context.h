@@ -24,15 +24,12 @@ class HvsContext {
     return _context_p;
   }
   HvsContext()
-      : _log(nullptr), _config(nullptr), _rpc(nullptr), node(nullptr) {}
+      : _log(nullptr), _config(nullptr), node(nullptr) {}
 
  public:
-  std::string module_name;
   Log* _log;
   ConfigureSettings* _config;
-  RpcServer* _rpc;
   Node* node;
-  std::string ioproxy_rootdir;
 
  private:
   static HvsContext* _context_p;

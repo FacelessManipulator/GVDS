@@ -15,11 +15,12 @@
 #include "msg/op.h"
 #include "msg/node.h"
 #include "msg/udt_server.h"
+#include "io_proxy/io_mon.h"
 
 namespace hvs {
 class IOProxy : public Thread, public Node {
  public:
-  IOProxy() : m_stop(false), Node(IO_PROXY_NODE), _rpc(nullptr), proxy_op(this), fdm(this) {
+  IOProxy() : m_stop(false), Node(IO_PROXY_NODE), _rpc(nullptr), proxy_op(this), fdm(this), iom(this) {
     // TODO: should read from config file
     m_max_op = 1000;
     m_max_worker = 1024;
@@ -86,6 +87,7 @@ class IOProxy : public Thread, public Node {
   UDTServer* _udt;
   ProxyOP proxy_op;
   FdManager fdm;
+  IOMonitor iom;
   virtual void rpc_bind(RpcServer* server) override;
   friend class IOProxyWorker;
 };

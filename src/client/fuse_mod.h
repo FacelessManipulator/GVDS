@@ -28,12 +28,14 @@ class ClientFuse : public ClientModule {
  public:
   bool use_udt;
   bool async_mode;
+  int readahead;
 
  public:
   ClientFuse(const char* name, Client* cli) : ClientModule(name, cli) {
     isThread = true;
     fuse_argc = 0;
     use_udt = false;
+    readahead = 0;
   }
   friend class Client;
 };

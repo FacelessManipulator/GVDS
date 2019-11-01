@@ -1,0 +1,77 @@
+//
+// Created by miller on 10/31/19.
+//
+#pragma once
+
+#include <atomic>
+#include "client.h"
+#include "hvs_struct.h"
+#include "common/Thread.h"
+
+#define CACHE_UNIT_SIZE 512
+
+namespace hvs {
+    class ClientReadAhead : public ClientModule {
+    private:
+        virtual void start() override;
+        virtual void stop() override;
+        void fetch_sector_remote();
+
+    public:
+        enum Status {
+            MAY_SEQ_READ,
+            UNLIKE_SEQ_READ,
+            ON_LINK,
+            IN_BUFFER,
+        };
+
+        struct BufArea {
+            uint64_t sec_bg;
+            std::set<uint64_t> sec_bufferd;
+            unsigned int max_sec;
+            char* buf;
+            std::map<uint64_t, std::future<RPCLIB_MSGPACK::object_handle>> ft_res_tab;
+            std::map<uint64_t, std::shared_future<bool>> ft_waiting_tab;
+            std::map<uint64_t, std::shared_ptr<std::promise<bool>>> prom_waiting_tab;
+            std::mutex mut;
+            Status lookup(uint64_t sec_nr) {
+                if(sec_nr < sec_bg || sec_nr >= sec_bg + max_sec)
+                    return UNLIKE_SEQ_READ;
+                else if(sec_bufferd.count(sec_nr)) {
+                    return IN_BUFFER;
+                } else {
+                    return ON_LINK;
+                }
+            }
+            char* sector_addr(uint64_t sec_nr) {
+                return buf + (sec_nr-sec_bg)*(1 << 18);
+            }
+        };
+
+    private:
+        std::pair<std::shared_ptr<IOProxyNode>, std::string> current_speedup;
+        std::atomic_uint64_t cur_onlink;
+        std::atomic_uint64_t cur_sec_nr;
+        std::string last_req_filename;
+        uint64_t last_req_sec;
+        uint64_t last_req_hit_ct;
+        unsigned int hit_threshold;
+        unsigned int max_onlink;
+        BufArea bufs[1];
+        std::mutex mut;
+
+    public:
+        ClientReadAhead(const char* name, Client* cli) : ClientModule(name, cli) {
+            isThread = false;
+            last_req_sec = 0;
+            last_req_hit_ct = 0;
+        }
+        Status status(const std::string& rpath, uint64_t offset, uint64_t size, char*& dest);
+        Status fetch_cache(uint64_t offset, uint64_t size, char*& dest);
+        // release the sector buffer before offset
+        bool wait_sector(uint64_t sec_nr);
+        void clear_buf();
+        bool set_task(std::shared_ptr<IOProxyNode> iop, const std::string& filename, uint64_t sec_bg, uint64_t sec_max);
+        const std::string& cur_speedup_file() {return current_speedup.second;}
+    };
+}  // namespace hvs

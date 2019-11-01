@@ -28,6 +28,7 @@
 #include "context.h"
 #include "hvs_struct.h"
 #include "io_proxy/rpc_types.h"
+#include "client/readahead.h"
 
 extern bool zonechecker_run;
 #define FUSE_DEBUG_LEVEL 25
@@ -211,6 +212,23 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
   if (!iop) {
     return -ENOENT;
   }
+  char* cache_found = nullptr;
+  while (HVS_FUSE_DATA->fuse_client->readahead != 0) {
+    auto cache_st = HVS_FUSE_DATA->client->readahead->status(rpath, offset, size, cache_found);
+    if (cache_st == ClientReadAhead::IN_BUFFER) {
+      dout(20) << "cache hit: " << rpath << " sector: " << (offset>>18) << dendl;
+      memcpy(buf, cache_found, size);
+      // TODO: this is not real size
+      return size;
+    } else if (cache_st == ClientReadAhead::MAY_SEQ_READ) {
+      bool nt= HVS_FUSE_DATA->client->readahead->set_task(iop, rpath, offset >> 18, HVS_FUSE_DATA->fuse_client->readahead);
+      if(!nt) break;
+    } else if (cache_st == ClientReadAhead::ON_LINK) {
+      break;
+    } else {
+      break;
+    }
+  }
 
   ioproxy_rpc_buffer _buffer(rpath.c_str(), offset, size);
   _buffer.fid = fi->fh;
@@ -251,6 +269,11 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
   // not exists
   if (!iop) {
     return -ENOENT;
+  }
+  if(HVS_FUSE_DATA->fuse_client->readahead != 0) {
+    if(rpath == HVS_FUSE_DATA->client->readahead->cur_speedup_file()) {
+      HVS_FUSE_DATA->client->readahead->clear_buf();
+    }
   }
 
   ioproxy_rpc_buffer _buffer(rpath.c_str(), buf, offset, size);

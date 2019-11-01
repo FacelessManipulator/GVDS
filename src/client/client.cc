@@ -9,6 +9,7 @@
 #include "client/clientuser/ClientUser.h"
 #include "client/OPTNode/opt_node.h"
 #include "client/queue.h"
+#include "client/readahead.h"
 
 using namespace hvs;
 using namespace std;
@@ -81,6 +82,7 @@ hvs::Client* init_client() {
    client->optNode = std::make_shared<SelectNode>("optNode", client);
   client->user = std::make_shared<ClientUser>("user", client);
   client->queue = std::make_shared<ClientBufferQueue>("queue", client);
+  client->readahead = std::make_shared<ClientReadAhead>("readahead", client);
 
   client->registe_module(client->rpc);
   client->registe_module(client->optNode);
@@ -90,6 +92,7 @@ hvs::Client* init_client() {
   client->registe_module(client->user);
   client->registe_module(client->fuse);
   client->registe_module(client->queue);
+  client->registe_module(client->readahead);
 
   client->start();
   return client;

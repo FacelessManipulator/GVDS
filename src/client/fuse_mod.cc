@@ -14,6 +14,7 @@ void ClientFuse::start() {
   auto auto_unmount = _config->get<bool>("client.auto_unmount");
   use_udt = _config->get<bool>("client.use_udt").value_or(false);
   async_mode = _config->get<bool>("client.async").value_or(false);
+  readahead = _config->get<int>("client.readahead").value_or(0);
   snprintf(workers_argv, 32, "max_idle_threads=%u", _config->get<unsigned int>("client.fuse_workers").value_or(10));
   memcpy(mountpoint, mp.value_or("/mnt/hvs").c_str(), mp.value_or("/mnt/hvs").size());
   char *options[] = {

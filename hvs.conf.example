@@ -16,7 +16,7 @@ ioproxy = {
     rpc_port = 9092;
     rpc_workers = 6;
     rpc_timeout = 3000;
-    rpc_retry = 3;
+    rpc_retry = 1;
 };
 
 manager = {
@@ -46,8 +46,10 @@ client = {
     use_udt = false;
     data_port_begin = 9096;
     data_port_end = 9150;
-    data_buffer = 1024000;
-    max_queue = 1500;
-    onlink = 1024;
+    data_buffer = 102400;
+    max_queue = 128;
+    onlink = 64;
     async = true;
+    readahead = 0;
+    seq_threshold = 2;
 };

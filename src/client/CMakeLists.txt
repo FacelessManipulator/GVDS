@@ -9,7 +9,7 @@ ADD_EXECUTABLE(hvs_client main.cc fuse_mod.cc client.cc graph_mod.cc hvs_fuse_im
                 ./clientuser/ClientUser_struct.cc
                 ./clientuser/ClientUser.cc
                 ./clientuser/ClientAuth_struct.cc
-                )
+        readahead.cc readahead.h)
 TARGET_LINK_LIBRARIES(hvs_client fuse3 hvscommon ${HVSCOMMOM_DEPENDS_ON})
 
 install(TARGETS hvs_client

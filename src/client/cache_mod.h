@@ -12,29 +12,33 @@
 
 namespace hvs {
 
-class Buffer {
-  
-};
-
-class ClientCache : public ClientModule, public Thread {
+class ClientCache : public ClientModule {
  private:
   virtual void start() override;
   virtual void stop() override;
 
- protected:
-  void* entry() override;
-  ioproxy_rpc_statbuffer* lookup(const std::string& key);
 
  private:
-  ioproxy_rpc_buffer* not_exists;
   std::shared_mutex cache_mu;
-  LRU<std::string, ioproxy_rpc_statbuffer*> missing;
-  LRU<std::string, ioproxy_rpc_statbuffer*> cached;
+  int stat_cache_ct;
+  LRU<std::string, struct stat*> missing;
+  LRU<std::string, struct stat*> cached;
+  // just use map to store stat first
 
  public:
-  ioproxy_rpc_statbuffer* get_stat(std::shared_ptr<IOProxyNode> node, const std::string& path);
+  int max_stat_cache_ct;
+  enum Status {
+      FOUND,
+      NOT_FOUND,
+      FOUND_MISSING
+  };
+ public:
+  Status get_stat(const std::string& path, struct stat* dest);
+  bool set_stat(const std::string& path, struct stat* src);
+  void expire_stat(const std::string& path);
 
-  
+ protected:
+  Status lookup(const std::string& key, struct stat*& res);
 
  public:
   ClientCache(const char* name, Client* cli) : ClientModule(name, cli) {
@@ -42,7 +46,7 @@ class ClientCache : public ClientModule, public Thread {
   }
   struct stat_pool {};
   struct data_cache_unit {};
-  typedef boost::singleton_pool<stat_pool, sizeof(ioproxy_rpc_statbuffer)>
+  typedef boost::singleton_pool<stat_pool, sizeof(struct stat)>
       stat_pool_sig;
   typedef boost::singleton_pool<data_cache_unit, sizeof(char)*CACHE_UNIT_SIZE> data_cache_pool;
 };

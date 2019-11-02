@@ -29,9 +29,10 @@
 #include "hvs_struct.h"
 #include "io_proxy/rpc_types.h"
 #include "client/readahead.h"
+#include "client/cache_mod.h"
 
 extern bool zonechecker_run;
-#define FUSE_DEBUG_LEVEL 25
+#define FUSE_DEBUG_LEVEL 30
 #define HVS_FUSE_DATA \
   ((struct ::hvs::ClientFuseData *)fuse_get_context()->private_data)
 
@@ -89,6 +90,20 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
     return -EPERM; // 当找不到远程路径时，说明当前的空间为不存在，返回无权限；
   }
 
+  // if we have cache mod, try fetch it from cache mod first
+  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+      auto found = HVS_FUSE_DATA->client->cache->get_stat(rpath, stbuf);
+      if (found == ClientCache::FOUND) {
+          dout(FUSE_DEBUG_LEVEL) << "cache mod hit stat :" << path << dendl;
+          return 0;
+      } else if (found == ClientCache::FOUND_MISSING) {
+        dout(FUSE_DEBUG_LEVEL) << "cache mod hit stat missing :" << path << dendl;
+        return -ENOENT;
+      } else if (found == ClientCache::NOT_FOUND) {
+        // wait remote fetch
+      }
+  }
+
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat", rpath);
   if (!res.get()) {
@@ -99,6 +114,11 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   auto retbuf = res->as<ioproxy_rpc_statbuffer>();
   if (retbuf.error_code) {
     // stat failed on remote server
+    // if we have cache mod, try set it
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+      HVS_FUSE_DATA->client->cache->set_stat(rpath, nullptr);
+      dout(FUSE_DEBUG_LEVEL) << "cache mod set missing stat :" << path << dendl;
+    }
     return retbuf.error_code;
   }
 
@@ -118,6 +138,11 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   stbuf->st_ctim.tv_nsec = retbuf.st_ctim_tv_nsec;
   stbuf->st_ctim.tv_sec = retbuf.st_ctim_tv_sec;
   dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
+      // if we have cache mod, try set it
+      if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->set_stat(rpath, stbuf);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod set stat :" << path << dendl;
+      }
   return retbuf.error_code;
 }
 
@@ -189,6 +214,10 @@ int hvsfs_open(const char *path, struct fuse_file_info *fi) {
   if (!iop) {
     return -ENOENT;
   }
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_open",
                                               rpath.c_str(), fi->flags);
@@ -218,7 +247,7 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
           int cur_sec_left = std::min(size_left, (((cur_off >> 18) + 1) << 18) - cur_off);
           auto cache_st = HVS_FUSE_DATA->client->readahead->status(rpath, cur_off, cur_sec_left, buf);
           if (cache_st == ClientReadAhead::IN_BUFFER) {
-              dout(20) << "cache hit: " << rpath << " sector: " << (offset >> 18) << dendl;
+              dout(REAHAHEAD_DEBUG_LEVEL) << "cache hit: " << rpath << " sector: " << (offset >> 18) << dendl;
               // TODO: this is not real size
               cur_off += cur_sec_left;
               size_left -= cur_sec_left;
@@ -281,6 +310,10 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
   if(HVS_FUSE_DATA->fuse_client->readahead != 0) {
     HVS_FUSE_DATA->client->readahead->clear_buf(rpath);
   }
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
 
   ioproxy_rpc_buffer _buffer(rpath.c_str(), buf, offset, size);
   _buffer.is_read = false;
@@ -344,7 +377,10 @@ int hvsfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {
   if (!iop) {
     return -ENOENT;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_truncate",
                                               rpath.c_str(), offset);
   if (!res.get()) {
@@ -391,6 +427,10 @@ int hvsfs_mkdir(const char *path, mode_t mode) {
     return -ENOENT;
   }
 
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_mkdir",
                                               rpath.c_str(), mode);
@@ -409,7 +449,10 @@ int hvsfs_unlink(const char *path) {
   if (!iop) {
     return -ENOENT;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_unlink", rpath);
   if (!res.get()) {
@@ -434,7 +477,10 @@ int hvsfs_rmdir(const char *path) {
   if (!iop) {
     return -ENOENT;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_rmdir", rpath);
   if (!res.get()) {
@@ -479,7 +525,11 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
     // over ioproxy move is not support yet
     return -ENOTSUP;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(srpath);
+        HVS_FUSE_DATA->client->cache->expire_stat(drpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename", srpath, drpath);
@@ -516,7 +566,10 @@ int hvsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
   if (!iop) {
     return -ENOENT;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chmod", rpath, mode);
@@ -541,7 +594,10 @@ int hvsfs_chown(const char *path, uid_t uid, gid_t gid,
   if (!iop) {
     return -ENOENT;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chown", rpath, uid, gid);
@@ -594,7 +650,10 @@ int hvsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
   if (!iop) {
     return -ENOENT;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
   auto res =
       HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
@@ -624,7 +683,10 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
   if (!iop) {
     return -ENOENT;
   }
-
+    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+        HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+        dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
+    }
   auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_utimes", rpath,
                                               sec0n, sec0s, sec1n, sec1s);
   if (!res.get()) {

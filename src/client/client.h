@@ -26,6 +26,7 @@ class SelectNode;
 class ClientUser;
 class ClientBufferQueue;
 class ClientReadAhead;
+class ClientCache;
 
 class Client : public Thread, public Node, public JsonSerializer {
  public:
@@ -65,6 +66,7 @@ public:
   std::shared_ptr<ClientUser> user;
   std::shared_ptr<ClientBufferQueue> queue;
   std::shared_ptr<ClientReadAhead> readahead;
+  std::shared_ptr<ClientCache> cache;
 };
 
 class ClientModule {

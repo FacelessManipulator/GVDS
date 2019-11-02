@@ -9,6 +9,7 @@
 #include "common/Thread.h"
 
 #define CACHE_UNIT_SIZE 512
+#define REAHAHEAD_DEBUG_LEVEL 30
 
 namespace hvs {
     class ClientReadAhead : public ClientModule {

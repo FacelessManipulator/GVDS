@@ -69,7 +69,7 @@ void ClientReadAhead::fetch_sector_remote(int buf_idx) {
                                                                  bufs[buf_idx].prom_waiting_tab.erase(sec_nr);
                                                              }
                                                              bufs[buf_idx].mut.unlock();
-                                                             dout(20) << "prefetch: " << filename << " sector: "
+                                                             dout(REAHAHEAD_DEBUG_LEVEL) << "prefetch: " << filename << " sector: "
                                                                       << sec_nr
                                                                       << " size:" << retbuf.buf.size << dendl;
 
@@ -233,11 +233,6 @@ bool ClientReadAhead::set_task(std::shared_ptr<IOProxyNode> iop, const std::stri
     }
     // no need to speed up, already have this task
     {
-        // if sec_bg smaller than any buf's sec_bg, then ignore it.
-        if (filename == bufs[buf_idx].file.second &&
-            (sec_bg < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec || bufs[buf_idx].cursor + 1 < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec)) {
-             return false;
-        }
         // choose a buf to use! we choose one with smaller sec_bg
 //        int buf_idx = 0, smallest_sec = bufs[0].sec_bg;
 //        for (int i = 1; i < 2; i++) {
@@ -248,6 +243,18 @@ bool ClientReadAhead::set_task(std::shared_ptr<IOProxyNode> iop, const std::stri
 //        }
         // set task on the choosen buf
         std::lock_guard<std::mutex> lock(bufs[buf_idx].mut);
+        // if sec_bg smaller than any buf's sec_bg, then ignore it.
+        if (filename == bufs[buf_idx].file.second && (
+                sec_bg < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec && sec_bg >= bufs[buf_idx].sec_bg)) {
+            return false;
+        }
+        // if sec_bg smaller than any buf's sec_bg, then ignore it.
+        if (filename == bufs[buf_idx].file.second && bufs[buf_idx].cursor + 1 < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec) {
+            // the cursor buffer barrier would been removed, cause cursor would incr 1 if set task called to prevent out-of-date
+            if (epoch > bufs[buf_idx].epoch)
+                bufs[buf_idx].cursor++;
+            return false;
+        }
         bufs[buf_idx].ft_res_tab.clear();
         // clear the promise in task
         for(auto& prom:bufs[buf_idx].prom_waiting_tab) {
@@ -264,9 +271,9 @@ bool ClientReadAhead::set_task(std::shared_ptr<IOProxyNode> iop, const std::stri
         bufs[buf_idx].onlink = 0;
         bufs[buf_idx].file.first = iop;
         bufs[buf_idx].file.second = filename;
-        bufs[buf_idx].cursor = 0;
+        bufs[buf_idx].cursor = sec_bg;
         fetch_sector_remote(buf_idx);
     }
-    dout(15) << "readahead task: " << filename << " sector: " << sec_bg << " at buf: "<< buf_idx << dendl;
+    dout(REAHAHEAD_DEBUG_LEVEL) << "readahead task: " << filename << " sector: " << sec_bg << " at buf: "<< buf_idx << dendl;
     return true;
 }

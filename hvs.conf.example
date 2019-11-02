@@ -51,5 +51,6 @@ client = {
     onlink = 64;
     async = true;
     readahead = 0;
-    seq_threshold = 2;
+    seq_threshold = 10;
+    stat_cache_size = 0;
 };

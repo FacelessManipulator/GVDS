@@ -4,46 +4,75 @@
 using namespace hvs;
 using namespace std;
 
-void ClientCache::start() {}
+void ClientCache::start() {
+    auto _config = HvsContext::get_context()->_config;
+    max_stat_cache_ct = _config->get<int>("client.stat_cache_size").value_or(0);
+    stat_cache_ct = 0;
+}
 
 void ClientCache::stop() {}
 
-void* ClientCache::entry() {}
-
-ioproxy_rpc_statbuffer* ClientCache::get_stat(std::shared_ptr<IOProxyNode> iop,
-                                              const std::string& path) {
-  string global_path(iop->uuid);
-  global_path.append(path);
-
-
-  auto res = client->rpc->call(iop, "ioproxy_stat", path.c_str());
-  if (!res) {
-    // rpc call failed
-    return nullptr;
-  }
-  // singleton memory pool is thread safe
-  auto retbuf = res->as<ioproxy_rpc_statbuffer>();
-  if (retbuf.error_code) {
-    // stat failed on remote server
-    missing.touch(path);
-    return nullptr;
-  }
-  auto st_buf = static_cast<ioproxy_rpc_statbuffer*>(stat_pool_sig::malloc());
-  memcpy(st_buf, &retbuf, sizeof(ioproxy_rpc_statbuffer));
-  return st_buf;
+ClientCache::Status ClientCache::get_stat(const std::string& path, struct stat* dest) {
+    cache_mu.lock_shared();
+    struct stat* lk_res;
+    auto fd_res = lookup(path, lk_res);
+    if (fd_res == FOUND_MISSING || fd_res == NOT_FOUND) {
+        cache_mu.unlock_shared();
+        return fd_res;
+    } else {
+        memcpy(dest, lk_res, sizeof(struct stat));
+        cache_mu.unlock_shared();
+        return FOUND;
+    }
 }
 
-ioproxy_rpc_statbuffer* ClientCache::lookup(const std::string& key) {
+bool ClientCache::set_stat(const std::string& path, struct stat* st_buf) {
+    lock_guard<std::shared_mutex> lock(cache_mu);
+    if (st_buf == nullptr) {
+        // means file not exists
+        missing.touch(path);
+        return true;
+    } else {
+        missing.remove(path);
+        struct stat* lk_res;
+        // try look up stat in cache at first
+        auto lk_st = lookup(path, lk_res);
+        if (lk_st != FOUND) {
+            // if stat cache reach max size, then return false
+            if (stat_cache_ct >= max_stat_cache_ct)
+                return false;
+            // if stat not exists in cache, try create one
+            lk_res = static_cast<struct stat*>(stat_pool_sig::malloc());
+            cached.touch(path, lk_res);
+            stat_cache_ct ++;
+        } else {
+            // stat buf already alloc in ClientCache, just do nothing
+        }
+        memcpy(lk_res, st_buf, sizeof(struct stat));
+        return true;
+    }
+}
+
+void ClientCache::expire_stat(const std::string& path) {
+    lock_guard<std::shared_mutex> lock(cache_mu);
+    // just expire it no matter whether it exists or not
+    missing.remove(path);
+    bool removed = cached.remove(path);
+    if (removed) stat_cache_ct--;
+}
+
+ClientCache::Status ClientCache::lookup(const std::string& key, struct stat*& res) {
   if(missing.hit(key)) {
     // found in missing list, means not exists.
-    return nullptr;
+    return FOUND_MISSING;
   } else {
-    auto buf_obj = cached.find((key);
-    if(!buf_obj.has_value()) {
-      return nullptr;
+    auto buf_obj = cached.find(key);
+    if(buf_obj == cached.end()) {
+      return NOT_FOUND;
     } else {
       cached.hit(key);
-      return buf_obj->data;
+      res = buf_obj->data;
+      return FOUND;
     }
   }
 }

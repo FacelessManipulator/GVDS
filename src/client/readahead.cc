@@ -17,71 +17,95 @@ void ClientReadAhead::start() {
 
 void ClientReadAhead::stop() {}
 
-void ClientReadAhead::fetch_sector_remote() {
-    std::shared_ptr<IOProxyNode> iop = current_speedup.first;
-    std::string filename = current_speedup.second;
+void ClientReadAhead::fetch_sector_remote(int buf_idx) {
+    std::shared_ptr<IOProxyNode> iop = bufs[buf_idx].file.first;
+    std::string filename = bufs[buf_idx].file.second;
 
     auto rpcc = client->rpc->rpc_channel(iop, false, 100);
     // the callback function could be used to trigger some event
-    while (cur_onlink < max_onlink && cur_sec_nr < bufs[0].sec_bg + bufs[0].max_sec) {
-        cur_onlink++;
-        uint64_t sec_nr = cur_sec_nr++;
+    while (bufs[buf_idx].onlink < max_onlink && bufs[buf_idx].cur_sec_nr < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec) {
+        bufs[buf_idx].onlink++;
+        uint64_t sec_nr = bufs[buf_idx].cur_sec_nr++, cur_epoch = bufs[buf_idx].epoch;
         auto ft = rpcc->_client->async_call_callback("ioproxy_read",
-                                                     [this, sec_nr, iop, filename]() {
-                                                         cur_onlink--;
-                                                         RPCLIB_MSGPACK::object_handle obj_hd;
-                                                         bufs[0].mut.lock();
-                                                         if(bufs[0].ft_res_tab.count(sec_nr) > 0) {
-                                                             obj_hd = bufs[0].ft_res_tab[sec_nr].get();
-                                                             bufs[0].ft_res_tab.erase(sec_nr);
-                                                         }
-                                                         bufs[0].mut.unlock();
-                                                         if (obj_hd.zone() == nullptr)
-                                                             return ;
-                                                         auto retbuf = obj_hd.as<ioproxy_rpc_buffer>();
-                                                         if (retbuf.error_code != 0) {
-                                                             // stat failed on remote server
+                                                     [this, sec_nr, iop, filename, buf_idx, cur_epoch]() {
+                                                         bufs[buf_idx].mut.lock();
+                                                         if (bufs[buf_idx].epoch != cur_epoch) {
+                                                             // out-of-date response, not expected
+                                                             bufs[buf_idx].mut.unlock();
                                                              return;
-                                                         }
-                                                         memcpy(bufs[0].sector_addr(sec_nr), retbuf.buf.ptr,
-                                                                retbuf.buf.size);
-                                                         bufs[0].mut.lock();
-                                                         bufs[0].sec_bufferd.insert(sec_nr);
-                                                         // if there are someone who waiting for this sector, wake it up
-                                                         if (bufs[0].prom_waiting_tab.count(sec_nr) > 0) {
-                                                             bufs[0].prom_waiting_tab[sec_nr]->set_value(
-                                                                     retbuf.error_code == 0);
-                                                             bufs[0].prom_waiting_tab.erase(sec_nr);
-                                                         }
-                                                         bufs[0].mut.unlock();
-                                                         dout(20) << "prefetch: " << filename << " sector: " << sec_nr
-                                                                  << " size:" << retbuf.buf.size << dendl;
-                                                         if (iop == current_speedup.first &&
-                                                             filename == current_speedup.second &&
-                                                             cur_onlink < max_onlink &&
-                                                             cur_sec_nr + 1 < bufs[0].sec_bg + bufs[0].max_sec) {
-                                                             fetch_sector_remote();
+                                                         } else {
+                                                             bufs[buf_idx].onlink--;
+                                                             // fetch the response data from rpclib's future
+                                                             std::future<RPCLIB_MSGPACK::object_handle> ft_cur;
+                                                             if (bufs[buf_idx].ft_res_tab.count(sec_nr) > 0) {
+                                                                 ft_cur = std::move(bufs[buf_idx].ft_res_tab[sec_nr]);
+                                                                 bufs[buf_idx].ft_res_tab.erase(sec_nr);
+                                                             } else {
+                                                                 // if future not exsits, means new task has been set
+                                                                 bufs[buf_idx].mut.unlock();
+                                                                 return;
+                                                             }
+                                                             bufs[buf_idx].mut.unlock();
+
+                                                             // this callback function may be miss called even if there is a timeout
+                                                             auto st = ft_cur.wait_for(chrono::milliseconds(100));
+                                                             if (st != future_status::ready) return;
+                                                             auto obj_hd = ft_cur.get();
+                                                             auto retbuf = obj_hd.as<ioproxy_rpc_buffer>();
+                                                             if (retbuf.error_code != 0) {
+                                                                 // stat failed on remote server
+                                                                 return;
+                                                             }
+
+                                                             // copy the data from response to buffer
+                                                             memcpy(bufs[buf_idx].sector_addr(sec_nr), retbuf.buf.ptr,
+                                                                    retbuf.buf.size);
+                                                             bufs[buf_idx].mut.lock();
+                                                             bufs[buf_idx].sec_bufferd[sec_nr] = retbuf.buf.size;
+                                                             // if there are someone who waiting for this sector, wake it up
+                                                             if (bufs[buf_idx].prom_waiting_tab.count(sec_nr) > 0) {
+                                                                 bufs[buf_idx].prom_waiting_tab[sec_nr]->set_value(
+                                                                         retbuf.error_code == 0);
+                                                                 bufs[buf_idx].prom_waiting_tab.erase(sec_nr);
+                                                             }
+                                                             bufs[buf_idx].mut.unlock();
+                                                             dout(20) << "prefetch: " << filename << " sector: "
+                                                                      << sec_nr
+                                                                      << " size:" << retbuf.buf.size << dendl;
+
+                                                             // trigger the next call, it could trigger at least 1 remote fetch
+                                                             if (retbuf.buf.size != 0 && bufs[buf_idx].onlink < max_onlink) {
+                                                                 if (bufs[buf_idx].cur_sec_nr >= bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec) {
+                                                                     // if cur buf_idx is full, use next buf
+                                                                     if (cur_epoch >= bufs[(buf_idx+1)%2].epoch) {
+                                                                         // if cur_epoch > next buf's epoch, means cur_task newer/same with the next buf's task
+                                                                         set_task(iop, filename, (buf_idx+1)%2, bufs[buf_idx].cur_sec_nr, bufs[buf_idx].max_sec, cur_epoch);
+                                                                     } else {
+                                                                         // else start the next buf
+                                                                         fetch_sector_remote((buf_idx + 1) % 2);
+                                                                     }
+                                                                 } else {
+                                                                     fetch_sector_remote(buf_idx);
+                                                                 }
+                                                             }
                                                          }
                                                      }, filename, 1 << 18, sec_nr << 18, 0);
         // TODO: we are not sure the code below 100% run before the callback function
-        bufs[0].ft_res_tab[sec_nr] = std::move(ft);
+        bufs[buf_idx].ft_res_tab[sec_nr] = std::move(ft);
     }
 }
 
-ClientReadAhead::Status ClientReadAhead::status(const std::string& rpath, uint64_t offset, uint64_t size, char*& dest) {
+ClientReadAhead::Status ClientReadAhead::status(const std::string& rpath, uint64_t offset, uint64_t size, char* dest) {
     uint64_t sector_bg = offset >> 18;
 //            uint64_t sector_nr = (size >> 8) + (1-~(size&0xff)); // = upper(size/256)
     uint64_t sector_nr = 1; // currently fuse only send at most 128KB request
     mut.lock();
-    if(rpath == current_speedup.second) {
+    if(rpath == bufs[0].file.second) {
         mut.unlock();
-        auto st = fetch_cache(offset, size, dest);
-        mut.lock();
+        auto st = fetch_cache(rpath, offset, size, dest);
         if (UNLIKE_SEQ_READ == st) {
-            current_speedup.first.reset();
-            current_speedup.second.clear();
+            clear_buf(rpath);
         }
-        mut.unlock();
         return st;
     }
     mut.unlock();
@@ -102,98 +126,147 @@ ClientReadAhead::Status ClientReadAhead::status(const std::string& rpath, uint64
     return MAY_SEQ_READ;
 }
 
-ClientReadAhead::Status ClientReadAhead::fetch_cache(uint64_t offset, uint64_t size, char*& dest) {
+ClientReadAhead::Status ClientReadAhead::fetch_cache(const std::string& filename, uint64_t offset, uint64_t size, char* dest) {
+    char* orig;
     uint64_t sector_bg = offset >> 18;
-    Status st = bufs[0].lookup(sector_bg);
-    if(st == UNLIKE_SEQ_READ) {
-        return UNLIKE_SEQ_READ;
-    } else if (st == IN_BUFFER) {
-        dest = bufs[0].sector_addr(sector_bg) + (offset&0x3ffff);
-        if (dest + size > bufs[0].sector_addr(bufs[0].sec_bg + bufs[0].max_sec))
-            return UNLIKE_SEQ_READ;
-//                    dest = bufs[0].buf + (offset - (bufs[0].sec_bg << 18));
-        return IN_BUFFER;
-    } else if (st == ON_LINK) {
-        // wait until fulfilled
-        if (wait_sector(sector_bg)) {
-            dest = bufs->sector_addr(sector_bg) + (offset&0x3ffff);
-            if (dest + size > bufs[0].sector_addr(bufs[0].sec_bg + bufs[0].max_sec))
+    for (int i= 0; i < 2; i++) {
+        bufs[i].mut.lock();
+        Status st = bufs[i].lookup(filename, sector_bg);
+        if (st == NOT_FOUND) {
+            bufs[i].mut.unlock();
+            continue;
+        } else if (st == IN_BUFFER) {
+            orig = bufs[i].sector_addr(sector_bg) + (offset & 0x3ffff);
+            if (orig + size > bufs[i].sector_addr(bufs[i].sec_bg + bufs[i].max_sec)) {
+                bufs[i].mut.unlock();
                 return UNLIKE_SEQ_READ;
-//                        dest = bufs[0].buf + (offset - (bufs[0].sec_bg << 18));
+            }
+            std::memcpy(dest, orig, min(size, bufs[i].sec_bufferd[sector_bg] - (offset & 0x3ffff)));
+            bufs[i].cursor = sector_bg > bufs[i].cursor ? sector_bg : bufs[i].cursor;
+            bufs[i].mut.unlock();
             return IN_BUFFER;
+        } else if (st == ON_LINK) {
+            // wait until fulfilled
+            bufs[i].mut.unlock();
+            if (wait_sector(i, sector_bg)) {
+                bufs[i].mut.lock();
+                orig = bufs[i].sector_addr(sector_bg) + (offset & 0x3ffff);
+                if (orig + size > bufs[i].sector_addr(bufs[i].sec_bg + bufs[i].max_sec)) {
+                    bufs[i].mut.unlock();
+                    return UNLIKE_SEQ_READ;
+                }
+                memcpy(dest, orig, min(size, bufs[i].sec_bufferd[sector_bg] - (offset & 0x3ffff)));
+                bufs[i].cursor = sector_bg > bufs[i].cursor ? sector_bg : bufs[i].cursor;
+                bufs[i].mut.unlock();
+                return IN_BUFFER;
+            } else {
+                bufs[i].mut.unlock();
+                return UNLIKE_SEQ_READ;
+            }
         } else {
+            bufs[i].mut.unlock();
+            // impossible to reach here
             return UNLIKE_SEQ_READ;
         }
-    } else {
-        // impossible to reach here
-        return UNLIKE_SEQ_READ;
     }
 }
 
 // release the sector buffer before offset
-bool ClientReadAhead::wait_sector(uint64_t sec_nr) {
-    bufs[0].mut.lock();
-    if(bufs[0].ft_waiting_tab.count(sec_nr) == 0) {
-        bufs[0].prom_waiting_tab[sec_nr] = std::make_shared<std::promise<bool>>();
-        bufs[0].ft_waiting_tab[sec_nr] = std::shared_future(bufs[0].prom_waiting_tab[sec_nr]->get_future());
+bool ClientReadAhead::wait_sector(int buf_idx, uint64_t sec_nr) {
+    // hold the live of this promise
+    auto prom = std::make_shared<std::promise<bool>>();
+    bufs[buf_idx].mut.lock();
+    if(bufs[buf_idx].ft_waiting_tab.count(sec_nr) == 0) {
+        bufs[buf_idx].prom_waiting_tab[sec_nr] = prom;
+        bufs[buf_idx].ft_waiting_tab[sec_nr] = std::shared_future(bufs[buf_idx].prom_waiting_tab[sec_nr]->get_future());
     }
-    auto sft = bufs[0].ft_waiting_tab[sec_nr];
-    bufs[0].mut.unlock();
-    auto st = sft.wait_for(std::chrono::milliseconds(1000));
-    bufs[0].mut.lock();
-    bool ret = (bufs[0].ft_waiting_tab.count(sec_nr) == 0 || st==std::future_status::ready && sft.get());
-    if(bufs[0].ft_waiting_tab.count(sec_nr) > 0) {
-        bufs[0].prom_waiting_tab.erase(sec_nr);
-        bufs[0].ft_waiting_tab.erase(sec_nr);
+    // hold a new shared future
+    std::shared_future<bool> sft (bufs[buf_idx].ft_waiting_tab[sec_nr]);
+    bufs[buf_idx].mut.unlock();
+    auto st = sft.wait_for(std::chrono::milliseconds(100));
+    bufs[buf_idx].mut.lock();
+    bool ret = (bufs[buf_idx].ft_waiting_tab.count(sec_nr) == 0 || st==std::future_status::ready && sft.get());
+    if(bufs[buf_idx].ft_waiting_tab.count(sec_nr) > 0) {
+        bufs[buf_idx].prom_waiting_tab.erase(sec_nr);
+        bufs[buf_idx].ft_waiting_tab.erase(sec_nr);
     }
-    bufs[0].mut.unlock();
+    bufs[buf_idx].mut.unlock();
     return ret;
 }
 
-void ClientReadAhead::clear_buf() {
-    if(current_speedup.second.empty())
+void ClientReadAhead::clear_buf(const std::string& filepath) {
+    if (filepath != bufs[0].file.second) {
         return;
-    std::lock_guard<std::mutex> lock(mut);
-    std::lock_guard<std::mutex> lock2(bufs[0].mut);
-    for(auto& prom:bufs[0].prom_waiting_tab) {
-        prom.second->set_value(false);
     }
-    current_speedup.first.reset();
-    current_speedup.second.clear();
-    cur_sec_nr = 0;
-    cur_onlink = 0;
-    bufs[0].sec_bg = 0;
-    bufs[0].max_sec = 0;
-    bufs[0].sec_bufferd.clear();
-    bufs[0].ft_res_tab.clear();
-    bufs[0].prom_waiting_tab.clear();
-    bufs[0].ft_waiting_tab.clear();
-}
-
-bool ClientReadAhead::set_task(std::shared_ptr<IOProxyNode> iop, const std::string& filename, uint64_t sec_bg, uint64_t sec_max=100) {
-    // no need to speed up, already have this task
-    clear_buf();
-    {
-        std::lock_guard<std::mutex> lock(mut);
-        std::lock_guard<std::mutex> lock2(bufs[0].mut);
-        if (bufs[0].ft_res_tab.size() != 0) {
-            // cannot set new task if there are onlink or waiting thread
-            return false;
-        }
-        if (filename == current_speedup.second && sec_bg < bufs[0].sec_bg + bufs[0].max_sec)
-            return true;
-        for(auto& prom:bufs[0].prom_waiting_tab) {
+    uint64_t to_epoch = bufs[0].epoch++;
+    // increase all buf's epoch to prevent reposonse callback
+    for(int i = 0; i < 2; i++) {
+        std::lock_guard<std::mutex> lock(bufs[i].mut);
+        bufs[i].epoch = to_epoch;
+        // wake up all the waiting reader
+        for (auto &prom:bufs[i].prom_waiting_tab) {
             prom.second->set_value(false);
         }
-        current_speedup.first = iop;
-        current_speedup.second = filename;
-        cur_sec_nr = sec_bg;
-        cur_onlink = 0;
-        bufs[0].sec_bg = sec_bg;
-        bufs[0].max_sec = sec_max;
-        bufs[0].buf = (char *) realloc(bufs[0].buf, sec_max << 18);
-        fetch_sector_remote();
-        dout(15) << "readahead task: " << filename << " sector: " << sec_bg << dendl;
+        bufs[i].prom_waiting_tab.clear();
+        bufs[i].ft_waiting_tab.clear();
+        // clear other variable
+        bufs[i].file.first.reset();
+        bufs[i].file.second.clear();
+        bufs[i].ft_res_tab.clear();
+        bufs[i].sec_bufferd.clear();
+        bufs[i].cur_sec_nr = 0;
+        bufs[i].onlink = 0;
+        bufs[i].sec_bg = 0;
+        bufs[i].max_sec = 0;
+        bufs[i].cursor = 0;
     }
+}
+
+bool ClientReadAhead::set_task(std::shared_ptr<IOProxyNode> iop, const std::string& filename,
+        int buf_idx, uint64_t sec_bg, unsigned int sec_max, uint64_t epoch) {
+    if (epoch == -1) {
+        // means unlimited big epoch, we reduce it to next epoch
+        epoch = bufs[buf_idx].epoch + 1;
+    } else if (epoch < bufs[buf_idx].epoch) {
+        // cannot set the task with smaller epoch
+        return false;
+    }
+    // no need to speed up, already have this task
+    {
+        // if sec_bg smaller than any buf's sec_bg, then ignore it.
+        if (filename == bufs[buf_idx].file.second &&
+            (sec_bg < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec || bufs[buf_idx].cursor + 1 < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec)) {
+             return false;
+        }
+        // choose a buf to use! we choose one with smaller sec_bg
+//        int buf_idx = 0, smallest_sec = bufs[0].sec_bg;
+//        for (int i = 1; i < 2; i++) {
+//            if (bufs[i].sec_bg < smallest_sec) {
+//                smallest_sec = bufs[i].sec_bg;
+//                buf_idx = i;
+//            }
+//        }
+        // set task on the choosen buf
+        std::lock_guard<std::mutex> lock(bufs[buf_idx].mut);
+        bufs[buf_idx].ft_res_tab.clear();
+        // clear the promise in task
+        for(auto& prom:bufs[buf_idx].prom_waiting_tab) {
+            prom.second->set_value(false);
+        }
+        bufs[buf_idx].epoch = epoch;
+        bufs[buf_idx].prom_waiting_tab.clear();
+        bufs[buf_idx].ft_waiting_tab.clear();
+        bufs[buf_idx].sec_bufferd.clear();
+        bufs[buf_idx].sec_bg = sec_bg;
+        bufs[buf_idx].max_sec = sec_max;
+        bufs[buf_idx].buf = (char *) realloc(bufs[buf_idx].buf, sec_max << 18);
+        bufs[buf_idx].cur_sec_nr = sec_bg;
+        bufs[buf_idx].onlink = 0;
+        bufs[buf_idx].file.first = iop;
+        bufs[buf_idx].file.second = filename;
+        bufs[buf_idx].cursor = 0;
+        fetch_sector_remote(buf_idx);
+    }
+    dout(15) << "readahead task: " << filename << " sector: " << sec_bg << " at buf: "<< buf_idx << dendl;
     return true;
 }

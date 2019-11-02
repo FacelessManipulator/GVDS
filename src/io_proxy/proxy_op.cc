@@ -106,7 +106,7 @@ int ProxyOP::ioproxy_do_metadata_op(IOProxyMetadataOP* op) {
 int ProxyOP::ioproxy_do_data_op(IOProxyDataOP* op) {
   switch (op->operation) {
     case IOProxyDataOP::read: {
-      func_sync_io.sread(op->path.c_str(), op->obuf, op->size, op->offset, op);
+      op->size = func_sync_io.sread(op->path.c_str(), op->obuf, op->size, op->offset, op);
       break;
     }
     case IOProxyDataOP::write: {

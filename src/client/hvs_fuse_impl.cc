@@ -212,22 +212,30 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
   if (!iop) {
     return -ENOENT;
   }
-  char* cache_found = nullptr;
-  while (HVS_FUSE_DATA->fuse_client->readahead != 0) {
-    auto cache_st = HVS_FUSE_DATA->client->readahead->status(rpath, offset, size, cache_found);
-    if (cache_st == ClientReadAhead::IN_BUFFER) {
-      dout(20) << "cache hit: " << rpath << " sector: " << (offset>>18) << dendl;
-      memcpy(buf, cache_found, size);
-      // TODO: this is not real size
-      return size;
-    } else if (cache_st == ClientReadAhead::MAY_SEQ_READ) {
-      bool nt= HVS_FUSE_DATA->client->readahead->set_task(iop, rpath, offset >> 18, HVS_FUSE_DATA->fuse_client->readahead);
-      if(!nt) break;
-    } else if (cache_st == ClientReadAhead::ON_LINK) {
-      break;
-    } else {
-      break;
-    }
+  if(HVS_FUSE_DATA->fuse_client->readahead) {
+      int cur_off = offset, size_left = size;
+      while (size_left > 0) {
+          int cur_sec_left = std::min(size_left, (((cur_off >> 18) + 1) << 18) - cur_off);
+          auto cache_st = HVS_FUSE_DATA->client->readahead->status(rpath, cur_off, cur_sec_left, buf);
+          if (cache_st == ClientReadAhead::IN_BUFFER) {
+              dout(20) << "cache hit: " << rpath << " sector: " << (offset >> 18) << dendl;
+              // TODO: this is not real size
+              cur_off += cur_sec_left;
+              size_left -= cur_sec_left;
+              continue;
+          } else if (cache_st == ClientReadAhead::MAY_SEQ_READ) {
+              bool nt = HVS_FUSE_DATA->client->readahead->set_task(iop, rpath, 0, offset >> 18,
+                                                                   HVS_FUSE_DATA->fuse_client->readahead, -1);
+              if (!nt) break;
+          } else if (cache_st == ClientReadAhead::ON_LINK) {
+              break;
+          } else {
+              break;
+          }
+      }
+      if (size_left == 0) {
+          return size;
+      }
   }
 
   ioproxy_rpc_buffer _buffer(rpath.c_str(), offset, size);
@@ -271,9 +279,7 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
     return -ENOENT;
   }
   if(HVS_FUSE_DATA->fuse_client->readahead != 0) {
-    if(rpath == HVS_FUSE_DATA->client->readahead->cur_speedup_file()) {
-      HVS_FUSE_DATA->client->readahead->clear_buf();
-    }
+    HVS_FUSE_DATA->client->readahead->clear_buf(rpath);
   }
 
   ioproxy_rpc_buffer _buffer(rpath.c_str(), buf, offset, size);

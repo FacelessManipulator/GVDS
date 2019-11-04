@@ -95,17 +95,14 @@ void ClientReadAhead::fetch_sector_remote(int buf_idx) {
     }
 }
 
-ClientReadAhead::Status ClientReadAhead::status(const std::string& rpath, uint64_t offset, uint64_t size, char* dest) {
+ClientReadAhead::Status ClientReadAhead::status(const std::string& rpath, uint64_t offset, uint64_t size, char* dest, uint64_t& read_size) {
     uint64_t sector_bg = offset >> 18;
 //            uint64_t sector_nr = (size >> 8) + (1-~(size&0xff)); // = upper(size/256)
     uint64_t sector_nr = 1; // currently fuse only send at most 128KB request
     mut.lock();
     if(rpath == bufs[0].file.second) {
         mut.unlock();
-        auto st = fetch_cache(rpath, offset, size, dest);
-        if (UNLIKE_SEQ_READ == st) {
-            clear_buf(rpath);
-        }
+        auto st = fetch_cache(rpath, offset, size, dest, read_size);
         return st;
     }
     mut.unlock();
@@ -126,7 +123,7 @@ ClientReadAhead::Status ClientReadAhead::status(const std::string& rpath, uint64
     return MAY_SEQ_READ;
 }
 
-ClientReadAhead::Status ClientReadAhead::fetch_cache(const std::string& filename, uint64_t offset, uint64_t size, char* dest) {
+ClientReadAhead::Status ClientReadAhead::fetch_cache(const std::string& filename, uint64_t offset, uint64_t size, char* dest, uint64_t& read_size) {
     char* orig;
     uint64_t sector_bg = offset >> 18;
     for (int i= 0; i < 2; i++) {
@@ -139,9 +136,10 @@ ClientReadAhead::Status ClientReadAhead::fetch_cache(const std::string& filename
             orig = bufs[i].sector_addr(sector_bg) + (offset & 0x3ffff);
             if (orig + size > bufs[i].sector_addr(bufs[i].sec_bg + bufs[i].max_sec)) {
                 bufs[i].mut.unlock();
-                return UNLIKE_SEQ_READ;
+                return NOT_FOUND;
             }
-            std::memcpy(dest, orig, min(size, bufs[i].sec_bufferd[sector_bg] - (offset & 0x3ffff)));
+            read_size = min(size, bufs[i].sec_bufferd[sector_bg] - (offset & 0x3ffff));
+            std::memcpy(dest, orig, read_size);
             bufs[i].cursor = sector_bg > bufs[i].cursor ? sector_bg : bufs[i].cursor;
             bufs[i].mut.unlock();
             return IN_BUFFER;
@@ -150,23 +148,29 @@ ClientReadAhead::Status ClientReadAhead::fetch_cache(const std::string& filename
             bufs[i].mut.unlock();
             if (wait_sector(i, sector_bg)) {
                 bufs[i].mut.lock();
-                orig = bufs[i].sector_addr(sector_bg) + (offset & 0x3ffff);
-                if (orig + size > bufs[i].sector_addr(bufs[i].sec_bg + bufs[i].max_sec)) {
+                if (bufs[i].lookup(filename, sector_bg) == IN_BUFFER) {
+                    orig = bufs[i].sector_addr(sector_bg) + (offset & 0x3ffff);
+                    if (orig + size > bufs[i].sector_addr(bufs[i].sec_bg + bufs[i].max_sec)) {
+                        bufs[i].mut.unlock();
+                        return NOT_FOUND;
+                    }
+                    read_size = min(size, bufs[i].sec_bufferd[sector_bg] - (offset & 0x3ffff));
+                    std::memcpy(dest, orig, read_size);
+                    bufs[i].cursor = sector_bg > bufs[i].cursor ? sector_bg : bufs[i].cursor;
                     bufs[i].mut.unlock();
-                    return UNLIKE_SEQ_READ;
+                    return IN_BUFFER;
+                } else {
+                    bufs[i].mut.unlock();
+                    return NOT_FOUND;
                 }
-                memcpy(dest, orig, min(size, bufs[i].sec_bufferd[sector_bg] - (offset & 0x3ffff)));
-                bufs[i].cursor = sector_bg > bufs[i].cursor ? sector_bg : bufs[i].cursor;
-                bufs[i].mut.unlock();
-                return IN_BUFFER;
             } else {
                 bufs[i].mut.unlock();
-                return UNLIKE_SEQ_READ;
+                return NOT_FOUND;
             }
         } else {
             bufs[i].mut.unlock();
             // impossible to reach here
-            return UNLIKE_SEQ_READ;
+            return NOT_FOUND;
         }
     }
 }
@@ -183,7 +187,8 @@ bool ClientReadAhead::wait_sector(int buf_idx, uint64_t sec_nr) {
     // hold a new shared future
     std::shared_future<bool> sft (bufs[buf_idx].ft_waiting_tab[sec_nr]);
     bufs[buf_idx].mut.unlock();
-    auto st = sft.wait_for(std::chrono::milliseconds(100));
+    dout(REAHAHEAD_DEBUG_LEVEL) << "readahead wait task sector: " << sec_nr << " at buf: "<< buf_idx << dendl;
+    auto st = sft.wait_for(std::chrono::milliseconds(1000));
     bufs[buf_idx].mut.lock();
     bool ret = (bufs[buf_idx].ft_waiting_tab.count(sec_nr) == 0 || st==std::future_status::ready && sft.get());
     if(bufs[buf_idx].ft_waiting_tab.count(sec_nr) > 0) {

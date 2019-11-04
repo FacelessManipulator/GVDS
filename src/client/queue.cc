@@ -11,18 +11,33 @@ using namespace hvs;
 #define MAX_MERGE_SIZE 1048576
 namespace hvs {
 ClientWorker* ClientBufferQueue::_get_idle_worker() {
-  ClientWorker* ret;
+  ClientWorker* ret = nullptr;
   // cause io process is fast, use spin lock here
-  while (!idle_list.pop(ret))
-    usleep(10);
+  while (ret == nullptr) {
+    idle_list_mu.lock();
+    if (idle_list.empty()) {
+      idle_list_mu.unlock();
+      usleep(1000);
+      idle_list_mu.lock();
+    } else {
+      ret = idle_list.front();
+      idle_list.pop();
+    }
+    idle_list_mu.unlock();
+  }
+//  while (!idle_list.pop(ret))
+//    usleep(100);
   idle_worker_num--;
   return ret;
 }
 
-bool ClientBufferQueue::add_idle_worker(ClientWorker* wocker) {
+bool ClientBufferQueue::add_idle_worker(ClientWorker* worker) {
+    idle_list_mu.lock();
+    idle_list.push(worker);
+    idle_list_mu.unlock();
   // should not wait, idle list max capcity > max number of idle worker
-  while (!idle_list.push(wocker))
-    usleep(10);
+//  while (!idle_list.push(wocker))
+//    usleep(100);
   idle_worker_num++;
   return true;
 };
@@ -51,10 +66,11 @@ bool ClientBufferQueue::queue_buffer(std::shared_ptr<Buffer> buf, bool block) {
         }
       }
   // wait for dispatch to catch up
-  while (buf_waiting_line.size() + buf_onlink > m_max_buf && block)
+  while (buf_inqueue > m_max_buf && block) {
     pthread_cond_wait(&m_cond_ioproxy, &m_queue_mutex);
+  }
 
-  buf_onlink++;
+  buf_inqueue++;
   buf_waiting_line.push(buf);
   pthread_cond_signal(&m_cond_dispatcher);
   m_queue_mutex_holder = 0;
@@ -155,6 +171,8 @@ void ClientBufferQueue::_dispatch_unsafe(
     t->pop();
     assert(buf.get());                 // buf ptr should not be empty
     auto worker = _get_idle_worker();  // may wait on spin lock
+    buf_inqueue--;
+    buf_onlink++;
     boost::intrusive_ptr<BufferQueued> bufq = new BufferQueued(buf);
     worker->my_scheduler().queue_event(worker->my_handle(), bufq);
   }

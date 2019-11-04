@@ -242,15 +242,16 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
     return -ENOENT;
   }
   if(HVS_FUSE_DATA->fuse_client->readahead) {
-      int cur_off = offset, size_left = size;
+      uint64_t cur_off = offset, size_left = size, read_size = 0, read_size_total = 0;
       while (size_left > 0) {
-          int cur_sec_left = std::min(size_left, (((cur_off >> 18) + 1) << 18) - cur_off);
-          auto cache_st = HVS_FUSE_DATA->client->readahead->status(rpath, cur_off, cur_sec_left, buf);
+          uint64_t cur_sec_left = std::min(size_left, (((cur_off >> 18) + 1) << 18) - cur_off);
+          auto cache_st = HVS_FUSE_DATA->client->readahead->status(rpath, cur_off, cur_sec_left, buf, read_size);
           if (cache_st == ClientReadAhead::IN_BUFFER) {
               dout(REAHAHEAD_DEBUG_LEVEL) << "cache hit: " << rpath << " sector: " << (offset >> 18) << dendl;
               // TODO: this is not real size
               cur_off += cur_sec_left;
               size_left -= cur_sec_left;
+              read_size_total += read_size;
               continue;
           } else if (cache_st == ClientReadAhead::MAY_SEQ_READ) {
               bool nt = HVS_FUSE_DATA->client->readahead->set_task(iop, rpath, 0, offset >> 18,
@@ -263,7 +264,7 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
           }
       }
       if (size_left == 0) {
-          return size;
+          return read_size_total;
       }
   }
 

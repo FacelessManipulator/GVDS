@@ -71,8 +71,8 @@ namespace hvs {
             last_req_sec = 0;
             last_req_hit_ct = 0;
         }
-        Status status(const std::string& rpath, uint64_t offset, uint64_t size, char* dest);
-        Status fetch_cache(const std::string& filename, uint64_t offset, uint64_t size, char* dest);
+        Status status(const std::string& rpath, uint64_t offset, uint64_t size, char* dest, uint64_t& read_size);
+        Status fetch_cache(const std::string& filename, uint64_t offset, uint64_t size, char* dest, uint64_t& read_size);
         // release the sector buffer before offset
         bool wait_sector(int buf_idx, uint64_t sec_nr);
         bool set_task(std::shared_ptr<IOProxyNode> iop, const std::string& filename,

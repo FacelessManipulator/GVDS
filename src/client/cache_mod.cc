@@ -30,10 +30,10 @@ bool ClientCache::set_stat(const std::string& path, struct stat* st_buf) {
     lock_guard<std::shared_mutex> lock(cache_mu);
     if (st_buf == nullptr) {
         // means file not exists
-        missing.touch(path);
+        missing.insert(path);
         return true;
     } else {
-        missing.remove(path);
+        missing.erase(path);
         struct stat* lk_res;
         // try look up stat in cache at first
         auto lk_st = lookup(path, lk_res);
@@ -43,7 +43,7 @@ bool ClientCache::set_stat(const std::string& path, struct stat* st_buf) {
                 return false;
             // if stat not exists in cache, try create one
             lk_res = static_cast<struct stat*>(stat_pool_sig::malloc());
-            cached.touch(path, lk_res);
+            cached[path] = lk_res;
             stat_cache_ct ++;
         } else {
             // stat buf already alloc in ClientCache, just do nothing
@@ -56,13 +56,13 @@ bool ClientCache::set_stat(const std::string& path, struct stat* st_buf) {
 void ClientCache::expire_stat(const std::string& path) {
     lock_guard<std::shared_mutex> lock(cache_mu);
     // just expire it no matter whether it exists or not
-    missing.remove(path);
-    bool removed = cached.remove(path);
+    missing.erase(path);
+    bool removed = cached.erase(path);
     if (removed) stat_cache_ct--;
 }
 
 ClientCache::Status ClientCache::lookup(const std::string& key, struct stat*& res) {
-  if(missing.hit(key)) {
+  if(missing.count(key) != 0) {
     // found in missing list, means not exists.
     return FOUND_MISSING;
   } else {
@@ -70,8 +70,7 @@ ClientCache::Status ClientCache::lookup(const std::string& key, struct stat*& re
     if(buf_obj == cached.end()) {
       return NOT_FOUND;
     } else {
-      cached.hit(key);
-      res = buf_obj->data;
+      res = buf_obj->second;
       return FOUND;
     }
   }

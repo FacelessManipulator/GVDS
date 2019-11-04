@@ -21,8 +21,10 @@ class ClientCache : public ClientModule {
  private:
   std::shared_mutex cache_mu;
   int stat_cache_ct;
-  LRU<std::string, struct stat*> missing;
-  LRU<std::string, struct stat*> cached;
+//  LRU<std::string, struct stat*> missing;
+//  LRU<std::string, struct stat*> cached;
+    std::set<std::string> missing;
+    std::map<std::string, struct stat*> cached;
   // just use map to store stat first
 
  public:

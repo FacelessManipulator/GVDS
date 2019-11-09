@@ -40,7 +40,7 @@ do
                 echo -e -n $(awk '$1=="'$prefix''$filename'"' $finalfile | awk '{print $3}') >> ${testname[$i]}.txt
                 echo -e -n '\t' >> ${testname[$i]}.txt
                 echo $(awk '$1=="'$prefix''$filename'"' $finalfile | awk '{print $4}') >> ${testname[$i]}.txt
-            if
+            fi
 
             
         }

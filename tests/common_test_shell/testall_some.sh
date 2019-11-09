@@ -138,7 +138,7 @@ do
         # rm
         testname=1hr
         (time {
-            for ((i=1; i<=$num; i++)); do
+            for ((i=1; i<=$num; i++));
             do
             {
                 rm meta/test$i -r

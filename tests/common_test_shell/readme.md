@@ -10,6 +10,7 @@ merge_2_some.sh 为测试结果处理shell
 1hc(元数据create) 1hs(元数据stat) 1hr(元数据remove))
 
 测试之前请将三个文件的prefix变量，改为你需要放入原始的测试结果的目录
+请确认网卡是否为eno1，如果不是请改动testall_some.sh中的eth变量
 可以在testall_some.sh 中修改类似于test_1a的变量来选择生成你需要的测试数据
 使用请将testall_some.sh 放入需要进行测试的目录下,使用命令为：
 $ bash testall_some.sh

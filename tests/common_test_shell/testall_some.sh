@@ -1,6 +1,7 @@
 #!/bin/bash
 
 prefix=/home/wcb/data  #测试数据存放位置
+eth=eno1
 nums=(0ms 10ms 20ms 40ms 60ms 80ms 100ms) #测试时延
 op_size=300 #元数操作数
 test_1a=true
@@ -22,7 +23,7 @@ nums_size=${#nums[*]}
 for ((k=0; k<$nums_size; k++));
 do
 {
-    tc qdisc add dev eno1 root netem delay ${nums[$k]}
+    tc qdisc add dev $eth root netem delay ${nums[$k]}
 
     block_size=(8k 16k 32k 64k 128k 256k 512k 1M 2M 4M 8M) #单次操作的块大小
     bs_length=${#block_size[*]}
@@ -219,6 +220,6 @@ do
     
     echo test_1h_${nums[$k]} done
 
-    tc qdisc del dev eno1 root netem delay ${nums[$k]}
+    tc qdisc del dev $eth root netem delay ${nums[$k]}
 }
 done

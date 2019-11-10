@@ -95,7 +95,7 @@ do
     for ((i=0;i<$jlist_size;i++));
     do
     {
-        fio -filename=$testname -fallocate=none  -direct=$direct -iodepth 1 -thread -rw=write -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[i]} -name=$testname  > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
+        fio -filename=$testname -fallocate=none  -direct=$direct -iodepth 1 -thread -rw=write -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[$i]} -name=$testname  > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
     }
     done
     echo test_$testname\_${nums[$k]} done
@@ -109,7 +109,7 @@ do
     for ((i=0;i<$jlist_size;i++));
     do
     {
-        fio -filename=$testname -fallocate=none  -direct=$direct -iodepth 1 -thread -rw=read -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[i]} -name=$testname  > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
+        fio -filename=$testname -fallocate=none  -direct=$direct -iodepth 1 -thread -rw=read -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[$i]} -name=$testname  > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
     }
     done
     echo test_$testname\_${nums[$k]} done
@@ -123,7 +123,7 @@ do
     for ((i=0;i<$jlist_size;i++));
     do
     {
-        fio -filename_format='test.$jobnum' -fallocate=none -direct=$direct -iodepth 1 -thread -rw=write -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[i]} -name=$testname   > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
+        fio -filename_format='test.$jobnum' -fallocate=none -direct=$direct -iodepth 1 -thread -rw=write -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[$i]} -name=$testname   > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
     }
     done
     echo test_$testname\_${nums[$k]} done
@@ -137,7 +137,7 @@ do
     for ((i=0;i<$jlist_size;i++));
     do
     {
-        fio -filename_format='test.$jobnum' -fallocate=none -direct=$direct -iodepth 1 -thread -rw=read -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[i]} -name=$testname   > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
+        fio -filename_format='test.$jobnum' -fallocate=none -direct=$direct -iodepth 1 -thread -rw=read -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[$i]} -name=$testname   > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
     }
     done
     echo test_$testname\_${nums[$k]} done

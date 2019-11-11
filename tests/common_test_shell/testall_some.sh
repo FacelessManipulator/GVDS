@@ -29,8 +29,8 @@ do
     bs_length=${#block_size[*]}
     
     #1a:顺序写
-    if $test_1a; then
-        i=$[$bs_length+1]
+    if ! $test_1a; then
+        bs_length=-1
     fi
 
     testname=1a #测试名称
@@ -43,8 +43,8 @@ do
     echo test_$testname\_${nums[$k]} done
 
     #1b：顺序读
-    if $test_1b; then
-        i=$[$bs_length+1]
+    if ! $test_1b; then
+        bs_length=-1
     fi
     
     testname=1b
@@ -57,8 +57,8 @@ do
     echo test_$testname\_${nums[$k]} done
 
     #1c：随机读
-    if $test_1c; then
-        i=$[$bs_length+1]
+    if ! $test_1c; then
+        bs_length=-1
     fi
     
     testname=1c
@@ -71,8 +71,8 @@ do
     echo test_$testname\_${nums[$k]} done
 
     #1d：随机写
-    if $test_1d; then
-        i=$[$bs_length+1]
+    if ! $test_1d; then
+        bs_length=-1
     fi
     
     testname=1d
@@ -87,8 +87,8 @@ do
     job_list=(1 10 20 50 100) #线程数目
     jlist_size=${#job_list[*]}
     #1fw：单文件多线程顺序写
-    if $test_1fw; then
-        i=$[$jlist_size+1]
+    if ! $test_1fw; then
+        jlist_size=-1
     fi
     
     testname=1fw
@@ -101,8 +101,8 @@ do
     echo test_$testname\_${nums[$k]} done
 
     #1fr：单文件多线程顺序读
-    if $test_1fr; then
-        i=$[$jlist_size+1]
+    if ! $test_1fr; then
+        jlist_size=-1
     fi
     
     testname=1fr
@@ -115,8 +115,8 @@ do
     echo test_$testname\_${nums[$k]} done
 
     #1gw：多文件多线程顺序写
-    if $test_1gw; then
-        i=$[$jlist_size+1]
+    if ! $test_1gw; then
+        jlist_size=-1
     fi
     
     testname=1gw
@@ -129,8 +129,8 @@ do
     echo test_$testname\_${nums[$k]} done
 
     #1gr：多文件多线程顺序读
-    if $test_1gr; then
-        i=$[$jlist_size+1]
+    if ! $test_1gr; then
+        jlist_size=-1
     fi
     
     testname=1gr
@@ -155,7 +155,7 @@ do
         num=${threads[$g]}
 
         # create
-        if $test_1hc; then
+        if ! $test_1hc; then
             i=$[$num+1]
         fi
     
@@ -178,7 +178,7 @@ do
         }) >& $prefix/test_$testname\_${nums[$k]}_$num
 
         # stat
-        if $test_1hs; then
+        if ! $test_1hs; then
             i=$[$num+1]
         fi
     
@@ -199,7 +199,7 @@ do
         }) >& $prefix/test_$testname\_${nums[$k]}_$num
 
         # rm
-        if $test_1hr; then
+        if ! $test_1hr; then
             i=$[$num+1]
         fi
     

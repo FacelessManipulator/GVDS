@@ -62,9 +62,13 @@ class IOProxy : public Thread, public Node {
  private:
   std::vector<boost::thread*> worker_threads;
   std::vector<std::shared_ptr<IOProxy_scheduler>> schedulers;
-  boost::lockfree::spsc_queue<IOProxyWorker* ,
-                              boost::lockfree::capacity<1024>>
-      idle_list;
+//  boost::lockfree::spsc_queue<IOProxyWorker* ,
+//                              boost::lockfree::capacity<1024>>
+//      idle_list;
+
+  std::queue<IOProxyWorker*> idle_list;
+  std::mutex idle_list_mu;
+  std::atomic<long> idle_worker_num;
   std::queue<std::shared_ptr<OP>> op_waiting_line;
   int m_max_op;  // the max number of op in ioproxy
   int m_max_worker;      // the max number of worker

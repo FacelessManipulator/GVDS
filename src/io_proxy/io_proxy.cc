@@ -12,19 +12,37 @@ using namespace hvs;
 using namespace Pistache;
 
 namespace hvs {
-IOProxyWorker* IOProxy::_get_idle_worker() {
-  IOProxyWorker* ret;
-  // cause io process is fast, use spin lock here
-  while (!idle_list.pop(ret))
-    ;
-  return ret;
-}
+    IOProxyWorker* IOProxy::_get_idle_worker() {
+      IOProxyWorker* ret = nullptr;
+      // cause io process is fast, use spin lock here
+      while (ret == nullptr) {
+        idle_list_mu.lock();
+        if (idle_list.empty()) {
+          idle_list_mu.unlock();
+          usleep(1000);
+          idle_list_mu.lock();
+        } else {
+          ret = idle_list.front();
+          idle_list.pop();
+        }
+        idle_list_mu.unlock();
+      }
+//  while (!idle_list.pop(ret))
+//    usleep(100);
+      idle_worker_num--;
+      return ret;
+    }
 
-bool IOProxy::add_idle_worker(IOProxyWorker* woker) {
-  // should not wait, idle list max capcity > max number of idle worker
-  while (!idle_list.push(woker))
-    ;
-};
+    bool IOProxy::add_idle_worker(IOProxyWorker* worker) {
+      idle_list_mu.lock();
+      idle_list.push(worker);
+      idle_list_mu.unlock();
+      // should not wait, idle list max capcity > max number of idle worker
+//  while (!idle_list.push(wocker))
+//    usleep(100);
+      idle_worker_num++;
+      return true;
+    };
 
 bool IOProxy::queue_and_wait(std::shared_ptr<OP> op) {
   auto worker_is_done = make_shared<promise<bool>>();

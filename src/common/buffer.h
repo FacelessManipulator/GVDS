@@ -6,13 +6,13 @@
 namespace hvs {
 struct Buffer {
   clmdep_msgpack::type::raw_ref buf;
-  unsigned long offset;
+  uint64_t offset;
   std::string path;
   std::shared_ptr<IOProxyNode> dest;
   std::function<void()> callback;
   // prevent error write
   Buffer() : offset(0), path("/dev/null") {}
-  Buffer(const std::string& p, const char* b, unsigned long off, unsigned long size) : path(p), offset(off) {
+  Buffer(const std::string& p, const char* b, uint64_t off, unsigned long size) : path(p), offset(off) {
     // free at the end of queue
     buf.ptr = (const char*)std::malloc(size);
     buf.size = size;

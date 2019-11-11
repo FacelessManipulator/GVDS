@@ -21,7 +21,7 @@ struct ioproxy_rpc_statbuffer {
   int st_uid;
   int st_gid;
   int st_rdev;
-  int st_size;
+  uint64_t st_size;
   int st_blksize;
   int st_blocks;
   int st_atim_tv_nsec;
@@ -41,7 +41,7 @@ struct ioproxy_rpc_statbuffer {
     st_uid = st->st_uid;
     st_gid = st->st_gid;
     st_rdev = static_cast<int>(st->st_rdev);
-    st_size = static_cast<int>(st->st_size);
+    st_size = static_cast<uint64_t>(st->st_size);
     st_blksize = static_cast<int>(st->st_blksize);
     st_blocks = static_cast<int>(st->st_blocks);
     st_atim_tv_nsec = static_cast<int>(st->st_atim.tv_nsec);
@@ -66,14 +66,14 @@ struct ioproxy_rpc_buffer {
   bool is_read;
   unsigned long id;
   clmdep_msgpack::type::raw_ref buf;
-  unsigned long offset;
+  uint64_t offset;
   unsigned long read_size;
   std::string path;
   bool finalize_buf;
   int fid;
   int flags;
   // for write request purpose
-  ioproxy_rpc_buffer(const char* _path, const char* buffer, unsigned long off,
+  ioproxy_rpc_buffer(const char* _path, const char* buffer, uint64_t off,
                      int _size)
       : offset(off), path(_path), is_read(false), finalize_buf(false) {
     error_code = 0;
@@ -81,7 +81,7 @@ struct ioproxy_rpc_buffer {
     buf.size = _size;
   }
   // for read request purpose
-  ioproxy_rpc_buffer(const char* _path, unsigned long off, int _size)
+  ioproxy_rpc_buffer(const char* _path, uint64_t off, int _size)
       : offset(off), path(_path), is_read(true), finalize_buf(false) {
     error_code = 0;
     read_size = _size;

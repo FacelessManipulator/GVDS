@@ -41,7 +41,8 @@ do
     }
     done
     echo test_$testname\_${nums[$k]} done
-
+    
+    bs_length=${#block_size[*]}
     #1b：顺序读
     if ! $test_1b; then
         bs_length=-1
@@ -56,6 +57,7 @@ do
     done
     echo test_$testname\_${nums[$k]} done
 
+    bs_length=${#block_size[*]}
     #1c：随机读
     if ! $test_1c; then
         bs_length=-1
@@ -70,6 +72,7 @@ do
     done
     echo test_$testname\_${nums[$k]} done
 
+    bs_length=${#block_size[*]}
     #1d：随机写
     if ! $test_1d; then
         bs_length=-1
@@ -100,6 +103,7 @@ do
     done
     echo test_$testname\_${nums[$k]} done
 
+    jlist_size=${#job_list[*]}
     #1fr：单文件多线程顺序读
     if ! $test_1fr; then
         jlist_size=-1
@@ -114,6 +118,7 @@ do
     done
     echo test_$testname\_${nums[$k]} done
 
+    jlist_size=${#job_list[*]}
     #1gw：多文件多线程顺序写
     if ! $test_1gw; then
         jlist_size=-1
@@ -128,6 +133,7 @@ do
     done
     echo test_$testname\_${nums[$k]} done
 
+    jlist_size=${#job_list[*]}
     #1gr：多文件多线程顺序读
     if ! $test_1gr; then
         jlist_size=-1
@@ -155,10 +161,7 @@ do
         num=${threads[$g]}
 
         # create
-        if ! $test_1hc; then
-            i=$[$num+1]
-        fi
-    
+        if $test_1hc; then
         testname=1hc
         (time {
             for ((i=1; i<=$num; i++)); do
@@ -176,12 +179,11 @@ do
             done
             wait
         }) >& $prefix/test_$testname\_${nums[$k]}_$num
+        fi
+
 
         # stat
-        if ! $test_1hs; then
-            i=$[$num+1]
-        fi
-    
+        if $test_1hs; then
         testname=1hs
         (time {
             for ((i=1; i<=$num; i++)); do
@@ -197,12 +199,10 @@ do
             done
             wait
         }) >& $prefix/test_$testname\_${nums[$k]}_$num
+        fi
 
         # rm
-        if ! $test_1hr; then
-            i=$[$num+1]
-        fi
-    
+        if $test_1hr; then
         testname=1hr
         (time {
             for ((i=1; i<=$num; i++));
@@ -214,7 +214,7 @@ do
             wait
         }) >& $prefix/test_$testname\_${nums[$k]}_$num
         rm meta/* -r >& /dev/null
-
+        fi
     }
     done
     

@@ -42,6 +42,10 @@ Processing::Processing(my_context ctx) : my_base(ctx) {
   ///> call **async** op processing function
   int channel_id = node->queue->get_spare_channel() + 1;
   auto rpcc = node->rpc->rpc_channel(worker.cur_buf->dest, false, channel_id);
+  if (rpcc->_client->get_connection_state() == rpc::client::connection_state::disconnected ||
+      rpcc->_client->get_connection_state() == rpc::client::connection_state::reset) {
+        rpcc = node->rpc->rpc_channel(worker.cur_buf->dest, true, channel_id);
+      }
   // the callback function could be used to trigger some event
   rpcc->async_call( "iop_write", callback, worker.cur_buf);
   }

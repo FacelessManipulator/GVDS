@@ -61,6 +61,7 @@ int FdManager::create(const string& path, int mode) {
             fds.remove(fd_it->key);
             ::close(fd_old);
         }
+        ::close(fd_new);
         return 0;
     } else {
         return fd_new;

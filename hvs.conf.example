@@ -8,6 +8,7 @@ log = {
 ioproxy = {
     //use linux command uuid to generate your own uuid
     uuid = "a8a8eb78-8536-4bb5-a22a-c83483eff378";
+    cid = "1";
     scher = 6;
     data_path = "/opt/hvs/var/data/";
     data_port = 9095;

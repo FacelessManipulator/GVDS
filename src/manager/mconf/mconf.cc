@@ -2,6 +2,7 @@
 #include <vector>
 #include <stdio.h>
 #include "common/JsonSerializer.h"
+#include "common/json.h"
 #include "context.h"
 #include "datastore/datastore.h"
 
@@ -46,9 +47,7 @@ void Mconf::addCenterRest(const Rest::Request& request, Http::ResponseWriter res
 
 // 首次添加，没有表需要注释部分代码，先set，否则无法get
 int Mconf::addCenter(FECenterInfo &FEcenter){
-    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_account_info));
-    f0_dbPtr->init();
+    auto f0_dbPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::couchbase, true);
     
     int first_access_flag = 0;
 // /* 
@@ -75,6 +74,16 @@ int Mconf::addCenter(FECenterInfo &FEcenter){
 
     if(tmp == false){
         mycenter.centerID.push_back(FEcenter.centerID);
+        std::map<std::string, std::map<std::string, std::string>> users;
+        users["use_account"] = std::map<std::string, std::string>();
+        users["unuse_account"] = std::map<std::string, std::string>();
+        char username[32];
+        for (int i = 1; i <= 100; i++) {
+            snprintf(username, 32, "test%d", i);
+            users["unuse_account"][username] = "";
+        }
+        auto users_str = hvs::json_encode(users);
+        f0_dbPtr->set(FEcenter.centerName, users_str);
     }
     mycenter.centerIP[FEcenter.centerID] = FEcenter.centerIP;
     mycenter.centerPort[FEcenter.centerID] = FEcenter.centerPort;
@@ -112,9 +121,7 @@ void Mconf::searchCenterRest(const Rest::Request& request, Http::ResponseWriter 
 }
 
 string Mconf::searchCenter(){
-    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_account_info));
-    f0_dbPtr->init();
+    auto f0_dbPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::couchbase, true);
 
     // cout << "key: " << key <<endl;
     auto [pvalue, error_0] = f0_dbPtr->get(key);   //key 在构造函数里
@@ -149,9 +156,7 @@ void Mconf::deleteCenterRest(const Rest::Request& request, Http::ResponseWriter 
 string Mconf::deleteCenter(string centerID){
     cout << "start: deleteCenter" << endl;
 
-    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_account_info));
-    f0_dbPtr->init();
+    auto f0_dbPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::couchbase, true);
 
     // cout << "key: " << key <<endl;
     //1、获取数据

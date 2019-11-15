@@ -35,5 +35,6 @@ RpcClient::RpcClient(const std::string address, const unsigned port)
   _client = std::make_unique<rpc::client>(address, port);
   // TODO: avoid timeout
  _client->set_timeout(*timeout);
+ _client->set_keepalive(true);
   _retry = static_cast<unsigned int>(*retry);
 }

@@ -14,5 +14,10 @@
 5. initilize standalone gvds cluster. use the python script with `sudo python /opt/hvs/bin/init-cluster.py`, follow the instructions given by this script.
 6. try with pre-built-in test acconut, `cd /mnt/hvs` and do something.
 
+## How to pack a binary package?
+1. make sure you have already successfully built the gvds with `build.sh`
+2. change directory into `build/` and `cp ../help/postinstall-pak ./`
+3. pack it ! `../help/pack_deb.sh`
+4. you would see an deb package called `gvds_[VERSION]_[ARCH].deb` in your build directory. it could be installed on other ubuntu systems with similar version. The Only Depandencies Missed Is Libfuse. [Someone would fix it Sometime.]
 
-
+## forgive my plastic english. my sogoupinyin has broken so I can't type chinese on Ubuntu

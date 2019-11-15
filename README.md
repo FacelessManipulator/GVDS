@@ -1,4 +1,4 @@
-# HVS-ONE
+# GVDS
 
 ## How to build an GVDS cluster with empty linux env?
 1. Download and install couchbase-server.

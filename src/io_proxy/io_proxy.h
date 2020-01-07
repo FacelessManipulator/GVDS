@@ -54,7 +54,7 @@ class IOProxy : public Thread, public Node {
 
  private:
   void* entry() override;
-  void fresh_stat();
+  bool fresh_stat();
   void _dispatch();
   void _dispatch_unsafe(std::queue<std::shared_ptr<OP>>* t);
   IOProxyWorker* _get_idle_worker();

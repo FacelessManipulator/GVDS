@@ -70,7 +70,7 @@ bool ClientBufferQueue::queue_buffer(std::shared_ptr<Buffer> buf, bool block) {
     pthread_cond_wait(&m_cond_ioproxy, &m_queue_mutex);
   }
 
-  buf_inqueue++;
+  buf_inqueue+=buf->buf.size;
   buf_waiting_line.push(buf);
   pthread_cond_signal(&m_cond_dispatcher);
   m_queue_mutex_holder = 0;
@@ -171,7 +171,7 @@ void ClientBufferQueue::_dispatch_unsafe(
     t->pop();
     assert(buf.get());                 // buf ptr should not be empty
     auto worker = _get_idle_worker();  // may wait on spin lock
-    buf_inqueue--;
+    buf_inqueue -= buf->buf.size;
     buf_onlink++;
     boost::intrusive_ptr<BufferQueued> bufq = new BufferQueued(buf);
     worker->my_scheduler().queue_event(worker->my_handle(), bufq);

@@ -203,7 +203,10 @@ bool IOProxy::start() {
   }
   create("io_proxy");
   iom.start();
-  fresh_stat();
+  while (!fresh_stat()) {
+    // continue register this ioproxy node to manager node until success
+    sleep(5);
+  }
   return true;
 }
 
@@ -224,7 +227,7 @@ void IOProxy::stop() {
   }
 }
 
-void IOProxy::fresh_stat() {
+bool IOProxy::fresh_stat() {
   // regist itself to manager node
   Http::Client client;
   char url[256];
@@ -254,9 +257,12 @@ void IOProxy::fresh_stat() {
       },
       Async::IgnoreException);
   auto status = fu.wait_for(std::chrono::seconds(3));
-  if(status == std::future_status::timeout)
-    dout(-1) << "WARNING: Lost connection with manager server [" << url << "]" << dendl;
   client.shutdown();
+  if(status == std::future_status::timeout) {
+    dout(-1) << "WARNING: Lost connection with manager server [" << url << "]" << dendl;
+    return false;
+  }
+  return true;
 }
 
 void IOProxy::rpc_bind(RpcServer* server) { hvs_ioproxy_rpc_bind(server); }

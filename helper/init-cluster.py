@@ -61,7 +61,7 @@ client = {
     data_port_begin = 9096;
     data_port_end = 9150;
     data_buffer = 102400;
-    max_queue = 128;
+    max_queue = 12800000;
     onlink = 64;
     async = true;
     readahead = 0;
@@ -187,9 +187,9 @@ def setup_couchbase():
                     res = requests.get('%s'%(couchbase_addr), headers=headers)
                 except Exception,e:
                     res = None
-                if res and res.status_code!= 200 and query_yn("Cannot connect to couchbase. Still Wait?"):
+                if (not res or res.status_code!= 200) and query_yn("Cannot connect to couchbase. Still Wait?"):
                     continue
-                elif res.status_code == 200:
+                elif res and res.status_code == 200:
                     break
                 else:
                     exit()

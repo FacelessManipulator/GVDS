@@ -53,10 +53,10 @@ int main(int argc, char* argv[]){
     commandline.cmd_desc_func_map[cmdname] =  [](std::shared_ptr<po::options_description> sp_cmdline_options)->void {
         po::options_description command("添加或修改超算信息");
         command.add_options()
-                ("centerID", po::value<std::string>(), "超算ID")
-                ("centerIP", po::value<std::string>(), "超算IP")
-                ("centerPort", po::value<std::string>(), "超算端口")
-                ("centerName", po::value<std::string>(), "超算名字")
+                ("centerID,i", po::value<std::string>(), "超算ID")
+                ("centerIP,a", po::value<std::string>(), "超算IP")
+                ("centerPort,p", po::value<std::string>(), "超算端口")
+                ("centerName,n", po::value<std::string>(), "超算名字")
                 ;
         sp_cmdline_options->add(command); // 添加子模块命令行描述
     };
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]){
         std::promise<bool> prom;
         auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
-        IPCClient ipcClient("127.0.0.1", 6666);
+        IPCClient ipcClient("127.0.0.1", GVDS_CLIENT_LISTENING_PORT());
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             // 客户端输出服务端发送来的消息
             std::string ipcresult (msg.body(), msg.body_length());

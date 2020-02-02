@@ -4,7 +4,7 @@ ADD_LIBRARY(io_proxy STATIC proxy_op.cc io_proxy.cc io_worker.cc sync_io.cc ../m
 
 ADD_EXECUTABLE(hvs_ioproxy hvs_ioproxy_main.cc)
 
-TARGET_LINK_LIBRARIES(hvs_ioproxy io_proxy hvscommon ${HVSCOMMOM_DEPENDS_ON})
+TARGET_LINK_LIBRARIES(hvs_ioproxy io_proxy hvscommon ${HVSCOMMOM_DEPENDS_ON} boost_program_options)
 
 install(TARGETS hvs_ioproxy
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -9,9 +9,37 @@
 #include "io_proxy/io_proxy.h"
 #include "msg/rpc.h"
 #include "rpc_bindings.hpp"
+#include <boost/program_options.hpp>
 
-int main(int argc, char* argv[]) {
-  hvs::init_context();
+using namespace std;
+using namespace hvs;
+namespace po = boost::program_options;
+po::variables_map parse_cmd(int argc, char *const argv[])
+{
+  // Declare the supported options.
+  po::options_description desc("GVDS IOProxy daemon program");
+  desc.add_options()
+    ("help", "get help infomation from GVDS IOProxy.")
+    ("config,c", po::value<string>(), "set config file path, default is /etc/hvs/hvs.conf or /opt/hvs/hvs.conf");
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+  if (vm.count("help")) {
+    cout << desc << endl;
+    exit(EXIT_SUCCESS);
+  }
+  return std::move(vm);
+}
+
+int main(int argc, char* const argv[]) {
+  string config_path;
+  auto vm = parse_cmd(argc, argv);
+  if (vm.count("help")) {
+    return 0;
+  } else if (vm.count("config")) {
+    config_path = vm["config"].as<string>();
+  }
+  hvs::init_context(config_path);
   std::cout << "IOProxy Node Context initilized." << std::endl;
   hvs::IOProxy* ioproxy = hvs::init_ioproxy();
   if(ioproxy) {

@@ -79,8 +79,9 @@ sc::result Processing::react(const BufferComplete& op) {
   Client* node = (Client*)HvsContext::get_context()->node;
   outermost_context_type& worker = outermost_context();
   // invoked when worker turn to waiting state
+  size_t bufsize = worker.cur_buf->buf.size;
   worker.cur_buf->destroy();
-  node->queue->done_one();
+  node->queue->done_one(0, bufsize);
   return transit<Waiting>();
 }
 

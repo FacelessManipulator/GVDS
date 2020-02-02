@@ -26,7 +26,7 @@ class ClientBufferQueue : public ClientModule, Thread {
   ClientBufferQueue(const char* name, Client* cli) : ClientModule(name, cli), m_stop(false) {
     auto _config = HvsContext::get_context()->_config;
     isThread = true;
-    m_max_buf = _config->get<int>("client.max_queue").value_or(1024);
+    m_max_buf = _config->get<int>("client.max_queue").value_or(10240000);
     m_max_worker = _config->get<int>("client.onlink").value_or(1024);
     multi_channel = _config->get<int>("client.multi_channel").value_or(1);
     channel_loads.resize(multi_channel, 0);
@@ -44,7 +44,7 @@ class ClientBufferQueue : public ClientModule, Thread {
   public:
   bool queue_buffer(std::shared_ptr<Buffer> buf, bool block = true);
   std::future<bool> block_on_last(std::shared_ptr<IOProxyNode> iop);
-  void done_one(int channel_id = 0);
+  void done_one(int channel_id = 0, size_t bufsize = 0);
   int get_spare_channel();
   bool add_idle_worker(ClientWorker* woker);
 

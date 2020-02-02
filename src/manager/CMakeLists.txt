@@ -16,7 +16,8 @@ ADD_LIBRARY(managerO OBJECT
 )
 
 ADD_EXECUTABLE(hvs_manager main.cc)
-TARGET_LINK_LIBRARIES(hvs_manager hvscommon ${HVSCOMMOM_DEPENDS_ON} boost_thread boost_system managerO)
+TARGET_LINK_LIBRARIES(hvs_manager hvscommon ${HVSCOMMOM_DEPENDS_ON}
+ boost_thread boost_system boost_program_options managerO)
 
 install(TARGETS hvs_manager
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

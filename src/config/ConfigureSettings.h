@@ -137,5 +137,5 @@ bool ConfigureSettings::_add(libconfig::Setting& setting, std::string& path,
     return true;
   }
 }
-ConfigureSettings* init_config();
+ConfigureSettings* init_config(const std::string& config_path = "");
 }  // namespace hvs

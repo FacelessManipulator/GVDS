@@ -119,16 +119,20 @@ bool ConfigureSettings::writeFile(const char* outfile) {
   }
 }
 
-hvs::ConfigureSettings* hvs::init_config() {
+hvs::ConfigureSettings* hvs::init_config(const std::string& config_path) {
   hvs::ConfigureSettings* _config = nullptr;
-  std::vector<std::string> default_config_paths{
+  std::list<std::string> default_config_paths{
       "./hvs.conf", "/etc/hvs/hvs.conf", "/opt/hvs/hvs.conf"};
+  if (!config_path.empty()) {
+    default_config_paths.push_front(config_path);
+  }
   for (auto& path : default_config_paths) {
     if (boost::filesystem::exists(path)) {
       _config = new hvs::ConfigureSettings(path);
       if(!_config->vaild()) {
         return nullptr;
       }
+      std::cout << "GVDS Manager using config file: [" << path << "]." << std::endl;
       // default config code was moved to src/config/default_config.hpp
       default_config(_config);
       return _config;

@@ -75,7 +75,7 @@ int main(int argc, char* argv[]){
         std::promise<bool> prom;
         auto fu = prom.get_future();
         // TODO:  调用IPC 客户端 进行同行，并获取返回结果
-        IPCClient ipcClient("127.0.0.1", 6666);
+        IPCClient ipcClient("127.0.0.1", GVDS_CLIENT_LISTENING_PORT());
         ipcClient.set_callback_func([&](IPCMessage msg)->void {
             // 客户端输出服务端发送来的消息
 //            char tmp[IPCMessage::max_body_length] = {0};

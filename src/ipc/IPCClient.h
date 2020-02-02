@@ -46,6 +46,18 @@ namespace hvs{
         std::shared_ptr<std::thread> sp_context_thread; // 用来指向线程
         std::shared_ptr<std::function <void (IPCMessage)>>  sp_process_func; // 指向函数和lamda 表达式的智能指针
     };
+
+    inline int GVDS_CLIENT_LISTENING_PORT() {
+        // 6666 is the old version default client listening port.
+        int port = 6666;
+        try {
+            port = std::stoi(std::getenv("GVDS_CLIENT_LISTEN_PORT"));
+        } catch(std::exception e) {
+            // if env variable not exists, use old default value for compatibility
+            return 6666;
+        }
+        return port;
+    }
 }
 
 #endif //HVSONE_IPCCLIENT_H

@@ -33,9 +33,12 @@ void ClientIPC::stop()
 
 void ClientIPC::init()
 {
+    auto _config = HvsContext::get_context()->_config;
+    int listen_port = _config->get<int>("client.listen_port").value_or(6666);
     try
     {
-        sp_ipcserver = std::make_shared<IPCServer>(6666); // TODO : 端口需要再次确定！
+        
+        sp_ipcserver = std::make_shared<IPCServer>(listen_port); // TODO : 端口需要再次确定！
         sp_ipcserver->set_callback_func([&](IPCMessage msg) -> std::string {
             //命令行处理逻辑需要添加
             //            std::string cmdline(msg.body(), msg.body_length());

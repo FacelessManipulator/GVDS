@@ -51,6 +51,7 @@ manager = {
 client_temp = '''
 client = {
     mountpoint = "${MNT_POINT}";
+    listen_port = 6666;
     foreground = true;
     debug = false;
     multithread = true;
@@ -64,9 +65,9 @@ client = {
     max_queue = 12800000;
     onlink = 64;
     async = true;
-    readahead = 0;
+    readahead = 20;
     seq_threshold = 10;
-    stat_cache_size = 0;
+    stat_cache_size = 1000;
 };
 '''
 
@@ -162,10 +163,10 @@ def interact_options():
     print("======START Generated config file content START======")
     print(config_content)
     print("======END Generated config file content END======")
-    write_yn = query_yn("Should write it to /opt/hvs/hvs.conf?")
-    if write_yn:
-        with open('/opt/hvs/hvs.conf','w') as f:
-            f.write(config_content)
+    config_path = query_str("Input Config File Generate Path", "/opt/hvs/hvs.conf")
+    with open(config_path,'w') as f:
+        f.write(config_content)
+    print("Success in generating config file at %s"%config_path)
     print("******End GVDS Config Phase.******")
 
 def setup_couchbase():
@@ -217,11 +218,15 @@ def setup_couchbase():
             'ramQuotaMB':bk_mem , 'bucketType':'couchbase', 'name': config_ops['COUCHBASE_BUCKET']
             }
         res = requests.post('%s/pools/default/buckets'%couchbase_addr, data=data , headers=headers)
+        print("Sleep 3 seconds waiting for buckect create completing")
+        time.sleep(3)
         data = {
             'indexerThreads':'0', 'logLevel':'error', 'maxRollbackPoints':'5', 'memorySnapshotInterval': '200', 'stableSnapshotInterval': '5000',
             'storageMode': 'forestdb'
         }
         res = requests.post('%s/settings/indexes'%couchbase_addr, data=data , headers=headers)
+        print("Sleep 3 seconds waiting for buckect index completing")
+        time.sleep(3)
         data = {
             'statement': 'CREATE PRIMARY INDEX `%s-index` on `%s` USING GSI;'%(config_ops['COUCHBASE_BUCKET'],config_ops['COUCHBASE_BUCKET'])
         }
@@ -256,7 +261,8 @@ def check_couchbase():
 
 def generate_user(cn_name):
     if query_yn("generating 100 local system users, continue?"):
-        os.system("for i in {1..100}; do echo useradd -s test$i; done")
+        for i in range(1, 101):
+            os.system("useradd -r test%s"%i)
     print("Generating account document of %s in couchbase"%cn_name)
     authorization = base64.b64encode(config_ops['COUCHBASE_USER'] + ":" + config_ops['COUCHBASE_PASS'])
     headers = {

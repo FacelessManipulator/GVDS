@@ -10,7 +10,7 @@ ADD_EXECUTABLE(hvs_client main.cc fuse_mod.cc client.cc graph_mod.cc hvs_fuse_im
                 ./clientuser/ClientUser.cc
                 ./clientuser/ClientAuth_struct.cc
         readahead.cc readahead.h cache_mod.cc cache_mod.h)
-TARGET_LINK_LIBRARIES(hvs_client fuse3 hvscommon ${HVSCOMMOM_DEPENDS_ON})
+TARGET_LINK_LIBRARIES(hvs_client fuse3 hvscommon ${HVSCOMMOM_DEPENDS_ON} boost_program_options)
 
 install(TARGETS hvs_client
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

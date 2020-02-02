@@ -2,10 +2,10 @@
 
 namespace hvs {
 HvsContext* HvsContext::_context_p = nullptr;
-void init_context() {
+void init_context(const std::string& config_path) {
   HvsContext* _context = HvsContext::get_context();
   // TODO: use command line parameter config_path
-  _context->_config = init_config();
+  _context->_config = init_config(config_path);
   if (!_context->_config) {
     // failed to start config component
     std::cerr << "ERROR: cannot read config file." << std::endl << std::flush;

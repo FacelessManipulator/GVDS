@@ -35,7 +35,7 @@ class HvsContext {
   static HvsContext* _context_p;
 };
 
-extern void init_context();
+extern void init_context(const std::string& config_path = "");
 extern void destroy_context();
 }  // namespace hvs
 

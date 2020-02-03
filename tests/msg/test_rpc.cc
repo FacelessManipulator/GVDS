@@ -11,9 +11,6 @@ using namespace hvs;
 class RPCTEST : public ::testing::Test {
  protected:
   void SetUp() override {
-    //svr = HvsContext::get_context()->_rpc;
-    svr = init_rpcserver();
-    HvsContext::get_context()->_rpc = svr;
     ASSERT_NE(svr, nullptr);
   }
   void TearDown() override {

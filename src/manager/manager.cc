@@ -1,7 +1,6 @@
 #include "manager/manager.h"
 #include "manager/ioproxy_mgr.h"
 #include "manager/usermodel/UserModelServer.h"
-#include "manager/authmodel/AuthModelServer.h"
 #include "manager/mconf/mconf.h"
 #include "manager/resaggregation_mgr.h"
 #include "zone/ZoneServer.h"
@@ -139,7 +138,6 @@ hvs::Manager* init_manager() {
   mgr->registe_module(std::make_shared<SpaceServer>());
 
   mgr->registe_module(std::make_shared<UserModelServer>());
-  mgr->registe_module(std::make_shared<AuthModelServer>());
   mgr->registe_module(std::make_shared<Mconf>());
 
   hvs::HvsContext::get_context()->node = mgr;

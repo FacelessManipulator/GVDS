@@ -119,25 +119,6 @@ namespace hvs{
             dout(10) << "SpaceCreate失败！" << dendl;
             return "-2"; // 文件夹创建失败后，返回false字符串，用于之后的判断
         }
-        UserModelServer *p_usermodel = static_cast<UserModelServer*>(mgr->get_module("user").get());
-        string m_value = p_usermodel->getLocalAccountinfo(ownerID, tmpm.hostCenterName); 
-        if (m_value.compare("fail") == 0){
-            dout(10) << "getLocalAccountinfo fail" <<dendl;
-            return "-4";
-        }
-        LocalAccountPair owner_localpair;
-        owner_localpair.deserialize(m_value);
-        //创建组
-        std::string gp = groupname; 
-        std::string group_cmd = "groupadd " + gp;
-        dout(10) << group_cmd << dendl;
-        system(group_cmd.c_str());
-
-        //设置权限
-        string new_cmd = "chown -R " + owner_localpair.localaccount + ":" + gp + " " + rootdir;
-        system(new_cmd.c_str());
-
-
         new_space.spacePath = tmp_uuid; // TODO: 默认当前 spacepath 在存储集群顶层，且空间的名字为相对lustre挂载点的路径，并且使用UUID作为文件夹的名字
         //3、权限增加模块 ： 不需要
         //4、空间分配容量记录到聚合模块中

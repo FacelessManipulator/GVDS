@@ -4,13 +4,12 @@
 #include "gtest/gtest.h"
 
 using namespace std;
+using namespace hvs;
 
 class CouchbaseTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("beer-sample"));
-    ASSERT_EQ(dbPtr->init(), 0);
+    dbPtr = dynamic_pointer_cast<CouchbaseDatastore>(DatastoreFactory::create_datastore("test2", couchbase, true));
   }
   void TearDown() override { dbPtr.reset(); }
   static void SetUpTestCase() { hvs::init_context(); }
@@ -34,7 +33,8 @@ TEST_F(CouchbaseTest, CURD) {
 }
 
 TEST_F(CouchbaseTest, SubCommand) {
-  std::string key = "21st_amendment_brewery_cafe";
+  dbPtr->set(".DB_UNITTEST",  "{}");
+  std::string key = ".DB_UNITTEST";
   std::string path = "geo.lat2";
   std::string value = "37.7825";
   dbPtr->set(key, path, value);
@@ -54,4 +54,16 @@ TEST_F(CouchbaseTest, N1QL) {
       "select ** from `beer-sample` where country = \"United States\" limit 5;";
   tie(vp, err) = dbPtr->n1ql(query);
   EXPECT_EQ(-EINVAL, err);
+}
+
+TEST_F(CouchbaseTest, SubCommand2) {
+    std::string key = ".USER_UUID_MAP";
+    std::string path = "admin";
+    std::string value = "5d297210-a1dc-41d4-88dd-7fed4a9e2607";
+//    dbPtr->set(key, path, json_encode(value));
+    auto [vp, err] = dbPtr->get( ".USER_UUID_MAP", path);
+    cout << *vp << endl;
+    string res;
+    json_decode(*vp, res);
+    EXPECT_EQ(value, res);
 }

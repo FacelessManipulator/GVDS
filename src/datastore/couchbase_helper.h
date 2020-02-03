@@ -16,6 +16,7 @@ class CouchbaseDatastore : public hvs::Datastore {
 
  public:
   std::string get_typename() override { return "couchbase"; }
+  std::shared_ptr<Couchbase::Client> get_raw_client() {return client;}
   int set(const std::string& key, const std::string& value) override {
     return upsert(key, value);
   };

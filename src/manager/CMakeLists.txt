@@ -6,8 +6,6 @@ ADD_LIBRARY(managerO OBJECT
         usermodel/Account.cc
         usermodel/MD5.cc
         usermodel/UserModelServer.cc
-        authmodel/Auth.cc
-        authmodel/AuthModelServer.cc
         space/SpaceServer.cc
         zone/ZoneServer.cc
         resaggregation_mgr.cc

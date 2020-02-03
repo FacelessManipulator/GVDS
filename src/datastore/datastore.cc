@@ -31,7 +31,7 @@ std::shared_ptr<Datastore> DatastoreFactory::create_datastore(
 
   switch (type) {
     case couchbase:
-      dsp = std::make_shared<CouchbaseDatastore>(CouchbaseDatastore(name));
+      dsp = std::make_shared<CouchbaseDatastore>(name);
       dout(10) << "DatastoreFactory: create datastore instance "
                << dsp->get_typename() << dendl;
       break;

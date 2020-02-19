@@ -246,6 +246,12 @@ void ClientIPC::init()
                 cout << "resource update..." << endl;
                 return doresourceupdate(ipcreq);
             }
+            //space replica
+            if (ipcreq.cmdname == "spacereplica")
+            {
+                cout << "replicating spaces..." << endl;
+                return dospacereplica(ipcreq);
+            }
 
             else
             {
@@ -2256,5 +2262,24 @@ std::string ClientIPC::doadauthmodify(IPCreq &ipcreq)
         return "modify auth success";
     }
 }
+
+    std::string ClientIPC::dospacereplica(IPCreq &ipcreq)
+    {
+        // TODO: 提前准备的数据
+        string replicated_id = ipcreq.spacename;
+        string single_id = ipcreq.newspacename;
+        map<string, string> req;
+        req["replicated"] = replicated_id;
+        req["single"] = single_id;
+        string response = client->rpc->post_request(client->get_manager(), "/space/replica", json_encode(req));
+        int result;
+        json_decode(response, result);
+        if (!result)
+            return "success";
+        else if (result == -E2BIG)
+            return "ERROR: the number of replicated space exceeds maximun limit";
+        else
+            return "ERROR: cannot create replica space for UNKNOWN ERROR";
+    }
 
 } // namespace hvs

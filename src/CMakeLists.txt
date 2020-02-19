@@ -1,21 +1,20 @@
-# ADD_SUBDIRECTORY(hello)
 SET(CommonSRCS
-        common/Thread.cc
-        log/Log.cc
-        cmdline/CmdLineProxy.cc
-        config/ConfigureSettings.cc
-        common/context.cc
-        datastore/datastore.cc
-        datastore/couchbase_helper.cc
-        common/RestServer.cc
-        common/JsonSerializer.cc
-        msg/rpc.cc
-        msg/udt_client.cc
-        msg/udt_writer.cc
-        msg/client_session.cc
-        ipc/IPCClient.cc
-        ipc/IPCServer.cc
-        ipc/IPCMessage.hpp
+        ${PROJECT_SOURCE_DIR}/src/common/Thread.cc
+        ${PROJECT_SOURCE_DIR}/src/log/Log.cc
+        ${PROJECT_SOURCE_DIR}/src/cmdline/CmdLineProxy.cc
+        ${PROJECT_SOURCE_DIR}/src/config/ConfigureSettings.cc
+        ${PROJECT_SOURCE_DIR}/src/common/context.cc
+        ${PROJECT_SOURCE_DIR}/src/datastore/datastore.cc
+        ${PROJECT_SOURCE_DIR}/src/datastore/couchbase_helper.cc
+        ${PROJECT_SOURCE_DIR}/src/common/RestServer.cc
+        ${PROJECT_SOURCE_DIR}/src/common/JsonSerializer.cc
+        ${PROJECT_SOURCE_DIR}/src/msg/rpc.cc
+        ${PROJECT_SOURCE_DIR}/src/msg/udt_client.cc
+        ${PROJECT_SOURCE_DIR}/src/msg/udt_writer.cc
+        ${PROJECT_SOURCE_DIR}/src/msg/client_session.cc
+        ${PROJECT_SOURCE_DIR}/src/common/ipc/IPCClient.cc
+        ${PROJECT_SOURCE_DIR}/src/common/ipc/IPCServer.cc
+        ${PROJECT_SOURCE_DIR}/src/common/ipc/IPCMessage.hpp
 )
 
 SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
@@ -38,14 +37,14 @@ install(TARGETS hvscommon
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
+add_subdirectory(common/pb)
 add_subdirectory(io_proxy)
 add_subdirectory(client)
 add_subdirectory(manager)
-add_subdirectory(spacecmdline)
-add_subdirectory(zonecmdline)
-add_subdirectory(usercmdline)
-add_subdirectory(authcmdline)
-add_subdirectory(aggregationcmdline)
-add_subdirectory(mconfcmdline)
+add_subdirectory(cmdline/spacecmdline)
+add_subdirectory(cmdline/zonecmdline)
+add_subdirectory(cmdline/usercmdline)
+add_subdirectory(cmdline/aggregationcmdline)
+add_subdirectory(cmdline/mconfcmdline)
 
 #TARGET_LINK_LIBRARIES(hvsd hello)

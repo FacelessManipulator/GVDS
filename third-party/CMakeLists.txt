@@ -25,7 +25,7 @@ SET(RAPIDJSON_BUILD_THIRDPARTY_GTEST OFF CACHE BOOL
 SET(RAPIDJSON_HAS_STDSTRING ON CACHE BOOL "Use std::string in rapidjson.")
 
 # gtest variable override
-SET(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject")
+SET(BUILD_GMOCK ON CACHE BOOL "Builds the googlemock subproject")
 SET(INSTALL_GTEST OFF CACHE BOOL
     "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)")
 
@@ -105,6 +105,7 @@ ADD_SUBDIRECTORY(libcouchbase EXCLUDE_FROM_ALL)
 ADD_SUBDIRECTORY(rpclib EXCLUDE_FROM_ALL)
 ADD_SUBDIRECTORY(libconfig/lib EXCLUDE_FROM_ALL)
 ADD_SUBDIRECTORY(udt4/udt4 EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(grpc EXCLUDE_FROM_ALL)
 
 install(TARGETS pistache_shared couchbase
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -1,3 +1,9 @@
+/*
+ * @Author: Hanjie,Zhou
+ * @Date: 2020-02-20 00:36:58
+ * @Last Modified by:   Hanjie,Zhou
+ * @Last Modified time: 2020-02-20 00:36:58
+ */
 #include "client/msg_mod.h"
 #include "client/clientuser/ClientUser.h"
 
@@ -24,7 +30,7 @@ std::shared_ptr<RpcClient> ClientRpc::rpc_channel(
 
   if (rpcc != rpc_clients.end()) {
     auto& rpc_client = rpcc->second;
-    if(reconnect) {
+    if (reconnect) {
       dout(-1) << "create new rpc client" << dendl;
       auto newClient = make_shared<RpcClient>(node->ip, node->rpc_port);
       rpc_clients[channel_key].swap(newClient);
@@ -38,6 +44,27 @@ std::shared_ptr<RpcClient> ClientRpc::rpc_channel(
   return rpcp;
 }
 
+std::shared_ptr<OperatorClient> ClientRpc::get_operator(
+    std::shared_ptr<IOProxyNode> node, int channel_id) {
+  string channel_key(node->uuid);
+  channel_key.append(to_string(channel_id));
+  lock_guard<mutex> lock(rpc_mutex);
+  auto rpcc = operators.find(channel_key);
+
+  if (rpcc != operators.end()) {
+    auto& oper = rpcc->second;
+    return oper;
+  }
+  // Just try create it
+  // may cost a lot of moment
+  char target_str[256];
+  snprintf(target_str, 256, "%s:%u", node->ip.c_str(), node->rpc_port);
+  auto oper = make_shared<OperatorClient>(
+      grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
+  operators.try_emplace(channel_key, oper);
+  return oper;
+}
+
 std::shared_ptr<ClientSession> ClientRpc::udt_channel(
     std::shared_ptr<IOProxyNode> node, bool reconnect) {
   // Found, already established connection, maybe out-of-date.
@@ -47,7 +74,7 @@ std::shared_ptr<ClientSession> ClientRpc::udt_channel(
 
   if (udtc != udt_clients.end()) {
     auto& udtc_old = udtc->second;
-    if(reconnect) {
+    if (reconnect) {
       udt_client.close_session(udtc_old);
       auto new_con = udt_client.create_session(node->ip, node->data_port);
       udtc_old.swap(new_con);
@@ -67,32 +94,30 @@ int ClientRpc::write_data(std::shared_ptr<IOProxyNode> node,
   auto udtc = udt_channel(node);
   if (!udtc.get()) return -ETIMEDOUT;
   int id = udtc->write(buf);
-  if(id == -ECONNRESET) {
+  if (id == -ECONNRESET) {
     udtc = udt_channel(node, true);
     id = udtc->write(buf);
   }
-  if(id < 0)
-    return -ECONNREFUSED;
+  if (id < 0) return -ECONNREFUSED;
   auto res = udtc->wait_op(id);
-  if(res)
+  if (res)
     return res->error_code;
   else
     return -ETIMEDOUT;
 }
 
 int ClientRpc::write_data_async(std::shared_ptr<IOProxyNode> node,
-                          ioproxy_rpc_buffer& buf) {
+                                ioproxy_rpc_buffer& buf) {
   // TODO: We assume RpcClient can concurently call
   auto udtc = udt_channel(node);
   if (!udtc.get()) return -ETIMEDOUT;
   int id = udtc->write(buf);
-  if(id == -ECONNRESET) {
+  if (id == -ECONNRESET) {
     udtc = udt_channel(node, true);
     if (!udtc.get()) return -ETIMEDOUT;
     id = udtc->write(buf);
   }
-  if(id < 0)
-    return -ECONNREFUSED;
+  if (id < 0) return -ECONNREFUSED;
   // not waiting, result immediately
   udtc->auto_handle(id);
   return buf.buf.size;
@@ -104,14 +129,13 @@ shared_ptr<ioproxy_rpc_buffer> ClientRpc::read_data(
   auto udtc = udt_channel(node);
   if (!udtc.get()) return nullptr;
   int id = udtc->write(buf);
-  if(id < 0) {
+  if (id < 0) {
     udtc = udt_channel(node, true);
     id = udtc->write(buf);
   }
-  if(id < 0)
-    return nullptr;
+  if (id < 0) return nullptr;
   auto res = udtc->wait_op(id);
-  if(res)
+  if (res)
     return res;
   else {
     // timeout
@@ -144,7 +168,10 @@ std::string ClientRpc::post_request(const std::string& endpoint,
     auto restc = rest_channel(endpoint);
     string real_url = endpoint + url;
     string mtoken = client->user->getToken();
-    auto response = restc->post(real_url).cookie(Http::Cookie("token", mtoken)).body(data).send();
+    auto response = restc->post(real_url)
+                        .cookie(Http::Cookie("token", mtoken))
+                        .body(data)
+                        .send();
     dout(15) << "Info: Client post request to " << url << dendl;
 
     auto prom_p = make_shared<promise<std::string>>();
@@ -186,7 +213,8 @@ string ClientRpc::get_request(const string& endpoint, const string& url) {
     auto restc = rest_channel(endpoint);
     string real_url = endpoint + url;
     string mtoken = client->user->getToken();
-    auto response = restc->get(real_url).cookie(Http::Cookie("token", mtoken)).send();
+    auto response =
+        restc->get(real_url).cookie(Http::Cookie("token", mtoken)).send();
     dout(15) << "Info: Client get request to " << url << dendl;
 
     auto prom_p = make_shared<promise<std::string>>();
@@ -233,23 +261,23 @@ string ClientRpc::delete_request(const string& endpoint, const string& url) {
     auto prom_p = make_shared<promise<std::string>>();
     auto fu = prom_p->get_future();
     response.then(
-            [prom_p, endpoint, this](Http::Response res) {
-                dout(15) << "Info: Client post get response from " << endpoint
-                         << dendl;
-                prom_p->set_value(std::move(res.body()));
-                rest_cookies[endpoint] = res.cookies();
-            },
-            [prom_p, endpoint](exception_ptr& exptr) {
-                try {
-                  if (exptr) {
-                    rethrow_exception(exptr);
-                  }
-                } catch (const std::exception& e) {
-                  dout(10) << "Warnning: Client post get response rejected from "
-                           << endpoint << " reason: " << e.what() << dendl;
-                }
-                prom_p->set_value("");
-            });
+        [prom_p, endpoint, this](Http::Response res) {
+          dout(15) << "Info: Client post get response from " << endpoint
+                   << dendl;
+          prom_p->set_value(std::move(res.body()));
+          rest_cookies[endpoint] = res.cookies();
+        },
+        [prom_p, endpoint](exception_ptr& exptr) {
+          try {
+            if (exptr) {
+              rethrow_exception(exptr);
+            }
+          } catch (const std::exception& e) {
+            dout(10) << "Warnning: Client post get response rejected from "
+                     << endpoint << " reason: " << e.what() << dendl;
+          }
+          prom_p->set_value("");
+        });
     auto status = fu.wait_for(std::chrono::seconds(30));
     if (status == std::future_status::timeout) {
       dout(5) << "ERROR: Client connot connect to " << endpoint << dendl;

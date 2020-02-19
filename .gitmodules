@@ -25,3 +25,6 @@
 [submodule "third-party/udt4"]
 	path = third-party/udt4
 	url = ../udt.git
+[submodule "third-party/grpc"]
+	path = third-party/grpc
+	url = https://github.com/grpc/grpc.git

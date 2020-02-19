@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package gvds;
+
+// The greeting service definition.
+service Operator {
+  // Sends a greeting
+  rpc Submit (OpRequest) returns (OpReply) {}
+}
+
+enum OpType {
+  // filesystem operations
+  statfs = 0;
+
+  // general operations
+  getattr = 1;
+  rename = 2;
+  access = 3;
+  utimens = 4;
+  lock = 5;
+
+  // extend attributes
+  setxattr = 6;
+  getxattr = 7;
+  listxattr = 8;
+  removexattr = 9;
+
+  // permission operations
+  chmod = 10;
+  chown = 11;
+
+  // file operations
+  truncate = 12;
+  open = 13;
+  read = 14;
+  write = 15;
+  flush = 16;
+  release = 17;
+  fsync = 18;
+  create = 19;
+  write_buf = 20;
+  read_buf = 21;
+  fallocate = 22;
+  flock = 23;
+
+  // directory operations
+  mkdir = 24;
+  rmdir = 25;
+  opendir = 26;
+  readdir = 27;
+  releasedir = 28;
+  fsyncdir = 29;
+
+  // link operations
+  readlink = 30;
+  unlink = 31;
+  symlink = 32;
+  link = 33;
+
+  // special
+  bmap = 34;
+  ioctl = 35;
+  poll = 36;
+}
+
+// file and directory's attribute
+message Attr {
+  // client should already known the filename before sending the request
+  //option string filename = -1;
+  enum NodeType {
+    RegularFile = 0;
+    Directory = 1;
+    Link = 2;
+  }
+  uint64 size = 1;
+  NodeType type = 2;
+  int32 permission = 3;
+  uint64 ctime = 4; // change time means file's attr change time
+  uint64 mtime = 5; // modify time means file's content modify time
+}
+
+// The request message containing the user's name.
+message OpRequest {
+  uint64 id = 1;
+  string filepath = 2;
+  OpType type = 3;
+
+  message IOParam {
+    uint64 offset = 17;
+    uint64 size = 18;
+  }
+
+  oneof additional_param {
+    bool noadditional = 32;
+    string newpath = 33; // for rename op
+    uint64 size = 35; // for truncate op
+    string xattr_name = 36; // for xattr name
+    IOParam io_param = 37;
+  }
+  uint32 mode = 34; // pull out for operation fallocate; for open/create/permission op
+
+  bytes data = 65; // for xattr data or write content
+}
+
+// The response message containing the greetings
+message OpReply {
+  uint64 id = 1;
+  int32 err_code = 2;
+  oneof additional {
+    bool noadditional = 64;
+    // !important, data should not contains data longer than 2^32 (4GB)
+    bytes data = 65; // for xattr data or read content
+    Attr attr = 66; // may not return the attr
+  }
+  repeated string entry_names = 80;
+  repeated Attr entries = 81;
+}

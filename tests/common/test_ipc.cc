@@ -7,8 +7,8 @@
  */
 
 #include "gtest/gtest.h"
-#include "ipc/IPCServer.hpp"
-#include "ipc/IPCClient.h"
+#include "common/ipc/IPCServer.hpp"
+#include "common/ipc/IPCClient.h"
 #include <iostream>
 #include <thread>
 #include <boost/asio.hpp>

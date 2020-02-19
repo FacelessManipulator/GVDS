@@ -1,7 +1,13 @@
+/*
+ * @Author: Hanjie,Zhou
+ * @Date: 2020-02-20 00:36:13
+ * @Last Modified by:   Hanjie,Zhou
+ * @Last Modified time: 2020-02-20 00:36:13
+ */
 #include "client/client_worker.h"
-#include "client/queue.h"
 #include "client/fuse_mod.h"
 #include "client/msg_mod.h"
+#include "client/queue.h"
 
 using namespace hvs;
 
@@ -31,42 +37,41 @@ Processing::Processing(my_context ctx) : my_base(ctx) {
   boost::function0<void> callback =
       boost::bind(&Client_scheduler::queue_event, &(worker.my_scheduler()),
                   worker.my_handle(), callback_event);
-  if(worker.cur_buf->path == "") {
+  if (worker.cur_buf->path == "") {
     // fake buf, do nothing
-    if(worker.cur_buf->callback)
-      worker.cur_buf->callback();
+    if (worker.cur_buf->callback) worker.cur_buf->callback();
     callback();
     return;
   }
   if (!node->fuse->use_udt) {
-  ///> call **async** op processing function
-  int channel_id = node->queue->get_spare_channel() + 1;
-  auto rpcc = node->rpc->rpc_channel(worker.cur_buf->dest, false, channel_id);
-  if (rpcc->_client->get_connection_state() == rpc::client::connection_state::disconnected ||
-      rpcc->_client->get_connection_state() == rpc::client::connection_state::reset) {
-        rpcc = node->rpc->rpc_channel(worker.cur_buf->dest, true, channel_id);
-      }
-  // the callback function could be used to trigger some event
-  rpcc->async_call( "iop_write", callback, worker.cur_buf);
-  }
-  else {
+    ///> call **async** op processing function
+    int channel_id = node->queue->get_spare_channel() + 1;
+    auto oper = node->rpc->get_operator(worker.cur_buf->dest, channel_id);
+    OpRequest request;
+    request.set_type(OpType::write);
+    request.set_filepath(worker.cur_buf->path);
+    request.mutable_io_param()->set_size(worker.cur_buf->buf.size);
+    request.mutable_io_param()->set_offset(worker.cur_buf->offset);
+    request.set_data(worker.cur_buf->buf.ptr, worker.cur_buf->buf.size);
+    oper->SubmitAsync(request, callback);
+  } else {
     auto udtc = node->rpc->udt_channel(worker.cur_buf->dest, false);
-  // if (!udtc.get()) return -ETIMEDOUT;
-  ioproxy_rpc_buffer buf(*(worker.cur_buf.get()));
-  int id = udtc->write(buf);
-  if(id == -ECONNRESET) {
-    udtc = node->rpc->udt_channel(worker.cur_buf->dest, true);
     // if (!udtc.get()) return -ETIMEDOUT;
-    id = udtc->write(buf);
+    ioproxy_rpc_buffer buf(*(worker.cur_buf.get()));
+    int id = udtc->write(buf);
+    if (id == -ECONNRESET) {
+      udtc = node->rpc->udt_channel(worker.cur_buf->dest, true);
+      // if (!udtc.get()) return -ETIMEDOUT;
+      id = udtc->write(buf);
+    }
+    // if(id < 0)
+    //   return -ECONNREFUSED;
+    // not waiting, result immediately
+    udtc->registe_handler(id, callback);
   }
-  // if(id < 0)
-  //   return -ECONNREFUSED;
-  // not waiting, result immediately
-  udtc->registe_handler(id, callback);
-  }
-//  node->rpc->async_call(worker.cur_buf->dest, "iop_write", callback, worker.cur_buf);
+  //  node->rpc->async_call(worker.cur_buf->dest, "iop_write", callback,
+  //  worker.cur_buf);
 }
-
 
 Processing::~Processing() {
   // invoked when worker turn from waiting state

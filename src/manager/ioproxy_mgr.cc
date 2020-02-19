@@ -1,3 +1,9 @@
+/*
+ * @Author: Hanjie,Zhou
+ * @Date: 2020-02-20 00:40:34
+ * @Last Modified by:   Hanjie,Zhou
+ * @Last Modified time: 2020-02-20 00:40:34
+ */
 #include "manager/ioproxy_mgr.h"
 #include "datastore/couchbase_helper.h"
 #include "datastore/datastore.h"
@@ -18,41 +24,41 @@ void IOProxy_MGR::start() {
 }
 
 void IOProxy_MGR::stop() {
-    if(m_stop)
-        return;
-    m_stop = true;
-    join();
+  if (m_stop) return;
+  m_stop = true;
+  join();
 }
 
 void* IOProxy_MGR::entry() {
   while (!m_stop) {
     dout(15) << "ioproxy mgr check heart beat." << dendl;
-    for (auto iop_iter : live_ioproxy) {
-      auto iop = iop_iter.second;
-      try {
-        auto res = mgr->rpc->call(iop, "ioproxy_heartbeat");
-        if (res) {
-          auto ms_str = res->as<std::string>();
-          MonitorSpeed ms;
-          ms.deserialize(ms_str);
-          iop_stat[iop->uuid] = ms;
-          iop->status = IOProxyNode::Running;
-        } else {
-          iop->status = IOProxyNode::Stopped;
-        }
-      } catch (exception& e) {
-        dout(10) << "ERROR: IOProxy {" << iop->uuid << "} stopped work."
-                 << dendl;
-        iop->status = IOProxyNode::Stopped;
-      }
-    }
+    //    for (auto iop_iter : live_ioproxy) {
+    //      auto iop = iop_iter.second;
+    //      try {
+    //        auto res = mgr->rpc->call(iop, "ioproxy_heartbeat");
+    //        if (res) {
+    //          auto ms_str = res->as<std::string>();
+    //          MonitorSpeed ms;
+    //          ms.deserialize(ms_str);
+    //          iop_stat[iop->uuid] = ms;
+    //          iop->status = IOProxyNode::Running;
+    //        } else {
+    //          iop->status = IOProxyNode::Stopped;
+    //        }
+    //      } catch (exception& e) {
+    //        dout(10) << "ERROR: IOProxy {" << iop->uuid << "} stopped work."
+    //                 << dendl;
+    //        iop->status = IOProxyNode::Stopped;
+    //      }
+    //    }
     std::this_thread::sleep_for(std::chrono::seconds(10));
   }
 }
 
 void IOProxy_MGR::router(Router& router) {
   Routes::Get(router, "/ioproxy", Routes::bind(&IOProxy_MGR::list, this));
-  Routes::Get(router, "/ioproxy/detail", Routes::bind(&IOProxy_MGR::detail, this));
+  Routes::Get(router, "/ioproxy/detail",
+              Routes::bind(&IOProxy_MGR::detail, this));
   Routes::Get(router, "/ioproxy/:id", Routes::bind(&IOProxy_MGR::list, this));
   Routes::Post(router, "/ioproxy", Routes::bind(&IOProxy_MGR::add, this));
   Routes::Delete(router, "/ioproxy/:id", Routes::bind(&IOProxy_MGR::del, this));
@@ -79,13 +85,13 @@ bool IOProxy_MGR::add(const Rest::Request& req, Http::ResponseWriter res) {
 }
 
 bool IOProxy_MGR::list(const Rest::Request& req, Http::ResponseWriter res) {
-    res.send(Code::Ok, json_encode(live_ioproxy));
-    return true;
+  res.send(Code::Ok, json_encode(live_ioproxy));
+  return true;
 }
 
 bool IOProxy_MGR::detail(const Rest::Request& req, Http::ResponseWriter res) {
-    res.send(Code::Ok, json_encode(iop_stat));
-    return true;
+  res.send(Code::Ok, json_encode(iop_stat));
+  return true;
 }
 
 bool IOProxy_MGR::del(const Rest::Request& req, Http::ResponseWriter res) {
@@ -122,14 +128,15 @@ void IOProxy_MGR::init_ioproxy_list() {
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
   char query[256];
   snprintf(query, 256,
-           "select uuid,data_port,ip,name,rpc_port,cid from `%s` where META().id like '%s%%'",
+           "select uuid,data_port,ip,name,rpc_port,cid from `%s` where "
+           "META().id like '%s%%'",
            bucket.c_str(), IOProxyNode::prefix().c_str());
   auto [iop_infos_p, err] = cbd->n1ql(string(query));
-  for(auto info : *iop_infos_p) {
+  for (auto info : *iop_infos_p) {
     try {
       auto ion = make_shared<IOProxyNode>();
       ion->deserialize(info);
-      if(ion->cid == mgr->center_id) {
+      if (ion->cid == mgr->center_id) {
         live_ioproxy_tmp[ion->uuid] = ion;
       }
     } catch (Expectation& e) {

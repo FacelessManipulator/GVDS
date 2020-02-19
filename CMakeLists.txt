@@ -1,4 +1,3 @@
-
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 PROJECT(HVSONE CXX C)
@@ -19,6 +18,7 @@ option(BUILD_TESTING "Build test" ON)
 
 option(BUILD_THIRD_PARTY "Build with third party rather than depends on system" ON)
 
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/pb)
 if(BUILD_THIRD_PARTY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE FILEPATH "archive output path")
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE FILEPATH "library output path")

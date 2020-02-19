@@ -1,3 +1,9 @@
+/*
+ * @Author: Hanjie,Zhou
+ * @Date: 2020-02-20 00:40:58
+ * @Last Modified by:   Hanjie,Zhou
+ * @Last Modified time: 2020-02-20 00:40:58
+ */
 #include "common/json.h"
 #include "context.h"
 #include "datastore/couchbase_helper.h"
@@ -9,7 +15,8 @@ using namespace hvs;
 class CouchbaseTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    dbPtr = dynamic_pointer_cast<CouchbaseDatastore>(DatastoreFactory::create_datastore("test2", couchbase, true));
+    dbPtr = dynamic_pointer_cast<CouchbaseDatastore>(
+        DatastoreFactory::create_datastore("test2", couchbase, true));
   }
   void TearDown() override { dbPtr.reset(); }
   static void SetUpTestCase() { hvs::init_context(); }
@@ -33,7 +40,7 @@ TEST_F(CouchbaseTest, CURD) {
 }
 
 TEST_F(CouchbaseTest, SubCommand) {
-  dbPtr->set(".DB_UNITTEST",  "{}");
+  dbPtr->set(".DB_UNITTEST", "{}");
   std::string key = ".DB_UNITTEST";
   std::string path = "geo.lat2";
   std::string value = "37.7825";
@@ -56,14 +63,29 @@ TEST_F(CouchbaseTest, N1QL) {
   EXPECT_EQ(-EINVAL, err);
 }
 
+TEST_F(CouchbaseTest, ArrCommand) {
+  dbPtr->set(".TEST_SPACES", "\"replica\":[]");
+  auto dbraw = dbPtr->get_raw_client();
+  dbraw->arr_insert_uniq(".TEST_SPACES", "replica", "");
+  std::string key = ".USER_UUID_MAP";
+  std::string path = "admin";
+  std::string value = "5d297210-a1dc-41d4-88dd-7fed4a9e2607";
+  auto [vp, err] = dbPtr->get(".USER_UUID_MAP", path);
+  //    dbPtr->set(key, path, json_encode(value));
+  cout << *vp << endl;
+  string res;
+  json_decode(*vp, res);
+  EXPECT_EQ(value, res);
+}
+
 TEST_F(CouchbaseTest, SubCommand2) {
-    std::string key = ".USER_UUID_MAP";
-    std::string path = "admin";
-    std::string value = "5d297210-a1dc-41d4-88dd-7fed4a9e2607";
-//    dbPtr->set(key, path, json_encode(value));
-    auto [vp, err] = dbPtr->get( ".USER_UUID_MAP", path);
-    cout << *vp << endl;
-    string res;
-    json_decode(*vp, res);
-    EXPECT_EQ(value, res);
+  std::string key = ".USER_UUID_MAP";
+  std::string path = "admin";
+  std::string value = "5d297210-a1dc-41d4-88dd-7fed4a9e2607";
+  //    dbPtr->set(key, path, json_encode(value));
+  auto [vp, err] = dbPtr->get(".USER_UUID_MAP", path);
+  cout << *vp << endl;
+  string res;
+  json_decode(*vp, res);
+  EXPECT_EQ(value, res);
 }

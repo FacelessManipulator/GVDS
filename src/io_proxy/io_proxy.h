@@ -1,3 +1,9 @@
+/*
+ * @Author: Hanjie,Zhou
+ * @Date: 2020-02-20 00:38:33
+ * @Last Modified by:   Hanjie,Zhou
+ * @Last Modified time: 2020-02-20 00:38:33
+ */
 #pragma once
 
 #include <memory>
@@ -9,18 +15,40 @@
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/thread/thread.hpp>
 #include "common/Thread.h"
+#include "io_proxy/fd_mgr.h"
+#include "io_proxy/grpc_impl.h"
+#include "io_proxy/io_mon.h"
 #include "io_proxy/io_worker.h"
 #include "io_proxy/proxy_op.h"
-#include "io_proxy/fd_mgr.h"
-#include "msg/op.h"
 #include "msg/node.h"
+#include "msg/op.h"
 #include "msg/udt_server.h"
-#include "io_proxy/io_mon.h"
+#include "pistache/client.h"
+
+using namespace std;
+using namespace hvs;
+using namespace Pistache;
 
 namespace hvs {
+using grpc::Server;
+using grpc::ServerAsyncResponseWriter;
+using grpc::ServerBuilder;
+using grpc::ServerCompletionQueue;
+using grpc::ServerContext;
+using grpc::Status;
+using gvds::Operator;
+using gvds::OpReply;
+using gvds::OpRequest;
+
 class IOProxy : public Thread, public Node {
  public:
-  IOProxy() : m_stop(false), Node(IO_PROXY_NODE), _rpc(nullptr), proxy_op(this), fdm(this), iom(this) {
+  IOProxy()
+      : m_stop(false),
+        Node(IO_PROXY_NODE),
+        _rpc(nullptr),
+        proxy_op(this),
+        fdm(this),
+        iom(this) {
     // TODO: should read from config file
     m_max_op = 1000;
     m_max_worker = 1024;
@@ -62,23 +90,24 @@ class IOProxy : public Thread, public Node {
  private:
   std::vector<boost::thread*> worker_threads;
   std::vector<std::shared_ptr<IOProxy_scheduler>> schedulers;
-//  boost::lockfree::spsc_queue<IOProxyWorker* ,
-//                              boost::lockfree::capacity<1024>>
-//      idle_list;
+  //  boost::lockfree::spsc_queue<IOProxyWorker* ,
+  //                              boost::lockfree::capacity<1024>>
+  //      idle_list;
 
   std::queue<IOProxyWorker*> idle_list;
   std::mutex idle_list_mu;
   std::atomic<long> idle_worker_num;
   std::queue<std::shared_ptr<OP>> op_waiting_line;
-  int m_max_op;  // the max number of op in ioproxy
-  int m_max_worker;      // the max number of worker
+  int m_max_op;      // the max number of op in ioproxy
+  int m_max_worker;  // the max number of worker
   std::string manager_addr;
 
  private:
   // thread saft variables
   pthread_mutex_t m_queue_mutex;
   pthread_mutex_t m_dispatch_mutex;
-  pthread_cond_t m_cond_ioproxy;     // wait on when processing op exceeds max limits
+  pthread_cond_t
+      m_cond_ioproxy;  // wait on when processing op exceeds max limits
   pthread_cond_t m_cond_dispatcher;  // wait on when op waiting line is empty
 
   pthread_t m_queue_mutex_holder;
@@ -86,7 +115,7 @@ class IOProxy : public Thread, public Node {
   std::string data_path;
   bool m_stop;
 
-  public:
+ public:
   RpcServer* _rpc;
   UDTServer* _udt;
   ProxyOP proxy_op;
@@ -94,6 +123,7 @@ class IOProxy : public Thread, public Node {
   IOMonitor iom;
   virtual void rpc_bind(RpcServer* server) override;
   friend class IOProxyWorker;
+  unique_ptr<OpServerImpl> _ops;
 };
 extern hvs::IOProxy* init_ioproxy();
 extern void destroy_ioproxy(hvs::IOProxy* iop);

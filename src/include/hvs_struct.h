@@ -1,3 +1,9 @@
+/*
+ * @Author: Hanjie,Zhou
+ * @Date: 2020-02-20 00:38:00
+ * @Last Modified by:   Hanjie,Zhou
+ * @Last Modified time: 2020-02-20 00:38:00
+ */
 #pragma once
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -85,6 +91,7 @@ struct Space : public hvs::JsonSerializer {
   std::string hostCenterName;
   std::string storageSrcName;
   bool status;  //空间可用状态
+  std::vector<std::string> replica_spaces;
 
  public:
   void serialize_impl() override {
@@ -97,6 +104,7 @@ struct Space : public hvs::JsonSerializer {
     put("hostCenterName", hostCenterName);
     put("storageSrcName", storageSrcName);
     put("Status", status);
+    put("replica_spaces", replica_spaces);
   };
 
   void deserialize_impl() override {
@@ -109,26 +117,28 @@ struct Space : public hvs::JsonSerializer {
     get("hostCenterName", hostCenterName);
     get("storageSrcName", storageSrcName);
     get("Status", status);
+    get("replica_spaces", replica_spaces);
   };
 
  public:
   Space() = default;
-    Space& operator = (const Space& oths) {
-        spaceID = oths.spaceID;
-        spaceName = oths.spaceName;
-        spaceSize = oths.spaceSize;
-        hostCenterID = oths.hostCenterID;
-        storageSrcID = oths.storageSrcID;
-        spacePath = oths.spacePath;
-        hostCenterName = oths.hostCenterName;
-        storageSrcName = oths.storageSrcName;
-        status = oths.status;
-    }
+  Space& operator=(const Space& oths) {
+    spaceID = oths.spaceID;
+    spaceName = oths.spaceName;
+    spaceSize = oths.spaceSize;
+    hostCenterID = oths.hostCenterID;
+    storageSrcID = oths.storageSrcID;
+    spacePath = oths.spacePath;
+    hostCenterName = oths.hostCenterName;
+    storageSrcName = oths.storageSrcName;
+    status = oths.status;
+    replica_spaces = oths.replica_spaces;
+  }
 };
 
 struct SpaceRequest : public hvs::JsonSerializer {
  public:
-  std::string spaceID;       //空间ID
+  std::string spaceID;  //空间ID
   std::vector<std::string> spaceIDs;
   int64_t newSpaceSize;      //空间容量
   std::string newSpaceName;  //区域名
@@ -165,7 +175,7 @@ struct Zone : public hvs::JsonSerializer {
   std::string ownerID;                //区域主人ID，UUID
   std::vector<std::string> memberID;  //区域成员ID，UUID
   std::vector<std::string> spaceID;   //区域映射空间ID，UUID
-  std::vector<std::shared_ptr<Space>> spaceBicInfo;    //空间基本信息
+  std::vector<std::shared_ptr<Space>> spaceBicInfo;  //空间基本信息
 
   // AuthType ownerType;
   // AuthType groupType;
@@ -195,7 +205,6 @@ struct Zone : public hvs::JsonSerializer {
       put("groupAuth", groupAuth);
       put("otherAuth", otherAuth);
     }
-    
   }
 
   void deserialize_impl() override {
@@ -220,14 +229,14 @@ struct Zone : public hvs::JsonSerializer {
       // otherType = static_cast<AuthType>(otherAuth);
     }
   }
-  Zone& operator = (const Zone& oths) {
-      zoneID = oths.zoneID;
-      zoneName = oths.zoneName;
-      ownerID = oths.ownerID;
-      memberID = oths.memberID;
-      spaceID = oths.spaceID;
-      spaceBicInfo = oths.spaceBicInfo;
-      contains_spaceinfo = oths.contains_spaceinfo;
+  Zone& operator=(const Zone& oths) {
+    zoneID = oths.zoneID;
+    zoneName = oths.zoneName;
+    ownerID = oths.ownerID;
+    memberID = oths.memberID;
+    spaceID = oths.spaceID;
+    spaceBicInfo = oths.spaceBicInfo;
+    contains_spaceinfo = oths.contains_spaceinfo;
   }
 
  public:
@@ -235,7 +244,6 @@ struct Zone : public hvs::JsonSerializer {
 };
 
 struct ZoneRequest : public hvs::JsonSerializer {
-
  public:
   std::string zoneID;  //空间ID
   std::string clientID;
@@ -274,39 +282,37 @@ struct ZoneRequest : public hvs::JsonSerializer {
   }
 };
 
-//apply_info  数据库中结构
-class struct_apply_info : public hvs::JsonSerializer{
-public:
-    std::string id;
-    std::string data;
-public:
-    void serialize_impl(){
-      put("id", id);
-      put("data", data);
-    } 
-    void deserialize_impl(){
-      get("id", id);
-      get("data", data);
-    }
-public:
-    struct_apply_info() = default;
+// apply_info  数据库中结构
+class struct_apply_info : public hvs::JsonSerializer {
+ public:
+  std::string id;
+  std::string data;
+
+ public:
+  void serialize_impl() {
+    put("id", id);
+    put("data", data);
+  }
+  void deserialize_impl() {
+    get("id", id);
+    get("data", data);
+  }
+
+ public:
+  struct_apply_info() = default;
 };
 
-//apply_info 的string vector
-class struct_apply_content : public hvs::JsonSerializer{
-public:
-    std::vector<std::string> applycontent;
-public:
-    void serialize_impl(){
-      put("applycontent", applycontent);
-    } 
-    void deserialize_impl(){
-      get("applycontent", applycontent);
-    }
-public:
-    struct_apply_content() = default;
+// apply_info 的string vector
+class struct_apply_content : public hvs::JsonSerializer {
+ public:
+  std::vector<std::string> applycontent;
+
+ public:
+  void serialize_impl() { put("applycontent", applycontent); }
+  void deserialize_impl() { get("applycontent", applycontent); }
+
+ public:
+  struct_apply_content() = default;
 };
-
-
 
 }  // namespace hvs

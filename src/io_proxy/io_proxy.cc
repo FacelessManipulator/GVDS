@@ -1,48 +1,53 @@
+/*
+ * @Author: Hanjie,Zhou 
+ * @Date: 2020-02-20 00:38:30 
+ * @Last Modified by:   Hanjie,Zhou 
+ * @Last Modified time: 2020-02-20 00:38:30 
+ */
 #include "io_proxy/io_proxy.h"
 #include <pistache/client.h>
 #include <boost/filesystem.hpp>
 #include <future>
 #include <mutex>
+
+// gvds related
+#include <experimental/filesystem>
 #include "hvs_struct.h"
 #include "io_proxy/io_worker.h"
 #include "rpc_bindings.hpp"
 
-using namespace std;
-using namespace hvs;
-using namespace Pistache;
-
 namespace hvs {
-    IOProxyWorker* IOProxy::_get_idle_worker() {
-      IOProxyWorker* ret = nullptr;
-      // cause io process is fast, use spin lock here
-      while (ret == nullptr) {
-        idle_list_mu.lock();
-        if (idle_list.empty()) {
-          idle_list_mu.unlock();
-          usleep(1000);
-          idle_list_mu.lock();
-        } else {
-          ret = idle_list.front();
-          idle_list.pop();
-        }
-        idle_list_mu.unlock();
-      }
-//  while (!idle_list.pop(ret))
-//    usleep(100);
-      idle_worker_num--;
-      return ret;
-    }
-
-    bool IOProxy::add_idle_worker(IOProxyWorker* worker) {
-      idle_list_mu.lock();
-      idle_list.push(worker);
+IOProxyWorker* IOProxy::_get_idle_worker() {
+  IOProxyWorker* ret = nullptr;
+  // cause io process is fast, use spin lock here
+  while (ret == nullptr) {
+    idle_list_mu.lock();
+    if (idle_list.empty()) {
       idle_list_mu.unlock();
-      // should not wait, idle list max capcity > max number of idle worker
-//  while (!idle_list.push(wocker))
-//    usleep(100);
-      idle_worker_num++;
-      return true;
-    };
+      usleep(1000);
+      idle_list_mu.lock();
+    } else {
+      ret = idle_list.front();
+      idle_list.pop();
+    }
+    idle_list_mu.unlock();
+  }
+  //  while (!idle_list.pop(ret))
+  //    usleep(100);
+  idle_worker_num--;
+  return ret;
+}
+
+bool IOProxy::add_idle_worker(IOProxyWorker* worker) {
+  idle_list_mu.lock();
+  idle_list.push(worker);
+  idle_list_mu.unlock();
+  // should not wait, idle list max capcity > max number of idle worker
+  //  while (!idle_list.push(wocker))
+  //    usleep(100);
+  idle_worker_num++;
+  return true;
+};
 
 bool IOProxy::queue_and_wait(std::shared_ptr<OP> op) {
   auto worker_is_done = make_shared<promise<bool>>();
@@ -149,16 +154,18 @@ bool IOProxy::start() {
   // TODO: read configs
   auto _config = HvsContext::get_context()->_config;
   auto ip = _config->get<string>("ip");
-  Node::addr =  boost::asio::ip::make_address(ip.value_or("0.0.0.0"));
+  Node::addr = boost::asio::ip::make_address(ip.value_or("0.0.0.0"));
   auto scher_o = _config->get<int>("ioproxy.scher");
   data_path = _config->get<string>("ioproxy.data_path").value_or("/tmp/data");
   center_id = _config->get<std::string>("ioproxy.cid").value_or("unknown");
+  auto port = _config->get<int>("ioproxy.rpc_port").value_or(9092);
   if (!boost::filesystem::exists(data_path) ||
       !boost::filesystem::is_directory(data_path)) {
     dout(-1) << "ERROR: IOProxy data path not exists or is not directory."
              << dendl;
     return false;
   }
+  proxy_op.data_path = data_path;
   auto __manager_addr = _config->get<std::string>("manager_addr");
   if (!__manager_addr) {
     dout(-1) << "ERROR: NO MANAGER ADDR FOUND IN CONFIG FILE!\nPlease add "
@@ -176,13 +183,18 @@ bool IOProxy::start() {
     return false;
   }
   uuid = _config->get<string>("ioproxy.uuid").value();
+  // start rpc service
+  _ops.reset(new OpServerImpl(port));
+  _ops->start();
 
+  // start worker threads and scheduler
   int scher_num = scher_o.value_or(8);
   for (int i = 0; i < scher_num; i++) {
     auto scher = make_shared<IOProxy_scheduler>(true);
     schedulers.push_back(scher);
     for (int j = 0; j < m_max_worker / scher_num; j++) {
-      auto worker = scher->create_processor<IOProxyWorker>();
+      auto worker = scher->create_processor<IOProxyWorker>(_ops->get_service(),
+                                                           _ops->get_cq());
       scher->initiate_processor(worker);
     }
     boost::thread* t = new boost::thread(
@@ -191,19 +203,20 @@ bool IOProxy::start() {
   }
   pthread_mutex_unlock(&m_queue_mutex);
 
-  _rpc = init_rpcserver();
-  if (!_rpc) {
-    dout(-1) << "failed to start rpc component, exit!" << dendl;
-    return false;
-  }
+  // _rpc = init_rpcserver();
+  // if (!_rpc) {
+  //   dout(-1) << "failed to start rpc component, exit!" << dendl;
+  //   return false;
+  // }
   _udt = init_udtserver();
   if (!_udt) {
     dout(-1) << "failed to start udt component, exit!" << dendl;
     return false;
   }
   create("io_proxy");
-  iom.start();
-  while (!fresh_stat()) {
+  //  iom.start();
+  int max_loop = 3;
+  while (!fresh_stat() && max_loop-- > 0) {
     // continue register this ioproxy node to manager node until success
     sleep(5);
   }
@@ -240,26 +253,28 @@ bool IOProxy::fresh_stat() {
   node.uuid = uuid;
   node.name = Node::name;
   node.ip = Node::addr.to_string();
-  node.rpc_port = _rpc->port;
+  //    node.rpc_port = _rpc->port;
+  node.rpc_port = _ops->get_port();
   node.data_port = _udt->port;
   node.cid = center_id;
   auto response = client.post(url).body(node.serialize()).send();
-  dout(-1) << "DEBUG: Connecting to manager server [" << url << "]" << dendl;
+  dout(10) << "DEBUG: Connecting to manager server [" << url << "]" << dendl;
 
   std::promise<bool> prom;
   auto fu = prom.get_future();
   response.then(
       [&](Http::Response res) {
-        dout(10) << "INFO: connected to manager server. Response: " << res.code()
-                 << dendl;
+        dout(10) << "INFO: connected to manager server. Response: "
+                 << res.code() << dendl;
         // uuid = res.body();
         prom.set_value(true);
       },
       Async::IgnoreException);
   auto status = fu.wait_for(std::chrono::seconds(3));
   client.shutdown();
-  if(status == std::future_status::timeout) {
-    dout(-1) << "WARNING: Lost connection with manager server [" << url << "]" << dendl;
+  if (status == std::future_status::timeout) {
+    dout(15) << "WARNING: Lost connection with manager server [" << url << "]"
+             << dendl;
     return false;
   }
   return true;
@@ -270,7 +285,7 @@ void IOProxy::rpc_bind(RpcServer* server) { hvs_ioproxy_rpc_bind(server); }
 hvs::IOProxy* init_ioproxy() {
   hvs::IOProxy* ioproxy = new hvs::IOProxy;
   hvs::HvsContext::get_context()->node = ioproxy;
-  if(ioproxy->start())
+  if (ioproxy->start())
     return ioproxy;
   else {
     delete ioproxy;
@@ -279,8 +294,7 @@ hvs::IOProxy* init_ioproxy() {
 }
 
 void destroy_ioproxy(hvs::IOProxy* ioproxy) {
-  if(ioproxy)
-    ioproxy->stop();
+  if (ioproxy) ioproxy->stop();
   //  delete ioproxy;
 }
 }  // namespace hvs

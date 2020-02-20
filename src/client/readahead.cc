@@ -21,75 +21,87 @@ void ClientReadAhead::fetch_sector_remote(int buf_idx) {
     std::shared_ptr<IOProxyNode> iop = bufs[buf_idx].file.first;
     std::string filename = bufs[buf_idx].file.second;
 
-    auto rpcc = client->rpc->rpc_channel(iop, false, 100);
+
+    auto oper = client->rpc->get_operator(iop, 100);
+//    auto rpcc = client->rpc->rpc_channel(iop, false, 100);
     // the callback function could be used to trigger some event
     while (bufs[buf_idx].onlink < max_onlink && bufs[buf_idx].cur_sec_nr < bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec) {
         bufs[buf_idx].onlink++;
         uint64_t sec_nr = bufs[buf_idx].cur_sec_nr++, cur_epoch = bufs[buf_idx].epoch;
-        auto ft = rpcc->_client->async_call_callback("ioproxy_read",
-                                                     [this, sec_nr, iop, filename, buf_idx, cur_epoch]() {
-                                                         bufs[buf_idx].mut.lock();
-                                                         if (bufs[buf_idx].epoch != cur_epoch) {
-                                                             // out-of-date response, not expected
-                                                             bufs[buf_idx].mut.unlock();
-                                                             return;
-                                                         } else {
-                                                             bufs[buf_idx].onlink--;
-                                                             // fetch the response data from rpclib's future
-                                                             std::future<RPCLIB_MSGPACK::object_handle> ft_cur;
-                                                             if (bufs[buf_idx].ft_res_tab.count(sec_nr) > 0) {
-                                                                 ft_cur = std::move(bufs[buf_idx].ft_res_tab[sec_nr]);
-                                                                 bufs[buf_idx].ft_res_tab.erase(sec_nr);
-                                                             } else {
-                                                                 // if future not exsits, means new task has been set
-                                                                 bufs[buf_idx].mut.unlock();
-                                                                 return;
-                                                             }
-                                                             bufs[buf_idx].mut.unlock();
+        std::function<void()> callback = [this, sec_nr, iop, filename, buf_idx, cur_epoch]() {
+            bufs[buf_idx].mut.lock();
+            if (bufs[buf_idx].epoch != cur_epoch) {
+                // out-of-date response, not expected
+                bufs[buf_idx].mut.unlock();
+                return;
+            } else {
+                bufs[buf_idx].onlink--;
+                // fetch the response data from rpclib's future
+                std::future<OpReply*> ft_cur;
+                if (bufs[buf_idx].ft_res_tab.count(sec_nr) > 0) {
+                    ft_cur = std::move(bufs[buf_idx].ft_res_tab[sec_nr]);
+                    bufs[buf_idx].ft_res_tab.erase(sec_nr);
+                } else {
+                    // if future not exsits, means new task has been set
+                    bufs[buf_idx].mut.unlock();
+                    return;
+                }
+                bufs[buf_idx].mut.unlock();
 
-                                                             // this callback function may be miss called even if there is a timeout
-                                                             auto st = ft_cur.wait_for(chrono::milliseconds(100));
-                                                             if (st != future_status::ready) return;
-                                                             auto obj_hd = ft_cur.get();
-                                                             auto retbuf = obj_hd.as<ioproxy_rpc_buffer>();
-                                                             if (retbuf.error_code != 0) {
-                                                                 // stat failed on remote server
-                                                                 return;
-                                                             }
+                // this callback function may be miss called even if there is a timeout
+                auto st = ft_cur.wait_for(chrono::milliseconds(100));
+                if (st != future_status::ready) return;
+                auto reply = ft_cur.get();
+//                auto retbuf = obj_hd.as<ioproxy_rpc_buffer>();
+                if (reply->err_code() < 0) {
+                    // stat failed on remote server
+                    return;
+                }
 
-                                                             // copy the data from response to buffer
-                                                             memcpy(bufs[buf_idx].sector_addr(sec_nr), retbuf.buf.ptr,
-                                                                    retbuf.buf.size);
-                                                             bufs[buf_idx].mut.lock();
-                                                             bufs[buf_idx].sec_bufferd[sec_nr] = retbuf.buf.size;
-                                                             // if there are someone who waiting for this sector, wake it up
-                                                             if (bufs[buf_idx].prom_waiting_tab.count(sec_nr) > 0) {
-                                                                 bufs[buf_idx].prom_waiting_tab[sec_nr]->set_value(
-                                                                         retbuf.error_code == 0);
-                                                                 bufs[buf_idx].prom_waiting_tab.erase(sec_nr);
-                                                             }
-                                                             bufs[buf_idx].mut.unlock();
-                                                             dout(REAHAHEAD_DEBUG_LEVEL) << "prefetch: " << filename << " sector: "
-                                                                      << sec_nr
-                                                                      << " size:" << retbuf.buf.size << dendl;
+                // copy the data from response to buffer
+                memcpy(bufs[buf_idx].sector_addr(sec_nr), reply->data().c_str(),
+                       reply->err_code());
+                bufs[buf_idx].mut.lock();
+                bufs[buf_idx].sec_bufferd[sec_nr] = reply->err_code();
+                // if there are someone who waiting for this sector, wake it up
+                if (bufs[buf_idx].prom_waiting_tab.count(sec_nr) > 0) {
+                    bufs[buf_idx].prom_waiting_tab[sec_nr]->set_value(
+                            reply->err_code() >= 0);
+                    bufs[buf_idx].prom_waiting_tab.erase(sec_nr);
+                }
+                bufs[buf_idx].mut.unlock();
+                dout(REAHAHEAD_DEBUG_LEVEL) << "prefetch: " << filename << " sector: "
+                                            << sec_nr
+                                            << " size:" << reply->err_code()<< dendl;
 
-                                                             // trigger the next call, it could trigger at least 1 remote fetch
-                                                             if (retbuf.buf.size != 0 && bufs[buf_idx].onlink < max_onlink) {
-                                                                 if (bufs[buf_idx].cur_sec_nr >= bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec) {
-                                                                     // if cur buf_idx is full, use next buf
-                                                                     if (cur_epoch >= bufs[(buf_idx+1)%2].epoch) {
-                                                                         // if cur_epoch > next buf's epoch, means cur_task newer/same with the next buf's task
-                                                                         set_task(iop, filename, (buf_idx+1)%2, bufs[buf_idx].cur_sec_nr, bufs[buf_idx].max_sec, cur_epoch);
-                                                                     } else {
-                                                                         // else start the next buf
-                                                                         fetch_sector_remote((buf_idx + 1) % 2);
-                                                                     }
-                                                                 } else {
-                                                                     fetch_sector_remote(buf_idx);
-                                                                 }
-                                                             }
-                                                         }
-                                                     }, filename, 1 << 18, sec_nr << 18, 0);
+                // trigger the next call, it could trigger at least 1 remote fetch
+                if (reply->err_code() > 0 && bufs[buf_idx].onlink < max_onlink) {
+                    if (bufs[buf_idx].cur_sec_nr >= bufs[buf_idx].sec_bg + bufs[buf_idx].max_sec) {
+                        // if cur buf_idx is full, use next buf
+                        if (cur_epoch >= bufs[(buf_idx+1)%2].epoch) {
+                            // if cur_epoch > next buf's epoch, means cur_task newer/same with the next buf's task
+                            set_task(iop, filename, (buf_idx+1)%2, bufs[buf_idx].cur_sec_nr, bufs[buf_idx].max_sec, cur_epoch);
+                        } else {
+                            // else start the next buf
+                            fetch_sector_remote((buf_idx + 1) % 2);
+                        }
+                    } else {
+                        fetch_sector_remote(buf_idx);
+                    }
+                }
+            }
+        };
+
+        OpRequest request;
+        request.set_type(OpType::read);
+        request.mutable_io_param()->set_offset(sec_nr << 18);
+        request.mutable_io_param()->set_size( 1 << 18);
+        request.set_type(OpType::read);
+        request.set_filepath(filename);
+
+        auto ft = oper->SubmitAsync(request, callback);
+//        auto ft = rpcc->_client->async_call_callback("ioproxy_read",
+//                                                     , filename, 1 << 18, sec_nr << 18, 0);
         // TODO: we are not sure the code below 100% run before the callback function
         bufs[buf_idx].ft_res_tab[sec_nr] = std::move(ft);
     }
@@ -271,7 +283,10 @@ bool ClientReadAhead::set_task(std::shared_ptr<IOProxyNode> iop, const std::stri
         bufs[buf_idx].sec_bufferd.clear();
         bufs[buf_idx].sec_bg = sec_bg;
         bufs[buf_idx].max_sec = sec_max;
-        bufs[buf_idx].buf = (char *) realloc(bufs[buf_idx].buf, sec_max << 18);
+        if (bufs[buf_idx].buf != nullptr)
+            bufs[buf_idx].buf = (char *) realloc(bufs[buf_idx].buf, sec_max << 18);
+        else
+            bufs[buf_idx].buf = (char *) malloc(sec_max << 18);
         bufs[buf_idx].cur_sec_nr = sec_bg;
         bufs[buf_idx].onlink = 0;
         bufs[buf_idx].file.first = iop;

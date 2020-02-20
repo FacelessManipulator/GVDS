@@ -50,13 +50,14 @@ class OperatorClient : Thread {
     }
     return status;
   }
-  void SubmitAsync(const OpRequest &op, const std::function<void()> &callback) {
+  std::future<OpReply*> SubmitAsync(const OpRequest &op, const std::function<void()> &callback) {
     AsyncClientCall *call = new AsyncClientCall;
     call->response_reader = stub_->PrepareAsyncSubmit(&call->context, op, &cq_);
     call->callback = callback;
     // StartCall initiates the RPC call
     call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void *)call);
+    return std::move(call->prom.get_future());
   }
   void start() {
     m_stop = false;
@@ -79,9 +80,11 @@ class OperatorClient : Thread {
       // TODO: currently I trigger callback whether the connection success or
       // not
       if (call->status.ok()) {
+        call->prom.set_value(&call->reply);
         call->callback();
       } else {
         dout(-1) << "GRPC called failed" << dendl;
+        call->prom.set_value(nullptr);
         call->callback();
       }
       // Once we're complete, delete the call data
@@ -96,6 +99,7 @@ class OperatorClient : Thread {
     Status status;
     std::unique_ptr<ClientAsyncResponseReader<OpReply>> response_reader;
     std::function<void()> callback;
+    std::promise<OpReply*> prom;
   };
 
  private:

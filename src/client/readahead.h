@@ -7,12 +7,13 @@
 #include "client.h"
 #include "hvs_struct.h"
 #include "common/Thread.h"
+#include "client/msg_mod.h"
 
 #define CACHE_UNIT_SIZE 512
-#define REAHAHEAD_DEBUG_LEVEL 30
+#define REAHAHEAD_DEBUG_LEVEL 20
 
 namespace hvs {
-    class ClientReadAhead : public ClientModule {
+class ClientReadAhead : public ClientModule {
     private:
         virtual void start() override;
         virtual void stop() override;
@@ -33,7 +34,7 @@ namespace hvs {
             unsigned int max_sec;
             char* buf;
             std::atomic_uint64_t epoch;
-            std::map<uint64_t, std::future<RPCLIB_MSGPACK::object_handle>> ft_res_tab;
+            std::map<uint64_t, std::future<OpReply*>> ft_res_tab;
             std::map<uint64_t, std::shared_future<bool>> ft_waiting_tab;
             std::map<uint64_t, std::shared_ptr<std::promise<bool>>> prom_waiting_tab;
             std::pair<std::shared_ptr<IOProxyNode>, std::string> file;
@@ -41,6 +42,7 @@ namespace hvs {
             std::atomic_uint64_t cur_sec_nr;
             int cursor;
             std::mutex mut;
+            BufArea(): cursor(0), cur_sec_nr(0), onlink(0), sec_bg(0), max_sec(0), buf(nullptr), epoch(0) {}
             Status lookup(const std::string& filename, uint64_t sec_nr) {
                 if (filename != file.second) return NOT_FOUND;
                 if(sec_nr < sec_bg || sec_nr >= sec_bg + max_sec)

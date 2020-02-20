@@ -288,7 +288,7 @@ int ProxyOP::get_attr(const std::experimental::filesystem::path& path,
   struct stat st;
   int err = ::stat(path.c_str(), &st);
   if (err == -1) {
-    return errno;
+    return -errno;
   } else {
     attr.set_ctime(st.st_ctim.tv_sec);
     switch (st.st_mode & S_IFMT) {

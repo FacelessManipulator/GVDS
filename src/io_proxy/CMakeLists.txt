@@ -41,12 +41,12 @@ ADD_EXECUTABLE(hvs_ioproxy hvs_ioproxy_main.cc grpc_impl.cc
     ${gvds_grpc_srcs}
     proxy_op.cc io_proxy.cc
     io_worker.cc sync_io.cc ../msg/udt_server.cc ../msg/server_session.cc
-    fd_mgr.cc io_mon.cc
+    fd_mgr.cc io_mon.cc replica_mgr.cc
 )
 
 TARGET_LINK_LIBRARIES(hvs_ioproxy
     ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF} io_proxy hvscommon 
-    ${HVSCOMMOM_DEPENDS_ON} boost_program_options stdc++fs
+    ${HVSCOMMOM_DEPENDS_ON} boost_program_options stdc++fs roaring
 )
 
 install(TARGETS hvs_ioproxy

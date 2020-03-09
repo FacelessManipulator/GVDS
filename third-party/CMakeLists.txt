@@ -41,6 +41,10 @@ SET(LCB_EMBED_PLUGIN_LIBEVENT ON CACHE BOOL "Embed the libevent plugin")
 SET(LCB_STATIC_LIBEVENT ON CACHE BOOL "Link static libevent (only applicable if EMBED_PLUGIN_LIBEVENT is ON")
 SET(LCB_BUILD_STATIC OFF CACHE BOOL "Build libcouchbase static library")
 
+# CRoaring bitmap settings
+SET(ROARING_BUILD_STATIC ON CACHE BOOL "Build a static library")
+SET(ENABLE_ROARING_TESTS OFF CACHE BOOL "If OFF, disable unit tests altogether")
+
 if(HVS_CPPCHECK)
     find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
     if (CMAKE_CXX_CPPCHECK)
@@ -106,6 +110,7 @@ ADD_SUBDIRECTORY(rpclib EXCLUDE_FROM_ALL)
 ADD_SUBDIRECTORY(libconfig/lib EXCLUDE_FROM_ALL)
 ADD_SUBDIRECTORY(udt4/udt4 EXCLUDE_FROM_ALL)
 ADD_SUBDIRECTORY(grpc EXCLUDE_FROM_ALL)
+ADD_SUBDIRECTORY(croaring EXCLUDE_FROM_ALL)
 
 install(TARGETS pistache_shared couchbase
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

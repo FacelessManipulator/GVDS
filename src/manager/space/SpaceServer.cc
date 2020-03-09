@@ -10,7 +10,7 @@
 #include <pistache/http.h>
 #include <pistache/net.h>
 #include <atomic>
-
+#include <future>
 #include "common/centerinfo.h"
 #include "hvs_struct.h"
 #include "manager/space/SpaceServer.h"

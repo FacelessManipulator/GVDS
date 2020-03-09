@@ -815,6 +815,132 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
   return reply.err_code();
 }
 
+    int hvsfs_setxattr(const char *path, const char* name, const char* value, size_t size, int flags) {
+        std::vector<std::string> namev = splitWithStl(path, "/");
+        int nvsize = static_cast<int>(namev.size());
+        if (namev.size() <= 3) {
+            return -EPERM;
+        }
+        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        // not exists
+        if (!iop) {
+            return -ENOENT;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
+        //  auto res =
+        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        OpRequest request;
+        OpReply reply;
+        request.set_type(OpType::setxattr);
+        request.set_filepath(rpath);
+        request.set_xattr_name(name);
+        request.set_data(value, size);
+        request.set_size(size);
+        request.set_mode(flags);
+        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto status = oper->Submit(request, reply);
+        if (!status.ok()) {
+            // timeout exception raised
+            return -ENOENT;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+        return reply.err_code();
+    }
+
+    int hvsfs_getxattr(const char *path, const char* name, char* value, size_t size) {
+        std::vector<std::string> namev = splitWithStl(path, "/");
+        int nvsize = static_cast<int>(namev.size());
+        if (namev.size() <= 3) {
+            return -EPERM;
+        }
+        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        // not exists
+        if (!iop) {
+            return -ENOENT;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
+        //  auto res =
+        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        OpRequest request;
+        OpReply reply;
+        request.set_type(OpType::getxattr);
+        request.set_filepath(rpath);
+        request.set_xattr_name(name);
+        request.set_size(size);
+        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto status = oper->Submit(request, reply);
+        if (!status.ok()) {
+            // timeout exception raised
+            return -ENOENT;
+        }
+        if (reply.err_code() > 0) {
+            memcpy(value, reply.data().c_str(), reply.err_code());
+        }
+        dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+        return reply.err_code();
+    }
+
+    int hvsfs_listxattr(const char *path, char* value, size_t size) {
+        std::vector<std::string> namev = splitWithStl(path, "/");
+        int nvsize = static_cast<int>(namev.size());
+        if (namev.size() <= 3) {
+            return -EPERM;
+        }
+        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        // not exists
+        if (!iop) {
+            return -ENOENT;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
+        //  auto res =
+        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        OpRequest request;
+        OpReply reply;
+        request.set_type(OpType::listxattr);
+        request.set_filepath(rpath);
+        request.set_size(size);
+        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto status = oper->Submit(request, reply);
+        if (!status.ok()) {
+            // timeout exception raised
+            return -ENOENT;
+        }
+        if (reply.err_code() > 0) {
+            memcpy(value, reply.data().c_str(), reply.err_code());
+        }
+        dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+        return reply.err_code();
+    }
+
+    int hvsfs_removexattr(const char *path, const char* name) {
+        std::vector<std::string> namev = splitWithStl(path, "/");
+        int nvsize = static_cast<int>(namev.size());
+        if (namev.size() <= 3) {
+            return -EPERM;
+        }
+        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        // not exists
+        if (!iop) {
+            return -ENOENT;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
+        //  auto res =
+        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        OpRequest request;
+        OpReply reply;
+        request.set_type(OpType::removexattr);
+        request.set_filepath(rpath);
+        request.set_xattr_name(name);
+        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto status = oper->Submit(request, reply);
+        if (!status.ok()) {
+            // timeout exception raised
+            return -ENOENT;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+        return reply.err_code();
+    }
+
 struct fuse_operations hvsfs_oper = {
     .getattr = hvsfs_getattr,
     .readlink = hvsfs_readlink,
@@ -837,10 +963,10 @@ struct fuse_operations hvsfs_oper = {
     .flush = hvsfs_flush,      // TODO: cache 相关，暂时不做
     .release = hvsfs_release,  // TODO: 未保存文件fd, 暂时不做
     .fsync = hvsfs_fsync,      // TODO: caced 相关暂时不做
-    .setxattr = NULL,
-    .getxattr = NULL,
-    .listxattr = NULL,
-    .removexattr = NULL,
+    .setxattr = hvsfs_setxattr,
+    .getxattr = hvsfs_getxattr,
+    .listxattr = hvsfs_listxattr,
+    .removexattr = hvsfs_removexattr,
     .opendir = hvsfs_opendir,
     .readdir = hvsfs_readdir,
     .releasedir = hvsfs_releasedir,  // TODO: 未保存DIR, 暂时不做

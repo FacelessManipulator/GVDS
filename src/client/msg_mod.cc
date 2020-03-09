@@ -1,8 +1,8 @@
 /*
  * @Author: Hanjie,Zhou
  * @Date: 2020-02-20 00:36:58
- * @Last Modified by:   Hanjie,Zhou
- * @Last Modified time: 2020-02-20 00:36:58
+ * @Last Modified by: Hanjie,Zhou
+ * @Last Modified time: 2020-02-21 15:47:06
  */
 #include "client/msg_mod.h"
 #include "client/clientuser/ClientUser.h"
@@ -14,35 +14,36 @@ using namespace Pistache;
 void ClientRpc::start() {}
 
 void ClientRpc::stop() {
-  for (auto rpcc : rpc_clients) {
-    rpcc.second->shutdown();
-  }
+  // for (auto rpcc : rpc_clients) {
+  //   rpcc.second->shutdown();
+  // }
 }
 
-std::shared_ptr<RpcClient> ClientRpc::rpc_channel(
-    std::shared_ptr<IOProxyNode> node, bool reconnect, int channel_id) {
-  // Found, already established connection, maybe out-of-date.
-  // Currently we not mantain the exists connection.
-  string channel_key(node->uuid);
-  channel_key.append(to_string(channel_id));
-  lock_guard<mutex> lock(rpc_mutex);
-  auto rpcc = rpc_clients.find(channel_key);
+// abandoned rpclib
+// std::shared_ptr<RpcClient> ClientRpc::rpc_channel(
+//     std::shared_ptr<IOProxyNode> node, bool reconnect, int channel_id) {
+//   // Found, already established connection, maybe out-of-date.
+//   // Currently we not mantain the exists connection.
+//   string channel_key(node->uuid);
+//   channel_key.append(to_string(channel_id));
+//   lock_guard<mutex> lock(rpc_mutex);
+//   auto rpcc = rpc_clients.find(channel_key);
 
-  if (rpcc != rpc_clients.end()) {
-    auto& rpc_client = rpcc->second;
-    if (reconnect) {
-      dout(-1) << "create new rpc client" << dendl;
-      auto newClient = make_shared<RpcClient>(node->ip, node->rpc_port);
-      rpc_clients[channel_key].swap(newClient);
-    }
-    return rpc_client;
-  }
-  // Just try create it
-  // may cost a lot of moment
-  auto rpcp = make_shared<RpcClient>(node->ip, node->rpc_port);
-  rpc_clients.try_emplace(channel_key, rpcp);
-  return rpcp;
-}
+//   if (rpcc != rpc_clients.end()) {
+//     auto& rpc_client = rpcc->second;
+//     if (reconnect) {
+//       dout(-1) << "create new rpc client" << dendl;
+//       auto newClient = make_shared<RpcClient>(node->ip, node->rpc_port);
+//       rpc_clients[channel_key].swap(newClient);
+//     }
+//     return rpc_client;
+//   }
+//   // Just try create it
+//   // may cost a lot of moment
+//   auto rpcp = make_shared<RpcClient>(node->ip, node->rpc_port);
+//   rpc_clients.try_emplace(channel_key, rpcp);
+//   return rpcp;
+// }
 
 std::shared_ptr<OperatorClient> ClientRpc::get_operator(
     std::shared_ptr<IOProxyNode> node, int channel_id) {

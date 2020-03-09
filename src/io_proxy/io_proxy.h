@@ -19,6 +19,7 @@
 #include "io_proxy/grpc_impl.h"
 #include "io_proxy/io_mon.h"
 #include "io_proxy/io_worker.h"
+#include "io_proxy/replica_mgr.h"
 #include "io_proxy/proxy_op.h"
 #include "msg/node.h"
 #include "msg/op.h"
@@ -48,7 +49,8 @@ class IOProxy : public Thread, public Node {
         _rpc(nullptr),
         proxy_op(this),
         fdm(this),
-        iom(this) {
+        iom(this),
+        repm(this) {
     // TODO: should read from config file
     m_max_op = 1000;
     m_max_worker = 1024;
@@ -112,7 +114,6 @@ class IOProxy : public Thread, public Node {
 
   pthread_t m_queue_mutex_holder;
   pthread_t m_dispatcher_mutex_holder;
-  std::string data_path;
   bool m_stop;
 
  public:
@@ -121,6 +122,8 @@ class IOProxy : public Thread, public Node {
   ProxyOP proxy_op;
   FdManager fdm;
   IOMonitor iom;
+  ReplicaMgr repm;
+  std::experimental::filesystem::path data_path;
   virtual void rpc_bind(RpcServer* server) override;
   friend class IOProxyWorker;
   unique_ptr<OpServerImpl> _ops;

@@ -5,6 +5,7 @@
  * @Last Modified time: 2020-02-20 00:38:46
  */
 #include <sys/stat.h>
+#include <sys/xattr.h>
 
 #include <utime.h>
 #include "context.h"
@@ -167,12 +168,13 @@ void ProxyOP::do_op(gvds::OpRequest& request, gvds::OpReply& reply,
       DIR* dp = ::opendir((data_path / request.filepath()).c_str());
       struct dirent* de;
       if (dp == nullptr) {
+        ::closedir(dp);
         reply.set_err_code(-errno);
         break;
       }
       de = ::readdir(dp);
       if (de == nullptr) {
-        closedir(dp);
+        ::closedir(dp);
         reply.set_err_code(-errno);
         break;
       }
@@ -185,7 +187,6 @@ void ProxyOP::do_op(gvds::OpRequest& request, gvds::OpReply& reply,
         int err = get_attr(data_path / request.filepath() / filename, *attr);
         if (err != 0) {
           // this is rare in readdir
-          reply.set_err_code(err);
           delete attr;
           dout(-1) << "cannot found [" << request.filepath() << "/" << filename
                    << "]" << dendl;
@@ -253,10 +254,52 @@ void ProxyOP::do_op(gvds::OpRequest& request, gvds::OpReply& reply,
     }
 
     // TODO: not implemented yet!
-    case OpType::setxattr:
-    case OpType::getxattr:
-    case OpType::listxattr:
-    case OpType::removexattr:
+    case OpType::setxattr: {
+        if (request.xattr_name() == "user.replicate.create") {
+            int err = iop->repm.create_replicated_space(request.filepath(), request.data());
+            reply.set_err_code(err);
+        } else {
+            int err = ::setxattr((data_path/request.filepath()).c_str(), request.xattr_name().c_str(), request.data().c_str(),
+                                 request.size(), request.mode());
+            if (err == -1) {
+                reply.set_err_code(-errno);
+            }
+        }
+        break;
+    }
+    case OpType::getxattr: {
+        string* buf = new string();
+        buf->resize(request.size());
+        int err = ::getxattr((data_path/request.filepath()).c_str(), request.xattr_name().c_str(), buf->data(), request.size());
+        if (err == -1) {
+            reply.set_err_code(-errno);
+        } else {
+            reply.set_err_code(err);
+            reply.set_allocated_data(buf);
+        }
+        break;
+    }
+    case OpType::listxattr: {
+        string* buf = new string();
+        buf->resize(request.size());
+        int err = ::listxattr((data_path/request.filepath()).c_str(), buf->data(), request.size());
+        if (err == -1) {
+            reply.set_err_code(-errno);
+        } else {
+            reply.set_err_code(err);
+            reply.set_allocated_data(buf);
+        }
+        break;
+    }
+    case OpType::removexattr: {
+        int err = ::removexattr((data_path/request.filepath()).c_str(), request.xattr_name().c_str());
+        if (err == -1) {
+            reply.set_err_code(-errno);
+        } else {
+            reply.set_err_code(err);
+        }
+        break;
+    }
     case OpType::flock:
     case OpType::opendir:
     case OpType::releasedir:
@@ -280,7 +323,11 @@ void ProxyOP::do_op(gvds::OpRequest& request, gvds::OpReply& reply,
     case OpType::poll: {
       break;
     }
+      default:
+          break;
   }
+  iop->repm.handle_replica_async(move(request), reply);
+  callback();
 }
 
 int ProxyOP::get_attr(const std::experimental::filesystem::path& path,

@@ -34,8 +34,8 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
     return {nullptr, rpath};
   }
   for (const auto& ioproxy : *(ioproxy_list[centerID])) {
-    if (ioproxy.second->status == IOProxyNode::Running) {
-        iop = ioproxy.second;
+    if (ioproxy->status == IOProxyNode::Running) {
+        iop = ioproxy;
         break;
     }
   }
@@ -75,7 +75,14 @@ void ClientGraph::fresh_ioproxy() {
     if (res.size()) {
       json_decode(res, *ioproxy_list_tmp);
       graph_mutex.lock();
-      ioproxy_list[endpoint.center_id] = ioproxy_list_tmp;
+      for(auto& iop : *ioproxy_list_tmp) {
+          if (ioproxy_list.count(iop.second->cid) == 0) {
+              ioproxy_list[iop.second->cid] = make_shared<vector<std::shared_ptr<IOProxyNode>>>();
+          } else {
+              ioproxy_list[iop.second->cid]->clear();
+          }
+        ioproxy_list[iop.second->cid]->push_back(iop.second);
+      }
       graph_mutex.unlock();
       dout(10) << "INFO: get " << ioproxy_list.size()
                << " ioproxy from manager." << dendl;

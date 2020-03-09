@@ -61,6 +61,11 @@ enum OpType {
   bmap = 34;
   ioctl = 35;
   poll = 36;
+
+  // replicate
+  rep_init_space = 64;
+  rep_remove_space = 65;
+  rep_update_index = 66;
 }
 
 // file and directory's attribute
@@ -84,6 +89,8 @@ message OpRequest {
   uint64 id = 1;
   string filepath = 2;
   OpType type = 3;
+  // could be used to carry some control message
+  string extra = 4;
 
   message IOParam {
     uint64 offset = 17;
@@ -93,11 +100,11 @@ message OpRequest {
   oneof additional_param {
     bool noadditional = 32;
     string newpath = 33; // for rename op
-    uint64 size = 35; // for truncate op
     string xattr_name = 36; // for xattr name
     IOParam io_param = 37;
   }
   uint32 mode = 34; // pull out for operation fallocate; for open/create/permission op
+  uint64 size = 35; // for truncate op
 
   bytes data = 65; // for xattr data or write content
 }
@@ -114,4 +121,13 @@ message OpReply {
   }
   repeated string entry_names = 80;
   repeated Attr entries = 81;
+}
+
+message DataIndex {
+  message CIndex {
+    repeated uint64 off = 2;
+    repeated uint64 len = 3;
+  }
+  uint64 rsize = 1;
+  map<uint32, CIndex> index = 8;
 }

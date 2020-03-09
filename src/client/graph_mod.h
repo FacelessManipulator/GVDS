@@ -11,7 +11,7 @@
 
 namespace hvs {
 class ClientGraph : public ClientModule, public Thread {
-  typedef std::map<std::string, std::shared_ptr<IOProxyNode>> IOProxyListType;
+  typedef std::vector<std::shared_ptr<IOProxyNode>> IOProxyListType;
  private:
   virtual void start() override;
   virtual void stop() override;

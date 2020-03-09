@@ -8,7 +8,7 @@
 #include "context.h"
 #include "io_proxy/io_proxy.h"
 #include "msg/rpc.h"
-#include "rpc_bindings.hpp"
+// #include "rpc_bindings.hpp"
 #include <boost/program_options.hpp>
 
 using namespace std;

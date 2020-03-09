@@ -1,8 +1,8 @@
 /*
  * @Author: Hanjie,Zhou 
  * @Date: 2020-02-20 00:38:30 
- * @Last Modified by:   Hanjie,Zhou 
- * @Last Modified time: 2020-02-20 00:38:30 
+ * @Last Modified by: Hanjie,Zhou
+ * @Last Modified time: 2020-02-21 22:18:24
  */
 #include "io_proxy/io_proxy.h"
 #include <pistache/client.h>
@@ -14,7 +14,7 @@
 #include <experimental/filesystem>
 #include "hvs_struct.h"
 #include "io_proxy/io_worker.h"
-#include "rpc_bindings.hpp"
+// #include "rpc_bindings.hpp"
 
 namespace hvs {
 IOProxyWorker* IOProxy::_get_idle_worker() {
@@ -159,8 +159,8 @@ bool IOProxy::start() {
   data_path = _config->get<string>("ioproxy.data_path").value_or("/tmp/data");
   center_id = _config->get<std::string>("ioproxy.cid").value_or("unknown");
   auto port = _config->get<int>("ioproxy.rpc_port").value_or(9092);
-  if (!boost::filesystem::exists(data_path) ||
-      !boost::filesystem::is_directory(data_path)) {
+  if (!boost::filesystem::exists(data_path.string()) ||
+      !boost::filesystem::is_directory(data_path.string())) {
     dout(-1) << "ERROR: IOProxy data path not exists or is not directory."
              << dendl;
     return false;
@@ -213,6 +213,7 @@ bool IOProxy::start() {
     dout(-1) << "failed to start udt component, exit!" << dendl;
     return false;
   }
+  repm.start();
   create("io_proxy");
   //  iom.start();
   int max_loop = 3;
@@ -225,12 +226,12 @@ bool IOProxy::start() {
 
 void IOProxy::stop() {
   if (is_started()) {
-    if (_rpc != nullptr) {
-      dout(-1) << "stopping rpc service..." << dendl;
-      _rpc->stop();
-      delete _rpc;
-      _rpc = nullptr;
-    }
+//    if (_rpc != nullptr) {
+//      dout(-1) << "stopping rpc service..." << dendl;
+//      _rpc->stop();
+//      delete _rpc;
+//      _rpc = nullptr;
+//    }
     pthread_mutex_lock(&m_queue_mutex);
     m_stop = true;
     pthread_cond_signal(&m_cond_dispatcher);
@@ -258,29 +259,52 @@ bool IOProxy::fresh_stat() {
   node.data_port = _udt->port;
   node.cid = center_id;
   auto response = client.post(url).body(node.serialize()).send();
-  dout(10) << "DEBUG: Connecting to manager server [" << url << "]" << dendl;
+  dout(-1) << "DEBUG: Connecting to manager server [" << url << "]" << dendl;
 
   std::promise<bool> prom;
   auto fu = prom.get_future();
   response.then(
-      [&](Http::Response res) {
-        dout(10) << "INFO: connected to manager server. Response: "
+      [&prom](Http::Response res) {
+        dout(-1) << "INFO: connected to manager server. Response: "
                  << res.code() << dendl;
-        // uuid = res.body();
         prom.set_value(true);
       },
       Async::IgnoreException);
   auto status = fu.wait_for(std::chrono::seconds(3));
-  client.shutdown();
   if (status == std::future_status::timeout) {
-    dout(15) << "WARNING: Lost connection with manager server [" << url << "]"
+    dout(-1) << "WARNING: Lost connection with manager server [" << url << "]"
              << dendl;
+    client.shutdown();
     return false;
   }
+  promise<bool> prom2;
+  auto fu2 = prom2.get_future();
+  auto nodelist = client.get(url).send();
+  nodelist.then(
+          [&prom2, this](Http::Response res) {
+              dout(-1) << "INFO: got ioproxy list from manager." << dendl;
+              // uuid = res.body();
+              map<string, shared_ptr<IOProxyNode>> tmp;
+              json_decode(res.body(), tmp);
+              for(auto& iop : tmp )
+                repm.ioproxys[stoi(iop.second->cid)] = iop.second;
+              prom2.set_value(true);
+          },
+          Async::IgnoreException);
+  auto status2 = fu2.wait_for(std::chrono::seconds(10));
+  if (status2 == std::future_status::timeout) {
+      dout(-1) << "ERROR: cannot get ioproxy list from manager server [" << url << "]"
+               << dendl;
+      client.shutdown();
+      return false;
+  }
+  client.shutdown();
   return true;
 }
 
-void IOProxy::rpc_bind(RpcServer* server) { hvs_ioproxy_rpc_bind(server); }
+void IOProxy::rpc_bind(RpcServer* server) {
+  // hvs_ioproxy_rpc_bind(server);
+}
 
 hvs::IOProxy* init_ioproxy() {
   hvs::IOProxy* ioproxy = new hvs::IOProxy;

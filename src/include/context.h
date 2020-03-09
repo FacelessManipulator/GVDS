@@ -11,7 +11,6 @@
 #include <string>
 
 namespace hvs {
-class RpcServer;
 class Log;
 class ConfigureSettings;
 class IOProxy;
@@ -43,4 +42,3 @@ extern void destroy_context();
 #include "config/ConfigureSettings.h"
 #include "log/Log.h"
 #include "msg/node.h"
-#include "msg/rpc.h"

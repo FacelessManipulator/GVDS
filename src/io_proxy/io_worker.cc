@@ -49,8 +49,6 @@ Processing::Processing(my_context ctx) : my_base(ctx) {
   // node->proxy_op.prepare_op(worker.cur_op);
   node->proxy_op.do_op(worker.cur_call->request, worker.cur_call->reply,
                        callback);
-  worker.cur_call->reply.set_id(5);
-  callback();
 }
 
 Processing::~Processing() {

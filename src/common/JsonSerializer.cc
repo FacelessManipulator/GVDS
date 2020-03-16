@@ -1,6 +1,6 @@
 #include "common/JsonSerializer.h"
 
-using namespace hvs;
+using namespace gvds;
 
 template <>
 void JsonSerializer::encode<unsigned>(unsigned& value) {

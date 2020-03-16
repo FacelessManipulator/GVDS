@@ -5,7 +5,7 @@
 #include "rpc/server.h"
 #include <string>
 
-namespace hvs {
+namespace gvds {
 struct stat_buffer {
   int error_code;
   unsigned st_dev;

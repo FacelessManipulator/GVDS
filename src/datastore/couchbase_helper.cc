@@ -6,7 +6,7 @@
 #include "libcouchbase/couchbase++/query.h"
 // #include "config.h"
 
-void hvs::N1qlResponse::deserialize_impl() {
+void gvds::N1qlResponse::deserialize_impl() {
   std::string status_s;
   std::map<std::string, unsigned> metrics;
   get("requestID", id);
@@ -23,7 +23,7 @@ void hvs::N1qlResponse::deserialize_impl() {
   }
 }
 
-int hvs::CouchbaseDatastore::init() {
+int gvds::CouchbaseDatastore::init() {
   if (!initilized) {
     int err = _connect(name);
     if (!err) initilized = true;
@@ -33,9 +33,9 @@ int hvs::CouchbaseDatastore::init() {
   }
 }
 
-int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
+int gvds::CouchbaseDatastore::_connect(const std::string& bucket) {
   // format the connection string
-  auto _config = hvs::HvsContext::get_context()->_config;
+  auto _config = gvds::HvsContext::get_context()->_config;
   auto server_address = _config->get<std::string>("manager.couchbase_addr");
   auto username = _config->get<std::string>("manager.couchbase_user");
   auto passwd = _config->get<std::string>("manager.couchbase_passwd");
@@ -75,7 +75,7 @@ int hvs::CouchbaseDatastore::_connect(const std::string& bucket) {
   return rc.errcode();
 }
 
-int hvs::CouchbaseDatastore::insert(const std::string& key,
+int gvds::CouchbaseDatastore::insert(const std::string& key,
                                   const std::string& doc) {
   Couchbase::StoreResponse rs = client->insert(key, doc);
   if (!rs.status().success()) {
@@ -86,7 +86,7 @@ int hvs::CouchbaseDatastore::insert(const std::string& key,
   return rs.status().errcode();
 }
 
-int hvs::CouchbaseDatastore::upsert(const std::string& key,
+int gvds::CouchbaseDatastore::upsert(const std::string& key,
                                   const std::string& doc) {
   Couchbase::StoreResponse rs = client->upsert(key, doc);
   if (!rs.status().success()) {
@@ -97,7 +97,7 @@ int hvs::CouchbaseDatastore::upsert(const std::string& key,
   return rs.status().errcode();
 }
 
-int hvs::CouchbaseDatastore::upsert_sub(const std::string& key,
+int gvds::CouchbaseDatastore::upsert_sub(const std::string& key,
                                   const std::string& path,
                                   const std::string& subdoc) {
   Couchbase::SubdocResponse rs = client->upsert_sub(key, path, subdoc);
@@ -108,7 +108,7 @@ int hvs::CouchbaseDatastore::upsert_sub(const std::string& key,
   return rs.status().errcode();
 }
 
-bool hvs::CouchbaseDatastore::_exist(const std::string& key, const std::string& path) {
+bool gvds::CouchbaseDatastore::_exist(const std::string& key, const std::string& path) {
   Couchbase::SubdocResponse rs = client->exists_sub(key, path);
   if (!rs.status().success()) {
     dout(5) << "ERROR: Couchbase helper exsits failed " << key.c_str()
@@ -118,7 +118,7 @@ bool hvs::CouchbaseDatastore::_exist(const std::string& key, const std::string& 
   return rs.status().errcode();
 }
 
-std::tuple<std::shared_ptr<std::string>, int> hvs::CouchbaseDatastore::_get(
+std::tuple<std::shared_ptr<std::string>, int> gvds::CouchbaseDatastore::_get(
     const std::string& key) {
   Couchbase::GetResponse rs = client->get(key);
   std::shared_ptr<std::string> content;
@@ -131,7 +131,7 @@ std::tuple<std::shared_ptr<std::string>, int> hvs::CouchbaseDatastore::_get(
   return {content, rs.status().errcode()};
 }
 
-std::tuple<std::shared_ptr<std::string>, int> hvs::CouchbaseDatastore::_get(
+std::tuple<std::shared_ptr<std::string>, int> gvds::CouchbaseDatastore::_get(
     const std::string& key, const std::string& path) {
   Couchbase::SubdocResponse rs = client->get_sub(key, path);
   std::shared_ptr<std::string> content;
@@ -144,7 +144,7 @@ std::tuple<std::shared_ptr<std::string>, int> hvs::CouchbaseDatastore::_get(
   return {content, rs.status().errcode()};
 }
 
-int hvs::CouchbaseDatastore::_remove(const std::string& key) {
+int gvds::CouchbaseDatastore::_remove(const std::string& key) {
   Couchbase::RemoveResponse rs = client->remove(key);
   if (!rs.status().success()) {
     dout(5) << "ERROR: Couchbase helper couldn't remove kv pair " << key.c_str()
@@ -154,7 +154,7 @@ int hvs::CouchbaseDatastore::_remove(const std::string& key) {
 }
 
 std::tuple<std::shared_ptr<std::vector<std::string>>, int>
-hvs::CouchbaseDatastore::_n1ql(const std::string& query) {
+gvds::CouchbaseDatastore::_n1ql(const std::string& query) {
   Couchbase::QueryCommand qcmd(query);
   Couchbase::Status status;
   N1qlResponse res;

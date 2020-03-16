@@ -2,11 +2,11 @@
 
 #include <map>
 #include <string>
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "manager.h"
 #include "monitor_counter.hpp"
 
-namespace hvs {
+namespace gvds {
 class IOProxy_MGR : public ManagerModule, public Thread {
  private:
   virtual void start() override;
@@ -41,4 +41,4 @@ private:
   bool m_stop;
 };
 
-}  // namespace hvs
+}  // namespace gvds

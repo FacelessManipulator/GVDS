@@ -5,7 +5,7 @@
 #include "common/json.h"
 #include "gtest/gtest.h"
 
-class Pet : public hvs::JsonSerializer {
+class Pet : public gvds::JsonSerializer {
  public:
   std::string name;
   std::vector<std::string> children_name;
@@ -35,7 +35,7 @@ class Pet : public hvs::JsonSerializer {
   Pet(std::string n) : name(n) {}
   Pet() = default;
 };
-class User : public hvs::JsonSerializer {
+class User : public gvds::JsonSerializer {
  public:
   int age;
   std::string name;
@@ -92,7 +92,7 @@ User generate_user() {
   return user;
 }
 
-TEST(HVSJsonTest, Simple) {
+TEST(GVDSJsonTest, Simple) {
   User u1 = generate_user();
   User u2;
   std::string u1_json = u1.serialize();
@@ -102,7 +102,7 @@ TEST(HVSJsonTest, Simple) {
   EXPECT_EQ(u1, u2);
 }
 
-TEST(HVSJsonTest, Simple2) {
+TEST(GVDSJsonTest, Simple2) {
   User u1 = generate_user();
   User u2;
   std::string u1_json = u1.serialize();
@@ -114,37 +114,37 @@ TEST(HVSJsonTest, Simple2) {
   // EXPECT_EQ(u1, u2);
 }
 
-TEST(HVSJsonTest, DencVector) {
+TEST(GVDSJsonTest, DencVector) {
   std::vector<int> vec = {1, 2, 3, 4, 5};
-  std::string json_str = hvs::json_encode(vec);
+  std::string json_str = gvds::json_encode(vec);
   std::cout << json_str << std::endl;
   std::vector<int> vec2 = {2, 3, 4};
   std::map<std::string, int> _map;
-  hvs::json_decode(json_str, _map);
+  gvds::json_decode(json_str, _map);
   // EXPECT_EQ(vec, vec2);
   EXPECT_EQ(_map.size(), 0);
 }
 
-TEST(HVSJsonTest, DencUser) {
+TEST(GVDSJsonTest, DencUser) {
   User u1 = generate_user();
   // decode sub object
-  std::string json_str = hvs::json_encode(u1.pet);
+  std::string json_str = gvds::json_encode(u1.pet);
   User u2;
-  hvs::json_decode(json_str, u2.pet);
+  gvds::json_decode(json_str, u2.pet);
   EXPECT_EQ(u1.pet, u2.pet);
 
   // decode normal type
-  json_str = hvs::json_encode(u1.height);
-  hvs::json_decode(json_str, u2.height);
+  json_str = gvds::json_encode(u1.height);
+  gvds::json_decode(json_str, u2.height);
   EXPECT_EQ(u1.height, u2.height);
 
   // decode map type
-  json_str = hvs::json_encode(u1.pets_age);
-  hvs::json_decode(json_str, u2.pets_age);
+  json_str = gvds::json_encode(u1.pets_age);
+  gvds::json_decode(json_str, u2.pets_age);
   EXPECT_EQ(u1.pets_age, u2.pets_age);
 
   // decode all
-  json_str = hvs::json_encode(u1);
-  hvs::json_decode(json_str, u2);
+  json_str = gvds::json_encode(u1);
+  gvds::json_decode(json_str, u2);
   EXPECT_EQ(u1, u2);
 }

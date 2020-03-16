@@ -2,12 +2,12 @@
  * Created by Yaowen Xu on 2019-03-20.
  * 作者: Yaowen Xu
  * 时间: 2019-03-20
- * 工程: HVSONE
+ * 工程: GVDS
  * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
  */
 
-#ifndef HVSONE_IPCCLIENT_H
-#define HVSONE_IPCCLIENT_H
+#ifndef GVDS_IPCCLIENT_H
+#define GVDS_IPCCLIENT_H
 #include <iostream>
 #include <boost/asio.hpp>
 #include "IPCMessage.hpp" // 引入消息格式
@@ -16,7 +16,7 @@
 #include <thread>
 #include <string>
 
-namespace hvs{
+namespace gvds{
     typedef std::deque<IPCMessage> ipc_message_queue;
 
     class IPCClient {
@@ -60,4 +60,4 @@ namespace hvs{
     }
 }
 
-#endif //HVSONE_IPCCLIENT_H
+#endif //GVDS_IPCCLIENT_H

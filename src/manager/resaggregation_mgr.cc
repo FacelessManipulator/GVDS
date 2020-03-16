@@ -2,7 +2,7 @@
 #include "datastore/datastore.h"
 #include "datastore/couchbase_helper.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 using namespace Pistache::Rest;
 using namespace Pistache::Http;
@@ -28,7 +28,7 @@ void ResAggregation_MGR::router(Router &router)
 bool ResAggregation_MGR::add(const Rest::Request &req, Http::ResponseWriter res)
 {
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
-      bucket, hvs::DatastoreType::couchbase, true);
+      bucket, gvds::DatastoreType::couchbase, true);
   auto storage_res = parse_request(req);
   // broken request
   if (!storage_res)
@@ -61,7 +61,7 @@ bool ResAggregation_MGR::add(const Rest::Request &req, Http::ResponseWriter res)
 bool ResAggregation_MGR::list(const Rest::Request &req, Http::ResponseWriter res)
 {
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
-      bucket, hvs::DatastoreType::couchbase, true);
+      bucket, gvds::DatastoreType::couchbase, true);
   auto cbd = static_cast<CouchbaseDatastore *>(dbPtr.get());
   auto uuid = req.param(":id").as<std::string>();
   string reluuid = StorageResource::prefix() + uuid;
@@ -101,7 +101,7 @@ bool ResAggregation_MGR::list(const Rest::Request &req, Http::ResponseWriter res
 bool ResAggregation_MGR::del(const Rest::Request &req, Http::ResponseWriter res)
 {
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
-      bucket, hvs::DatastoreType::couchbase, true);
+      bucket, gvds::DatastoreType::couchbase, true);
   auto cbd = static_cast<CouchbaseDatastore *>(dbPtr.get());
   auto uuid = req.param(":id").as<std::string>();
   string reluuid = StorageResource::prefix() + uuid;
@@ -134,7 +134,7 @@ bool ResAggregation_MGR::del(const Rest::Request &req, Http::ResponseWriter res)
 bool ResAggregation_MGR::update(const Rest::Request &req, Http::ResponseWriter res)
 {
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
-      bucket, hvs::DatastoreType::couchbase, true);
+      bucket, gvds::DatastoreType::couchbase, true);
   auto storage_res = parse_request(req);
   // broken request
   if (!storage_res)
@@ -154,7 +154,7 @@ bool ResAggregation_MGR::update(const Rest::Request &req, Http::ResponseWriter r
   //err = cbd->insert(storage_res->key(), storage_res->json_value());
   usleep(100000); // may take 100ms to be effective
   // int error=1000;
-  std::shared_ptr<hvs::StorageResource> storRe;
+  std::shared_ptr<gvds::StorageResource> storRe;
 
   json_decode(*vp, storRe);
   // res.send(Code::Accepted,"Debug:"+storRe->json_value());

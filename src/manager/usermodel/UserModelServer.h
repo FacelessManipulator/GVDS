@@ -17,7 +17,7 @@ date:2019.03.21
 #include "datastore/couchbase_helper.h"
 #include "manager/usermodel/Account.h"
 #include "manager/manager.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "config/ConfigureSettings.h"
 
 class Account;
@@ -25,7 +25,7 @@ class SCAccount;
 //using namespace Pistache;
 
 
-namespace hvs{
+namespace gvds{
 class UserModelServer : public ManagerModule {
 
 private:
@@ -75,13 +75,13 @@ public:
 
     //管理员查看 apply_info 数据库中内容
     void viewbufferListRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string viewbufferList(std::string hvsID);
+    std::string viewbufferList(std::string gvdsID);
 
     //删除请求记录
     void removeoneofApplyInfoRest(const Rest::Request& request, Http::ResponseWriter response);
 
     //验证身份是否为管理员
-    bool validadminidentity(std::string hvsID);
+    bool validadminidentity(std::string gvdsID);
 
     //管理员添加 、删除账户映射接口
     void adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response);
@@ -92,7 +92,7 @@ public:
     
     //管理员查看账户池的情况  
     void adminSearchAccountPoolRest(const Rest::Request& request, Http::ResponseWriter response);
-    std::string adminSearchAccountPool(std::string adhvsID);
+    std::string adminSearchAccountPool(std::string adgvdsID);
     
 public:
     UserModelServer() : ManagerModule("user") {
@@ -125,7 +125,7 @@ std::string md5(std::string strPlain);
 void printCookies(const Http::Request& req);
 bool auth_token(const Rest::Request& request);
 
-}// namespace hvs
+}// namespace gvds
 
 
 #endif

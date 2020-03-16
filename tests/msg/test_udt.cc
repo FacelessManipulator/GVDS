@@ -8,7 +8,7 @@
 #include <vector>
 #include <dirent.h>
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 #define  TFILEP "/syncio.txt"
 
 class IOProxyUDT : public ::testing::Test {
@@ -21,13 +21,13 @@ class IOProxyUDT : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-    // hvs::init_ioproxy();
+    gvds::init_context();
+    // gvds::init_ioproxy();
   }
   static void TearDownTestCase() {
-    // hvs::destroy_ioproxy(
+    // gvds::destroy_ioproxy(
     //     static_cast<IOProxy*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:
@@ -59,7 +59,7 @@ TEST_F(IOProxyUDT, write_bench_sm) {
     char* buf = new char[buf_size]; //100KB
     memcpy(buf, "hello\n", 6);
     ioproxy_rpc_buffer _buffer(pathname.c_str(), buf, 0, buf_size);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     unsigned size  = 10; // 100KB*1000=100MB
 
     auto start = std::chrono::steady_clock::now();

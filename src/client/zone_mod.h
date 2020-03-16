@@ -3,7 +3,7 @@
 // 北航系统结构所-存储组
 //
 
-#pragma once  // HVSONE_ZONE_MOD_H
+#pragma once  // GVDS_ZONE_MOD_H
 #ifndef FUSE_USE_VERSION
 #define FUSE_USE_VERSION 31
 #endif
@@ -17,11 +17,11 @@
 #include <unordered_map>
 #include <vector>
 #include "client/client.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 
 // 主要包含区域信息检索前端模块和区域定位模块
 
-namespace hvs {
+namespace gvds {
 class ClientZone : public ClientModule, public Thread {
  private:
   virtual void start() override;
@@ -59,5 +59,5 @@ class ClientZone : public ClientModule, public Thread {
   friend class Client;
   bool m_stop;
 };
-}  // namespace hvs
-// HVSONE_ZONE_MOD_H
+}  // namespace gvds
+// GVDS_ZONE_MOD_H

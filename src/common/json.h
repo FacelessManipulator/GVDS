@@ -3,7 +3,7 @@
 #include <mutex>
 #include "JsonSerializer.h"
 
-namespace hvs {
+namespace gvds {
 
 class __JSON_DENC : public JsonSerializer {
  public:
@@ -70,4 +70,4 @@ void json_decode(const std::string& json_string, T& dest) {
   __JSON_DENC decoder;
   return decoder.json_decode(json_string, dest);
 }
-}  // namespace hvs
+}  // namespace gvds

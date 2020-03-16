@@ -8,7 +8,7 @@
 void Auth::serialize_impl() {
 
     put("zoneID", zoneID);
-    put("HVSAccountID", HVSAccountID);
+    put("GVDSAccountID", GVDSAccountID);
     put("owner_read", owner_read);
     put("owner_write", owner_write);
     put("owner_exe", owner_exe);
@@ -25,7 +25,7 @@ void Auth::serialize_impl() {
 void Auth::deserialize_impl() {
 
     get("zoneID", zoneID);
-    get("HVSAccountID", HVSAccountID);
+    get("GVDSAccountID", GVDSAccountID);
     get("owner_read", owner_read);
     get("owner_write", owner_write);
     get("owner_exe", owner_exe);
@@ -54,7 +54,7 @@ void SelfAuthSpaceInfo::deserialize_impl() {
 }
 //
 void AuthSearch::serialize_impl(){
-    put("hvsID", hvsID);
+    put("gvdsID", gvdsID);
     put("vec_ZoneID", vec_ZoneID);
     put("read", read);
     put("write", write);
@@ -67,7 +67,7 @@ void AuthSearch::serialize_impl(){
 }
 
 void AuthSearch::deserialize_impl(){
-    get("hvsID", hvsID);
+    get("gvdsID", gvdsID);
     get("vec_ZoneID", vec_ZoneID);
     get("read", read);
     get("write", write);
@@ -82,7 +82,7 @@ void AuthSearch::deserialize_impl(){
 
 void AuthModifygroupinfo::serialize_impl(){
     put("spaceinformation", spaceinformation);
-    put("hvsID", hvsID);
+    put("gvdsID", gvdsID);
     put("au_person", au_person);
     put("au_group", au_group);
     put("au_other", au_other);
@@ -90,7 +90,7 @@ void AuthModifygroupinfo::serialize_impl(){
 
 void AuthModifygroupinfo::deserialize_impl(){
     get("spaceinformation", spaceinformation);
-    get("hvsID", hvsID);
+    get("gvdsID", gvdsID);
     get("au_person", au_person);
     get("au_group", au_group);
     get("au_other", au_other);
@@ -99,13 +99,13 @@ void AuthModifygroupinfo::deserialize_impl(){
 
 //
 void FEAuthModifygroupinfo::serialize_impl(){
-    put("hvsID", hvsID);
+    put("gvdsID", gvdsID);
     put("zonename", zonename);
     put("modify_groupauth", modify_groupauth);
 }
 
 void FEAuthModifygroupinfo::deserialize_impl(){
-    get("hvsID", hvsID);
+    get("gvdsID", gvdsID);
     get("zonename", zonename);
     get("modify_groupauth", modify_groupauth);
 }

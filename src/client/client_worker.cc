@@ -9,7 +9,7 @@
 #include "client/msg_mod.h"
 #include "client/queue.h"
 
-using namespace hvs;
+using namespace gvds;
 
 Waiting::Waiting(my_context ctx) : my_base(ctx) {
   Client* node = (Client*)HvsContext::get_context()->node;

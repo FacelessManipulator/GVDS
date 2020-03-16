@@ -13,7 +13,7 @@
 
 
 
-namespace hvs{
+namespace gvds{
 
 typedef std::pair<std::string, double> PAIR;
 
@@ -51,7 +51,7 @@ public:
     //3、获取centerName 对应的 centerid
     std::string getmapIdName(std::string centerName);
 
-    void getAuthFromServer(std::string hvsID);
+    void getAuthFromServer(std::string gvdsID);
     AuthSearch getAuthFromClient();
 
 
@@ -106,5 +106,5 @@ private:
 };
 
 
-}//namespace hvs
+}//namespace gvds
 #endif

@@ -4,12 +4,12 @@
  * Created by Yaowen Xu on 2019-03-20.
  * 作者: Yaowen Xu
  * 时间: 2019-03-20
- * 工程: HVSONE
+ * 工程: GVDS
  * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
  */
 
 #include "IPCServer.hpp"
-using namespace hvs;
+using namespace gvds;
 using boost::asio::ip::tcp; // 单独使用 tcp 命名空间
 typedef std::deque<IPCMessage> ipc_message_queue; // 声明一个消息队列
 
@@ -138,8 +138,8 @@ private:
     IPCTaskCollection& task_collection_; // 展示当前已经连接的所有任务
     ipc_message_queue write_msgs_;
     tcp::socket socket_;
-    boost::asio::ip::address addr;  // 添加此变量，避免了命令行提前退出导致的客户端段错误，从而导致hvs_client 崩溃
-    unsigned short po; // 添加此变量，避免了命令行提前退出导致的客户端段错误，从而导致hvs_client 崩溃 此变量将在析构函数中再次被使用！
+    boost::asio::ip::address addr;  // 添加此变量，避免了命令行提前退出导致的客户端段错误，从而导致gvds_client 崩溃
+    unsigned short po; // 添加此变量，避免了命令行提前退出导致的客户端段错误，从而导致gvds_client 崩溃 此变量将在析构函数中再次被使用！
     IPCSessionWorker session_worker_;
 };
 

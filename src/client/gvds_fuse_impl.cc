@@ -35,17 +35,17 @@
 #include "client/readahead.h"
 #include "client/zone_mod.h"
 #include "context.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "io_proxy/rpc_types.h"
 
 extern bool zonechecker_run;
 #define FUSE_DEBUG_LEVEL -1
-#define HVS_FUSE_DATA \
-  ((struct ::hvs::ClientFuseData *)fuse_get_context()->private_data)
+#define GVDS_FUSE_DATA \
+  ((struct ::gvds::ClientFuseData *)fuse_get_context()->private_data)
 
 using namespace std;
 namespace fs = std::experimental::filesystem;
-namespace hvs {
+namespace gvds {
 // TODO: 工具函数，分割字符串
 std::vector<std::string> splitWithStl(const std::string str,
                                       const std::string pattern) {
@@ -69,28 +69,28 @@ std::vector<std::string> splitWithStl(const std::string str,
   return resVec;
 }
 
-void *hvsfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
+void *gvdsfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
   cfg->ac_attr_timeout_set = 1;
   cfg->attr_timeout = 1;
   cfg->entry_timeout = 1;
   cfg->negative_timeout = 1;
   conn->max_readahead = 524288;
   conn->max_read = 524288;
-  return HVS_FUSE_DATA;
+  return GVDS_FUSE_DATA;
 }
 
 // stat
-int hvsfs_getattr(const char *path, struct stat *stbuf,
+int gvdsfs_getattr(const char *path, struct stat *stbuf,
                   struct fuse_file_info *fi) {
-  auto zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+  auto zs_res = GVDS_FUSE_DATA->client->zone->isZoneSpacePath(path);
   // if path is not remote file
   if (zs_res < 0) {
     return zs_res;
   } else if (zs_res < 2) {
-    return HVS_FUSE_DATA->client->zone->getattr(path, stbuf);
+    return GVDS_FUSE_DATA->client->zone->getattr(path, stbuf);
   }
 
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     // return -ENETUNREACH;
@@ -98,8 +98,8 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   }
 
   // if we have cache mod, try fetch it from cache mod first
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    auto found = HVS_FUSE_DATA->client->cache->get_stat(rpath, stbuf);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    auto found = GVDS_FUSE_DATA->client->cache->get_stat(rpath, stbuf);
     if (found == ClientCache::FOUND) {
       dout(FUSE_DEBUG_LEVEL) << "cache mod hit stat :" << path << dendl;
       return 0;
@@ -116,9 +116,9 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   OpReply reply;
   request.set_type(OpType::getattr);
   request.set_filepath(rpath);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat", rpath);
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_stat", rpath);
   if (!status.ok()) {
     // timeout exception raised
     return -ENOENT;
@@ -128,8 +128,8 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   if (reply.err_code()) {
     // stat failed on remote server
     // if we have cache mod, try set it
-    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-      HVS_FUSE_DATA->client->cache->set_stat(rpath, nullptr);
+    if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+      GVDS_FUSE_DATA->client->cache->set_stat(rpath, nullptr);
       dout(FUSE_DEBUG_LEVEL) << "cache mod set missing stat :" << path << dendl;
     }
     return reply.err_code();
@@ -154,38 +154,38 @@ int hvsfs_getattr(const char *path, struct stat *stbuf,
   stbuf->st_ctim.tv_sec = reply.attr().ctime();
   dout(FUSE_DEBUG_LEVEL) << "remote finish req-" << path << dendl;
   // if we have cache mod, try set it
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->set_stat(rpath, stbuf);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->set_stat(rpath, stbuf);
     dout(FUSE_DEBUG_LEVEL) << "cache mod set stat :" << path << dendl;
   }
   return 0;
 }
 
-int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+int gvdsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                   off_t offset, struct fuse_file_info *fi,
                   enum fuse_readdir_flags flags) {
-  auto zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+  auto zs_res = GVDS_FUSE_DATA->client->zone->isZoneSpacePath(path);
   if (zs_res < 0) {
     return zs_res;
   } else if (zs_res < 2) {
-    return HVS_FUSE_DATA->client->zone->readdir(path, buf, filler);
+    return GVDS_FUSE_DATA->client->zone->readdir(path, buf, filler);
   }
 
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
 
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readdir",
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readdir",
   //  rpath);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::readdir);
   request.set_filepath(rpath);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -217,8 +217,8 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                static_cast<fuse_fill_dir_flags>(0)) != 0) {
       return -ENOMEM;
     }
-    if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-      HVS_FUSE_DATA->client->cache->set_stat(
+    if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+      GVDS_FUSE_DATA->client->cache->set_stat(
           fs::path(rpath) / reply.entry_names(i), &dirfilestat);
       dout(FUSE_DEBUG_LEVEL) << "cache mod set stat :" << path << dendl;
     }
@@ -228,33 +228,33 @@ int hvsfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   return retstat;
 }
 
-int hvsfs_open(const char *path, struct fuse_file_info *fi) {
+int gvdsfs_open(const char *path, struct fuse_file_info *fi) {
   int retstat = 0;
-  int zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+  int zs_res = GVDS_FUSE_DATA->client->zone->isZoneSpacePath(path);
   if (zs_res < 0) {
     return zs_res;
   } else if (zs_res < 2) {
     // zs_res < 0 or zs_res >0 both means zone mod handle this operation
     return -ENOTSUP;
   }
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_open",
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_open",
   //                                              rpath.c_str(), fi->flags);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::open);
   request.set_filepath(rpath);
   request.set_mode(fi->flags);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -269,20 +269,20 @@ int hvsfs_open(const char *path, struct fuse_file_info *fi) {
     return retstat;
 }
 
-int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
+int gvdsfs_read(const char *path, char *buf, size_t size, off_t offset,
                struct fuse_file_info *fi) {
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->fuse_client->readahead) {
+  if (GVDS_FUSE_DATA->fuse_client->readahead) {
     uint64_t cur_off = offset, size_left = size, read_size = 0,
              read_size_total = 0;
     while (size_left > 0) {
       uint64_t cur_sec_left =
           std::min(size_left, (((cur_off >> 18) + 1) << 18) - cur_off);
-      auto cache_st = HVS_FUSE_DATA->client->readahead->status(
+      auto cache_st = GVDS_FUSE_DATA->client->readahead->status(
           rpath, cur_off, cur_sec_left, buf, read_size);
       if (cache_st == ClientReadAhead::IN_BUFFER) {
         dout(REAHAHEAD_DEBUG_LEVEL)
@@ -293,8 +293,8 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
         read_size_total += read_size;
         continue;
       } else if (cache_st == ClientReadAhead::MAY_SEQ_READ) {
-        bool nt = HVS_FUSE_DATA->client->readahead->set_task(
-            iop, rpath, 0, offset >> 18, HVS_FUSE_DATA->fuse_client->readahead,
+        bool nt = GVDS_FUSE_DATA->client->readahead->set_task(
+            iop, rpath, 0, offset >> 18, GVDS_FUSE_DATA->fuse_client->readahead,
             -1);
         if (!nt) break;
       } else if (cache_st == ClientReadAhead::ON_LINK) {
@@ -312,9 +312,9 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
   _buffer.fid = fi->fh;
   _buffer.flags = fi->flags;
 
-  if (HVS_FUSE_DATA->fuse_client->use_udt) {
+  if (GVDS_FUSE_DATA->fuse_client->use_udt) {
     // UDT version
-    auto res = HVS_FUSE_DATA->client->rpc->read_data(iop, _buffer);
+    auto res = GVDS_FUSE_DATA->client->rpc->read_data(iop, _buffer);
     if (!res) {
       return -ETIMEDOUT;
     }
@@ -325,7 +325,7 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
     memcpy(buf, res->buf.ptr, res->buf.size);
     return res->buf.size;
   } else {
-    //    auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_read",
+    //    auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_read",
     //    rpath,
     //                                                size, offset, fi->fh);
     OpRequest request;
@@ -334,7 +334,7 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
     request.set_filepath(rpath);
     request.mutable_io_param()->set_size(size);
     request.mutable_io_param()->set_offset(offset);
-    auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+    auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
     auto status = oper->Submit(request, reply);
     if (!status.ok()) {
       // timeout exception raised
@@ -350,18 +350,18 @@ int hvsfs_read(const char *path, char *buf, size_t size, off_t offset,
   }
 }
 
-int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
+int gvdsfs_write(const char *path, const char *buf, size_t size, off_t offset,
                 struct fuse_file_info *fi) {
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->fuse_client->readahead != 0) {
-    HVS_FUSE_DATA->client->readahead->clear_buf(rpath);
+  if (GVDS_FUSE_DATA->fuse_client->readahead != 0) {
+    GVDS_FUSE_DATA->client->readahead->clear_buf(rpath);
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
 
@@ -370,14 +370,14 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
   _buffer.fid = fi->fh;
   _buffer.flags = fi->flags;
 
-  if (HVS_FUSE_DATA->fuse_client->async_mode) {
-    auto buf2q = std::make_shared<hvs::Buffer>(rpath, buf, offset, size);
+  if (GVDS_FUSE_DATA->fuse_client->async_mode) {
+    auto buf2q = std::make_shared<gvds::Buffer>(rpath, buf, offset, size);
     buf2q->dest = iop;
-    HVS_FUSE_DATA->client->queue->queue_buffer(buf2q);
+    GVDS_FUSE_DATA->client->queue->queue_buffer(buf2q);
     return size;
   } else {
     // tcp version
-    //    auto res = HVS_FUSE_DATA->client->rpc->call(
+    //    auto res = GVDS_FUSE_DATA->client->rpc->call(
     //        iop, "ioproxy_write", rpath.c_str(), _buffer, size, offset);
     OpRequest request;
     OpReply reply;
@@ -386,7 +386,7 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
     request.mutable_io_param()->set_size(size);
     request.mutable_io_param()->set_offset(offset);
     request.set_data(buf, size);
-    auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+    auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
     auto status = oper->Submit(request, reply);
     if (!status.ok()) {
       // timeout exception raised
@@ -398,27 +398,27 @@ int hvsfs_write(const char *path, const char *buf, size_t size, off_t offset,
   // write may failed on remote server
 }
 
-int hvsfs_access(const char *path, int mode) {
-  int zs_res = HVS_FUSE_DATA->client->zone->isZoneSpacePath(path);
+int gvdsfs_access(const char *path, int mode) {
+  int zs_res = GVDS_FUSE_DATA->client->zone->isZoneSpacePath(path);
   if (zs_res < 0) {
     return zs_res;
   } else if (zs_res < 2) {
     return 0;
   }
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_access",
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_access",
   //                                              rpath.c_str(), mode);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::access);
   request.set_filepath(rpath);
   request.set_mode(mode);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -428,25 +428,25 @@ int hvsfs_access(const char *path, int mode) {
   return reply.err_code();
 }
 
-int hvsfs_opendir(const char *path, struct fuse_file_info *fi) {
+int gvdsfs_opendir(const char *path, struct fuse_file_info *fi) {
   int retstat = 0;
 
   return retstat;
 }
 
-void hvsfs_destroy(void *private_data) { HVS_FUSE_DATA->client->stop(); }
+void gvdsfs_destroy(void *private_data) { GVDS_FUSE_DATA->client->stop(); }
 
-int hvsfs_truncate(const char *path, off_t size, struct fuse_file_info *fi) {
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+int gvdsfs_truncate(const char *path, off_t size, struct fuse_file_info *fi) {
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_truncate",
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_truncate",
   //                                              rpath.c_str(), offset);
   OpRequest request;
   OpReply reply;
@@ -454,7 +454,7 @@ int hvsfs_truncate(const char *path, off_t size, struct fuse_file_info *fi) {
   request.set_filepath(rpath);
   // truncate a file to specified length
   request.mutable_io_param()->set_size(size);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -464,15 +464,15 @@ int hvsfs_truncate(const char *path, off_t size, struct fuse_file_info *fi) {
   return reply.err_code();
 }
 
-int hvsfs_readlink(const char *path, char *link, size_t size) {
-  //  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+int gvdsfs_readlink(const char *path, char *link, size_t size) {
+  //  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   //  // not exists
   //  if (!iop) {
   //    return -ENOENT;
   //  }
   //
   //  auto res =
-  //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readlink", rpath,
+  //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_readlink", rpath,
   //      size);
   //  if (!res.get()) {
   //    // timeout exception raised
@@ -485,36 +485,36 @@ int hvsfs_readlink(const char *path, char *link, size_t size) {
   return -ENOTSUP;
 }
 
-int hvsfs_mknod(const char *path, mode_t mode, dev_t dev) {
+int gvdsfs_mknod(const char *path, mode_t mode, dev_t dev) {
   int retstat = 0;
 
   return retstat;
 }
-int hvsfs_mkdir(const char *path, mode_t mode) {
+int gvdsfs_mkdir(const char *path, mode_t mode) {
   std::vector<std::string> namev = splitWithStl(path, "/");
   int nvsize = static_cast<int>(namev.size());
   if (namev.size() <= 3) {
     return -EPERM;
   }
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
 
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_mkdir",
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_mkdir",
   //                                              rpath.c_str(), mode);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::mkdir);
   request.set_filepath(rpath);
   request.set_mode(mode);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -524,23 +524,23 @@ int hvsfs_mkdir(const char *path, mode_t mode) {
   return reply.err_code();
 }
 
-int hvsfs_unlink(const char *path) {
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+int gvdsfs_unlink(const char *path) {
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_unlink", rpath);
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_unlink", rpath);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::unlink);
   request.set_filepath(rpath);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -550,7 +550,7 @@ int hvsfs_unlink(const char *path) {
   return reply.err_code();
 }
 
-int hvsfs_rmdir(const char *path) {
+int gvdsfs_rmdir(const char *path) {
   //跳过本地
   std::vector<std::string> namev = splitWithStl(path, "/");
   int nvsize = static_cast<int>(namev.size());
@@ -558,22 +558,22 @@ int hvsfs_rmdir(const char *path) {
     return -EPERM;
   }
   // 删除远程
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_rmdir", rpath);
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_rmdir", rpath);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::rmdir);
   request.set_filepath(rpath);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -583,7 +583,7 @@ int hvsfs_rmdir(const char *path) {
   return reply.err_code();
 }
 
-int hvsfs_symlink(const char *path, const char *newpath) {
+int gvdsfs_symlink(const char *path, const char *newpath) {
   int retstat = 0;
   dout(-1) << "TODO: 软连接操作有问题，待修复！" << dendl;
   //        std::string root("/");
@@ -591,14 +591,14 @@ int hvsfs_symlink(const char *path, const char *newpath) {
   //        std::string fullpath = root+paths;
   //        auto ip = new std::string(ioproxy_ip.c_str());
   //        auto port =
-  //        hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+  //        gvds::HvsContext::get_context()->_config->get<int>("rpc.port");
   //        RpcClient client(*ip, static_cast<const unsigned int>(*port));
   //        auto res = client.call("ioproxy_symlink", fullpath.c_str(),
   //        newpath); retstat = res->as<int>();
   return -ENOTSUP;
 }
 
-int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
+int gvdsfs_rename(const char *path, const char *newpath, unsigned int flags) {
   //跳过本地
   std::vector<std::string> namev = splitWithStl(path, "/");
   int nvsize = static_cast<int>(namev.size());
@@ -607,8 +607,8 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
   }
 
   // access content level
-  auto [siop, srpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
-  auto [diop, drpath] = HVS_FUSE_DATA->client->graph->get_mapping(newpath);
+  auto [siop, srpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [diop, drpath] = GVDS_FUSE_DATA->client->graph->get_mapping(newpath);
   // not exists
   if (!siop || !diop) {
     return -ENOENT;
@@ -616,21 +616,21 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
     // over ioproxy move is not support yet
     return -ENOTSUP;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(srpath);
-    HVS_FUSE_DATA->client->cache->expire_stat(drpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(srpath);
+    GVDS_FUSE_DATA->client->cache->expire_stat(drpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   //  auto res =
-  //      HVS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename", srpath,
+  //      GVDS_FUSE_DATA->client->rpc->call(siop, "ioproxy_rename", srpath,
   //      drpath);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::rename);
   request.set_filepath(srpath);
   request.set_newpath(drpath);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(siop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(siop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -640,43 +640,43 @@ int hvsfs_rename(const char *path, const char *newpath, unsigned int flags) {
   return reply.err_code();
 }
 
-int hvsfs_link(const char *path, const char *newpath) {
+int gvdsfs_link(const char *path, const char *newpath) {
   int retstat = 0;
   dout(-1) << "TODO: 硬连接操作有问题，待修复！" << dendl;
   //        auto ip = new std::string(ioproxy_ip.c_str());
   //        auto port =
-  //        hvs::HvsContext::get_context()->_config->get<int>("rpc.port");
+  //        gvds::HvsContext::get_context()->_config->get<int>("rpc.port");
   //        RpcClient client(*ip, static_cast<const unsigned int>(*port));
   //        auto res = client.call("ioproxy_link", path, newpath);
   //        retstat = res->as<int>();
   return -ENOTSUP;
 }
 
-int hvsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
+int gvdsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
   std::vector<std::string> namev = splitWithStl(path, "/");
   int nvsize = static_cast<int>(namev.size());
   if (namev.size() <= 3) {
     return -EPERM;
   }
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
 
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   //  auto res =
-  //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chmod", rpath, mode);
+  //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chmod", rpath, mode);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::chmod);
   request.set_filepath(rpath);
   request.set_mode(mode);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -686,25 +686,25 @@ int hvsfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
   return reply.err_code();
 }
 
-int hvsfs_chown(const char *path, uid_t uid, gid_t gid,
+int gvdsfs_chown(const char *path, uid_t uid, gid_t gid,
                 struct fuse_file_info *fi) {
   std::vector<std::string> namev = splitWithStl(path, "/");
   int nvsize = static_cast<int>(namev.size());
   if (namev.size() <= 3) {
     return -EPERM;
   }
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "remote req-" << path << dendl;
   //  auto res =
-  //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chown", rpath, uid,
+  //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_chown", rpath, uid,
   //      gid);
   //  if (!res.get()) {
   //    // timeout exception raised
@@ -715,59 +715,59 @@ int hvsfs_chown(const char *path, uid_t uid, gid_t gid,
   return -ENOTSUP;
 }
 
-int hvsfs_statfs(const char *, struct statvfs *) {
+int gvdsfs_statfs(const char *, struct statvfs *) {
   int retstat = 0;
 
   return retstat;
 }
 
-int hvsfs_flush(const char *, struct fuse_file_info *) {
+int gvdsfs_flush(const char *, struct fuse_file_info *) {
   int retstat = 0;
 
   return retstat;
 }
 
-int hvsfs_release(const char *, struct fuse_file_info *) {
+int gvdsfs_release(const char *, struct fuse_file_info *) {
   int retstat = 0;
   return retstat;
 }
 
-int hvsfs_fsync(const char *, int, struct fuse_file_info *) {
-  int retstat = 0;
-
-  return retstat;
-}
-
-int hvsfs_releasedir(const char *, struct fuse_file_info *) {
+int gvdsfs_fsync(const char *, int, struct fuse_file_info *) {
   int retstat = 0;
 
   return retstat;
 }
 
-int hvsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
+int gvdsfs_releasedir(const char *, struct fuse_file_info *) {
+  int retstat = 0;
+
+  return retstat;
+}
+
+int gvdsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
   std::vector<std::string> namev = splitWithStl(path, "/");
   int nvsize = static_cast<int>(namev.size());
   if (namev.size() <= 3) {
     return -EPERM;
   }
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // not exists
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
   dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
   //  auto res =
-  //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+  //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
   OpRequest request;
   OpReply reply;
   request.set_type(OpType::create);
   request.set_filepath(rpath);
   request.set_mode(mode);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -777,14 +777,14 @@ int hvsfs_create(const char *path, mode_t mode, struct fuse_file_info *) {
   return reply.err_code();
 }
 
-int hvsfs_utimens(const char *path, const struct timespec tv[2],
+int gvdsfs_utimens(const char *path, const struct timespec tv[2],
                   struct fuse_file_info *fi) {
   std::vector<std::string> namev = splitWithStl(path, "/");
   int nvsize = static_cast<int>(namev.size());
   if (namev.size() <= 3) {
     return -EPERM;
   }
-  auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+  auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
   // access content level
   long int sec0n = tv[0].tv_nsec;
   long int sec0s = tv[0].tv_sec;
@@ -794,11 +794,11 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
   if (!iop) {
     return -ENOENT;
   }
-  if (HVS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
-    HVS_FUSE_DATA->client->cache->expire_stat(rpath);
+  if (GVDS_FUSE_DATA->client->cache->max_stat_cache_ct > 0) {
+    GVDS_FUSE_DATA->client->cache->expire_stat(rpath);
     dout(FUSE_DEBUG_LEVEL) << "cache mod expire stat :" << path << dendl;
   }
-  //  auto res = HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_utimes", rpath,
+  //  auto res = GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_utimes", rpath,
   //                                              sec0n, sec0s, sec1n, sec1s);
   OpRequest request;
   OpReply reply;
@@ -806,7 +806,7 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
   request.set_filepath(rpath);
   request.mutable_io_param()->set_size(sec1s);
   request.mutable_io_param()->set_offset(sec1n);
-  auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+  auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
   auto status = oper->Submit(request, reply);
   if (!status.ok()) {
     // timeout exception raised
@@ -815,7 +815,7 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
   return reply.err_code();
 }
 
-    int hvsfs_setxattr(const char *path, const char* name, const char* value, size_t size, int flags) {
+    int gvdsfs_setxattr(const char *path, const char* name, const char* value, size_t size, int flags) {
         std::vector<std::string> namev = splitWithStl(path, "/");
         int nvsize = static_cast<int>(namev.size());
         if (namev.size() <= 3) {
@@ -823,19 +823,19 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
         }
 
         if (string(name) == "user.gvds.visit.force") {
-          HVS_FUSE_DATA->client->graph->set_force_mapping(path, string(value, size));
+          GVDS_FUSE_DATA->client->graph->set_force_mapping(path, string(value, size));
           dout(-1) << "set force visit space at center " << string(value, size) << dendl;
           return 0;
         }
 
-        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
         // not exists
         if (!iop) {
             return -ENOENT;
         }
         dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
         //  auto res =
-        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
         OpRequest request;
         OpReply reply;
         request.set_type(OpType::setxattr);
@@ -844,7 +844,7 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
         request.set_data(value, size);
         request.set_size(size);
         request.set_mode(flags);
-        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
         auto status = oper->Submit(request, reply);
         if (!status.ok()) {
             // timeout exception raised
@@ -854,27 +854,27 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
         return reply.err_code();
     }
 
-    int hvsfs_getxattr(const char *path, const char* name, char* value, size_t size) {
+    int gvdsfs_getxattr(const char *path, const char* name, char* value, size_t size) {
         std::vector<std::string> namev = splitWithStl(path, "/");
         int nvsize = static_cast<int>(namev.size());
         if (namev.size() <= 3) {
-            return -EPERM;
+            return -ENODATA;
         }
-        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
         // not exists
         if (!iop) {
-            return -ENOENT;
+            return -ENODATA;
         }
         dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
         //  auto res =
-        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
         OpRequest request;
         OpReply reply;
         request.set_type(OpType::getxattr);
         request.set_filepath(rpath);
         request.set_xattr_name(name);
         request.set_size(size);
-        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
         auto status = oper->Submit(request, reply);
         if (!status.ok()) {
             // timeout exception raised
@@ -887,26 +887,26 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
         return reply.err_code();
     }
 
-    int hvsfs_listxattr(const char *path, char* value, size_t size) {
+    int gvdsfs_listxattr(const char *path, char* value, size_t size) {
         std::vector<std::string> namev = splitWithStl(path, "/");
         int nvsize = static_cast<int>(namev.size());
         if (namev.size() <= 3) {
             return -EPERM;
         }
-        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
         // not exists
         if (!iop) {
             return -ENOENT;
         }
         dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
         //  auto res =
-        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
         OpRequest request;
         OpReply reply;
         request.set_type(OpType::listxattr);
         request.set_filepath(rpath);
         request.set_size(size);
-        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
         auto status = oper->Submit(request, reply);
         if (!status.ok()) {
             // timeout exception raised
@@ -919,26 +919,26 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
         return reply.err_code();
     }
 
-    int hvsfs_removexattr(const char *path, const char* name) {
+    int gvdsfs_removexattr(const char *path, const char* name) {
         std::vector<std::string> namev = splitWithStl(path, "/");
         int nvsize = static_cast<int>(namev.size());
         if (namev.size() <= 3) {
             return -EPERM;
         }
-        auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
+        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
         // not exists
         if (!iop) {
             return -ENOENT;
         }
         dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
         //  auto res =
-        //      HVS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
+        //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
         OpRequest request;
         OpReply reply;
         request.set_type(OpType::removexattr);
         request.set_filepath(rpath);
         request.set_xattr_name(name);
-        auto oper = HVS_FUSE_DATA->client->rpc->get_operator(iop);
+        auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
         auto status = oper->Submit(request, reply);
         if (!status.ok()) {
             // timeout exception raised
@@ -948,42 +948,42 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
         return reply.err_code();
     }
 
-struct fuse_operations hvsfs_oper = {
-    .getattr = hvsfs_getattr,
-    .readlink = hvsfs_readlink,
-    .mknod = hvsfs_mknod,  // TODO: create函数重复，暂时不做
-    .mkdir = hvsfs_mkdir,
-    .unlink = hvsfs_unlink,
-    .rmdir = hvsfs_rmdir,
-    .symlink = hvsfs_symlink,  // TODO: 软连接操作暂时有问题，待修复；
-    .rename = hvsfs_rename,
-    .link = hvsfs_link,  // TODO: 硬连接操作暂时有问题，待修复；
+struct fuse_operations gvdsfs_oper = {
+    .getattr = gvdsfs_getattr,
+    .readlink = gvdsfs_readlink,
+    .mknod = gvdsfs_mknod,  // TODO: create函数重复，暂时不做
+    .mkdir = gvdsfs_mkdir,
+    .unlink = gvdsfs_unlink,
+    .rmdir = gvdsfs_rmdir,
+    .symlink = gvdsfs_symlink,  // TODO: 软连接操作暂时有问题，待修复；
+    .rename = gvdsfs_rename,
+    .link = gvdsfs_link,  // TODO: 硬连接操作暂时有问题，待修复；
     .chmod =
-        hvsfs_chmod,  // TODO: 虚拟数据空间相关，涉及到权限，之后需要统一修改；
+        gvdsfs_chmod,  // TODO: 虚拟数据空间相关，涉及到权限，之后需要统一修改；
     .chown =
-        hvsfs_chown,  // TODO: 虚拟数据空间相关，涉及到权限，之后需要统一修改；
-    .truncate = hvsfs_truncate,
-    .open = hvsfs_open,
-    .read = hvsfs_read,
-    .write = hvsfs_write,
-    .statfs = hvsfs_statfs,    // TODO: vfs 相关，暂时不做
-    .flush = hvsfs_flush,      // TODO: cache 相关，暂时不做
-    .release = hvsfs_release,  // TODO: 未保存文件fd, 暂时不做
-    .fsync = hvsfs_fsync,      // TODO: caced 相关暂时不做
-    .setxattr = hvsfs_setxattr,
-    .getxattr = hvsfs_getxattr,
-    .listxattr = hvsfs_listxattr,
-    .removexattr = hvsfs_removexattr,
-    .opendir = hvsfs_opendir,
-    .readdir = hvsfs_readdir,
-    .releasedir = hvsfs_releasedir,  // TODO: 未保存DIR, 暂时不做
+        gvdsfs_chown,  // TODO: 虚拟数据空间相关，涉及到权限，之后需要统一修改；
+    .truncate = gvdsfs_truncate,
+    .open = gvdsfs_open,
+    .read = gvdsfs_read,
+    .write = gvdsfs_write,
+    .statfs = gvdsfs_statfs,    // TODO: vfs 相关，暂时不做
+    .flush = gvdsfs_flush,      // TODO: cache 相关，暂时不做
+    .release = gvdsfs_release,  // TODO: 未保存文件fd, 暂时不做
+    .fsync = gvdsfs_fsync,      // TODO: caced 相关暂时不做
+    .setxattr = gvdsfs_setxattr,
+    .getxattr = gvdsfs_getxattr,
+    .listxattr = gvdsfs_listxattr,
+    .removexattr = gvdsfs_removexattr,
+    .opendir = gvdsfs_opendir,
+    .readdir = gvdsfs_readdir,
+    .releasedir = gvdsfs_releasedir,  // TODO: 未保存DIR, 暂时不做
     .fsyncdir = NULL,
-    .init = hvsfs_init,
-    .destroy = hvsfs_destroy,
-    .access = hvsfs_access,
-    .create = hvsfs_create,
+    .init = gvdsfs_init,
+    .destroy = gvdsfs_destroy,
+    .access = gvdsfs_access,
+    .create = gvdsfs_create,
     .lock = NULL,
-    .utimens = hvsfs_utimens,
+    .utimens = gvdsfs_utimens,
     .bmap = NULL,
     .ioctl = NULL,
     .poll = NULL,
@@ -992,4 +992,4 @@ struct fuse_operations hvsfs_oper = {
     .flock = NULL,
     .fallocate = NULL,
 };
-}  // namespace hvs
+}  // namespace gvds

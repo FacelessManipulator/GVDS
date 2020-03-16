@@ -2,12 +2,12 @@
  * Created by Yaowen Xu on 2019-03-20.
  * 作者: Yaowen Xu
  * 时间: 2019-03-20
- * 工程: HVSONE
+ * 工程: GVDS
  * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
  */
 
-#ifndef HVSONE_IPCSERVER_H
-#define HVSONE_IPCSERVER_H
+#ifndef GVDS_IPCSERVER_H
+#define GVDS_IPCSERVER_H
 
 #include <iostream>
 #include <boost/shared_ptr.hpp>
@@ -24,7 +24,7 @@
 #include <thread>
 #include "IPCMessage.hpp"
 
-namespace hvs{
+namespace gvds{
     class IPCTask { // 每个Session都是一个Task
     public:
         virtual ~IPCTask() {}
@@ -65,4 +65,4 @@ namespace hvs{
     };
 }
 
-#endif //HVSONE_IPCSERVER_H
+#endif //GVDS_IPCSERVER_H

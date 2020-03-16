@@ -6,7 +6,7 @@
 #include "zone/ZoneServer.h"
 #include "manager/rpc_mod.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 using namespace Pistache::Rest;
 
@@ -116,8 +116,8 @@ std::shared_ptr<ManagerModule> Manager::get_module(
   }
 }
 
-namespace hvs {
-hvs::Manager* init_manager() {
+namespace gvds {
+gvds::Manager* init_manager() {
   auto _config = HvsContext::get_context()->_config;
   auto ip = _config->get<std::string>("ip");
   if (!ip) {
@@ -140,7 +140,7 @@ hvs::Manager* init_manager() {
   mgr->registe_module(std::make_shared<UserModelServer>());
   mgr->registe_module(std::make_shared<Mconf>());
 
-  hvs::HvsContext::get_context()->node = mgr;
+  gvds::HvsContext::get_context()->node = mgr;
   if(mgr->start()) {
     // TODO: use condition or mutex to wait the init stage
     return mgr;
@@ -151,8 +151,8 @@ hvs::Manager* init_manager() {
   }
 }
 
-void destroy_manager(hvs::Manager* mgr) {
+void destroy_manager(gvds::Manager* mgr) {
   mgr->stop();
   delete mgr;
 }
-}  // namespace hvs
+}  // namespace gvds

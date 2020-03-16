@@ -12,7 +12,7 @@ common_temp = '''
 ip = "${EXTERNAL_IP}";
 manager_addr = "${MGR_IP}:${MGR_REST_PORT}";
 log = {
-    path = "/opt/hvs/var/log/hvs.log";
+    path = "/opt/gvds/var/log/gvds.log";
     level = ${LOG_LEVEL};
 };
 '''
@@ -22,7 +22,7 @@ ioproxy = {
     uuid = "${IOP_UUID}";
     cid = "${CID}";
     scher = 6;
-    data_path = "/opt/hvs/var/data/";
+    data_path = "/opt/gvds/var/data/";
     data_port = ${IOP_UDP_PORT};
     data_buffer = 1024000;
     data_conn = 50;
@@ -38,7 +38,7 @@ manager = {
     //use linux command uuid to generate your own uuid
     uid = "${MGR_UID}";
     cid = "${CID}";
-    data_path = "/opt/hvs/var/data/";
+    data_path = "/opt/gvds/var/data/";
     port = ${MGR_REST_PORT};
     thread_num = 6;
     couchbase_addr = "${COUCHBASE_IP}:${COUCHBASE_PORT}";
@@ -86,7 +86,7 @@ config_ops = {
     'COUCHBASE_USER': 'dev',
     'COUCHBASE_PASS': 'buaaica',
     'COUCHBASE_BUCKET': 'test',
-    'MNT_POINT': '/mnt/hvs',
+    'MNT_POINT': '/mnt/gvds',
     'CENTER_NAME': 'Beijing',
 }
 
@@ -163,7 +163,7 @@ def interact_options():
     print("======START Generated config file content START======")
     print(config_content)
     print("======END Generated config file content END======")
-    config_path = query_str("Input Config File Generate Path", "/opt/hvs/hvs.conf")
+    config_path = query_str("Input Config File Generate Path", "/opt/gvds/gvds.conf")
     with open(config_path,'w') as f:
         f.write(config_content)
     print("Success in generating config file at %s"%config_path)
@@ -285,18 +285,18 @@ def main():
         setup_couchbase()
     if sys.argv[1] in ('start', 'all'):
         print("******Start GVDS Start Daemon Phase Start*******")
-        os.system("ln -sf /opt/hvs/gvds-supervisord.conf /etc/supervisor/conf.d/")
+        os.system("ln -sf /opt/gvds/gvds-supervisord.conf /etc/supervisor/conf.d/")
         os.system("supervisorctl reload")
         print("sleep 15s to wait supervisor totally restart")
         time.sleep(15)
         if query_yn("Should Start GVDS Manager Daemon?") and query_yn("Before start GVDS MGR daemon, "
             "you should ensure couchbase service has started and XDCR has been manually set up!! Continue?"):
             ck_cb = check_couchbase()
-            os.system("supervisorctl start hvs_manager")
+            os.system("supervisorctl start gvds_manager")
         if query_yn("Should Start GVDS IOProxy Daemon?"):
-            os.system("supervisorctl start hvs_ioproxy")
+            os.system("supervisorctl start gvds_ioproxy")
         if query_yn("Should Mount GVDS Client Daemon?"):
-            os.system("supervisorctl start hvs_client")
+            os.system("supervisorctl start gvds_client")
         print("GVDS Daemon Status: ")
         with os.popen("supervisorctl status", 'r', -1) as st:
             print(st.read())
@@ -307,35 +307,35 @@ def main():
         config_ops['MGR_REST_PORT'] = query_str("Input Manager HTTP Port", config_ops['MGR_REST_PORT'])
         config_ops['CID'] = query_str("Input Center ID:", config_ops['CID'])
         config_ops['CENTER_NAME'] = query_str("Input Center Name:", config_ops['CENTER_NAME'])
-        with os.popen("/opt/hvs/bin/centermodify --centerID %s --centerIP %s --centerPort %s --centerName %s"%(
+        with os.popen("/opt/gvds/bin/centermodify --centerID %s --centerIP %s --centerPort %s --centerName %s"%(
             config_ops['CID'], config_ops['MGR_IP'], config_ops['MGR_REST_PORT'], config_ops['CENTER_NAME']), 'r', -1) as st:
             print(st.read())
         generate_user(config_ops['CENTER_NAME'])
         stor_cap = query_str("Input Storage capcity(GB)", 1024)
-        with os.popen("/opt/hvs/bin/rg --ci %s --cn %s --ri %s --rn local1 --tc %s --ac 0 --mgs localhost --st 1"%(
+        with os.popen("/opt/gvds/bin/rg --ci %s --cn %s --ri %s --rn local1 --tc %s --ac 0 --mgs localhost --st 1"%(
             config_ops['CID'], config_ops['CENTER_NAME'], config_ops['CID'], stor_cap), 'r', -1) as st:
             print(st.read())
-        with os.popen("/opt/hvs/bin/adminsignup -u admin --pass password", 'r', -1) as st:
+        with os.popen("/opt/gvds/bin/adminsignup -u admin --pass password", 'r', -1) as st:
             print(st.read())
-        with os.popen("/opt/hvs/bin/usersignup -u test --pass password", 'r', -1) as st:
+        with os.popen("/opt/gvds/bin/usersignup -u test --pass password", 'r', -1) as st:
             print(st.read())
         
         print("sleep 5 sec to wait normal user create...")
         time.sleep(5)
-        with os.popen("/opt/hvs/bin/userlogin -u admin -p password; /opt/hvs/bin/listapply", 'r', -1) as st:
+        with os.popen("/opt/gvds/bin/userlogin -u admin -p password; /opt/gvds/bin/listapply", 'r', -1) as st:
             ids = [l[4:] for l in st.read().split('\n') if l.startswith("id:")]
             for mid in ids:
-                os.popen("/opt/hvs/bin/suggestion -s agree -i %s"%mid, 'r', -1).close()
-        os.popen("/opt/hvs/bin/userlogin -u test -p password; /opt/hvs/bin/zregister -z zone -s space --size 100 -c %s"%
+                os.popen("/opt/gvds/bin/suggestion -s agree -i %s"%mid, 'r', -1).close()
+        os.popen("/opt/gvds/bin/userlogin -u test -p password; /opt/gvds/bin/zregister -z zone -s space --size 100 -c %s"%
             config_ops['CENTER_NAME'], 'r', -1).close()
         print("sleep 5 sec to wait zone create...")
         time.sleep(5)
-        with os.popen("/opt/hvs/bin/userlogin -u admin -p password; /opt/hvs/bin/listapply;", 'r', -1) as st:
+        with os.popen("/opt/gvds/bin/userlogin -u admin -p password; /opt/gvds/bin/listapply;", 'r', -1) as st:
             ids = [l[4:] for l in st.read().split('\n') if l.startswith("id:")]
             print("found ids", ids)
             for mid in ids:
-                os.popen("/opt/hvs/bin/suggestion -s agree -i %s"%mid, 'r', -1).close()
-        with os.popen("/opt/hvs/bin/userlogin -u test -p password;", 'r', -1) as st:
+                os.popen("/opt/gvds/bin/suggestion -s agree -i %s"%mid, 'r', -1).close()
+        with os.popen("/opt/gvds/bin/userlogin -u test -p password;", 'r', -1) as st:
             print(st.read())
         print("INFO: Generate Admin Account admin:password")
         print("INFO: Generate Test Account test:password with new Zone")

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hvsdef.h>
+#include <gvdsdef.h>
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <map>
@@ -17,7 +17,7 @@
     if (ERR) return -ERROR_INCORRECT_TYPE; \
   } while (0);
 
-namespace hvs {
+namespace gvds {
 class JsonSerializer {
  public:
   // 每次调用都会重新生成文档，并没有重用
@@ -227,4 +227,4 @@ template <class T>
 int JsonSerializer::decode(rapidjson::Value* value, T& dest) {
   dest.deserialize(value);
 }
-}  // namespace hvs
+}  // namespace gvds

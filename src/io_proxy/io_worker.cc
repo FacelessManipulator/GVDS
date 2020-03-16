@@ -8,7 +8,7 @@
 #include "io_proxy/io_proxy.h"
 #include "io_proxy/proxy_op.h"
 
-using namespace hvs;
+using namespace gvds;
 
 Waiting::Waiting(my_context ctx) : my_base(ctx) {
   IOProxy* node = (IOProxy*)HvsContext::get_context()->node;

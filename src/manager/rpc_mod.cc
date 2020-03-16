@@ -1,7 +1,7 @@
 #include "manager/rpc_mod.h"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
 void ManagerRpc::start() {}
 

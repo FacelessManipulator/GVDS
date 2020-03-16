@@ -1,6 +1,6 @@
 #include "context.h"
 
-namespace hvs {
+namespace gvds {
 HvsContext* HvsContext::_context_p = nullptr;
 void init_context(const std::string& config_path) {
   HvsContext* _context = HvsContext::get_context();
@@ -29,4 +29,4 @@ void destroy_context() {
     _context->_config = nullptr;
   }
 }
-}  // namespace hvs
+}  // namespace gvds

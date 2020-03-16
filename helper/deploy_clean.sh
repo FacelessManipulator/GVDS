@@ -24,6 +24,6 @@ while true; do
     esac
 done
 
-sudo mkdir -p /opt/hvs
-sudo chmod -R `whoami`:`whoami` /opt/hvs
-git clone git@gitlab.com:buaaica/hvs-one.git /opt/hvs
+sudo mkdir -p /opt/gvds
+sudo chmod -R `whoami`:`whoami` /opt/gvds
+git clone git@gitlab.com:buaaica/gvds-one.git /opt/gvds

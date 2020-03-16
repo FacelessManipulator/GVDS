@@ -8,7 +8,7 @@
 #include "include/context.h"
 #include "op.grpc.pb.h"
 
-namespace hvs {
+namespace gvds {
 using grpc::Channel;
 using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
@@ -96,4 +96,4 @@ class OperatorClient : Thread {
   CompletionQueue cq_;
   bool m_stop;
 };
-}  // namespace hvs
+}  // namespace gvds

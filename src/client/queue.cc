@@ -6,10 +6,10 @@
 #include "client/msg_mod.h"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
 #define MAX_MERGE_SIZE 1048576
-namespace hvs {
+namespace gvds {
 ClientWorker* ClientBufferQueue::_get_idle_worker() {
   ClientWorker* ret = nullptr;
   // cause io process is fast, use spin lock here
@@ -210,4 +210,4 @@ void ClientBufferQueue::stop() {
     join();
   }
 }
-}  // namespace hvs
+}  // namespace gvds

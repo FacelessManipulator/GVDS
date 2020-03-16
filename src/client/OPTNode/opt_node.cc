@@ -18,12 +18,12 @@
 
 using namespace Pistache;
 using namespace Pistache::Http;
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 //mutex mtx_write
 
-namespace hvs{
+namespace gvds{
 
 
 std::vector<struct_Node> SelectNode::buf_delay;
@@ -388,12 +388,12 @@ std::string SelectNode::getmapIdName(std::string centerName){
 }
 
 
-void SelectNode::getAuthFromServer(string hvsID){
-    // std::string hvsID = client->user->getAccountID(); //在服务端产生 
+void SelectNode::getAuthFromServer(string gvdsID){
+    // std::string gvdsID = client->user->getAccountID(); //在服务端产生 
     //权限查询
     string endpoint = client->get_manager();
     string routepath = "/auth/search";
-    string res = client->rpc->post_request(endpoint, routepath, hvsID);
+    string res = client->rpc->post_request(endpoint, routepath, gvdsID);
     if(res!="fail" && res!="33"){
         // cout << "res: "<< res << endl;
         // cout << "getAuthFromServer success"<< endl;
@@ -410,9 +410,9 @@ void SelectNode::getAuthFromServer(string hvsID){
 AuthSearch SelectNode::getAuthFromClient(){
     AuthSearch tmp_auth;
     mutex_lock(); 
-    cout << "getAuthFromClient:  myauth.hvsID  " << myauth.hvsID << endl;
-    if(!myauth.hvsID.empty()){
-        tmp_auth.hvsID = myauth.hvsID;
+    cout << "getAuthFromClient:  myauth.gvdsID  " << myauth.gvdsID << endl;
+    if(!myauth.gvdsID.empty()){
+        tmp_auth.gvdsID = myauth.gvdsID;
         vector<string>::iterator iter;
         for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
             tmp_auth.vec_ZoneID.push_back(*iter);
@@ -453,4 +453,4 @@ SelectNode::SelectNode(){
 } 
 */
 
-}//namespace hvs
+}//namespace gvds

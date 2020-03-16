@@ -3,7 +3,7 @@
 #include "context.h"
 #include "datastore/couchbase_helper.h"
 
-using namespace hvs;
+using namespace gvds;
 
 std::map<std::pair<long int, std::string>, std::shared_ptr<Datastore>>
     DatastoreFactory::_reuse_map = {};

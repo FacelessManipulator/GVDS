@@ -25,7 +25,7 @@
 
 #include <queue>
 
-namespace hvs {
+namespace gvds {
 class Entry;
 
 /// 日志条目类Entry的智能指针
@@ -36,7 +36,7 @@ using EntryPtr = std::shared_ptr<Entry>;
  * @author: 周汉杰
  * @date: 2018/3/1
  *
- * 日志类Log的设计模式是单例模型，在整个进程中只有一个Log对象，目前暂时由hvs::HvsContext记录单例对象的指针。
+ * 日志类Log的设计模式是单例模型，在整个进程中只有一个Log对象，目前暂时由gvds::HvsContext记录单例对象的指针。
  * 日志类Log继承了线程类Thread，实现了入口函数，为其他线程提供打印日志的接口。
  * 日志类提供多线程以及日志等级的支持，其他线程提交的entry会被submit到Log的队列中。日志在本线程，只要queue非空，
  * 就会调用flush将queue中的entry刷入日志文件。如果queue为空，则会等待信号量直到有其他线程提交entry。
@@ -181,6 +181,6 @@ class Log : private Thread {
   static inline int append_time(const Log::log_lock::time_point &t, char *out,
                                 size_t outlen);
 };
-extern hvs::Log* init_logger();
-extern void stop_log(hvs::Log* log);
-}  // namespace hvs
+extern gvds::Log* init_logger();
+extern void stop_log(gvds::Log* log);
+}  // namespace gvds

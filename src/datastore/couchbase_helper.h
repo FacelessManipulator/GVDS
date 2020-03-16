@@ -6,9 +6,9 @@
 #include "datastore/datastore.h"
 #include "libcouchbase/couchbase++.h"
 
-namespace hvs {
+namespace gvds {
 struct N1qlResponse;
-class CouchbaseDatastore : public hvs::Datastore {
+class CouchbaseDatastore : public gvds::Datastore {
  public:
   CouchbaseDatastore(const std::string& bucket_name)
       : Datastore(bucket_name), initilized(false) {}
@@ -61,7 +61,7 @@ class CouchbaseDatastore : public hvs::Datastore {
   bool initilized;
 };
 
-struct N1qlResponse : public hvs::JsonSerializer {
+struct N1qlResponse : public gvds::JsonSerializer {
   struct error : public JsonSerializer {
    public:
     unsigned code;
@@ -88,4 +88,4 @@ struct N1qlResponse : public hvs::JsonSerializer {
   unsigned errorCount;
 };
 
-}  // namespace hvs
+}  // namespace gvds

@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 #include "log/Log.h"
 
-using namespace hvs;
+using namespace gvds;
 
 class LogTest : public ::testing::Test {
 protected:
@@ -22,17 +22,17 @@ public:
 
 TEST_F(LogTest, Simple) {
   for (int i = 0; i < 10; i++) {
-    hvs::EntryPtr e = log->create_entry(1, "hello world");
+    gvds::EntryPtr e = log->create_entry(1, "hello world");
     log->submit_entry(e);
   }
-  // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
+  // EXPECT_TRUE("the file in /tmp/gvds.logtest should be correct");
 }
 
 TEST_F(LogTest, Dout) {
   for (int i = 0; i < 10; i++) {
     dout(1) << "hello Dout" << dendl;
   }
-  // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
+  // EXPECT_TRUE("the file in /tmp/gvds.logtest should be correct");
 }
 
 class LogTester : public Thread {
@@ -53,5 +53,5 @@ TEST_F(LogTest, MultiThread) {
   for (int i = 0; i < 10; i++) {
     lts[i].join();
   }
-  // EXPECT_TRUE("the file in /tmp/hvs.logtest should be correct");
+  // EXPECT_TRUE("the file in /tmp/gvds.logtest should be correct");
 }

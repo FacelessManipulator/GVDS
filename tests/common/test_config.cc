@@ -7,7 +7,7 @@
 
 using namespace std;
 using namespace libconfig;
-using namespace hvs;
+using namespace gvds;
 
 class ConfigTest : public ::testing::Test {
  protected:
@@ -71,5 +71,5 @@ TEST_F(ConfigTest, AddOption) {
     csp->add("attr2.string", std::string("hello"));
     // list type
     csp->add("attr2.list", std::vector{1,2,3});
-    csp->writeFile("/tmp/hvs/tests/data/example.cfg");
+    csp->writeFile("/tmp/gvds/tests/data/example.cfg");
 }

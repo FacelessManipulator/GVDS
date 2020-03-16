@@ -4,14 +4,14 @@
 #include "io_proxy/rpc_types.h"
 #include "msg/udt_server.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 ServerSession::ServerSession(UDTServer *srv, UDTSOCKET socket)
     : parent(srv), unpacker(), socket_(socket), m_stop(false) {
   unpacker.reserve_buffer(2048000);
   writer = make_shared<UDTWriter>(socket_);
   writer->start();
-  iop = static_cast<IOProxy *>(hvs::HvsContext::get_context()->node);
+  iop = static_cast<IOProxy *>(gvds::HvsContext::get_context()->node);
 }
 
 void ServerSession::close() {
@@ -97,7 +97,7 @@ void ServerSession::do_read() {
         //        op->op_complete).count()  << dendl; dout(-1) << " write
         //        return: " << rb.error_code << dendl;
       });
-      static_cast<IOProxy *>(hvs::HvsContext::get_context()->node)
+      static_cast<IOProxy *>(gvds::HvsContext::get_context()->node)
           ->queue_op(op);
       // dout(-1) << "op-" << op->id << " queued on server" << dendl;
     } catch (exception &e) {

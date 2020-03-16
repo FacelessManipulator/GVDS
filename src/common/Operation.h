@@ -62,11 +62,11 @@ enum OpTypes {
   poll,
 };
 
-// hvs is GVDS's sub project name
-namespace hvs {
+// gvds is GVDS's sub project name
+namespace gvds {
 class GVDSOperation {
   // the operation type
   uint8_t type;
   const uint32_t id;
 };
-}  // namespace hvs
+}  // namespace gvds

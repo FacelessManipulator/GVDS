@@ -13,7 +13,7 @@
 #include <string>
 #include "boost/asio/ip/address.hpp"
 #include "common/Thread.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "msg/operator_client.hpp"
 #include "op.pb.h"
 
@@ -24,7 +24,7 @@
 
 
 namespace fs = std::experimental::filesystem;
-namespace hvs {
+namespace gvds {
 class IOProxy;
 class ReplicaMgr : public Thread {
  private:
@@ -99,4 +99,4 @@ class ReplicaMgr : public Thread {
   std::queue<std::shared_ptr<OpRequest>> m_new;  ///< 日志的记录队列
   int m_max_new;  ///< 日志队列的最大记录数
 };
-};  // namespace hvs
+};  // namespace gvds

@@ -17,7 +17,7 @@
 #define PREALLOC 1000000
 #define MAX_LOG_BUF 65536
 
-namespace hvs {
+namespace gvds {
 int Log::append_time(const Log::log_lock::time_point &t, char *out,
                      size_t outlen) {
   auto sec =
@@ -42,7 +42,7 @@ int Log::append_time(const Log::log_lock::time_point &t, char *out,
   return r;
 }
 
-hvs::Log *init_logger() {
+gvds::Log *init_logger() {
   // TODO: use config module to get log path
   auto _config = HvsContext::get_context()->_config;
   auto log_path = _config->get<std::string>("log.path");
@@ -54,7 +54,7 @@ hvs::Log *init_logger() {
   } else {
     // success, pass
   }
-  hvs::Log *log = new hvs::Log;
+  gvds::Log *log = new gvds::Log;
   log->set_log_file(*log_path);
   log->set_log_level(*log_level);
   if (!log->reopen_log_file()) {
@@ -65,7 +65,7 @@ hvs::Log *init_logger() {
   return log;
 }
 
-void stop_log(hvs::Log *log) {
+void stop_log(gvds::Log *log) {
   log->flush();
   log->stop();
   delete log;
@@ -319,4 +319,4 @@ bool Log::is_inside_log_lock() {
          pthread_self() == m_flush_mutex_holder;
 }
 
-}  // namespace hvs
+}  // namespace gvds

@@ -5,10 +5,10 @@
 #include "context.h"
 #include <map>  
 
-class Auth: public hvs::JsonSerializer {
+class Auth: public gvds::JsonSerializer {
 public:
     std::string zoneID;
-    std::string HVSAccountID;
+    std::string GVDSAccountID;
     int owner_read;
     int owner_write;
     int owner_exe;
@@ -32,7 +32,7 @@ public:
 
 
 //请求self  rest 所需的结构
-class SelfAuthSpaceInfo: public hvs::JsonSerializer {
+class SelfAuthSpaceInfo: public gvds::JsonSerializer {
 public:
     std::string spaceinformation;
     std::string ownerID_zone;
@@ -48,9 +48,9 @@ public:
 };
 
 //subAuthSearch
-class AuthSearch: public hvs::JsonSerializer {
+class AuthSearch: public gvds::JsonSerializer {
 public:
-  std::string hvsID;
+  std::string gvdsID;
   std::vector<std::string> vec_ZoneID;
   std::map<std::string, std::string> read;
   std::map<std::string, std::string> write;
@@ -71,10 +71,10 @@ public:
 };
 
 //modift group auth
-class AuthModifygroupinfo: public hvs::JsonSerializer {
+class AuthModifygroupinfo: public gvds::JsonSerializer {
   public:
   std::string spaceinformation;
-  std::string hvsID;
+  std::string gvdsID;
   std::string au_person;
   std::string au_group;
   std::string au_other;
@@ -86,9 +86,9 @@ public:
 };
 
 
-class FEAuthModifygroupinfo: public hvs::JsonSerializer {
+class FEAuthModifygroupinfo: public gvds::JsonSerializer {
   public:
-  std::string hvsID;
+  std::string gvdsID;
   std::string zonename;
   std::string modify_groupauth;
 public:
@@ -99,7 +99,7 @@ public:
 };
 
 
-class SelfSPD: public hvs::JsonSerializer {
+class SelfSPD: public gvds::JsonSerializer {
 public:
   std::string spaceinformation;
   std::string gp; //组名字，就是 zoneID.substr(0,9)
@@ -113,9 +113,9 @@ public:
 };
 
 /*
-class Auth: public hvs::JsonSerializer {
+class Auth: public gvds::JsonSerializer {
 public:
-    std::string HVSAccountID;
+    std::string GVDSAccountID;
     std::vector<std::string> zoneid;
     std::map<std::string, int> authwrite;
     std::map<std::string, int> authread;
@@ -129,7 +129,7 @@ public:
 
 public:
     Auth() = default;
-    Auth(std::string id) : HVSAccountID(id){}
+    Auth(std::string id) : GVDSAccountID(id){}
 };
 */
 

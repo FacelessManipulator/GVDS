@@ -12,7 +12,7 @@
 #include "client/readahead.h"
 #include "client/cache_mod.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void Client::start() {
@@ -64,8 +64,8 @@ string Client::get_manager() {
   }
 }
 
-namespace hvs {
-hvs::Client* init_client() {
+namespace gvds {
+gvds::Client* init_client() {
   auto _config = HvsContext::get_context()->_config;
   auto ip = _config->get<std::string>("ip");
   if (!ip) {
@@ -74,7 +74,7 @@ hvs::Client* init_client() {
     ip = "0.0.0.0";
   }
   auto client = new Client();
-  hvs::HvsContext::get_context()->node = client;
+  gvds::HvsContext::get_context()->node = client;
   // register modules in manager node
   client->fuse = std::make_shared<ClientFuse>("fuse", client);
   client->rpc = std::make_shared<ClientRpc>("rpc", client);
@@ -101,8 +101,8 @@ hvs::Client* init_client() {
   return client;
 }
 
-void destroy_client(hvs::Client* client) {
+void destroy_client(gvds::Client* client) {
   client->stop();
   delete client;
 }
-}  // namespace hvs
+}  // namespace gvds

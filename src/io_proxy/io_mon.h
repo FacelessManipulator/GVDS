@@ -7,7 +7,7 @@
 #include "boost/asio/ip/address.hpp"
 #include "monitor_counter.hpp"
 
-namespace hvs {
+namespace gvds {
     class IOProxy;
     class IOMonitor: public Thread {
     private:

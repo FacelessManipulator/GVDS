@@ -11,7 +11,7 @@
 #include "config/default_config.hpp"
 
 using namespace libconfig;
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 CONFIG_DEFINE_TYPE(int, libconfig::Setting::TypeInt);
@@ -119,16 +119,16 @@ bool ConfigureSettings::writeFile(const char* outfile) {
   }
 }
 
-hvs::ConfigureSettings* hvs::init_config(const std::string& config_path) {
-  hvs::ConfigureSettings* _config = nullptr;
+gvds::ConfigureSettings* gvds::init_config(const std::string& config_path) {
+  gvds::ConfigureSettings* _config = nullptr;
   std::list<std::string> default_config_paths{
-      "./hvs.conf", "/etc/hvs/hvs.conf", "/opt/hvs/hvs.conf"};
+      "./gvds.conf", "/etc/gvds/gvds.conf", "/opt/gvds/gvds.conf"};
   if (!config_path.empty()) {
     default_config_paths.push_front(config_path);
   }
   for (auto& path : default_config_paths) {
     if (boost::filesystem::exists(path)) {
-      _config = new hvs::ConfigureSettings(path);
+      _config = new gvds::ConfigureSettings(path);
       if(!_config->vaild()) {
         return nullptr;
       }
@@ -138,7 +138,7 @@ hvs::ConfigureSettings* hvs::init_config(const std::string& config_path) {
       return _config;
     }
   }
-  std::cerr << "ERROR: can't find hvs.conf in [";
+  std::cerr << "ERROR: can't find gvds.conf in [";
   for(auto& path : default_config_paths) {
     std::cerr << "\"" << path << "\", ";
   }

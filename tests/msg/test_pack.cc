@@ -3,7 +3,7 @@
 #include "msg/stat_demo.h"
 #include <iostream>
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 class ComplexStructure {
@@ -28,7 +28,7 @@ class ComplexStructure {
 };
 
 TEST(PACKTEST, simple) {
-  stat_buffer sb1 = get_stat("/tmp/hvs/tests/data/example.cfg");
+  stat_buffer sb1 = get_stat("/tmp/gvds/tests/data/example.cfg");
   auto buffer = pack(sb1);
   stat_buffer sb2;
   sb2 = unpack<stat_buffer>(buffer);

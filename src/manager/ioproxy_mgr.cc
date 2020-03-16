@@ -9,7 +9,7 @@
 #include "datastore/datastore.h"
 #include "manager/rpc_mod.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 using namespace Pistache::Rest;
 using namespace Pistache::Http;
@@ -77,7 +77,7 @@ bool IOProxy_MGR::add(const Rest::Request& req, Http::ResponseWriter res) {
   live_ioproxy[iop->uuid] = iop;
 
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
-      bucket, hvs::DatastoreType::couchbase, true);
+      bucket, gvds::DatastoreType::couchbase, true);
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
   auto err = cbd->upsert(IOProxyNode::prefix() + iop->uuid, iop->json_value());
   res.send(Code::Accepted, iop->uuid);
@@ -96,7 +96,7 @@ bool IOProxy_MGR::detail(const Rest::Request& req, Http::ResponseWriter res) {
 
 bool IOProxy_MGR::del(const Rest::Request& req, Http::ResponseWriter res) {
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
-      bucket, hvs::DatastoreType::couchbase, true);
+      bucket, gvds::DatastoreType::couchbase, true);
   auto uuid = req.param(":id").as<std::string>();
   auto err = dbPtr->remove(IOProxyNode::prefix() + uuid);
   if (!err)
@@ -124,7 +124,7 @@ std::shared_ptr<IOProxyNode> IOProxy_MGR::parse_request(
 void IOProxy_MGR::init_ioproxy_list() {
   std::map<std::string, shared_ptr<IOProxyNode>> live_ioproxy_tmp;
   std::shared_ptr<Datastore> dbPtr = DatastoreFactory::create_datastore(
-      bucket, hvs::DatastoreType::couchbase, true);
+      bucket, gvds::DatastoreType::couchbase, true);
   auto cbd = static_cast<CouchbaseDatastore*>(dbPtr.get());
   char query[256];
   snprintf(query, 256,

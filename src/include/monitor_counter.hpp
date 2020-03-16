@@ -1,7 +1,7 @@
 #pragma once
 #include "common/JsonSerializer.h"
 
-namespace hvs{
+namespace gvds{
     struct MonitorSpeed: public JsonSerializer {
         typedef std::pair<std::uint64_t, std::atomic_uint64_t> COUNTER;
         COUNTER byte_read_local;

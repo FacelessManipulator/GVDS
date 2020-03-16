@@ -11,14 +11,14 @@
 #include "zone_mod.h"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
-void hvs::ClientZone::start() {
+void gvds::ClientZone::start() {
   m_stop = false;
   create("client-zone-mod");
 }
 
-void hvs::ClientZone::stop() { m_stop = true; }
+void gvds::ClientZone::stop() { m_stop = true; }
 
 void *ClientZone::entry() {
   while (!m_stop) {
@@ -29,7 +29,7 @@ void *ClientZone::entry() {
   }
 }
 
-bool hvs::ClientZone::GetZoneInfo(std::string clientID) {
+bool gvds::ClientZone::GetZoneInfo(std::string clientID) {
   vector<shared_ptr<Zone>> zoneinfores;
   string endpoint = client->get_manager();
   string inforesult =
@@ -83,7 +83,7 @@ std::vector<std::string> splitWithStl(const std::string str,
   return resVec;
 }
 
-std::tuple<std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> hvs::ClientZone::locatePosition(
+std::tuple<std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> gvds::ClientZone::locatePosition(
     const std::string& path) {
   std::vector<std::string> namev = splitWithStl(path, "/");
   auto pos = path.find('/', 1);

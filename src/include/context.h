@@ -3,14 +3,14 @@
 //
 #pragma once
 
-#ifndef HVS_CONTEXT
-#define HVS_CONTEXT
+#ifndef GVDS_CONTEXT
+#define GVDS_CONTEXT
 #endif
 
 #include <memory>
 #include <string>
 
-namespace hvs {
+namespace gvds {
 class Log;
 class ConfigureSettings;
 class IOProxy;
@@ -36,7 +36,7 @@ class HvsContext {
 
 extern void init_context(const std::string& config_path = "");
 extern void destroy_context();
-}  // namespace hvs
+}  // namespace gvds
 
 #include "common/debug.h"
 #include "config/ConfigureSettings.h"

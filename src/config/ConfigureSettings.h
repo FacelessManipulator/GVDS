@@ -2,7 +2,7 @@
  * Created by Yaowen Xu on 2019-04-01.
  * 作者: Yaowen Xu
  * 时间: 2019-04-01
- * 工程: HVSONE
+ * 工程: GVDS
  * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
  */
 
@@ -15,10 +15,10 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include "hvsdef.h"
+#include "gvdsdef.h"
 
 //包含 libconfig 头文件
-namespace hvs {
+namespace gvds {
 class ConfigureSettings {
  public:
   ConfigureSettings(const std::string& config_path);
@@ -138,4 +138,4 @@ bool ConfigureSettings::_add(libconfig::Setting& setting, std::string& path,
   }
 }
 ConfigureSettings* init_config(const std::string& config_path = "");
-}  // namespace hvs
+}  // namespace gvds

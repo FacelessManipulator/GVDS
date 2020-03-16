@@ -2,7 +2,7 @@
 #include "CUDPBlast.h"
 #include "context.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 bool UDTServer::start() {
@@ -206,10 +206,10 @@ void* UDTServer::recvdata(const UDTSOCKET recver) {
   return 0;
 }
 
-namespace hvs {
+namespace gvds {
 UDTServer* init_udtserver() {
   UDTServer* udt_server = new UDTServer();
   udt_server->start();
   return udt_server;
 }
-}  // namespace hvs
+}  // namespace gvds

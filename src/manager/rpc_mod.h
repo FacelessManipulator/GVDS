@@ -5,10 +5,10 @@
 #include <unordered_map>
 #include "manager.h"
 #include "common/Thread.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "msg/node.h"
 
-namespace hvs {
+namespace gvds {
 class ManagerRpc : public ManagerModule {
  private:
   virtual void start() override;
@@ -50,4 +50,4 @@ class ManagerRpc : public ManagerModule {
 //     return std::make_shared<RPCLIB_MSGPACK::object_handle>(std::move(*res));
 //   }
 // }
-}  // namespace hvs
+}  // namespace gvds

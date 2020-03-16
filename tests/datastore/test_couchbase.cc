@@ -10,7 +10,7 @@
 #include "gtest/gtest.h"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
 class CouchbaseTest : public ::testing::Test {
  protected:
@@ -19,11 +19,11 @@ class CouchbaseTest : public ::testing::Test {
         DatastoreFactory::create_datastore("test2", couchbase, true));
   }
   void TearDown() override { dbPtr.reset(); }
-  static void SetUpTestCase() { hvs::init_context(); }
-  static void TearDownTestCase() { hvs::destroy_context(); }
+  static void SetUpTestCase() { gvds::init_context(); }
+  static void TearDownTestCase() { gvds::destroy_context(); }
 
  public:
-  std::shared_ptr<hvs::CouchbaseDatastore> dbPtr;
+  std::shared_ptr<gvds::CouchbaseDatastore> dbPtr;
 };
 
 TEST_F(CouchbaseTest, Init) { EXPECT_EQ("couchbase", dbPtr->get_typename()); }

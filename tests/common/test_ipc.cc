@@ -2,7 +2,7 @@
  * Created by Yaowen Xu on 2019-03-20.
  * 作者: Yaowen Xu
  * 时间: 2019-03-20
- * 工程: HVSONE
+ * 工程: GVDS
  * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
  */
 
@@ -14,7 +14,7 @@
 #include <boost/asio.hpp>
 #include "client/ipc_struct.h"
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
 bool send() {
     cout << endl;

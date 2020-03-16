@@ -4,7 +4,7 @@
 #include "common/JsonSerializer.h"
 #include <map>  
 
-class CenterInfo : public hvs::JsonSerializer {
+class CenterInfo : public gvds::JsonSerializer {
 public:
     std::vector<std::string> centerID;
     std::map<std::string, std::string> centerIP;
@@ -31,7 +31,7 @@ public:
 };
 
 
-class FECenterInfo : public hvs::JsonSerializer {
+class FECenterInfo : public gvds::JsonSerializer {
 public:
     std::string centerID;
     std::string centerIP;

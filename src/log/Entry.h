@@ -10,7 +10,7 @@
 #include <sstream>
 #include <cstring>
 
-namespace hvs {
+namespace gvds {
 class Entry {
  public:
   using log_time = std::chrono::time_point<std::chrono::system_clock>;
@@ -62,4 +62,4 @@ class Entry {
 };
 
 using EntryPtr = std::shared_ptr<Entry>;
-}  // namespace hvs
+}  // namespace gvds

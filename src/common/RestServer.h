@@ -3,8 +3,8 @@ Author:Liubingqi
 date:2019.03.21
 
 g++ -c UserModelServer.cc
-g++ -c hvsrest.cc -lpistache  -std=c++11
-g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
+g++ -c gvdsrest.cc -lpistache  -std=c++11
+g++ -o user UserModelServer.o gvdsrest.o -lpistache -std=c++11
 
 ./user 5
 */
@@ -22,7 +22,7 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 using namespace std;
 using namespace Pistache;
 
-namespace hvs {
+namespace gvds {
 class Manager;
 
 class RestServer : public Thread {
@@ -47,6 +47,6 @@ class RestServer : public Thread {
 };
 extern RestServer* init_rest();           //[后加函数]
 extern void stop_rest(RestServer* rest);  //[后加函数]
-}  // namespace hvs
+}  // namespace gvds
 
 #endif

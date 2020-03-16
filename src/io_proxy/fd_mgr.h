@@ -17,7 +17,7 @@
 #define _GVDS_BASE_FS_PAGE_SIZE (1<<12)
 #define _GVDS_BASE_FS_PAGE_MASK 0xFFF
 
-namespace hvs {
+namespace gvds {
     class IOProxy;
     class HvsFileHandler {
     public:

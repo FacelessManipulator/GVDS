@@ -1,6 +1,6 @@
 #include "msg/udt_writer.h"
 #include "context.h"
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void UDTWriter::start() {

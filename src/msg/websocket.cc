@@ -1,6 +1,6 @@
 #include "msg/websocket.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void fail(boost::system::error_code ec, char const* what) {

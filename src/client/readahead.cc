@@ -6,7 +6,7 @@
 #include "client/client.h"
 #include "client/msg_mod.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void ClientReadAhead::start() {

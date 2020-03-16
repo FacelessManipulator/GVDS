@@ -1,9 +1,9 @@
 #pragma once
 #include <functional>
 #include "rpc/client.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 
-namespace hvs {
+namespace gvds {
 struct Buffer {
   clmdep_msgpack::type::raw_ref buf;
   uint64_t offset;

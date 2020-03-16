@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include "client.h"
 #include "common/Thread.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "msg/node.h"
 #include "msg/rpc.h"
 #include "msg/udt_client.h"
@@ -22,7 +22,7 @@
 #include <grpcpp/grpcpp.h>
 #include "op.grpc.pb.h"
 
-namespace hvs {
+namespace gvds {
 class ClientRpc : public ClientModule {
  private:
   virtual void start() override;
@@ -141,4 +141,4 @@ class ClientRpc : public ClientModule {
 //   }
 //   return res;
 // }
-}  // namespace hvs
+}  // namespace gvds

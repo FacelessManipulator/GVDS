@@ -17,7 +17,7 @@
 #include "msg/op.h"
 
 class ManagerTest;
-namespace hvs {
+namespace gvds {
 class ManagerRpc;
 class ManagerModule;
 class Manager : public Thread, public Node, public JsonSerializer {
@@ -71,6 +71,6 @@ class ManagerModule {
   friend class Manager;
 };
 
-extern hvs::Manager* init_manager();
-extern void destroy_manager(hvs::Manager* mgr);
-}  // namespace hvs
+extern gvds::Manager* init_manager();
+extern void destroy_manager(gvds::Manager* mgr);
+}  // namespace gvds

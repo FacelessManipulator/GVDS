@@ -8,11 +8,11 @@
 #include "msg/stat_demo.h"
 #include <dirent.h>
 
-#define  TFILEP "/tmp/hvs/tests/data/syncio.txt"
-#define  TDIRP "/tmp/hvs/tests/data/"
+#define  TFILEP "/tmp/gvds/tests/data/syncio.txt"
+#define  TDIRP "/tmp/gvds/tests/data/"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
 class IOPROXYTEST : public ::testing::Test {
  protected:
@@ -24,13 +24,13 @@ class IOPROXYTEST : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-    hvs::init_ioproxy();
+    gvds::init_context();
+    gvds::init_ioproxy();
   }
   static void TearDownTestCase() {
-    hvs::destroy_ioproxy(
+    gvds::destroy_ioproxy(
         static_cast<IOProxy*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:

@@ -7,7 +7,7 @@
 #include <vector>
 #include "msg/udt_writer.h"
 
-namespace hvs {
+namespace gvds {
 
 class UDTServer;
 class IOProxy;
@@ -32,4 +32,4 @@ class ServerSession {
   bool m_stop = false;
   IOProxy* iop;
 };
-}  // namespace hvs
+}  // namespace gvds

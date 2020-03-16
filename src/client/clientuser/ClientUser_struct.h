@@ -9,7 +9,7 @@
 // 和服务端 Account.h 信息完全一致，可以对上
 
 //对应sc_account_info表
-// class SCAccount : public hvs::JsonSerializer {
+// class SCAccount : public gvds::JsonSerializer {
 // public:
 //     std::string accountID;
 //     std::map<std::string, std::string> Beijing_account;
@@ -28,7 +28,7 @@
 //     SCAccount(std::string id) : accountID(id){}
 // };
 
-class SCAccount : public hvs::JsonSerializer {
+class SCAccount : public gvds::JsonSerializer {
 public:
     std::string accountID;
     std::vector<std::string> centerName;
@@ -47,7 +47,7 @@ public:
 
 
 //对应account_info表
-class Account : public hvs::JsonSerializer {
+class Account : public gvds::JsonSerializer {
 public:
 
     std::string accountName; //虚拟数据空间账户名
@@ -71,7 +71,7 @@ public:
 };
 
 //账户注册时写入，账户登录时查询，对应account_map_id 表
-class AccountPair : public hvs::JsonSerializer{
+class AccountPair : public gvds::JsonSerializer{
 public:
     std::string accountName; //虚拟数据空间账户名
     std::string accountID;   //虚拟数据空间账户ID,在客户端生成
@@ -88,7 +88,7 @@ public:
 
 
 //账户登录时，解析body的账户名，密码，不对应具体表项
-class AccountPass : public hvs::JsonSerializer{
+class AccountPass : public gvds::JsonSerializer{
 public:
     std::string accountName; //虚拟数据空间账户名
     std::string Password;//虚拟数据空间账户密码
@@ -103,7 +103,7 @@ public:
 
 
 //登录时获取从账户池获取账户
-class AccountSCPool : public hvs::JsonSerializer{
+class AccountSCPool : public gvds::JsonSerializer{
 public:
     std::map<std::string, std::string> unuse_account;
     std::map<std::string, std::string> use_account;
@@ -115,7 +115,7 @@ public:
 };
 
 //getLocalAccountinfo用到,本地账户名，和密码// 不用和数据库交互
-class LocalAccountPair : public hvs::JsonSerializer{
+class LocalAccountPair : public gvds::JsonSerializer{
 public:
     std::string localaccount;
     std::string localpassword;
@@ -132,7 +132,7 @@ public:
 
 
 //admin
-class struct_AdminList : public hvs::JsonSerializer{
+class struct_AdminList : public gvds::JsonSerializer{
 public:
     std::vector<std::string> namelist;
 public:
@@ -142,10 +142,10 @@ public:
     struct_AdminList() = default;
 };
 
-class struct_AdminAccountMap : public hvs::JsonSerializer{
+class struct_AdminAccountMap : public gvds::JsonSerializer{
 public:
-    std::string adhvsID;
-    std::string hvsID;
+    std::string adgvdsID;
+    std::string gvdsID;
     std::string hostCenterName;
 public:
     void serialize_impl() override;
@@ -155,7 +155,7 @@ public:
 };
 
 // //apply_info  数据库中结构
-// class struct_apply_info : public hvs::JsonSerializer{
+// class struct_apply_info : public gvds::JsonSerializer{
 // public:
 //     std::string id;
 //     std::string data;

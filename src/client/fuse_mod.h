@@ -4,9 +4,9 @@
 #include <fuse3/fuse.h>
 #include "client.h"
 #include "common/Thread.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 
-namespace hvs {
+namespace gvds {
 struct ClientFuseData {
   Client* client;
   ClientFuse* fuse_client;
@@ -40,5 +40,5 @@ class ClientFuse : public ClientModule {
   friend class Client;
 };
 
-extern struct fuse_operations hvsfs_oper;
-}  // namespace hvs
+extern struct fuse_operations gvdsfs_oper;
+}  // namespace gvds

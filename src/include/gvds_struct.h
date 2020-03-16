@@ -11,13 +11,13 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "common/json.h"
 
-namespace hvs {
+namespace gvds {
 
 struct NodeStatistics {
   unsigned long uptime;
 };
 
-struct IOProxyNode : public hvs::JsonSerializer {
+struct IOProxyNode : public gvds::JsonSerializer {
   enum Status {
     Running = 0,
     Stopped,
@@ -80,7 +80,7 @@ struct IOProxyNode : public hvs::JsonSerializer {
   std::string json_value() { return serialize(); }
 };
 
-struct Space : public hvs::JsonSerializer {
+struct Space : public gvds::JsonSerializer {
  public:
   std::string spaceID;       //空间ID,UUID
   std::string spaceName;     //空间名
@@ -136,7 +136,7 @@ struct Space : public hvs::JsonSerializer {
   }
 };
 
-struct SpaceRequest : public hvs::JsonSerializer {
+struct SpaceRequest : public gvds::JsonSerializer {
  public:
   std::string spaceID;  //空间ID
   std::vector<std::string> spaceIDs;
@@ -157,7 +157,7 @@ struct SpaceRequest : public hvs::JsonSerializer {
   }
 };
 
-struct Zone : public hvs::JsonSerializer {
+struct Zone : public gvds::JsonSerializer {
   // enum AuthType {
   //   NO,
   //   X,
@@ -243,7 +243,7 @@ struct Zone : public hvs::JsonSerializer {
   Zone() : contains_spaceinfo(true){};
 };
 
-struct ZoneRequest : public hvs::JsonSerializer {
+struct ZoneRequest : public gvds::JsonSerializer {
  public:
   std::string zoneID;  //空间ID
   std::string clientID;
@@ -283,7 +283,7 @@ struct ZoneRequest : public hvs::JsonSerializer {
 };
 
 // apply_info  数据库中结构
-class struct_apply_info : public hvs::JsonSerializer {
+class struct_apply_info : public gvds::JsonSerializer {
  public:
   std::string id;
   std::string data;
@@ -303,7 +303,7 @@ class struct_apply_info : public hvs::JsonSerializer {
 };
 
 // apply_info 的string vector
-class struct_apply_content : public hvs::JsonSerializer {
+class struct_apply_content : public gvds::JsonSerializer {
  public:
   std::vector<std::string> applycontent;
 
@@ -315,4 +315,4 @@ class struct_apply_content : public hvs::JsonSerializer {
   struct_apply_content() = default;
 };
 
-}  // namespace hvs
+}  // namespace gvds

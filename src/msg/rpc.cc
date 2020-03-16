@@ -1,9 +1,9 @@
 #include "msg/rpc.h"
 #include "msg/bind_demo.h"
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
-RpcServer* hvs::init_rpcserver() {
+RpcServer* gvds::init_rpcserver() {
   auto _config = HvsContext::get_context()->_config;
   auto ip = _config->get<string>("ioproxy.ip").value_or("0.0.0.0");
   auto port = _config->get<int>("ioproxy.rpc_port");
@@ -17,7 +17,7 @@ RpcServer* hvs::init_rpcserver() {
     // success, pass
   }
   RpcServer* rpc_server = new RpcServer(ip, *port);
-  hvs_rpc_bind(rpc_server);
+  gvds_rpc_bind(rpc_server);
   rpc_server->run(*workers);
   return rpc_server;
 }

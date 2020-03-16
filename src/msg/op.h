@@ -11,7 +11,7 @@
 #include <vector>
 
 // generic op class
-namespace hvs {
+namespace gvds {
 
 enum OPType {
   GENERIC,
@@ -108,4 +108,4 @@ struct IOProxyDataOP : public OP {
     return data;
   }
 };
-}  // namespace hvs
+}  // namespace gvds

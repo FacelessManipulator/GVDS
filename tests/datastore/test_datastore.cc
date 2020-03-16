@@ -5,16 +5,16 @@
 class DatastoreTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    dbPtr = hvs::DatastoreFactory::create_datastore(
-        "test", hvs::DatastoreType::couchbase);
+    dbPtr = gvds::DatastoreFactory::create_datastore(
+        "test", gvds::DatastoreType::couchbase);
     EXPECT_EQ(dbPtr->init(), 0);
   }
   void TearDown() override {}
-  static void SetUpTestCase() { hvs::init_context(); }
-  static void TearDownTestCase() { hvs::destroy_context(); }
+  static void SetUpTestCase() { gvds::init_context(); }
+  static void TearDownTestCase() { gvds::destroy_context(); }
 
  public:
-  std::shared_ptr<hvs::Datastore> dbPtr;
+  std::shared_ptr<gvds::Datastore> dbPtr;
 };
 
 TEST_F(DatastoreTest, CouchbaseInit) {
@@ -37,11 +37,11 @@ TEST_F(DatastoreTest, CouchbaseCURD) {
 class SharedClientTest : public Thread {
  public:
   void* entry() override {
-    auto dbp_last = hvs::DatastoreFactory::create_datastore(
-        "test", hvs::DatastoreType::couchbase, true);
+    auto dbp_last = gvds::DatastoreFactory::create_datastore(
+        "test", gvds::DatastoreType::couchbase, true);
     for (int i = 0; i < 10; i++) {
-      auto dbp_cur = hvs::DatastoreFactory::create_datastore(
-        "test", hvs::DatastoreType::couchbase, true);
+      auto dbp_cur = gvds::DatastoreFactory::create_datastore(
+        "test", gvds::DatastoreType::couchbase, true);
       EXPECT_EQ(dbp_last, dbp_cur);
     }
   }

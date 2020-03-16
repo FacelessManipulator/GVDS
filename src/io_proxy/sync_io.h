@@ -3,7 +3,7 @@
 // 北航系统结构所-存储组
 //
 
-#pragma once //HVSONE_SYNC_IO_H
+#pragma once //GVDS_SYNC_IO_H
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include "msg/op.h"
-namespace  hvs{
+namespace  gvds{
     class IOProxy;
     class sync_io {
     public:
@@ -73,4 +73,4 @@ namespace  hvs{
     };
 }
 
-//HVSONE_SYNC_IO_H
+//GVDS_SYNC_IO_H

@@ -5,14 +5,14 @@
 
 #include <atomic>
 #include "client.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "common/Thread.h"
 #include "client/msg_mod.h"
 
 #define CACHE_UNIT_SIZE 512
 #define REAHAHEAD_DEBUG_LEVEL 20
 
-namespace hvs {
+namespace gvds {
 class ClientReadAhead : public ClientModule {
     private:
         virtual void start() override;
@@ -81,4 +81,4 @@ class ClientReadAhead : public ClientModule {
                       int buf_idx, uint64_t sec_bg, unsigned int sec_max, uint64_t epoch);
         void clear_buf(const std::string& filepath);
     };
-}  // namespace hvs
+}  // namespace gvds

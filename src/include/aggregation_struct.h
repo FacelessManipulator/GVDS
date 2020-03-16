@@ -5,7 +5,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "common/json.h"
 
-namespace hvs {
+namespace gvds {
 
 enum StorageResState // 存储资源状态
 {
@@ -16,7 +16,7 @@ enum StorageResState // 存储资源状态
     Quited           // 已经退出
 };
 
-struct StorageResource : public hvs::JsonSerializer {
+struct StorageResource : public gvds::JsonSerializer {
 
   std::string storage_src_id;    // 存储资源UUID
   std::string storage_src_name;  // 存储资源名称
@@ -89,4 +89,4 @@ struct StorageResource : public hvs::JsonSerializer {
   }
 };
 
-}  // namespace hvs
+}  // namespace gvds

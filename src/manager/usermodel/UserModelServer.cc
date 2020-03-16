@@ -3,8 +3,8 @@ Author:Liubingqi
 date:2019.03.21
 
 g++ -c UserModelServer.cc
-g++ -c hvsrest.cc -lpistache  -std=c++11
-g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
+g++ -c gvdsrest.cc -lpistache  -std=c++11
+g++ -o user UserModelServer.o gvdsrest.o -lpistache -std=c++11
 
 ./user 5
 */
@@ -20,12 +20,12 @@ g++ -o user UserModelServer.o hvsrest.o -lpistache -std=c++11
 
 #include "manager/usermodel/UserModelServer.h"
 #include "manager/usermodel/MD5.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 
 using namespace std;
 
 
-//using namespace hvs;
+//using namespace gvds;
 
 //f0_dbPtr     account_info
         //f2_dbPtr     token_info       key:mtoken
@@ -38,7 +38,7 @@ using namespace std;
 
 //f5_dbPtr  apply_info
 
-namespace hvs{
+namespace gvds{
 using namespace Pistache::Rest;
 using namespace Pistache::Http;
 
@@ -94,7 +94,7 @@ void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::Respon
 
 bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &memberID){
     dout(-1) << " enter getMemberID "<< dendl;
-    //获取每一个membername 对应的 hvsid
+    //获取每一个membername 对应的 gvdsid
     auto f0_dbPtr = DatastoreFactory::create_datastore(bucket_account_info, couchbase, true);
     for(int i=0; i<memberName.size(); i++){
         auto [pvalue, error_0] = f0_dbPtr->get(".USER_UUID_MAP", memberName[i]);
@@ -172,8 +172,8 @@ string UserModelServer::UserRegister(Account &person){
     //写入account_info表
     std::string person_value = person.serialize();  //json
    
-    // std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-    //     hvs::CouchbaseDatastore(bucket_account_info));
+    // std::shared_ptr<gvds::CouchbaseDatastore> f0_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+    //     gvds::CouchbaseDatastore(bucket_account_info));
     // f0_dbPtr->init();
     
     int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
@@ -185,7 +185,7 @@ string UserModelServer::UserRegister(Account &person){
         string result_1 = "Dear:" + person.accountName + ", registration success";
         return result_1;
     }    
-    //string result = "Dear user: " + person.HVSAccountName + ", registration success. Please log in with your username and password";
+    //string result = "Dear user: " + person.GVDSAccountName + ", registration success. Please log in with your username and password";
     //return result;
 }
 
@@ -209,8 +209,8 @@ void UserModelServer::UserLoginRest(const Rest::Request& request, Http::Response
         //md5
         string origin_str = acc_pass.accountName + acc_pass.Password; //再加上url以及时间等等信息
         string mtoken = md5(origin_str);
-        std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-            hvs::CouchbaseDatastore(bucket_account_info));
+        std::shared_ptr<gvds::CouchbaseDatastore> f0_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+            gvds::CouchbaseDatastore(bucket_account_info));
         f0_dbPtr->init();
         string value ="1";
         int login_flag = f0_dbPtr->set(mtoken, value);
@@ -385,8 +385,8 @@ string UserModelServer::modifyUserinfo(Account &person){
     dout(-1) << person_key << dendl;
     dout(-1) << person_value << dendl;
    
-    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_account_info)); 
+    std::shared_ptr<gvds::CouchbaseDatastore> f0_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore(bucket_account_info)); 
     f0_dbPtr->init();
     
     int flag = f0_dbPtr->set(user_prefix + person_key, person_value);
@@ -491,15 +491,15 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
         dout(-1) << "access to db[account_info] fail" << dendl;
         return "-1";
     }
-    Account hvsperson;
-    hvsperson.deserialize(*pvalue);
+    Account gvdsperson;
+    gvdsperson.deserialize(*pvalue);
 
     //TODO判断区域是否注销完毕sy
     // std::string query = "select * from `"+zonebucket+"` where owner = \"ownerID\";";
     // int pos = query.find("ownerID");
     // query.erase(pos, 7);
     // query.insert(pos, uuid);
-    // std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    // std::shared_ptr<gvds::Datastore> dbPtr = gvds::DatastoreFactory::create_datastore(zonebucket, gvds::DatastoreType::couchbase);
     // auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     // auto [vp, err] = zonePtr->n1ql(query);
     // if(vp->size() != 0){
@@ -514,7 +514,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
     snprintf(query, 256, 
     "select * from `%s` where owner = \"%s\"", 
     zonebucket.c_str(), ownerID.c_str());
-    std::shared_ptr<hvs::Datastore> dbPtr = hvs::DatastoreFactory::create_datastore(zonebucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<gvds::Datastore> dbPtr = gvds::DatastoreFactory::create_datastore(zonebucket, gvds::DatastoreType::couchbase);
     auto zonePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
     auto [vp, err] = zonePtr->n1ql(string(query));
     if(vp->size() != 0){
@@ -523,8 +523,8 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
         return "-2";
     }
 
-    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    std::shared_ptr<gvds::CouchbaseDatastore> f1_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
      
     int flag = f1_dbPtr->remove(sc_user_prefix + uuid);
@@ -538,7 +538,7 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
 
     
     //删除account_map_id
-    int acc_map_id_flag = f0_dbPtr->remove(hvsperson.accountName);
+    int acc_map_id_flag = f0_dbPtr->remove(gvdsperson.accountName);
     if(acc_map_id_flag){
         is_cancel_success = false;
         dout(-1) << "when db[account_map_id] remove, fail" << dendl;
@@ -560,8 +560,8 @@ string UserModelServer::cancellationUserAccount(string uuid, bool is_cancel_succ
  /* 
 bool UserModelServer::RemoveAccountMapping_old(string accountID){
 
-    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    std::shared_ptr<gvds::CouchbaseDatastore> f1_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
 
     auto [pvalue_scuser, error] = f1_dbPtr->get(accountID);  //sc_account_info  key:uuid
@@ -589,7 +589,7 @@ bool UserModelServer::RemoveAccountMapping_old(string accountID){
 }
 
 //删除一个用户指定地区(location)的［所有］账户映射
-bool UserModelServer::SubRemoveAccountMapping_old(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
+bool UserModelServer::SubRemoveAccountMapping_old(SCAccount &person, string location, shared_ptr<gvds::CouchbaseDatastore> f1_dbPtr){
     dout(-1) << "location " << location << dendl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);    //sc_account_pool  key:Beijing,Shanghai...
     if (error){
@@ -677,8 +677,8 @@ bool UserModelServer::BuildAccountMapping_old(string accountID){
     
     SCAccount person(accountID);
 
-    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    std::shared_ptr<gvds::CouchbaseDatastore> f1_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
     
     //账户映射算法，选一个地点进行映射，目前是默认Beijing，如果不做算法，这里就直接映射5个就完事了（直接把下面四个//取消）
@@ -701,7 +701,7 @@ bool UserModelServer::BuildAccountMapping_old(string accountID){
 
 //20190621 不用修改，这个是活的
 //建立给定地区(location)的用户的［1个］账户映射，即调用Beijing两次，则在Beijing建立2个账户映射; 删除是直接删除给定地区的所有账户映射，若想只删除给定地区的其中一个账户，则需再自定函数实现
-bool UserModelServer::SubBuildAccountMapping_old(SCAccount &person, string location, shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr){
+bool UserModelServer::SubBuildAccountMapping_old(SCAccount &person, string location, shared_ptr<gvds::CouchbaseDatastore> f1_dbPtr){
     
     dout(-1) << "location " << location << dendl;
     auto [pvalue_location, error] = f1_dbPtr->get(location);
@@ -837,7 +837,7 @@ string UserModelServer::AdminUserRegister(Account &person){
     // }
 
     //管理员特有，将此uuid记录进 adminwhiteuser
-    auto raw_dbc = static_cast<hvs::CouchbaseDatastore*>(f0_dbPtr.get())->get_raw_client();
+    auto raw_dbc = static_cast<gvds::CouchbaseDatastore*>(f0_dbPtr.get())->get_raw_client();
     int admin_flag = raw_dbc->arr_insert_uniq(adminlist, "namelist", json_encode(person.accountID)).status().errcode();
     if(admin_flag!=0){
         dout(-1) << "Registration fail: cannot insert admin into admin white list;" << dendl;
@@ -856,7 +856,7 @@ string UserModelServer::AdminUserRegister(Account &person){
         string result_1 = "Dear:" + person.accountName + ", registration success";
         return result_1;
     }    
-    //string result = "Dear user: " + person.HVSAccountName + ", registration success. Please log in with your username and password";
+    //string result = "Dear user: " + person.GVDSAccountName + ", registration success. Please log in with your username and password";
     //return result;
 }
 
@@ -882,7 +882,7 @@ void UserModelServer::bufferUserRegisterRest(const Rest::Request& request, Http:
 }
 
 int UserModelServer::bufferUserRegister(std::string apply){
-    std::shared_ptr<hvs::Datastore> f5_dbPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<gvds::Datastore> f5_dbPtr =gvds::DatastoreFactory::create_datastore(applybucket, gvds::DatastoreType::couchbase);
     boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
     const std::string uuid = boost::uuids::to_string(a_uuid);
     std::string key = "usign-" + uuid;
@@ -917,12 +917,12 @@ void UserModelServer::viewbufferListRest(const Rest::Request& request, Http::Res
 
     dout(-1) << "====== end UserModelServer function: viewbufferListRest ======"<< dendl;
 }
-string UserModelServer::viewbufferList(std::string hvsID){
-    //验证 hvsID是否管理员id
-    if(!validadminidentity(hvsID)){
+string UserModelServer::viewbufferList(std::string gvdsID){
+    //验证 gvdsID是否管理员id
+    if(!validadminidentity(gvdsID)){
         return "33";// 不是管理员
     }
-    std::shared_ptr<hvs::Datastore> f5_dbPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<gvds::Datastore> f5_dbPtr =gvds::DatastoreFactory::create_datastore(applybucket, gvds::DatastoreType::couchbase);
     auto applyPtr = static_cast<CouchbaseDatastore*>(f5_dbPtr.get());
     
     //把bucket的数据库 的 所用 或者前5条 返回给客户端
@@ -960,7 +960,7 @@ void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Htt
     auto info = request.body();
     dout(-1) << "info: " << info << dendl;
 
-    std::shared_ptr<hvs::Datastore> f5_dbPtr =hvs::DatastoreFactory::create_datastore(applybucket, hvs::DatastoreType::couchbase);
+    std::shared_ptr<gvds::Datastore> f5_dbPtr =gvds::DatastoreFactory::create_datastore(applybucket, gvds::DatastoreType::couchbase);
     int flag = f5_dbPtr->remove(info);
     if(flag == 0){
         response.send(Http::Code::Ok, "0");  //删除成功
@@ -972,7 +972,7 @@ void UserModelServer::removeoneofApplyInfoRest(const Rest::Request& request, Htt
 
 
 //管理新建 和 删除账户映射
-//客户端需先获取对应用户的hvsID，若获取不到，则有问题；获取到后  发生hvsID 和hostCenterName
+//客户端需先获取对应用户的gvdsID，若获取不到，则有问题；获取到后  发生gvdsID 和hostCenterName
 // 返回 0 是成功，1是失败  33是没有权限
 void UserModelServer::adminCreateAccountMapping(const Rest::Request& request, Http::ResponseWriter response){
     response.send(Http::Code::Ok, "0");
@@ -991,18 +991,18 @@ void UserModelServer::adminSearchAccountMapping(const Rest::Request& request, Ht
     dout(-1) << "info: " << info << dendl;   //
 
     struct_AdminAccountMap new_accountmap;
-    new_accountmap.deserialize(info);     //new_accountmap.hostCenterName 并没有用到，只是借用struct_AdminAccountMap 里的 adhvsID 和hvsID字段
+    new_accountmap.deserialize(info);     //new_accountmap.hostCenterName 并没有用到，只是借用struct_AdminAccountMap 里的 adgvdsID 和gvdsID字段
     // 若不是管理员，直接返回
-    if(!validadminidentity(new_accountmap.adhvsID)){
+    if(!validadminidentity(new_accountmap.adgvdsID)){
         response.send(Http::Code::Ok, "33");// 不是管理员
         return;
     }
 
-    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    std::shared_ptr<gvds::CouchbaseDatastore> f1_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
 
-    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + new_accountmap.hvsID);  //sc_account_info  key:uuid
+    auto [pvalue_scuser, error] = f1_dbPtr->get(sc_user_prefix + new_accountmap.gvdsID);  //sc_account_info  key:uuid
     if(error){
         dout(-1) << "get sc_account_info fail."<< dendl;
         response.send(Http::Code::Ok, "1");// 失败
@@ -1019,7 +1019,7 @@ void UserModelServer::adminSearchAccountMapping(const Rest::Request& request, Ht
 void UserModelServer::adminSearchAccountPoolRest(const Rest::Request& request, Http::ResponseWriter response){
     dout(-1) << "====== start UserModelServer function: adminSearchAccountPoolRest ======"<< dendl;
     auto info = request.body();
-    dout(-1) << "info: " << info << dendl;  //info 是adhvsID
+    dout(-1) << "info: " << info << dendl;  //info 是adgvdsID
 
     std::string data = adminSearchAccountPool(info);
     response.send(Http::Code::Ok, data);
@@ -1027,14 +1027,14 @@ void UserModelServer::adminSearchAccountPoolRest(const Rest::Request& request, H
 
 //管理员 各个 账户池 使用量查询
 //33 权限问题    1 失败  其他(struct_infoAccountPool)成功
-std::string UserModelServer::adminSearchAccountPool(std::string adhvsID){
-    if(!validadminidentity(adhvsID)){
+std::string UserModelServer::adminSearchAccountPool(std::string adgvdsID){
+    if(!validadminidentity(adgvdsID)){
         return "33";
     }
 
     //获取account_info center_information中的超算中心名字，并以该名字作为key去查询 sc_account_info 中的超算池
-    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_account_info));
+    std::shared_ptr<gvds::CouchbaseDatastore> f0_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore(bucket_account_info));
     f0_dbPtr->init();
 
     auto [pvalue, error_0] = f0_dbPtr->get(c_key);   //c_key 在构造函数里
@@ -1046,8 +1046,8 @@ std::string UserModelServer::adminSearchAccountPool(std::string adhvsID){
     mycenter.deserialize(*pvalue);
 
 
-    std::shared_ptr<hvs::CouchbaseDatastore> f1_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore(bucket_sc_account_info));  
+    std::shared_ptr<gvds::CouchbaseDatastore> f1_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore(bucket_sc_account_info));  
     f1_dbPtr->init();
 
     struct_infoAccountPool acpool;   //返回给客户端的查询信息
@@ -1087,8 +1087,8 @@ std::string UserModelServer::adminSearchAccountPool(std::string adhvsID){
 }
 
 //验证是否是管理员
-bool UserModelServer::validadminidentity(string hvsID){
-    std::shared_ptr<hvs::Datastore> f0_dbPtr =hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::DatastoreType::couchbase);
+bool UserModelServer::validadminidentity(string gvdsID){
+    std::shared_ptr<gvds::Datastore> f0_dbPtr =gvds::DatastoreFactory::create_datastore(bucket_account_info, gvds::DatastoreType::couchbase);
 
     auto [admin_vp, admin_err] = f0_dbPtr->get(adminlist);
     if(admin_err){ //!=0
@@ -1098,7 +1098,7 @@ bool UserModelServer::validadminidentity(string hvsID){
     struct_AdminList tmp_list;
     tmp_list.deserialize(*admin_vp);
     for (int i=0; i<tmp_list.namelist.size(); i++){
-        if(hvsID == tmp_list.namelist[i]){
+        if(gvdsID == tmp_list.namelist[i]){
             return true;
         }
     }
@@ -1148,8 +1148,8 @@ bool auth_token(const Rest::Request& request){
         name = c.name;
         mtoken = c.value;
     }
-    std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr = std::make_shared<hvs::CouchbaseDatastore>(
-        hvs::CouchbaseDatastore("account_info"));
+    std::shared_ptr<gvds::CouchbaseDatastore> f0_dbPtr = std::make_shared<gvds::CouchbaseDatastore>(
+        gvds::CouchbaseDatastore("account_info"));
     f0_dbPtr->init();
 
    
@@ -1161,4 +1161,4 @@ bool auth_token(const Rest::Request& request){
 }
 
 
-}// namespace hvs
+}// namespace gvds

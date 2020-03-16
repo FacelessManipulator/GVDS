@@ -15,9 +15,9 @@ int lbqprint(){
 
 void Account::serialize_impl() {
 
-    put("HVSAccountName", accountName);
-    put("HVSPassword", Password);
-    put("HVSAccountID", accountID);
+    put("GVDSAccountName", accountName);
+    put("GVDSPassword", Password);
+    put("GVDSAccountID", accountID);
     put("AccountEMAIL", accountEmail);
     put("AccountPHONE", accountPhone);
     put("AccountAddress", accountAddress);
@@ -27,9 +27,9 @@ void Account::serialize_impl() {
 }
 void Account::deserialize_impl() {
 
-    get("HVSAccountName", accountName);
-    get("HVSPassword", Password);
-    get("HVSAccountID", accountID);
+    get("GVDSAccountName", accountName);
+    get("GVDSPassword", Password);
+    get("GVDSAccountID", accountID);
     get("AccountEMAIL", accountEmail);
     get("AccountPHONE", accountPhone);
     get("AccountAddress", accountAddress);
@@ -54,24 +54,24 @@ void SCAccount::deserialize_impl() {
 
 
 void AccountPair::serialize_impl() {
-    put("HVSAccountName", accountName);
-    put("HVSAccountID", accountID);
+    put("GVDSAccountName", accountName);
+    put("GVDSAccountID", accountID);
 }
 
 void AccountPair::deserialize_impl() {
-    get("HVSAccountName", accountName);
-    get("HVSAccountID", accountID);
+    get("GVDSAccountName", accountName);
+    get("GVDSAccountID", accountID);
  }
  
 
  void AccountPass::serialize_impl() {
-    put("HVSAccountName", accountName);
-    put("HVSPassword", Password);
+    put("GVDSAccountName", accountName);
+    put("GVDSPassword", Password);
 }
 
 void AccountPass::deserialize_impl() {
-    get("HVSAccountName", accountName);
-    get("HVSPassword", Password);
+    get("GVDSAccountName", accountName);
+    get("GVDSPassword", Password);
  }
  
 
@@ -108,14 +108,14 @@ void struct_AdminList::deserialize_impl(){
 }
 
 void struct_AdminAccountMap::serialize_impl(){
-    put("adhvsID", adhvsID);
-    put("hvsID", hvsID);
+    put("adgvdsID", adgvdsID);
+    put("gvdsID", gvdsID);
     put("hostCenterName", hostCenterName);
 }
 
 void struct_AdminAccountMap::deserialize_impl(){
-    get("adhvsID", adhvsID);
-    get("hvsID", hvsID);
+    get("adgvdsID", adgvdsID);
+    get("gvdsID", gvdsID);
     get("hostCenterName", hostCenterName);
 }
 

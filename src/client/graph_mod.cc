@@ -2,7 +2,7 @@
 #include "client/OPTNode/opt_node.h"
 #include "client/msg_mod.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void ClientGraph::start() { fresh_ioproxy(); m_stop=false; create("graph_mode");}

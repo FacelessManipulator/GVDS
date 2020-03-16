@@ -8,7 +8,7 @@
 #include "client/clientuser/ClientUser.h"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 using namespace Pistache;
 
 void ClientRpc::start() {}

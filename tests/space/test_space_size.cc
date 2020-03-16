@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "manager/space/SpaceServer.h"
 #include "common/JsonSerializer.h"
 #include "context.h"
@@ -13,10 +13,11 @@
 #include "gtest/gtest.h"
 #include <pistache/client.h>
 #include <atomic>
+#include <future>
 
-using namespace hvs;
+using namespace gvds;
 
-class HVSSpaceTest : public ::testing::Test {
+class GVDSSpaceTest : public ::testing::Test {
  protected:
   void SetUp() override {
 //    manager = static_cast<Manager*>(HvsContext::get_context()->node);
@@ -26,21 +27,21 @@ class HVSSpaceTest : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-//    hvs::init_manager();
+    gvds::init_context();
+//    gvds::init_manager();
 //    usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-//    hvs::destroy_manager(
+//    gvds::destroy_manager(
 //        static_cast<Manager*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:
 //  Manager* manager;
 };
 
-TEST_F(HVSSpaceTest, SpaceUsageCheckRest) {
+TEST_F(GVDSSpaceTest, SpaceUsageCheckRest) {
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/space/spaceusagecheck", 9090);
@@ -65,7 +66,7 @@ TEST_F(HVSSpaceTest, SpaceUsageCheckRest) {
     client.shutdown();
 }
 
-TEST_F(HVSSpaceTest, Sizecheck) {
+TEST_F(GVDSSpaceTest, Sizecheck) {
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/space/spaceusage", 9090);

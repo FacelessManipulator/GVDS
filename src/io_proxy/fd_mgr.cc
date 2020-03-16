@@ -12,7 +12,7 @@
 #include <dirent.h>
 #include <sys/xattr.h>
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 

@@ -1,4 +1,4 @@
-GET_PROPERTY(HVSCOMMOM_DEPENDS_ON GLOBAL PROPERTY "HVSCOMMOM_DEPENDS_ON")
+GET_PROPERTY(GVDSCOMMOM_DEPENDS_ON GLOBAL PROPERTY "GVDSCOMMOM_DEPENDS_ON")
 
 set(_PROTOBUF_LIBPROTOBUF libprotobuf)
 if(CMAKE_CROSSCOMPILING)
@@ -38,7 +38,7 @@ include_directories("${CMAKE_BINARY_DIR}/pb")
 
 # add_subdirectory(fuse)
 
-ADD_EXECUTABLE(hvs_client main.cc fuse_mod.cc client.cc graph_mod.cc hvs_fuse_impl.cc msg_mod.cc zone_mod.cc ipc_mod.cc
+ADD_EXECUTABLE(gvds_client main.cc fuse_mod.cc client.cc graph_mod.cc gvds_fuse_impl.cc msg_mod.cc zone_mod.cc ipc_mod.cc
                 queue.cc client_worker.cc
                 ./OPTNode/myping.cc 
                 ./OPTNode/opt_node.cc
@@ -48,11 +48,11 @@ ADD_EXECUTABLE(hvs_client main.cc fuse_mod.cc client.cc graph_mod.cc hvs_fuse_im
         ${gvds_proto_srcs}
         ${gvds_grpc_srcs}
         readahead.cc readahead.h cache_mod.cc cache_mod.h)
-TARGET_LINK_LIBRARIES(hvs_client fuse3 hvscommon ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF}
-        ${HVSCOMMOM_DEPENDS_ON} boost_program_options stdc++fs
+TARGET_LINK_LIBRARIES(gvds_client fuse3 gvdscommon ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF}
+        ${GVDSCOMMOM_DEPENDS_ON} boost_program_options stdc++fs
         )
 
-install(TARGETS hvs_client
+install(TARGETS gvds_client
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

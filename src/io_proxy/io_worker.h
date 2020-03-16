@@ -30,7 +30,7 @@
 #include "context.h"
 #include "msg/op.h"
 
-namespace hvs {
+namespace gvds {
 
 using grpc::Server;
 using grpc::ServerAsyncResponseWriter;
@@ -59,7 +59,7 @@ struct OpFinished: sc::event<OpFinished> {};
 struct IOProxyWorker;
 struct Waiting;
 struct Processing;
-}  // namespace hvs
+}  // namespace gvds
 
 namespace boost {
 namespace statechart {
@@ -67,13 +67,13 @@ namespace statechart {
 // state_machine<>::initiate is not instantiated at a point where Waiting
 // is not defined yet.
 template <>
-inline void asynchronous_state_machine<hvs::IOProxyWorker, hvs::Waiting,
-                                       hvs::IOProxy_scheduler,
-        hvs::IOProxy_allocator>::initiate_impl() {}
+inline void asynchronous_state_machine<gvds::IOProxyWorker, gvds::Waiting,
+                                       gvds::IOProxy_scheduler,
+        gvds::IOProxy_allocator>::initiate_impl() {}
 }  // namespace statechart
 }  // namespace boost
 
-namespace hvs {
+namespace gvds {
 struct IOProxyWorker
     : sc::asynchronous_state_machine<IOProxyWorker, Waiting, IOProxy_scheduler,
             IOProxy_allocator> {
@@ -150,4 +150,4 @@ struct Processing : sc::state<Processing, IOProxyWorker> {
 
         sc::result react(const OpFinished &);
     };
-}  // namespace hvs
+}  // namespace gvds

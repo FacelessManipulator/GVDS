@@ -3,7 +3,7 @@
 #include "manager.h"
 #include "aggregation_struct.h"
 
-namespace hvs
+namespace gvds
 {
 class ResAggregation_MGR : public ManagerModule
 {
@@ -26,4 +26,4 @@ private:
   std::shared_ptr<StorageResource> parse_request(const Rest::Request &request);
 };
 
-} // namespace hvs
+} // namespace gvds

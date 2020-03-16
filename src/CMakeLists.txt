@@ -17,7 +17,7 @@ SET(CommonSRCS
         ${PROJECT_SOURCE_DIR}/src/common/ipc/IPCMessage.hpp
 )
 
-SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
+SET_PROPERTY(GLOBAL PROPERTY GVDSCOMMOM_DEPENDS_ON
         config++
         couchbase
         pthread
@@ -30,8 +30,8 @@ SET_PROPERTY(GLOBAL PROPERTY HVSCOMMOM_DEPENDS_ON
         udt
 )
 
-ADD_LIBRARY(hvscommon SHARED ${CommonSRCS})
-install(TARGETS hvscommon
+ADD_LIBRARY(gvdscommon SHARED ${CommonSRCS})
+install(TARGETS gvdscommon
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -47,4 +47,4 @@ add_subdirectory(cmdline/usercmdline)
 add_subdirectory(cmdline/aggregationcmdline)
 add_subdirectory(cmdline/mconfcmdline)
 
-#TARGET_LINK_LIBRARIES(hvsd hello)
+#TARGET_LINK_LIBRARIES(gvdsd hello)

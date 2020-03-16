@@ -12,11 +12,11 @@
 
 // gvds related
 #include <experimental/filesystem>
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "io_proxy/io_worker.h"
 // #include "rpc_bindings.hpp"
 
-namespace hvs {
+namespace gvds {
 IOProxyWorker* IOProxy::_get_idle_worker() {
   IOProxyWorker* ret = nullptr;
   // cause io process is fast, use spin lock here
@@ -303,12 +303,12 @@ bool IOProxy::fresh_stat() {
 }
 
 void IOProxy::rpc_bind(RpcServer* server) {
-  // hvs_ioproxy_rpc_bind(server);
+  // gvds_ioproxy_rpc_bind(server);
 }
 
-hvs::IOProxy* init_ioproxy() {
-  hvs::IOProxy* ioproxy = new hvs::IOProxy;
-  hvs::HvsContext::get_context()->node = ioproxy;
+gvds::IOProxy* init_ioproxy() {
+  gvds::IOProxy* ioproxy = new gvds::IOProxy;
+  gvds::HvsContext::get_context()->node = ioproxy;
   if (ioproxy->start())
     return ioproxy;
   else {
@@ -317,8 +317,8 @@ hvs::IOProxy* init_ioproxy() {
   }
 }
 
-void destroy_ioproxy(hvs::IOProxy* ioproxy) {
+void destroy_ioproxy(gvds::IOProxy* ioproxy) {
   if (ioproxy) ioproxy->stop();
   //  delete ioproxy;
 }
-}  // namespace hvs
+}  // namespace gvds

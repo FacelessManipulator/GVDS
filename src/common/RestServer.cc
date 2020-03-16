@@ -2,7 +2,7 @@
 
 #include "common/RestServer.h"
 #include "context.h"
-namespace hvs {
+namespace gvds {
 
 void RestServer::init(size_t thr) {
   auto opts = Http::Endpoint::options().threads(thr).flags(
@@ -68,4 +68,4 @@ void* RestServer::entry() {
   return NULL;
 }
 
-}  // namespace hvs
+}  // namespace gvds

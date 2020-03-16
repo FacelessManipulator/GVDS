@@ -26,14 +26,15 @@ g++ UserModelClient.cc -lpistache  -std=c++11 -o userclient
 #include <atomic>
 
 #include "manager/manager.h"
+#include <future>
 
 //#include "include/context.h"
 using namespace Pistache;
 using namespace Pistache::Http;
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
-class HVSAccountTest : public ::testing::Test {
+class GVDSAccountTest : public ::testing::Test {
  protected:
   void SetUp() override {
     manager = static_cast<Manager*>(HvsContext::get_context()->node);
@@ -43,14 +44,14 @@ class HVSAccountTest : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-    hvs::init_manager();
+    gvds::init_context();
+    gvds::init_manager();
     usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-    hvs::destroy_manager(
+    gvds::destroy_manager(
         static_cast<Manager*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:
@@ -58,7 +59,7 @@ class HVSAccountTest : public ::testing::Test {
 };
 
 
-TEST_F(HVSAccountTest, login_search) {
+TEST_F(GVDSAccountTest, login_search) {
   Http::Client client;
   char url[256];
   snprintf(url, 256, "http://localhost:%d/users/login", manager->rest_port());
@@ -66,7 +67,7 @@ TEST_F(HVSAccountTest, login_search) {
   client.init(opts);
 
   
-  std::string mes = "{\"HVSAccountName\":\"lbq-7\",\"HVSPassword\":\"123456\"}";
+  std::string mes = "{\"GVDSAccountName\":\"lbq-7\",\"GVDSPassword\":\"123456\"}";
   std::string mtoken;
 
 
@@ -137,7 +138,7 @@ TEST_F(HVSAccountTest, login_search) {
 }
 
 /*
-TEST_F(HVSAccountTest, atry) {
+TEST_F(GVDSAccountTest, atry) {
     cout<< "****** start client: login_search ******"<<endl;
 
     // 第二个参数传地址 第三个参数传请求数量 默认1
@@ -156,7 +157,7 @@ TEST_F(HVSAccountTest, atry) {
     //计时
     auto start = std::chrono::steady_clock::now();
 
-    std::string mes = "{\"HVSAccountName\":\"lbq\",\"HVSPassword\":\"123456\"}";
+    std::string mes = "{\"GVDSAccountName\":\"lbq\",\"GVDSPassword\":\"123456\"}";
     std::string mtoken;
     
     auto resp = client.post("http://localhost:9080/users/login").cookie(Http::Cookie("FOO", "bar")).body(mes).send();

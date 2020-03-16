@@ -9,13 +9,13 @@
 #include <map>
 
 #include "datastore/couchbase_helper.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "include/aggregation_struct.h"
 #include "manager/manager.h"
 
 using namespace Pistache;
 
-namespace hvs {
+namespace gvds {
 class SpaceServer : public ManagerModule {
  private:
   virtual void start() override;
@@ -90,7 +90,7 @@ class SpaceServer : public ManagerModule {
   SpaceServer() : ManagerModule("space") {
     auto _config = HvsContext::get_context()->_config;
     spacebucket = _config->get<std::string>("manager.bucket").value_or("test");
-    storagebucket = *(hvs::HvsContext::get_context()->_config->get<std::string>(
+    storagebucket = *(gvds::HvsContext::get_context()->_config->get<std::string>(
         "manager.bucket"));
     bucket_account_info =
         _config->get<std::string>("manager.bucket").value_or("test");
@@ -112,6 +112,6 @@ class SpaceServer : public ManagerModule {
 
 // std::string md5(std::string strPlain);
 
-}  // namespace hvs
+}  // namespace gvds
 
 #endif

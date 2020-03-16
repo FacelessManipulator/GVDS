@@ -2,7 +2,7 @@
 #include "context.h"
 #include "msg/udt_client.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 ClientSession::ClientSession(UDTClient *srv, UDTSOCKET socket)

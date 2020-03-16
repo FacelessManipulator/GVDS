@@ -14,7 +14,7 @@
 #include "io_proxy/proxy_op.h"
 #include "msg/stat_demo.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace gvds;
 using namespace std;
 namespace fs = std::experimental::filesystem;
@@ -23,7 +23,7 @@ using gvds::OpReply;
 using gvds::OpRequest;
 using gvds::OpType;
 
-namespace hvs {
+namespace gvds {
 
 void ProxyOP::prepare_op(std::shared_ptr<OP> op) {
   if (!op->should_prepare) return;
@@ -473,4 +473,4 @@ int ProxyOP::ioproxy_do_data_op(IOProxyDataOP* op) {
   }
   return op->error_code;
 }
-}  // namespace hvs
+}  // namespace gvds

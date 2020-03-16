@@ -13,7 +13,7 @@
 #include "io_proxy/rpc_types.h"
 #include "msg/udt_writer.h"
 
-namespace hvs {
+namespace gvds {
 
 class UDTClient;
 
@@ -55,4 +55,4 @@ class ClientSession : public Thread {
   std::map<int, std::function<void()>> handlers;
   friend class UDTClient;
 };
-}  // namespace hvs
+}  // namespace gvds

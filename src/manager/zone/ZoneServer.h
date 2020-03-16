@@ -11,7 +11,7 @@
 
 
 #include "datastore/couchbase_helper.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "manager/space/SpaceServer.h"
 #include "manager/manager.h"
 
@@ -19,7 +19,7 @@
 
 
 
-namespace hvs{
+namespace gvds{
 class ZoneServer : public ManagerModule {
 private:
   virtual void start() override;
@@ -107,7 +107,7 @@ private:
     std::string  auth_prefix = "AUTH-";
 };
 
-}// namespace hvs
+}// namespace gvds
 
 //判断vector1是否包含vector2
 bool isSubset(std::vector<std::string> v1, std::vector<std::string> v2);

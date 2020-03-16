@@ -18,7 +18,7 @@
 
 //using namespace Pistache;
 
-namespace hvs{
+namespace gvds{
 class Mconf : public ManagerModule {
 
 private:

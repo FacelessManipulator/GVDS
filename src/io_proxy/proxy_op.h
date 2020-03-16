@@ -12,7 +12,7 @@
 #include "op.pb.h"
 #include "sync_io.h"
 
-namespace hvs {
+namespace gvds {
 class IOProxy;
 class ProxyOP {
  public:
@@ -35,4 +35,4 @@ class ProxyOP {
  public:
   sync_io func_sync_io;
 };
-}  // namespace hvs
+}  // namespace gvds

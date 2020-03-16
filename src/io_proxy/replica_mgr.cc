@@ -14,7 +14,7 @@
 #include "io_proxy.h"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 using namespace boost::algorithm;
 using namespace gvds;
 

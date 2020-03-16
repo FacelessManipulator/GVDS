@@ -3,15 +3,15 @@
 // 北航系统结构所-存储组
 //
 
-#ifndef HVSONE_RPC_TYPES_H
-#define HVSONE_RPC_TYPES_H
+#ifndef GVDS_RPC_TYPES_H
+#define GVDS_RPC_TYPES_H
 #include <dirent.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "common/buffer.h"
 
-namespace hvs {
+namespace gvds {
 struct ioproxy_rpc_statbuffer {
   int error_code;
   int st_dev;
@@ -180,6 +180,6 @@ struct ioproxy_rpc_dirent {
   }
   MSGPACK_DEFINE_ARRAY(error_code, d_ino, d_off, d_reclen, dtype, d_name);
 };
-}  // namespace hvs
+}  // namespace gvds
 
-#endif  // HVSONE_RPC_TYPES_H
+#endif  // GVDS_RPC_TYPES_H

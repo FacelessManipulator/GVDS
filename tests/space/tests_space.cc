@@ -1,5 +1,5 @@
 #include <iostream>
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "manager/space/SpaceServer.h"
 #include "common/JsonSerializer.h"
 #include "context.h"
@@ -9,12 +9,13 @@
 #include "gtest/gtest.h"
 #include <pistache/client.h>
 #include <atomic>
+#include <future>
 
 
 
-using namespace hvs;
+using namespace gvds;
 
-class HVSSpaceTest : public ::testing::Test {
+class GVDSSpaceTest : public ::testing::Test {
  protected:
   void SetUp() override {
     manager = static_cast<Manager*>(HvsContext::get_context()->node);
@@ -24,25 +25,25 @@ class HVSSpaceTest : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-    hvs::init_manager();
+    gvds::init_context();
+    gvds::init_manager();
     usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-    hvs::destroy_manager(
+    gvds::destroy_manager(
         static_cast<Manager*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:
   Manager* manager;
 };
 
-// TEST_F(HVSSpaceTest, Simple){
+// TEST_F(GVDSSpaceTest, Simple){
 //   std::string tmp_key = "dca31346-91c3-48d1-865a-eef36b314c80";
 //   Space tmps;
-//   std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-//       hvs::CouchbaseDatastore("space_info"));
+//   std::shared_ptr<gvds::CouchbaseDatastore> spacePtr = std::make_shared<gvds::CouchbaseDatastore>(
+//       gvds::CouchbaseDatastore("space_info"));
 //   spacePtr->init();
 //   tmps.spaceID = "dca31346-91c3-48d1-865a-eef36b314c80";
 //   tmps.spaceName = "beijingspace";
@@ -53,7 +54,7 @@ class HVSSpaceTest : public ::testing::Test {
 //   spacePtr->set(tmp_key, tmp_value);
 // }
 
-TEST_F(HVSSpaceTest, Rename) {
+TEST_F(GVDSSpaceTest, Rename) {
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/space/rename", manager->rest_port());
@@ -81,7 +82,7 @@ TEST_F(HVSSpaceTest, Rename) {
     client.shutdown();
 }
 
-TEST_F(HVSSpaceTest, changesize) {
+TEST_F(GVDSSpaceTest, changesize) {
     Http::Client client;
     char url[256];
     snprintf(url, 256, "http://localhost:%d/space/changesize", manager->rest_port());

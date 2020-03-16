@@ -14,7 +14,7 @@
 #include "rpc/msgpack.hpp"
 #include "msg/server_session.h"
 
-namespace hvs {
+namespace gvds {
 
 class UDTServer : public Thread {
  public:
@@ -46,4 +46,4 @@ class UDTServer : public Thread {
 
 UDTServer* init_udtserver();
 
-}  // namespace hvs
+}  // namespace gvds

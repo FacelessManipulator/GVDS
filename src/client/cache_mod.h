@@ -10,7 +10,7 @@
 
 #define CACHE_UNIT_SIZE 512
 
-namespace hvs {
+namespace gvds {
 
 class ClientCache : public ClientModule {
  private:
@@ -52,4 +52,4 @@ class ClientCache : public ClientModule {
       stat_pool_sig;
   typedef boost::singleton_pool<data_cache_unit, sizeof(char)*CACHE_UNIT_SIZE> data_cache_pool;
 };
-}  // namespace hvs
+}  // namespace gvds

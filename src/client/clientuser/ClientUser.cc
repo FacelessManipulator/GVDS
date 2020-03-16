@@ -22,12 +22,12 @@
 
 using namespace Pistache;
 using namespace Pistache::Http;
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 //mutex mtx_write
 
-namespace hvs{
+namespace gvds{
 
 void ClientUser::start(){
     m_stop = false;

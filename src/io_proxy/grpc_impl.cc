@@ -8,7 +8,7 @@
 #include "io_proxy/grpc_impl.h"
 #include "io_proxy/io_worker.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void OpServerImpl::start() {

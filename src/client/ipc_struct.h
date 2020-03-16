@@ -3,16 +3,16 @@
 // 北航系统结构所-存储组
 //
 
-#ifndef HVSONE_IPC_STRUCT_H
-#define HVSONE_IPC_STRUCT_H
+#ifndef GVDS_IPC_STRUCT_H
+#define GVDS_IPC_STRUCT_H
 
 #include "common/JsonSerializer.h"
 
-namespace hvs
+namespace gvds
 {
 
 //命令行参数信息，用于IPC通信的消息
-class CmdlineParameters : public hvs::JsonSerializer
+class CmdlineParameters : public gvds::JsonSerializer
 {
 public:
     int argc;
@@ -44,7 +44,7 @@ public:
     }
 };
 
-class IPCreq : public hvs::JsonSerializer
+class IPCreq : public gvds::JsonSerializer
 {
 public:
     std::string cmdname;  //命令行具体执行的功能
@@ -67,7 +67,7 @@ public:
     //usermodel
     std::string accountName; //账户名
     std::string Password;    //密码
-    std::string hvsID;
+    std::string gvdsID;
     std::string email;
     std::string phone;
     std::string address;
@@ -116,7 +116,7 @@ public:
         put("spaceurl", spaceurl);
         put("accountName", accountName);
         put("Password", Password);
-        put("hvsID", hvsID);
+        put("gvdsID", gvdsID);
         put("email", email);
         put("phone", phone);
         put("address", address);
@@ -163,7 +163,7 @@ public:
         get("spaceurl", spaceurl);
         get("accountName", accountName);
         get("Password", Password);
-        get("hvsID", hvsID);
+        get("gvdsID", gvdsID);
         get("email", email);
         get("phone", phone);
         get("address", address);
@@ -189,6 +189,6 @@ public:
         get("state", state);
     };
 };
-} // namespace hvs
+} // namespace gvds
 
-#endif //HVSONE_IPC_STRUCT_H
+#endif //GVDS_IPC_STRUCT_H

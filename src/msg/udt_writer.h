@@ -8,7 +8,7 @@
 #include "common/Thread.h"
 #include <queue>
 
-namespace hvs {
+namespace gvds {
 
 class UDTWriter : public Thread {
  public:
@@ -54,4 +54,4 @@ class UDTWriter : public Thread {
   pthread_cond_t m_cond_session;
   unsigned long m_max_write;
 };
-}  // namespace hvs
+}  // namespace gvds

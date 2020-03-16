@@ -18,9 +18,9 @@
 
 #include "common/buffer.h"
 #include "context.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 
-namespace hvs {
+namespace gvds {
 
 namespace sc = ::boost::statechart;
 namespace mpl = ::boost::mpl;
@@ -38,7 +38,7 @@ struct BufferComplete : sc::event<BufferComplete> {};
 struct ClientWorker;
 struct Waiting;
 struct Processing;
-}  // namespace hvs
+}  // namespace gvds
 
 namespace boost {
 namespace statechart {
@@ -46,14 +46,14 @@ namespace statechart {
 // state_machine<>::initiate is not instantiated at a point where Waiting
 // is not defined yet.
 template <>
-inline void asynchronous_state_machine<hvs::ClientWorker, hvs::Waiting,
-                                       hvs::Client_scheduler,
-                                       hvs::Client_allocator>::initiate_impl() {
+inline void asynchronous_state_machine<gvds::ClientWorker, gvds::Waiting,
+                                       gvds::Client_scheduler,
+                                       gvds::Client_allocator>::initiate_impl() {
 }
 }  // namespace statechart
 }  // namespace boost
 
-namespace hvs {
+namespace gvds {
 struct ClientWorker
     : sc::asynchronous_state_machine<ClientWorker, Waiting, Client_scheduler,
                                      Client_allocator> {
@@ -89,4 +89,4 @@ struct Processing : sc::state<Processing, ClientWorker> {
 
   sc::result react(const BufferComplete &);
 };
-}  // namespace hvs
+}  // namespace gvds

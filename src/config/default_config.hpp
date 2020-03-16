@@ -4,10 +4,10 @@
 #include "config/ConfigureSettings.h"
 #include "common/centerinfo.h"
 
-namespace hvs {
+namespace gvds {
 using std::string;
 using std::vector;
-inline void default_config(hvs::ConfigureSettings* _config) {
+inline void default_config(gvds::ConfigureSettings* _config) {
   // 添加默认配置项
   _config->add("user.age", 1);
   _config->add("user.hello.world", false);
@@ -20,7 +20,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("manager_addr", string("127.0.0.1:9090"));
   _config->add("ioproxy.cid",string("1"));
 
-  _config->add("log.path", string("/var/log/hvs.log"));
+  _config->add("log.path", string("/var/log/gvds.log"));
   _config->add("log.level", 10);
   _config->add("ioproxy.rpc_port", 9092);
   _config->add("ioproxy.rpc_workers", 6);
@@ -31,7 +31,7 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("manager.couchbase_passwd", string("buaaica"));
   
   // fuse config options
-  _config->add("client.mountpoint", string("/mnt/hvs"));
+  _config->add("client.mountpoint", string("/mnt/gvds"));
   _config->add("client.foreground", true);
   _config->add("client.debug", false);
   _config->add("client.multithread", true);
@@ -55,4 +55,4 @@ inline void default_config(hvs::ConfigureSettings* _config) {
   _config->add("manager.id", string("1"));
 
 }
-}  // namespace hvs
+}  // namespace gvds

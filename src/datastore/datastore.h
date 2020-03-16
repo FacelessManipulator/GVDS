@@ -5,9 +5,9 @@
 #include <memory>
 #include <string>
 #include <tuple>
-#include "hvsdef.h"
+#include "gvdsdef.h"
 
-namespace hvs {
+namespace gvds {
 class Datastore;
 enum DatastoreType {
   null,
@@ -52,4 +52,4 @@ class DatastoreFactory {
   static std::map<std::pair<long int, std::string>, std::shared_ptr<Datastore>>
       _reuse_map;
 };
-}  // namespace hvs
+}  // namespace gvds

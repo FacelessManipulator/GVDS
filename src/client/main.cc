@@ -9,7 +9,7 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 namespace po = boost::program_options;
 po::variables_map parse_cmd(int argc, char *const argv[])
 {
@@ -17,7 +17,7 @@ po::variables_map parse_cmd(int argc, char *const argv[])
   po::options_description desc("GVDS IOProxy daemon program");
   desc.add_options()
     ("help", "get help infomation from GVDS IOProxy.")
-    ("config,c", po::value<string>(), "set config file path, default is /etc/hvs/hvs.conf or /opt/hvs/hvs.conf");
+    ("config,c", po::value<string>(), "set config file path, default is /etc/gvds/gvds.conf or /opt/gvds/gvds.conf");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);

@@ -67,5 +67,5 @@ Table of Contents
 
 ## 讨论与贡献
 
-我们建议在gitlab的  [ISSUE](https://gitlab.com/buaaica/hvs-one/issues/new)  中进行讨论，这样讨论的过程所有成员都能参与，并且能够更好的记录。
+我们建议在gitlab的  [ISSUE](https://gitlab.com/buaaica/gvds-one/issues/new)  中进行讨论，这样讨论的过程所有成员都能参与，并且能够更好的记录。
 

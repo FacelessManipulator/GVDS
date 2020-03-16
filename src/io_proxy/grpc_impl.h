@@ -21,7 +21,7 @@
 #include "common/Thread.h"
 #include "context.h"
 
-namespace hvs {
+namespace gvds {
 using grpc::Server;
 using grpc::ServerAsyncResponseWriter;
 using grpc::ServerBuilder;
@@ -53,4 +53,4 @@ class OpServerImpl final : public Thread {
   bool m_stop;
   unsigned int port;
 };
-}  // namespace hvs
+}  // namespace gvds

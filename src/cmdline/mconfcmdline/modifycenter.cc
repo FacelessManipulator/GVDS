@@ -16,7 +16,7 @@
 
 
 using namespace Pistache;
-using namespace hvs;
+using namespace gvds;
 //bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
  * zonerename 命令行客户端

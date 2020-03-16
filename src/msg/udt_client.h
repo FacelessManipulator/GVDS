@@ -14,7 +14,7 @@
 #include "rpc/msgpack.hpp"
 #include <mutex>
 
-namespace hvs {
+namespace gvds {
 
 class UDTClient {
  public:
@@ -39,4 +39,4 @@ class UDTClient {
   friend class ClientSession;
 };
 
-}  // namespace hvs
+}  // namespace gvds

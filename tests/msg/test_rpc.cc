@@ -6,7 +6,7 @@
 #include <chrono>
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
 class RPCTEST : public ::testing::Test {
  protected:
@@ -19,10 +19,10 @@ class RPCTEST : public ::testing::Test {
 
 protected:
     static void SetUpTestCase() {
-        hvs::init_context();
+        gvds::init_context();
     }
     static void TearDownTestCase() {
-        hvs::destroy_context();
+        gvds::destroy_context();
   }
  public:
   RpcServer* svr;
@@ -36,7 +36,7 @@ TEST_F(RPCTEST, simple) {
 }
 
 TEST_F(RPCTEST, stat) {
-    string pathname("/tmp/hvs/tests/data/example.cfg");
+    string pathname("/tmp/gvds/tests/data/example.cfg");
     RpcClient client(svr->ip, svr->port);
     unsigned size  = 10000;
     
@@ -55,7 +55,7 @@ class M_rpc_client : public Thread {
 public:
     M_rpc_client(string ip, unsigned port) : _ip(ip), _port(port) {}
     void* entry() override {
-        string pathname("/tmp/hvs/tests/data/example.cfg");
+        string pathname("/tmp/gvds/tests/data/example.cfg");
         RpcClient client(_ip, _port);
         for(int i = 0; i < 2000; i++)
             client.call("stat_test", pathname);

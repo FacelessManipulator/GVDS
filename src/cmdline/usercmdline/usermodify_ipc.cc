@@ -11,7 +11,7 @@
 
 
 using namespace Pistache;
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 //bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]){
         
        
         ipcreq.accountName = username; //账户名不能改
-        //ipcreq.hvsID = " "; //在服务端产生   //TODO 获取登录用户的UUID
+        //ipcreq.gvdsID = " "; //在服务端产生   //TODO 获取登录用户的UUID
         ipcreq.Password = pass;
         ipcreq.email = email;
         ipcreq.phone = phone;

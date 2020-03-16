@@ -3,7 +3,7 @@
 #include <udt.h>
 #include <ccc.h>
 
-namespace hvs {
+namespace gvds {
 class CTCP: public CCC
 {
 public:

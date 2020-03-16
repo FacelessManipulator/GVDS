@@ -12,7 +12,7 @@
 
 
 
-namespace hvs{
+namespace gvds{
 class ClientUser: public ClientModule{
 private:
     virtual void start() override;

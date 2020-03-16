@@ -45,8 +45,8 @@ bool issSubset(std::vector<std::string> v1, std::vector<std::string> v2)
 }
 
 TEST(SPACEFUNC, create){
-//    hvs::init_context();
-//    std::string rootdir = *(hvs::HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
+//    gvds::init_context();
+//    std::string rootdir = *(gvds::HvsContext::get_context()->_config->get<std::string>("manager.data_path"));
 //    rootdir += "superman";
 //    int mkret = mkdir(rootdir.c_str(), 0777);
 //    if (mkret !=0 ) {

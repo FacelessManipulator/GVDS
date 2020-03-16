@@ -6,7 +6,7 @@
 #include <optional>
 #include <unordered_map>
 
-namespace hvs {
+namespace gvds {
 
 // Attention: LRU list isn't designed to manage memory, it only provide the
 // infomation. PLEASE keep key simple, like long or pointer NOT THREAD SAFE.
@@ -153,4 +153,4 @@ class LRU {
   unsigned int max_n;
 };
 
-}  // namespace hvs
+}  // namespace gvds

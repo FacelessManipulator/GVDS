@@ -1,19 +1,19 @@
 #!/bin/bash
 
-if [[ ! -d /opt/hvs ]]; then
-    echo "Generating hvs.conf in /opt/hvs/hvs.conf..."
-    sudo mkdir -p /opt/hvs
-    sudo chown -R `whoami`:`whoami` /opt/hvs
+if [[ ! -d /opt/gvds ]]; then
+    echo "Generating gvds.conf in /opt/gvds/gvds.conf..."
+    sudo mkdir -p /opt/gvds
+    sudo chown -R `whoami`:`whoami` /opt/gvds
 fi
 
-if [[ ! -e /opt/hvs/var/log/hvs.log ]]; then
-    mkdir -p /opt/hvs/var/log
-    touch /opt/hvs/var/log/hvs.log
+if [[ ! -e /opt/gvds/var/log/gvds.log ]]; then
+    mkdir -p /opt/gvds/var/log
+    touch /opt/gvds/var/log/gvds.log
 fi
 
-if [[ ! -d /opt/hvs/var/data ]]; then
-    mkdir -p /opt/hvs/var/data
+if [[ ! -d /opt/gvds/var/data ]]; then
+    mkdir -p /opt/gvds/var/data
 fi
 
-cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=DEBUG -DBUILD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/opt/hvs
+cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=DEBUG -DBUILD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/opt/gvds
 cmake --build build -j 4

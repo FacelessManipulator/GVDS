@@ -2,12 +2,12 @@
  * Created by Yaowen Xu on 2019-03-09.
  * 作者: Yaowen Xu
  * 时间: 2019-03-09
- * 工程: HVSONE
+ * 工程: GVDS
  * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
  */
 
-#ifndef HVSONE_CMDLINEPROXY_H
-#define HVSONE_CMDLINEPROXY_H
+#ifndef GVDS_CMDLINEPROXY_H
+#define GVDS_CMDLINEPROXY_H
 
 #include <iostream>
 #include <boost/program_options.hpp>
@@ -57,4 +57,4 @@ public:
 };
 
 
-#endif //HVSONE_CMDLINEPROXY_H
+#endif //GVDS_CMDLINEPROXY_H

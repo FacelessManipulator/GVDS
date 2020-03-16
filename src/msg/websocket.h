@@ -16,7 +16,7 @@
 #include "context.h"
 #include "msg/dispatcher.h"
 
-namespace hvs {
+namespace gvds {
 namespace beast = ::boost::beast;
 class WebsocketListener;
 class WebsocketSession;
@@ -99,4 +99,4 @@ class WebsocketListener
   void on_accept(boost::system::error_code ec);
 };
 
-};  // namespace hvs
+};  // namespace gvds

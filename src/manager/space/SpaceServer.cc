@@ -12,11 +12,11 @@
 #include <atomic>
 #include <future>
 #include "common/centerinfo.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "manager/space/SpaceServer.h"
 #include "manager/usermodel/UserModelServer.h"
 
-namespace hvs {
+namespace gvds {
 using namespace Pistache::Rest;
 using namespace Pistache::Http;
 // SpaceServer* SpaceServer::instance = nullptr;
@@ -45,9 +45,9 @@ void SpaceServer::router(Router& router) {
 void SpaceServer::GetSpacePosition(std::vector<Space>& result,
                                    std::vector<std::string> spaceID) {
   Space tmps;
-  std::shared_ptr<hvs::Datastore> spacePtr =
-      hvs::DatastoreFactory::create_datastore(
-          spacebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> spacePtr =
+      gvds::DatastoreFactory::create_datastore(
+          spacebucket, gvds::DatastoreType::couchbase, true);
   for (std::vector<std::string>::iterator m = spaceID.begin();
        m != spaceID.end(); m++) {
     std::string tmps_key = space_prefix + *m;
@@ -62,9 +62,9 @@ void SpaceServer::GetSpacePosition(std::vector<Space>& result,
     // TODO:资源聚合模块查询名字
     // 已补充资源聚合模块查询接口
     StorageResource storage;
-    std::shared_ptr<hvs::Datastore> storPtr =
-        hvs::DatastoreFactory::create_datastore(
-            storagebucket, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<gvds::Datastore> storPtr =
+        gvds::DatastoreFactory::create_datastore(
+            storagebucket, gvds::DatastoreType::couchbase, true);
     auto [vp, serr] = storPtr->get(tmps.storageSrcID);
     if (serr != 0) {
       dout(10) << "GetSpacePosition-数据库错误：（可重试）" << serr << dendl;
@@ -80,9 +80,9 @@ void SpaceServer::GetSpaceInfo(std::vector<Space>& result_s,
                                std::vector<std::string> spaceID) {
   Space tmps;
   std::vector<Space> tmp_si;
-  std::shared_ptr<hvs::Datastore> spacePtr =
-      hvs::DatastoreFactory::create_datastore(
-          spacebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> spacePtr =
+      gvds::DatastoreFactory::create_datastore(
+          spacebucket, gvds::DatastoreType::couchbase, true);
   for (std::vector<std::string>::iterator m = spaceID.begin();
        m != spaceID.end(); m++) {
     std::string tmps_key = space_prefix + *m;
@@ -102,9 +102,9 @@ std::string SpaceServer::SpaceCreate(std::string spaceName, std::string ownerID,
                                      std::string spacePathInfo,
                                      std::string groupname) {
   Space new_space;
-  std::shared_ptr<hvs::Datastore> spacePtr =
-      hvs::DatastoreFactory::create_datastore(
-          spacebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> spacePtr =
+      gvds::DatastoreFactory::create_datastore(
+          spacebucket, gvds::DatastoreType::couchbase, true);
   Space tmpm;
   tmpm.deserialize(spacePathInfo);
   // 1、判断是否可以创建空间，将host和storage的name转换成ID
@@ -170,9 +170,9 @@ struct greaters {
 std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(
     int64_t spaceSize, std::string& hostCenterName,
     std::string& storageSrcName) {
-  std::shared_ptr<hvs::Datastore> dbPtr =
-      hvs::DatastoreFactory::create_datastore(
-          storagebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> dbPtr =
+      gvds::DatastoreFactory::create_datastore(
+          storagebucket, gvds::DatastoreType::couchbase, true);
   auto storagePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
 
   char query[256];
@@ -237,9 +237,9 @@ std::tuple<std::string, std::string> SpaceServer::GetSpaceCreatePath(
 std::string SpaceServer::SpaceCheck(std::string ownerID,
                                     std::vector<std::string> memberID,
                                     std::string spacePathInfo) {
-  std::shared_ptr<hvs::Datastore> dbPtr =
-      hvs::DatastoreFactory::create_datastore(
-          spacebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> dbPtr =
+      gvds::DatastoreFactory::create_datastore(
+          spacebucket, gvds::DatastoreType::couchbase, true);
   auto spacePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
   Space tmpm;
   tmpm.deserialize(spacePathInfo);
@@ -297,9 +297,9 @@ int SpaceServer::SpaceDelete(std::vector<std::string> spaceID) {
   for (std::vector<std::string>::iterator m = spaceID.begin();
        m != spaceID.end(); m++) {
     Space tmps;
-    std::shared_ptr<hvs::Datastore> spacePtr =
-        hvs::DatastoreFactory::create_datastore(
-            spacebucket, hvs::DatastoreType::couchbase, true);
+    std::shared_ptr<gvds::Datastore> spacePtr =
+        gvds::DatastoreFactory::create_datastore(
+            spacebucket, gvds::DatastoreType::couchbase, true);
     std::string tmps_key = space_prefix + *m;
     auto [vs, err] = spacePtr->get(tmps_key);
     if (err != 0) {
@@ -350,9 +350,9 @@ void SpaceServer::SpaceRenameRest(const Rest::Request& request,
 int SpaceServer::SpaceRename(std::string spaceID, std::string newSpaceName) {
   // TODO：在lustre中改目录名是否需要ownerID？
   Space space;
-  std::shared_ptr<hvs::Datastore> spaceptr =
-      hvs::DatastoreFactory::create_datastore(
-          spacebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> spaceptr =
+      gvds::DatastoreFactory::create_datastore(
+          spacebucket, gvds::DatastoreType::couchbase, true);
   auto [vp, err] = spaceptr->get(space_prefix + spaceID);
   if (err) {
     return -1;
@@ -411,9 +411,9 @@ int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {
   }
   //查找空间表中当前空间,判断当前是否能缩放空间，是增大空间还是减少空间。
   Space spacejson;
-  std::shared_ptr<hvs::Datastore> spaceptr =
-      hvs::DatastoreFactory::create_datastore(
-          spacebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> spaceptr =
+      gvds::DatastoreFactory::create_datastore(
+          spacebucket, gvds::DatastoreType::couchbase, true);
   auto [vp, err] = spaceptr->get(
       space_prefix + spaceID);  // 通过spaceID获取到描述空间的json数据；
   if (err) {
@@ -424,9 +424,9 @@ int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {
   //查看本机当前空间占用的数据的文件夹的大小，默认为2GB TODO:
   //查询本本机空间节点占用容量
   // TODO:加入usage判断------------------
-  std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr =
-      std::make_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore(bucket_account_info));
+  std::shared_ptr<gvds::CouchbaseDatastore> f0_dbPtr =
+      std::make_shared<gvds::CouchbaseDatastore>(
+          gvds::CouchbaseDatastore(bucket_account_info));
   f0_dbPtr->init();
   string c_key = "center_information";
   auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
@@ -509,9 +509,9 @@ int SpaceServer::SpaceSizeChange(std::string spaceID, int64_t newSpaceSize) {
 
 int SpaceServer::SpaceSizeAdd(std::string StorageID, int64_t add_size) {
   StorageResource storage;
-  std::shared_ptr<hvs::Datastore> storptr =
-      hvs::DatastoreFactory::create_datastore(
-          storagebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> storptr =
+      gvds::DatastoreFactory::create_datastore(
+          storagebucket, gvds::DatastoreType::couchbase, true);
   auto [vp, err] = storptr->get(StorageID);
   if (err) {
     return EAGAIN;
@@ -532,9 +532,9 @@ int SpaceServer::SpaceSizeAdd(std::string StorageID, int64_t add_size) {
 
 int SpaceServer::SpaceSizeDeduct(std::string StorageID, int64_t deduct_size) {
   StorageResource storage;
-  std::shared_ptr<hvs::Datastore> storptr =
-      hvs::DatastoreFactory::create_datastore(
-          storagebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> storptr =
+      gvds::DatastoreFactory::create_datastore(
+          storagebucket, gvds::DatastoreType::couchbase, true);
   auto [vp, err] = storptr->get(StorageID);
   if (err) {
     return EAGAIN;
@@ -588,9 +588,9 @@ std::vector<int64_t> SpaceServer::SpaceUsageCheck(
   GetSpacePosition(result, std::move(spaceID));
 
   //---提前读取center_information信息，为后面查找各中心信息做准备----
-  std::shared_ptr<hvs::CouchbaseDatastore> f0_dbPtr =
-      std::make_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore(bucket_account_info));
+  std::shared_ptr<gvds::CouchbaseDatastore> f0_dbPtr =
+      std::make_shared<gvds::CouchbaseDatastore>(
+          gvds::CouchbaseDatastore(bucket_account_info));
   f0_dbPtr->init();
   string c_key = "center_information";
   auto [pcenter_value, c_error] = f0_dbPtr->get(c_key);
@@ -735,9 +735,9 @@ void SpaceServer::SpaceSizeChangeApplyRest(const Rest::Request& request,
 }
 
 int SpaceServer::SpaceSizeChangeApply(std::string apply) {
-  std::shared_ptr<hvs::Datastore> applyPtr =
-      hvs::DatastoreFactory::create_datastore(
-          applybucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> applyPtr =
+      gvds::DatastoreFactory::create_datastore(
+          applybucket, gvds::DatastoreType::couchbase, true);
   boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
   const std::string uuid = boost::uuids::to_string(a_uuid);
   std::string key = "spsiz-" + uuid;
@@ -767,9 +767,9 @@ void SpaceServer::SpaceNumberRest(const Rest::Request& request,
 
 int SpaceServer::SpaceNumber(std::string hostCenterName) {
   Space tmps;
-  std::shared_ptr<hvs::Datastore> dbPtr =
-      hvs::DatastoreFactory::create_datastore(
-          spacebucket, hvs::DatastoreType::couchbase, true);
+  std::shared_ptr<gvds::Datastore> dbPtr =
+      gvds::DatastoreFactory::create_datastore(
+          spacebucket, gvds::DatastoreType::couchbase, true);
   auto spacePtr = static_cast<CouchbaseDatastore*>(dbPtr.get());
   char query[256];
   snprintf(query, 256,
@@ -830,4 +830,4 @@ int SpaceServer::SpaceReplica(
                        json_encode(replicaParams["replicated"]));
   return 0;
 }
-}  // namespace hvs
+}  // namespace gvds

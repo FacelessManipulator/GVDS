@@ -13,11 +13,11 @@
 #include "common/ipc/IPCClient.h"
 #include "client/ipc_struct.h"
 #include "datastore/datastore.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 
 
 using namespace Pistache;
-using namespace hvs;
+using namespace gvds;
 //bool GetZoneInfo(std::string ip, int port, std::string clientID);
 /*
  * zonerename 命令行客户端

@@ -3,7 +3,7 @@
 // a set of helper functions based on rpclib msgpack
 #include "rpc/msgpack.hpp"
 
-namespace hvs{
+namespace gvds{
   template <typename T>
   inline std::shared_ptr<clmdep_msgpack::sbuffer> pack(T& obj) {
     auto buffer = std::make_shared<clmdep_msgpack::sbuffer>();

@@ -1,5 +1,5 @@
 #include <iostream>
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "manager/zone/ZoneServer.h"
 #include "common/JsonSerializer.h"
 #include "context.h"
@@ -9,12 +9,13 @@
 #include "gtest/gtest.h"
 #include <pistache/client.h>
 #include <atomic>
+#include <future>
 
 
 
-using namespace hvs;
+using namespace gvds;
 
-class HVSZoneTest : public ::testing::Test {
+class GVDSZoneTest : public ::testing::Test {
  protected:
   void SetUp() override {
 //    manager = static_cast<Manager*>(HvsContext::get_context()->node);
@@ -26,20 +27,20 @@ class HVSZoneTest : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-//    hvs::init_manager();
+    gvds::init_context();
+//    gvds::init_manager();
     usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-//    hvs::destroy_manager(static_cast<Manager*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+//    gvds::destroy_manager(static_cast<Manager*>(HvsContext::get_context()->node));
+    gvds::destroy_context();
   }
 
  public:
 //  Manager* manager;
 };
 
-TEST_F(HVSZoneTest, Rename) {
+TEST_F(GVDSZoneTest, Rename) {
 //    Http::Client client;
 //    char url[256];
 //    snprintf(url, 256, "http://localhost:%d/zone/rename", manager->rest_port());
@@ -68,7 +69,7 @@ TEST_F(HVSZoneTest, Rename) {
 //    client.shutdown();
 }
 
- TEST_F(HVSZoneTest, Locate) {
+ TEST_F(GVDSZoneTest, Locate) {
     //  Http::Client client;
     //  char url[256];
     //  snprintf(url, 256, "http://localhost:%d/zone/locate", 37961);
@@ -97,7 +98,7 @@ TEST_F(HVSZoneTest, Rename) {
     //  client.shutdown();
  }
 
- TEST_F(HVSZoneTest, GetInfo) {
+ TEST_F(GVDSZoneTest, GetInfo) {
     //  Http::Client client;
     //  char url[256];
     //  snprintf(url, 256, "http://localhost:%d/zone/info", 37909);
@@ -121,7 +122,7 @@ TEST_F(HVSZoneTest, Rename) {
     //  client.shutdown();
  }
 
- TEST_F(HVSZoneTest, Share) {
+ TEST_F(GVDSZoneTest, Share) {
 //     Http::Client client;
 //     char url[256];
 //     snprintf(url, 256, "http://localhost:%d/zone/share", manager->rest_port());
@@ -151,7 +152,7 @@ TEST_F(HVSZoneTest, Rename) {
 //     client.shutdown();
  }
 
- TEST_F(HVSZoneTest, ShareCancel) {
+ TEST_F(GVDSZoneTest, ShareCancel) {
 //     Http::Client client;
 //     char url[256];
 //     snprintf(url, 256, "http://localhost:%d/zone/sharecancel", manager->rest_port());
@@ -180,7 +181,7 @@ TEST_F(HVSZoneTest, Rename) {
 //     client.shutdown();
  }
 
- TEST_F(HVSZoneTest, ZoneRegister) {
+ TEST_F(GVDSZoneTest, ZoneRegister) {
 //      Http::Client client;
 //      char url[256];
 //      snprintf(url, 256, "http://192.168.10.219:%d/zone/register", 34299);
@@ -231,7 +232,7 @@ TEST_F(HVSZoneTest, Rename) {
 //      client.shutdown();
  }
 
- TEST_F(HVSZoneTest, ZoneCancel) {
+ TEST_F(GVDSZoneTest, ZoneCancel) {
 //     Http::Client client;
 //     char url[256];
 //     snprintf(url, 256, "http://localhost:%d/zone/cancel", manager->rest_port());
@@ -260,7 +261,7 @@ TEST_F(HVSZoneTest, Rename) {
  }
 
 
- TEST_F(HVSZoneTest, MapAdd) {
+ TEST_F(GVDSZoneTest, MapAdd) {
   //  Http::Client client;
   //  char url[256];
   //  snprintf(url, 256, "http://127.0.0.1:%d/zone/mapadd", 53953);
@@ -295,7 +296,7 @@ TEST_F(HVSZoneTest, Rename) {
  }
 
 
- TEST_F(HVSZoneTest, MapDeduct) {
+ TEST_F(GVDSZoneTest, MapDeduct) {
 //   Http::Client client;
 //   char url[256];
 //   snprintf(url, 256, "http://localhost:%d/zone/mapdeduct", manager->rest_port());
@@ -325,7 +326,7 @@ TEST_F(HVSZoneTest, Rename) {
 //   client.shutdown();
  }
 
- TEST_F(HVSZoneTest, ZoneAdd) {
+ TEST_F(GVDSZoneTest, ZoneAdd) {
     // Http::Client client;
     // char url[256];
     // snprintf(url, 256, "http://localhost:%d/zone/add", 51521);
@@ -361,10 +362,10 @@ TEST_F(HVSZoneTest, Rename) {
  }
 
 
-TEST_F(HVSZoneTest, simpleInfo){
+TEST_F(GVDSZoneTest, simpleInfo){
     Zone tmp;
-    std::shared_ptr<hvs::CouchbaseDatastore> zonePtr = std::make_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore("zone_info"));
+    std::shared_ptr<gvds::CouchbaseDatastore> zonePtr = std::make_shared<gvds::CouchbaseDatastore>(
+          gvds::CouchbaseDatastore("zone_info"));
     zonePtr->init();
     std::string tmp_key = "0";
     tmp.zoneID = "0";
@@ -377,8 +378,8 @@ TEST_F(HVSZoneTest, simpleInfo){
     std::cout << tmp_value << std::endl;
 
     Space tmps;
-    std::shared_ptr<hvs::CouchbaseDatastore> spacePtr = std::make_shared<hvs::CouchbaseDatastore>(
-          hvs::CouchbaseDatastore("space_info"));
+    std::shared_ptr<gvds::CouchbaseDatastore> spacePtr = std::make_shared<gvds::CouchbaseDatastore>(
+          gvds::CouchbaseDatastore("space_info"));
     spacePtr->init();
     tmp_key = "0";
     tmps.spaceID = "0";

@@ -27,10 +27,10 @@
 #include "pistache/client.h"
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 using namespace Pistache;
 
-namespace hvs {
+namespace gvds {
 using grpc::Server;
 using grpc::ServerAsyncResponseWriter;
 using grpc::ServerBuilder;
@@ -128,6 +128,6 @@ class IOProxy : public Thread, public Node {
   friend class IOProxyWorker;
   unique_ptr<OpServerImpl> _ops;
 };
-extern hvs::IOProxy* init_ioproxy();
-extern void destroy_ioproxy(hvs::IOProxy* iop);
-}  // namespace hvs
+extern gvds::IOProxy* init_ioproxy();
+extern void destroy_ioproxy(gvds::IOProxy* iop);
+}  // namespace gvds

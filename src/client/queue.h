@@ -12,10 +12,10 @@
 #include "client/client_worker.h"
 #include "client/client.h"
 #include "common/Thread.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "common/buffer.h"
 
-namespace hvs {
+namespace gvds {
 
 class ClientBufferQueue : public ClientModule, Thread {
  private:
@@ -93,4 +93,4 @@ class ClientBufferQueue : public ClientModule, Thread {
   public:
   friend class ClientWorker;
 };
-}  // namespace hvs
+}  // namespace gvds

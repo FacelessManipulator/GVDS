@@ -5,9 +5,10 @@
 #include "context.h"
 #include "gtest/gtest.h"
 #include "manager/manager.h"
+#include <future>
 
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 
 class ManagerTest : public ::testing::Test {
  protected:
@@ -19,14 +20,14 @@ class ManagerTest : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-    hvs::init_manager();
+    gvds::init_context();
+    gvds::init_manager();
     usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-    hvs::destroy_manager(
+    gvds::destroy_manager(
         static_cast<Manager*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:

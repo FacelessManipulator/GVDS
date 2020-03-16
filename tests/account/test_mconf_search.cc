@@ -19,14 +19,15 @@
 
 #include "manager/manager.h"
 #include "common/centerinfo.h"
+#include <future>
 
 //#include "include/context.h"
 using namespace Pistache;
 using namespace Pistache::Http;
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
-class HVSAccountTest : public ::testing::Test {
+class GVDSAccountTest : public ::testing::Test {
  protected:
   void SetUp() override {
     manager = static_cast<Manager*>(HvsContext::get_context()->node);
@@ -36,14 +37,14 @@ class HVSAccountTest : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-    hvs::init_manager();
+    gvds::init_context();
+    gvds::init_manager();
     usleep(100000); // wait 100 ms. rest server may started.
   }
   static void TearDownTestCase() {
-    hvs::destroy_manager(
+    gvds::destroy_manager(
         static_cast<Manager*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:
@@ -51,7 +52,7 @@ class HVSAccountTest : public ::testing::Test {
 };
 
 
-TEST_F(HVSAccountTest, test_mconf_search) {
+TEST_F(GVDSAccountTest, test_mconf_search) {
   Http::Client client;
   char url[256];
   snprintf(url, 256, "http://localhost:9090/mconf/searchCenter");

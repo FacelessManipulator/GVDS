@@ -9,17 +9,17 @@
 #include "client/OPTNode/opt_node.h"
 #include "manager/manager.h"
 #include "aggregation_struct.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "client/clientuser/ClientAuth_struct.h"
 #include "client/zone_mod.h"
 
 #include <errno.h>
 
-using namespace hvs;
+using namespace gvds;
 using namespace Pistache;
 using namespace std;
 
-namespace hvs
+namespace gvds
 {
 void ClientIPC::start()
 {
@@ -1581,9 +1581,9 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq)
 
                 client->user->setAccountID(body.substr(2));
 
-                string hvsID = client->user->getAccountID();
-                client->optNode->getAuthFromServer(hvsID);
-                client->zone->GetZoneInfo(hvsID);
+                string gvdsID = client->user->getAccountID();
+                client->optNode->getAuthFromServer(gvdsID);
+                client->zone->GetZoneInfo(gvdsID);
                 // //【接口示例】
                 // cout << "getToken(): " << client->user->getToken() << endl;
                 // cout << "getAccountName(): " << client->user->getAccountName() << endl;
@@ -1613,8 +1613,8 @@ std::string ClientIPC::douserlogin(IPCreq &ipcreq)
 
     // //【接口示例】 客户端获取权限代码
     // AuthSearch myauth = client->optNode->getAuthFromClient();
-    // cout << "aaa: "<<myauth.hvsID << endl;
-    // if(!myauth.hvsID.empty()){
+    // cout << "aaa: "<<myauth.gvdsID << endl;
+    // if(!myauth.gvdsID.empty()){
     //     vector<string>::iterator iter;
     //     for (iter = myauth.vec_ZoneID.begin(); iter != myauth.vec_ZoneID.end(); iter++){
     //         cout << "区域id： " << *iter << endl;
@@ -1661,7 +1661,7 @@ std::string ClientIPC::dousersignup(IPCreq &ipcreq)
     // TODO: 提前准备的数据
 
     string username = ipcreq.accountName; //账户名
-    string hvsID = ipcreq.hvsID;          //在服务端产生
+    string gvdsID = ipcreq.gvdsID;          //在服务端产生
     string pass = ipcreq.Password;
     string email = ipcreq.email;
     string phone = ipcreq.phone;
@@ -1669,7 +1669,7 @@ std::string ClientIPC::dousersignup(IPCreq &ipcreq)
     string de = ipcreq.department;
 
     //账户注册
-    Account person(username, pass, hvsID, email, phone, ad, de); //以后在服务端产生uuid，客户端这块传值不影响
+    Account person(username, pass, gvdsID, email, phone, ad, de); //以后在服务端产生uuid，客户端这块传值不影响
     std::string value = person.serialize();
     std::cout << value << std::endl;
 
@@ -1687,7 +1687,7 @@ std::string ClientIPC::doadminsignup(IPCreq &ipcreq)
     // TODO: 提前准备的数据
 
     string username = ipcreq.accountName; //账户名
-    string hvsID = ipcreq.hvsID;          //在服务端产生
+    string gvdsID = ipcreq.gvdsID;          //在服务端产生
     string pass = ipcreq.Password;
     string email = ipcreq.email;
     string phone = ipcreq.phone;
@@ -1695,7 +1695,7 @@ std::string ClientIPC::doadminsignup(IPCreq &ipcreq)
     string de = ipcreq.department;
 
     //账户注册
-    Account person(username, pass, hvsID, email, phone, ad, de); //以后在服务端产生uuid，客户端这块传值不影响
+    Account person(username, pass, gvdsID, email, phone, ad, de); //以后在服务端产生uuid，客户端这块传值不影响
     std::string value = person.serialize();
     std::cout << value << std::endl;
 
@@ -1713,7 +1713,7 @@ std::string ClientIPC::dousermodify(IPCreq &ipcreq)
     // TODO: 提前准备的数据
 
     string username = ipcreq.accountName;        //账户名
-    string hvsID = client->user->getAccountID(); //在服务端产生     // 不能修改
+    string gvdsID = client->user->getAccountID(); //在服务端产生     // 不能修改
     string pass = ipcreq.Password;
     string email = ipcreq.email;
     string phone = ipcreq.phone;
@@ -1726,7 +1726,7 @@ std::string ClientIPC::dousermodify(IPCreq &ipcreq)
     }
 
     //账户修改
-    Account person(username, pass, hvsID, email, phone, ad, de);
+    Account person(username, pass, gvdsID, email, phone, ad, de);
     std::string person_value = person.serialize();
     std::cout << person_value << std::endl;
 
@@ -1785,13 +1785,13 @@ std::string ClientIPC::doauthsearch(IPCreq &ipcreq)
         return "client_input_error";
     }
 
-    std::string hvsID = client->user->getAccountID(); //在服务端产生
+    std::string gvdsID = client->user->getAccountID(); //在服务端产生
 
     //权限查询
     //std::string return_value = "authsearch success";
     string endpoint = client->get_manager();
     string routepath = "/auth/search";
-    string res = client->rpc->post_request(endpoint, routepath, hvsID);
+    string res = client->rpc->post_request(endpoint, routepath, gvdsID);
 
     return res;
 }
@@ -1807,7 +1807,7 @@ std::string ClientIPC::doauthmodify(IPCreq &ipcreq)
     }
 
     FEAuthModifygroupinfo FEgroup;
-    FEgroup.hvsID = client->user->getAccountID(); //在服务端产生
+    FEgroup.gvdsID = client->user->getAccountID(); //在服务端产生
     FEgroup.zonename = ipcreq.zonename;
     FEgroup.modify_groupauth = ipcreq.changeauth;
 
@@ -1819,8 +1819,8 @@ std::string ClientIPC::doauthmodify(IPCreq &ipcreq)
 
     //++++++
     //修改完要获取最新权限
-    string hvsID = client->user->getAccountID();
-    client->optNode->getAuthFromServer(hvsID);
+    string gvdsID = client->user->getAccountID();
+    client->optNode->getAuthFromServer(gvdsID);
     //++++++
     if (res == "-1")
     {
@@ -1885,10 +1885,10 @@ std::string ClientIPC::dodeletecenter(IPCreq &ipcreq)
 std::string ClientIPC::dolistapply(IPCreq &ipcreq)
 {
 
-    string hvsID = client->user->getAccountID();
+    string gvdsID = client->user->getAccountID();
     string endpoint = client->get_manager();
     string routepath = "/users/listapply";
-    string res = client->rpc->post_request(endpoint, routepath, hvsID);
+    string res = client->rpc->post_request(endpoint, routepath, gvdsID);
 
     if (res == "1")
     {
@@ -2078,7 +2078,7 @@ std::string ClientIPC::doadcam(IPCreq &ipcreq)
     string name = ipcreq.accountName;
     string centername = ipcreq.centerName;
 
-    //获取 accountName 对应的hvsID
+    //获取 accountName 对应的gvdsID
     std::vector<std::string> vec_name;
     vec_name.push_back(name);
     std::vector<std::string> memID;
@@ -2090,9 +2090,9 @@ std::string ClientIPC::doadcam(IPCreq &ipcreq)
     }
 
     struct_AdminAccountMap new_accountmap;
-    new_accountmap.adhvsID = client->user->getAccountID();
+    new_accountmap.adgvdsID = client->user->getAccountID();
     cout << "memID[0] :" << memID[0] << endl;
-    new_accountmap.hvsID = memID[0];
+    new_accountmap.gvdsID = memID[0];
     new_accountmap.hostCenterName = centername;
     string value = new_accountmap.serialize();
 
@@ -2109,7 +2109,7 @@ std::string ClientIPC::doaduam(IPCreq &ipcreq)
     string name = ipcreq.accountName;
     string centername = ipcreq.centerName;
 
-    //获取 accountName 对应的hvsID
+    //获取 accountName 对应的gvdsID
     std::vector<std::string> vec_name;
     vec_name.push_back(name);
     std::vector<std::string> memID;
@@ -2121,9 +2121,9 @@ std::string ClientIPC::doaduam(IPCreq &ipcreq)
     }
 
     struct_AdminAccountMap new_accountmap;
-    new_accountmap.adhvsID = client->user->getAccountID();
+    new_accountmap.adgvdsID = client->user->getAccountID();
     cout << "memID[0] :" << memID[0] << endl;
-    new_accountmap.hvsID = memID[0];
+    new_accountmap.gvdsID = memID[0];
     new_accountmap.hostCenterName = centername;
     string value = new_accountmap.serialize();
 
@@ -2139,7 +2139,7 @@ std::string ClientIPC::doadsearcham(IPCreq &ipcreq)
 {
     string name = ipcreq.accountName;
 
-    //获取 accountName 对应的hvsID
+    //获取 accountName 对应的gvdsID
     std::vector<std::string> vec_name;
     vec_name.push_back(name);
     std::vector<std::string> memID;
@@ -2151,9 +2151,9 @@ std::string ClientIPC::doadsearcham(IPCreq &ipcreq)
     }
 
     struct_AdminAccountMap new_accountmap;
-    new_accountmap.adhvsID = client->user->getAccountID(); //json需要adhvsID
+    new_accountmap.adgvdsID = client->user->getAccountID(); //json需要adgvdsID
     cout << "memID[0] :" << memID[0] << endl;
-    new_accountmap.hvsID = memID[0];    //json需要hvsID
+    new_accountmap.gvdsID = memID[0];    //json需要gvdsID
     new_accountmap.hostCenterName = ""; //json这块不需要
     string value = new_accountmap.serialize();
 
@@ -2167,11 +2167,11 @@ std::string ClientIPC::doadsearcham(IPCreq &ipcreq)
 
 std::string ClientIPC::doadseepool(IPCreq &ipcreq)
 {
-    string adhvsID = client->user->getAccountID();
+    string adgvdsID = client->user->getAccountID();
 
     string endpoint = client->get_manager();
     string routepath = "/users/adsearchpool";
-    string res = client->rpc->post_request(endpoint, routepath, adhvsID);
+    string res = client->rpc->post_request(endpoint, routepath, adgvdsID);
 
     cout << "res :" << res << endl;
     return res;
@@ -2182,7 +2182,7 @@ std::string ClientIPC::doadauthsearch(IPCreq &ipcreq)
     // TODO: 提前准备的数据
     string name = ipcreq.accountName;     //管理员要查询的 用户的账户名
     
-    //获取 name 对应的hvsID
+    //获取 name 对应的gvdsID
     std::vector<std::string> vec_name;
     vec_name.push_back(name);
     std::vector<std::string> memID;
@@ -2193,20 +2193,20 @@ std::string ClientIPC::doadauthsearch(IPCreq &ipcreq)
         return "-1";
     }
 
-    string hvsID = memID[0];
+    string gvdsID = memID[0];
 
     // if (username != client->user->getAccountName() && !client->user->getAccountName().empty())
     // { //用户没有登录的时候是 false
     //     return "client_input_error";
     // }
-    // std::string hvsID = client->user->getAccountID(); //在服务端产生
+    // std::string gvdsID = client->user->getAccountID(); //在服务端产生
 
-    //获取用户hvsID成功
+    //获取用户gvdsID成功
     //权限查询
     //std::string return_value = "authsearch success";
     string endpoint = client->get_manager();
     string routepath = "/auth/search";
-    string res = client->rpc->post_request(endpoint, routepath, hvsID);
+    string res = client->rpc->post_request(endpoint, routepath, gvdsID);
 
     return res;
 }
@@ -2222,7 +2222,7 @@ std::string ClientIPC::doadauthmodify(IPCreq &ipcreq)
     //     return "-2";
     // }
 
-    //获取 name 对应的hvsID
+    //获取 name 对应的gvdsID
     std::vector<std::string> vec_name;
     vec_name.push_back(name);
     std::vector<std::string> memID;
@@ -2234,7 +2234,7 @@ std::string ClientIPC::doadauthmodify(IPCreq &ipcreq)
     }
 
     FEAuthModifygroupinfo FEgroup;
-    FEgroup.hvsID = memID[0]; //hvsID
+    FEgroup.gvdsID = memID[0]; //gvdsID
     FEgroup.zonename = ipcreq.zonename;
     FEgroup.modify_groupauth = ipcreq.changeauth;
 
@@ -2246,8 +2246,8 @@ std::string ClientIPC::doadauthmodify(IPCreq &ipcreq)
 
     // //++++++
     // //修改完要获取最新权限
-    // string hvsID = client->user->getAccountID();
-    // client->optNode->getAuthFromServer(hvsID);
+    // string gvdsID = client->user->getAccountID();
+    // client->optNode->getAuthFromServer(gvdsID);
     // //++++++
     if (res == "-1")
     {
@@ -2282,4 +2282,4 @@ std::string ClientIPC::doadauthmodify(IPCreq &ipcreq)
             return "ERROR: cannot create replica space for UNKNOWN ERROR";
     }
 
-} // namespace hvs
+} // namespace gvds

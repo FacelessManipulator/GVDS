@@ -3,8 +3,8 @@
 // 北航系统结构所-存储组
 //
 
-#pragma once  // HVSONE_IPC_MOD_H
-#include <hvs_struct.h>
+#pragma once  // GVDS_IPC_MOD_H
+#include <gvds_struct.h>
 #include <pistache/client.h>
 #include <future>
 #include <mutex>
@@ -14,7 +14,7 @@
 #include "common/ipc/IPCServer.hpp"
 #include "ipc_struct.h"
 
-namespace hvs {
+namespace gvds {
 class ClientIPC : public ClientModule {
  private:
   virtual void start() override;
@@ -92,6 +92,6 @@ class ClientIPC : public ClientModule {
 
   std::string doadminsignup(IPCreq &ipcreq);
 };
-}  // namespace hvs
+}  // namespace gvds
 
-// HVSONE_IPC_MOD_H
+// GVDS_IPC_MOD_H

@@ -16,7 +16,7 @@
 #include <dirent.h>
 #include "io_proxy/sync_io.h"
 using namespace std;
-using namespace hvs;
+using namespace gvds;
 #define  TFILEP "/syncio.txt"
 #define  TDIRP "/."
 
@@ -30,13 +30,13 @@ class IOProxyRPC : public ::testing::Test {
 
  protected:
   static void SetUpTestCase() {
-    hvs::init_context();
-    hvs::init_ioproxy();
+    gvds::init_context();
+    gvds::init_ioproxy();
   }
   static void TearDownTestCase() {
-    hvs::destroy_ioproxy(
+    gvds::destroy_ioproxy(
         static_cast<IOProxy*>(HvsContext::get_context()->node));
-    hvs::destroy_context();
+    gvds::destroy_context();
   }
 
  public:
@@ -45,7 +45,7 @@ class IOProxyRPC : public ::testing::Test {
 
 
 TEST_F(IOProxyRPC, yx_ioproxy_simple) {
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -56,7 +56,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_simple) {
 
 TEST_F(IOProxyRPC, yx_ioproxy_stat) {
     string pathname(TFILEP);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -76,7 +76,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_stat) {
 
 TEST_F(IOProxyRPC, yx_ioproxy_read) {
     string pathname(TFILEP);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -95,7 +95,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_read) {
 
 TEST_F(IOProxyRPC, yx_ioproxy_write) {
     string pathname(TFILEP);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -117,7 +117,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_write) {
 
 TEST_F(IOProxyRPC, yx_ioproxy_open){
     string pathname(TFILEP);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -137,7 +137,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_open){
 
 TEST_F(IOProxyRPC, yx_ioproxy_close) {
     string pathname(TFILEP);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -157,7 +157,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_close) {
 
 TEST_F(IOProxyRPC, yx_ioproxy_opendir) {
     string pathname(TFILEP);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -177,7 +177,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_opendir) {
 
 TEST_F(IOProxyRPC, yx_ioproxy_readdir) {
     string pathname(TDIRP);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));
@@ -200,7 +200,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_readdir) {
 
 
 TEST_F(IOProxyRPC, yx_ioproxy_pack) {
-    ioproxy_rpc_statbuffer sb1 = ioproxy_stat("/tmp/hvs/tests/data/example.cfg");
+    ioproxy_rpc_statbuffer sb1 = ioproxy_stat("/tmp/gvds/tests/data/example.cfg");
     auto buffer = pack(sb1);
     ioproxy_rpc_statbuffer sb2;
     sb2 = unpack<ioproxy_rpc_statbuffer>(buffer);
@@ -211,7 +211,7 @@ TEST_F(IOProxyRPC, yx_ioproxy_write_bench) {
     string pathname(TFILEP);
     char* buf = new char[102400]; //100KB
     ioproxy_rpc_buffer _buffer(pathname.c_str(), buf, 0, 102400);
-    ConfigureSettings* config = hvs::HvsContext::get_context()->_config;
+    ConfigureSettings* config = gvds::HvsContext::get_context()->_config;
     auto ip = config->get<string>("ip");
     auto port = config->get<int>("rpc.port");
     RpcClient client(*ip, static_cast<const unsigned int>(*port));

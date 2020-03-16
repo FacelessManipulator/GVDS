@@ -12,7 +12,7 @@
 
 
 using namespace std;
-namespace hvs{
+namespace gvds{
 using namespace Pistache::Rest;
 using namespace Pistache::Http;
 
@@ -47,7 +47,7 @@ void Mconf::addCenterRest(const Rest::Request& request, Http::ResponseWriter res
 
 // 首次添加，没有表需要注释部分代码，先set，否则无法get
 int Mconf::addCenter(FECenterInfo &FEcenter){
-    auto f0_dbPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::couchbase, true);
+    auto f0_dbPtr = gvds::DatastoreFactory::create_datastore(bucket_account_info, gvds::couchbase, true);
     
     int first_access_flag = 0;
 // /* 
@@ -82,7 +82,7 @@ int Mconf::addCenter(FECenterInfo &FEcenter){
             snprintf(username, 32, "test%d", i);
             users["unuse_account"][username] = "";
         }
-        auto users_str = hvs::json_encode(users);
+        auto users_str = gvds::json_encode(users);
         f0_dbPtr->set(FEcenter.centerName, users_str);
     }
     mycenter.centerIP[FEcenter.centerID] = FEcenter.centerIP;
@@ -121,7 +121,7 @@ void Mconf::searchCenterRest(const Rest::Request& request, Http::ResponseWriter 
 }
 
 string Mconf::searchCenter(){
-    auto f0_dbPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::couchbase, true);
+    auto f0_dbPtr = gvds::DatastoreFactory::create_datastore(bucket_account_info, gvds::couchbase, true);
 
     // cout << "key: " << key <<endl;
     auto [pvalue, error_0] = f0_dbPtr->get(key);   //key 在构造函数里
@@ -156,7 +156,7 @@ void Mconf::deleteCenterRest(const Rest::Request& request, Http::ResponseWriter 
 string Mconf::deleteCenter(string centerID){
     cout << "start: deleteCenter" << endl;
 
-    auto f0_dbPtr = hvs::DatastoreFactory::create_datastore(bucket_account_info, hvs::couchbase, true);
+    auto f0_dbPtr = gvds::DatastoreFactory::create_datastore(bucket_account_info, gvds::couchbase, true);
 
     // cout << "key: " << key <<endl;
     //1、获取数据

@@ -1,4 +1,4 @@
-GET_PROPERTY(HVSCOMMOM_DEPENDS_ON GLOBAL PROPERTY "HVSCOMMOM_DEPENDS_ON")
+GET_PROPERTY(GVDSCOMMOM_DEPENDS_ON GLOBAL PROPERTY "GVDSCOMMOM_DEPENDS_ON")
 
 set(_PROTOBUF_LIBPROTOBUF libprotobuf)
 if(CMAKE_CROSSCOMPILING)
@@ -36,7 +36,7 @@ add_custom_command(
 # Include generated *.pb.h files
 include_directories("${CMAKE_BINARY_DIR}/pb")
 
-ADD_EXECUTABLE(hvs_ioproxy hvs_ioproxy_main.cc grpc_impl.cc
+ADD_EXECUTABLE(gvds_ioproxy gvds_ioproxy_main.cc grpc_impl.cc
     ${gvds_proto_srcs}
     ${gvds_grpc_srcs}
     proxy_op.cc io_proxy.cc
@@ -44,16 +44,16 @@ ADD_EXECUTABLE(hvs_ioproxy hvs_ioproxy_main.cc grpc_impl.cc
     fd_mgr.cc io_mon.cc replica_mgr.cc
 )
 
-TARGET_LINK_LIBRARIES(hvs_ioproxy
-    ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF} io_proxy hvscommon 
-    ${HVSCOMMOM_DEPENDS_ON} boost_program_options stdc++fs roaring
+TARGET_LINK_LIBRARIES(gvds_ioproxy
+    ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF} io_proxy gvdscommon 
+    ${GVDSCOMMOM_DEPENDS_ON} boost_program_options stdc++fs roaring
 )
 
-install(TARGETS hvs_ioproxy
+install(TARGETS gvds_ioproxy
 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 
-# TARGET_LINK_LIBRARIES(io_proxy  hvscommon ${HVSCOMMOM_DEPENDS_ON} boost_thread boost_system)
+# TARGET_LINK_LIBRARIES(io_proxy  gvdscommon ${GVDSCOMMOM_DEPENDS_ON} boost_thread boost_system)

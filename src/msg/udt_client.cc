@@ -1,7 +1,7 @@
 #include "udt_client.h"
 #include "context.h"
 #include "CUDPBlast.h"
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 UDTClient::UDTClient() {

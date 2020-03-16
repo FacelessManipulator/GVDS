@@ -7,7 +7,7 @@
 #include "client/fuse_mod.h"
 #include <cstdlib>
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void ClientFuse::start() {
@@ -23,10 +23,10 @@ void ClientFuse::start() {
   readahead = _config->get<int>("client.readahead").value_or(0);
   snprintf(workers_argv, 32, "max_idle_threads=%u",
            _config->get<unsigned int>("client.fuse_workers").value_or(10));
-  memcpy(mountpoint, mp.value_or("/mnt/hvs").c_str(),
-         mp.value_or("/mnt/hvs").size() + 1);
+  memcpy(mountpoint, mp.value_or("/mnt/gvds").c_str(),
+         mp.value_or("/mnt/gvds").size() + 1);
   char *options[] = {
-      const_cast<char *>("hvs_client"),
+      const_cast<char *>("gvds_client"),
       const_cast<char *>("-f"),
       const_cast<char *>("-d"),
       const_cast<char *>("-s"),
@@ -68,5 +68,5 @@ void ClientFuse::stop() {
 
 void ClientFuse::run() {
   int fuse_stat = 0;
-  fuse_stat = fuse_main(fuse_argc, fuse_argv, &hvsfs_oper, &fs_priv);
+  fuse_stat = fuse_main(fuse_argc, fuse_argv, &gvdsfs_oper, &fs_priv);
 }

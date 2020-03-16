@@ -22,8 +22,8 @@
 3. build and install libfuse.
     a. following the readme at [Libfuse github](https://github.com/libfuse/libfuse)
     b. please append `user_allow_other` in `/etc/fuse.conf`
-4. initilize standalone gvds cluster. use the python script with `sudo python /opt/hvs/bin/init-cluster.py`, follow the instructions given by this script.
-5. try with pre-built-in test account, `cd /mnt/hvs` and do something. 
-    eg: `/opt/hvs/bin/userlogin -u test -p password`
+4. initilize standalone gvds cluster. use the python script with `sudo python /opt/gvds/bin/init-cluster.py`, follow the instructions given by this script.
+5. try with pre-built-in test account, `cd /mnt/gvds` and do something. 
+    eg: `/opt/gvds/bin/userlogin -u test -p password`
 
 ## forgive my plastic English. my sogoupinyin has broken so I can't type Chinese on Ubuntu

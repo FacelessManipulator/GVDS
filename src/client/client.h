@@ -16,7 +16,7 @@
 #include "msg/op.h"
 #include <unordered_map>
 
-namespace hvs {
+namespace gvds {
 class ClientModule;
 class ClientRpc;
 class ClientGraph;
@@ -87,6 +87,6 @@ class ClientModule {
   friend class Client;
 };
 
-extern hvs::Client* init_client();
-extern void destroy_client(hvs::Client* client);
-}  // namespace hvs
+extern gvds::Client* init_client();
+extern void destroy_client(gvds::Client* client);
+}  // namespace gvds

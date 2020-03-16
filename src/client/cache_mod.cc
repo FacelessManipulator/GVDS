@@ -1,7 +1,7 @@
 #include "client/cache_mod.h"
 #include "client/msg_mod.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 void ClientCache::start() {

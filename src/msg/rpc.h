@@ -17,7 +17,7 @@
 // #define LOG_INFO 6
 // #define LOG_DEBUG 7
 
-namespace hvs {
+namespace gvds {
 class RpcServer {
  public:
   RpcServer() = delete;
@@ -119,4 +119,4 @@ bool RpcClient::async_call(
   return false;
 }
 
-}  // namespace hvs
+}  // namespace gvds

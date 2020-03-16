@@ -3,7 +3,7 @@
 /* Global version of the stuff in common/dout.h
  */
 // #include "context.h"
-#ifndef HVS_CONTEXT
+#ifndef GVDS_CONTEXT
 #error "include context.h before include debug.h"
 #endif
 #include "log/Entry.h"
@@ -11,8 +11,8 @@
 
 #define dout(v)                                          \
   do {                                                   \
-    auto _cct = hvs::HvsContext::get_context();          \
-    hvs::EntryPtr _dout_e = _cct->_log->create_entry(v, __FUNCTION__); \
+    auto _cct = gvds::HvsContext::get_context();          \
+    gvds::EntryPtr _dout_e = _cct->_log->create_entry(v, __FUNCTION__); \
     std::ostream *_dout = &_dout_e->get_ostream();       \
   *_dout
 

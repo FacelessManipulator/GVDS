@@ -4,12 +4,12 @@
 #include <shared_mutex>
 #include "client.h"
 #include "common/Thread.h"
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 #include "msg/node.h"
 #include "zone_mod.h"
 #include <unordered_map>
 
-namespace hvs {
+namespace gvds {
 class ClientGraph : public ClientModule, public Thread {
   typedef std::vector<std::shared_ptr<IOProxyNode>> IOProxyListType;
  private:
@@ -44,5 +44,5 @@ class ClientGraph : public ClientModule, public Thread {
   friend class Client;
 };
 
-extern struct fuse_operations hvsfs_oper;
-}  // namespace hvs
+extern struct fuse_operations gvdsfs_oper;
+}  // namespace gvds

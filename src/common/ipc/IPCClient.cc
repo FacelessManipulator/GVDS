@@ -2,14 +2,14 @@
  * Created by Yaowen Xu on 2019-03-20.
  * 作者: Yaowen Xu
  * 时间: 2019-03-20
- * 工程: HVSONE
+ * 工程: GVDS
  * 作者单位: 北京航空航天大学计算机学院-系统结构研究所
  */
 
 // 实现了 socket 通信操作
 
 #include "IPCClient.h"
-using namespace hvs;
+using namespace gvds;
 using boost::asio::ip::tcp;
 
 bool IPCClient::run() {

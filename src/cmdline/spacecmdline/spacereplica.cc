@@ -5,7 +5,7 @@
 
 #include <future>
 #include <iostream>
-#include "hvs_struct.h"
+#include "gvds_struct.h"
 //#include <pistache/client.h>
 #include "cmdline/CmdLineProxy.h"
 
@@ -13,7 +13,7 @@
 #include "client/ipc_struct.h"
 #include "common/ipc/IPCClient.h"
 
-using namespace hvs;
+using namespace gvds;
 using namespace std;
 
 /*

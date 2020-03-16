@@ -66,6 +66,7 @@ void ProxyOP::do_op(std::shared_ptr<OP> op, boost::function0<void> callback) {
 
 void ProxyOP::do_op(gvds::OpRequest& request, gvds::OpReply& reply,
                     boost::function0<void> callback) {
+
   std::error_code ec;
   reply.set_id(request.id());
   reply.set_err_code(0);
@@ -208,6 +209,8 @@ void ProxyOP::do_op(gvds::OpRequest& request, gvds::OpReply& reply,
         reply.set_err_code(fd);
         break;
       }
+      // sync the file
+      iop->repm.sync_filedata(request.filepath(), request.io_param().offset(), request.io_param().size());
       // after c++11 string provide contiguous storage so I can memcpy raw data
       // to string's data area
       string* buf = new string;
@@ -230,6 +233,8 @@ void ProxyOP::do_op(gvds::OpRequest& request, gvds::OpReply& reply,
         reply.set_err_code(fd);
         break;
       }
+      // sync the file
+      iop->repm.sync_unalign_page(request.filepath(), request.io_param().offset(), request.io_param().size());
       ssize_t ret =
           pwrite(fd, request.data().c_str(), request.io_param().size(),
                  request.io_param().offset());

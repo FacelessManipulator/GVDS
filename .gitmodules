@@ -28,3 +28,6 @@
 [submodule "third-party/grpc"]
 	path = third-party/grpc
 	url = https://github.com/grpc/grpc.git
+[submodule "third-party/croaring"]
+	path = third-party/croaring
+	url = https://github.com/RoaringBitmap/CRoaring.git

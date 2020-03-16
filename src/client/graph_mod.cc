@@ -30,6 +30,9 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
   std::shared_ptr<IOProxyNode> iop;
   std::string centerID = space->hostCenterID;
   graph_mutex.lock_shared();
+  if (force_map.count(space->spaceID) != 0) {
+    centerID = force_map[space->spaceID];
+  }
   if(ioproxy_list.count(centerID) == 0 || !ioproxy_list[centerID]) {
     return {nullptr, rpath};
   }
@@ -43,6 +46,16 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
   auto lpath = space->spacePath;
   lpath.append(rpath);
   return make_tuple(iop, lpath);
+}
+
+int ClientGraph::set_force_mapping(const std::string& path, const std::string& cid) {
+  auto [zone, space, rpath] = client->zone->locatePosition(path);
+  if (!zone || !space) {
+    return -1;
+  }
+  lock_guard<shared_mutex> lock(graph_mutex);
+  force_map[space->spaceID] = cid;
+  return 0;
 }
 
 std::vector<string> ClientGraph::list_space(std::string zonename) {

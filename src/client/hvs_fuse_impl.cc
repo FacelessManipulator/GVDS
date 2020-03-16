@@ -39,7 +39,7 @@
 #include "io_proxy/rpc_types.h"
 
 extern bool zonechecker_run;
-#define FUSE_DEBUG_LEVEL 30
+#define FUSE_DEBUG_LEVEL -1
 #define HVS_FUSE_DATA \
   ((struct ::hvs::ClientFuseData *)fuse_get_context()->private_data)
 
@@ -821,6 +821,13 @@ int hvsfs_utimens(const char *path, const struct timespec tv[2],
         if (namev.size() <= 3) {
             return -EPERM;
         }
+
+        if (string(name) == "user.gvds.visit.force") {
+          HVS_FUSE_DATA->client->graph->set_force_mapping(path, string(value, size));
+          dout(-1) << "set force visit space at center " << string(value, size) << dendl;
+          return 0;
+        }
+
         auto [iop, rpath] = HVS_FUSE_DATA->client->graph->get_mapping(path);
         // not exists
         if (!iop) {

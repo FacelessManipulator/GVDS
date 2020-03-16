@@ -17,11 +17,11 @@
 #include "msg/operator_client.hpp"
 #include "op.pb.h"
 
-#define _GVDS_SPACE_REPLICA_CENTER_IDS "user.gvds.r.c"
 #define _GVDS_SPACE_REPLICA_FILE_INDEX "user.gvds.r.fi"
 #define _GVDS_FILE_INDEX_WRITE 0x1
 #define _GVDS_FILE_INDEX_SYNC 0x2
 #define _GVDS_FILE_INDEX_CHECK 0x4
+
 
 namespace fs = std::experimental::filesystem;
 namespace hvs {
@@ -63,21 +63,22 @@ class ReplicaMgr : public Thread {
   // this function handle the situation that the dest extent of file data was stored in the remote
   // center and ioproxy have to sync the specific area before providing the data.
   int sync_filedata(const OpRequest& request);
-  int range(gvds::DataIndex& di, int64_t off, size_t size,
-                   uint8_t from_center, int mode);
+  int sync_filedata(const std::string& path, uint64_t off, uint64_t len);
+  int sync_unalign_page(const std::string& path, uint64_t off, uint64_t len);
 
  private:
   void flush();
   void _flush(std::queue<std::shared_ptr<OpRequest>>* q);
   void submit_replicated_request(std::shared_ptr<OpRequest>& request);
-  std::shared_ptr<OpRequest> _replicate_space_request(fs::path space);
+  std::shared_ptr<OpRequest> _replicate_space_request(fs::path space, const std::string& cids);
   void _handle_create_replicated_space(const OpRequest& request,
                                        OpReply& reply);
   void _handle_file_index_update(const OpRequest& request, OpReply& reply);
+  void _handle_file_sync_data(const OpRequest& request, OpReply& reply);
 
  private:
   IOProxy* iop;
-  uint8_t cid;
+  uint8_t mcid;
   fs::path replicate_data_path;
   std::unordered_map<std::string, std::shared_ptr<OperatorClient>> operators;
   std::mutex mu_;

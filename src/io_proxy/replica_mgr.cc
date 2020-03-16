@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <boost/algorithm/string.hpp>
 #include <stack>
+#include <unistd.h>
 #include "io_proxy.h"
 
 using namespace std;
@@ -19,7 +20,7 @@ using namespace gvds;
 
 void ReplicaMgr::start() {
   replicate_data_path = iop->data_path;
-  cid = stoi(iop->center_id);
+  mcid = stoi(iop->center_id);
   pthread_mutex_lock(&m_queue_mutex);
   m_stop = false;
   pthread_mutex_unlock(&m_queue_mutex);
@@ -124,6 +125,9 @@ void ReplicaMgr::handle_replica_async(OpRequest&& request, OpReply& reply) {
     case OpType::unlink:
     case OpType::symlink:
     case OpType::link:
+      // means is a replica request
+      if (request.extra().size() != 0)
+        return;
       break;
 
     // write modify the index and data, but for now I don't want to replicated
@@ -137,6 +141,12 @@ void ReplicaMgr::handle_replica_async(OpRequest&& request, OpReply& reply) {
     case OpType::rep_init_space:
       _handle_create_replicated_space(request, reply);
       return;
+    case OpType::rep_sync_data:
+      _handle_file_sync_data(request, reply);
+      return;
+      case OpType::rep_update_index:
+          _handle_file_index_update(request, reply);
+          return;
     default:
       break;
   }
@@ -167,7 +177,6 @@ void ReplicaMgr::handle_replica_async(OpRequest&& request, OpReply& reply) {
   submit_replicated_request(req_ptr);
   dout(-1) << "queue replicated request: " << req_ptr->filepath() << " >"
            << OpType_Name(req_ptr->type()) << dendl;
-  return;
 }
 
 void ReplicaMgr::submit_replicated_request(
@@ -194,7 +203,7 @@ int ReplicaMgr::create_replicated_space(const string& filepath,
 
   // check correctness and compress cids from human-readable format to array
   string cids;
-  cids.push_back(cid);
+  cids.push_back(mcid);
   for (auto& cid : tmp) {
     // may though exception if cid is not number, but it should be check before
     // set center id
@@ -227,7 +236,7 @@ int ReplicaMgr::create_replicated_space(const string& filepath,
   // 3. do the initial replicated stuff such as replicating the exists directory
   // and files this phase should block the client utils metadata has been
   // replicated
-  auto request = _replicate_space_request(*(fs::path(filepath).begin()));
+  auto request = _replicate_space_request(*(fs::path(filepath).begin()), cids);
   for (int i = 1; i < cids.size(); i++) {
     uint32_t cid = cids[i];
     auto oper = get_operator(ioproxys[cid], 100);
@@ -249,7 +258,7 @@ void ReplicaMgr::_handle_create_replicated_space(const OpRequest& request,
   // 1. create the space dir
   auto rep_space_path = replicate_data_path / request.filepath();
   err = ::mkdir(rep_space_path.c_str(), 0775);
-  if (err == -1) {
+  if (err == -1 && errno != EEXIST) {
     reply.set_err_code(-errno);
     return;
   }
@@ -277,14 +286,12 @@ void ReplicaMgr::_handle_create_replicated_space(const OpRequest& request,
         break;
       case Attr_NodeType_RegularFile: {
         ::creat(nodepath.c_str(), cur_attr.permission());
-        DataIndex di;
-        di.set_rsize(cur_attr.size());
-        di.add_off(0);
-        di.add_len(cur_attr.size());
-        di.add_cid(request.extra()[0]);
-        auto di_serialize = di.SerializeAsString();
-        ::setxattr(nodepath.c_str(), _GVDS_SPACE_REPLICA_FILE_INDEX,
-                   di_serialize.c_str(), di_serialize.size(), XATTR_CREATE);
+        ::truncate(nodepath.c_str(), cur_attr.size());
+        // set remote cid bitmap
+        auto fh = iop->fdm.get_file_handler(nodepath);
+        auto* bitmap = roaring_bitmap_from_range(0, cur_attr.size(), 1);
+        // set the bitmap from center id, no need to delete bitmap after it
+        fh->set_bitmap(request.extra()[0], bitmap);
         break;
       }
       default:
@@ -303,63 +310,118 @@ void ReplicaMgr::_handle_create_replicated_space(const OpRequest& request,
   reply.set_err_code(0);
 }
 
-void ReplicaMgr::_handle_file_index_update(const OpRequest& request,
-                                           OpReply& reply) {
+void ReplicaMgr::_handle_file_sync_data(const OpRequest& request, OpReply& reply) {
+    auto filepath = replicate_data_path / request.filepath();
+    uint64_t off = request.io_param().offset(), len = request.io_param().size();
+    auto fd = iop->fdm.get_file_handler(filepath);
+    auto data_ranges = fd->find_data_in_range(off, off+len);
+  dout(-1) << "handle file"<< filepath <<" sync data at range [" << off << ","<<off+len <<"] data range size:" << data_ranges.size() <<dendl;
 
-    ::getxattr(request.filepath().c_str(), _GVDS_SPACE_REPLICA_FILE_INDEX,
-               di_serialize.c_str(), di_serialize.size(), XATTR_REPLACE);
-  ::setxattr(request.filepath().c_str(), _GVDS_SPACE_REPLICA_FILE_INDEX,
-             di_serialize.c_str(), di_serialize.size(), XATTR_REPLACE);
-}
-
-int ReplicaMgr::range(gvds::DataIndex& di, int64_t off, size_t size,
-                             uint8_t from_center, int mode) {
-    auto& cindex = *di.mutable_index();
-    // currently I use parameter mode in request to store the cid
-    if (!cindex.contains(from_center)) {
-        // if index not contains the new center, create it
-        cindex[from_center] = {};
-    }
-    cindex[from_center].add_len(size);
-    cindex[from_center].add_off(off);
-    di.set_rsize(request.size());
-    auto di_serialize = di.SerializeAsString();
-  // I assume that no cross section exists in index before updating range, and
-  // neither after the updating.
-  switch (mode) {
-    case _GVDS_FILE_INDEX_WRITE:
-      //            for ()
-      break;
-    case _GVDS_FILE_INDEX_SYNC:
-      break;
-    case _GVDS_FILE_INDEX_CHECK:
-    //   di.add_index()
-    if (!cindex.contains(cid)) {
-        return -ENOENT;
-    } else {
-        // Iterating through the array and try to find the extent match expect
-        // TODO: should use divide search to speed up
-        // if off is between the extent
-        for (int i = 0; i < cindex[cid].len_size(); i++) {
-            if (cindex[cid].off(i) <= off && cindex[cid].off(i)+cindex[cid].len(i)>off) {
-                //if [off, off+len] is fully inside the extent
-
-
-            } else if (cindex[cid].off(i) <= off && cindex[cid].off(i)+cindex[cid].len(i)>off) {
-
-            } 
+    string* buf = new string;
+    uint64_t cursor = 0;
+    buf->resize(len);
+    for (auto [off1, off2] : data_ranges) {
+        ssize_t ret = ::pread(fd->fd, buf->data() + cursor,off2-off1, off1);
+        if (ret == -1) {
+            delete buf;
+            reply.set_err_code(-errno);
+            return;
+        } else {
+            cursor += ret;
+            auto param = reply.add_io_params();
+            param->set_offset(off1);
+            param->set_size(ret);
         }
     }
-      break;
-    default:
-      break;
+    // TODO: do resize to reduce the size of data, may cause bugs.
+    buf->resize(cursor);
+    reply.set_allocated_data(buf);
+    reply.set_err_code(0);
+}
+
+void ReplicaMgr::_handle_file_index_update(const OpRequest& request,
+                                           OpReply& reply) {
+    auto filepath = replicate_data_path / request.filepath();
+    uint64_t off = request.io_param().offset(), len = request.io_param().size();
+    auto fd = iop->fdm.get_file_handler(filepath);
+    uint8_t id = request.extra()[0];
+    assert(request.type() == OpType::rep_update_index);
+    // currently update index is only associated to write operation
+    auto bitmap = fd->get_bitmap(id, true);
+    // if remote center update [100, 300), than we should mark block {0, 1} as newest with closed range
+    roaring_bitmap_add_range_closed(bitmap, off/_GVDS_REPLICATE_SYNC_BLK, (off+len)/_GVDS_REPLICATE_SYNC_BLK);
+    // we are not punch the hole 2 block {0,1}, cuz local center still have the newest data
+    fd->punch_hole_local(off, len);
+    fd->flush_bitmap(id);
+    reply.set_err_code(0);
+    dout(-1) << "update local file index" << dendl;
+}
+
+int ReplicaMgr::sync_filedata(const string& path, uint64_t off, uint64_t len) {
+    auto fh = iop->fdm.get_file_handler(iop->data_path / path);
+    auto holes = fh->find_holes_in_range(off,off+len);
+    if (holes.size() == 0) {
+        // no holes in the specific range
+        return 0;
+    }
+
+  auto space_path = iop->data_path / *(fs::path(path).begin());
+  char cid[256];
+  // the replicated center IDs composed by bytes and each bytes store a center
+  // id which means the maximum id should not exceeds 2^8(256).
+  size_t sz =
+    ::getxattr(space_path.c_str(), _GVDS_SPACE_REPLICA_CENTER_IDS, cid, 256);
+  if (sz == -1) {
+    return 0;
   }
+  string cids(cid, sz);
+    OpRequest request;
+    request.set_filepath(path);
+    request.set_type(OpType::rep_sync_data);
+    request.mutable_io_param()->set_offset(off);
+    request.mutable_io_param()->set_size(len);
+    for (int i = 0; i < cids.size(); i++) {
+        uint32_t id = cids[i];
+        if (id == mcid)
+          continue;
+        auto oper = get_operator(ioproxys[id], 100);
+        OpReply reply;
+        auto status = oper->Submit(request, reply);
+        auto params = reply.io_params();
+        int cursor = 0;
+        for (int i = 0; i < params.size(); i++) {
+            ::pwrite(fh->fd, reply.data().c_str()+cursor, params[i].size(), params[i].offset());
+            cursor += params[i].size();
+        }
+        dout(-1) << "sent sync request to target ioproxy "
+                 << ioproxys[id]->cid << dendl;
+        if (status.ok()) {
+            dout(-1) << "replicated sync result from target ioproxy [" << ioproxys[id]->cid
+                     <<","<<ioproxys[id]->ip << ":" << ioproxys[id]->rpc_port << "] error " << reply.err_code() << dendl;
+        }
+    }
+    return 0;
 }
 
 int ReplicaMgr::sync_filedata(const OpRequest& request) {
     // 1. at first check if the space is an replicated space, if not, do nothing
 
 
+}
+
+int ReplicaMgr::sync_unalign_page(const std::string& path, uint64_t off, uint64_t len) {
+  // TODO: this is shit code but it miraculously worked.
+  uint64_t pg_bg = off / _GVDS_BASE_FS_PAGE_SIZE;
+  uint64_t pg_ed = (off+len) / _GVDS_BASE_FS_PAGE_SIZE;
+  if ((off & _GVDS_BASE_FS_PAGE_MASK) != 0) {
+    // means the first page is unaligned
+    sync_filedata(path, pg_bg*_GVDS_BASE_FS_PAGE_SIZE, _GVDS_BASE_FS_PAGE_SIZE);
+  }
+  if ((off+len & _GVDS_BASE_FS_PAGE_MASK) != 0) {
+    // means the last page is unaligned
+    sync_filedata(path, pg_ed*_GVDS_BASE_FS_PAGE_SIZE, _GVDS_BASE_FS_PAGE_SIZE);
+  }
+  return 0;
 }
 
 void ReplicaMgr::flush() {
@@ -391,17 +453,25 @@ void ReplicaMgr::_flush(queue<shared_ptr<OpRequest>>* t) {
     //        r->set_filepath(rep_path.string());
     if (r->type() == OpType::write) {
       r->set_type(OpType::rep_update_index);
+    } else if (r->type() == OpType::setxattr) {
+      if (r->xattr_name().substr(0, 9) == "user.gvds")
+        continue;
     }
-    for (int i = 1; i < r->extra().size(); i++) {
-      uint32_t cid = r->extra()[i];
-      auto oper = get_operator(ioproxys[cid], 100);
+    auto cids = r->extra();
+    string fromcid;
+    fromcid.push_back(mcid);
+    r->set_extra(move(fromcid));
+    for (int i = 0; i < cids.size(); i++) {
+      uint32_t id = cids[i];
+      if (id == mcid) continue;
+      auto oper = get_operator(ioproxys[id], 100);
       OpReply reply;
       auto status = oper->Submit(*r, reply);
       dout(-1) << "sent replicated request to target ioproxy "
-               << ioproxys[cid]->cid << dendl;
+               << ioproxys[id]->cid << dendl;
       if (status.ok()) {
         dout(-1) << "replicated result from target ioproxy "
-                 << ioproxys[cid]->cid << " :" << reply.err_code() << dendl;
+                 << ioproxys[id]->cid << " :" << reply.err_code() << dendl;
       }
     }
     dout(-1) << "replicating request: " << r->filepath() << " >"
@@ -409,11 +479,12 @@ void ReplicaMgr::_flush(queue<shared_ptr<OpRequest>>* t) {
   }
 }
 
-shared_ptr<OpRequest> ReplicaMgr::_replicate_space_request(fs::path space) {
+shared_ptr<OpRequest> ReplicaMgr::_replicate_space_request(fs::path space, const string& cids) {
   // I use OpReply as the container of directory structure
   auto request = make_shared<OpRequest>();
   request->set_filepath(space.string());
   request->set_type(OpType::rep_init_space);
+  request->set_extra(cids);
   OpReply dir_entries;
   fs::path rela_dir = space;
   stack<fs::path> dirs;

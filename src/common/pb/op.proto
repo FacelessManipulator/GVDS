@@ -66,6 +66,7 @@ enum OpType {
   rep_init_space = 64;
   rep_remove_space = 65;
   rep_update_index = 66;
+  rep_sync_data = 67;
 }
 
 // file and directory's attribute
@@ -84,6 +85,11 @@ message Attr {
   uint64 mtime = 5; // modify time means file's content modify time
 }
 
+message IOParam {
+  uint64 offset = 17;
+  uint64 size = 18;
+}
+
 // The request message containing the user's name.
 message OpRequest {
   uint64 id = 1;
@@ -91,11 +97,6 @@ message OpRequest {
   OpType type = 3;
   // could be used to carry some control message
   string extra = 4;
-
-  message IOParam {
-    uint64 offset = 17;
-    uint64 size = 18;
-  }
 
   oneof additional_param {
     bool noadditional = 32;
@@ -121,6 +122,7 @@ message OpReply {
   }
   repeated string entry_names = 80;
   repeated Attr entries = 81;
+  repeated IOParam io_params = 82;
 }
 
 message DataIndex {

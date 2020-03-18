@@ -1,6 +1,6 @@
 #include "msg/udt_server.h"
 #include "CUDPBlast.h"
-#include "context.h"
+#include "gvds_context.h"
 
 using namespace gvds;
 using namespace std;

@@ -5,7 +5,7 @@
 
 #include <unistd.h>
 #include <iostream>
-#include "context.h"
+#include "gvds_context.h"
 #include "io_proxy/io_proxy.h"
 #include "msg/rpc.h"
 // #include "rpc_bindings.hpp"

@@ -1,6 +1,9 @@
-//
-// Created by miller on 2/26/19.
-//
+/*
+ * @Author: Hanjie,Zhou 
+ * @Date: 2020-03-18 15:49:33 
+ * @Last Modified by:   Hanjie,Zhou 
+ * @Last Modified time: 2020-03-18 15:49:33 
+ */
 #pragma once
 
 #ifndef GVDS_CONTEXT
@@ -22,8 +25,7 @@ class HvsContext {
     if (_context_p == nullptr) _context_p = new HvsContext();
     return _context_p;
   }
-  HvsContext()
-      : _log(nullptr), _config(nullptr), node(nullptr) {}
+  HvsContext() : _log(nullptr), _config(nullptr), node(nullptr) {}
 
  public:
   Log* _log;

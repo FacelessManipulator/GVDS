@@ -5,7 +5,7 @@
 #include <mutex>
 #include <queue>
 #include <vector>
-#include "context.h"
+#include "gvds_context.h"
 
 #include <pistache/http.h>
 #include <pistache/router.h>

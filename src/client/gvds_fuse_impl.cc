@@ -34,7 +34,7 @@
 #include "client/queue.h"
 #include "client/readahead.h"
 #include "client/zone_mod.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "gvds_struct.h"
 #include "io_proxy/rpc_types.h"
 

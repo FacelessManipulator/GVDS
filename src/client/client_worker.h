@@ -17,7 +17,7 @@
 #include <boost/statechart/transition.hpp>
 
 #include "common/buffer.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "gvds_struct.h"
 
 namespace gvds {

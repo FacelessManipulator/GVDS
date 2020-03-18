@@ -3,7 +3,7 @@
 
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
-#include "context.h"
+#include "gvds_context.h"
 #include <map>  
 
 // 和服务端 Account.h 信息完全一致，可以对上

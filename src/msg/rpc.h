@@ -3,7 +3,7 @@
 #include <optional>
 #include <string>
 #include <unistd.h>
-#include "context.h"
+#include "gvds_context.h"
 #include "common/debug.h"
 
 // avoid config with sys/syslog.h

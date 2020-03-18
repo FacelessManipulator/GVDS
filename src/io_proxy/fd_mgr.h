@@ -8,7 +8,7 @@
 #include <string>
 #include <map>
 #include "roaring/roaring.h"
-#include "context.h"
+#include "gvds_context.h"
 #define _GVDS_SPACE_REPLICA_FILE_BITMAP_WITH_CID "user.gvds.r.fb%d"
 #define _GVDS_SPACE_REPLICA_CENTER_IDS "user.gvds.r.c"
 #define _GVDS_REPLICATE_SYNC_BLK 0x20000

@@ -1,5 +1,5 @@
 #include "udt_client.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "CUDPBlast.h"
 using namespace gvds;
 using namespace std;

@@ -1,4 +1,4 @@
-#include "context.h"
+#include "gvds_context.h"
 
 namespace gvds {
 HvsContext* HvsContext::_context_p = nullptr;

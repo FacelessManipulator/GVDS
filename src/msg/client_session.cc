@@ -1,5 +1,5 @@
 #include "msg/client_session.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "msg/udt_client.h"
 
 using namespace gvds;

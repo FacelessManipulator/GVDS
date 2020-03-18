@@ -10,7 +10,7 @@
 #include <mutex>
 #include <queue>
 #include <vector>
-#include "context.h"
+#include "gvds_context.h"
 
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/thread/thread.hpp>

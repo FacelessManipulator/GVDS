@@ -3,7 +3,7 @@
 
 #include "common/JsonSerializer.h"
 #include "datastore/datastore.h"
-#include "context.h"
+#include "gvds_context.h"
 #include <map>  
 
 

@@ -1,7 +1,7 @@
 #include "datastore/couchbase_helper.h"
 #include <cerrno>
 #include <memory>
-#include "context.h"
+#include "gvds_context.h"
 #include "libcouchbase/couchbase++.h"
 #include "libcouchbase/couchbase++/query.h"
 // #include "config.h"

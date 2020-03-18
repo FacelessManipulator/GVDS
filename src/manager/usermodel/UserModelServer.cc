@@ -14,7 +14,7 @@ g++ -o user UserModelServer.o gvdsrest.o -lpistache -std=c++11
 #include <vector>
 #include <stdio.h>
 #include "common/JsonSerializer.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "datastore/datastore.h"
 #include "common/centerinfo.h"
 

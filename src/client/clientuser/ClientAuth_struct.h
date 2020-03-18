@@ -2,7 +2,7 @@
 #define CLIENTAUTH_H
 
 #include "common/JsonSerializer.h"
-#include "context.h"
+#include "gvds_context.h"
 #include <map>  
 
 class Auth: public gvds::JsonSerializer {

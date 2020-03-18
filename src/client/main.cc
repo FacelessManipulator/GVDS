@@ -1,6 +1,6 @@
 #include <iostream>
 #include <csignal>
-#include "context.h"
+#include "gvds_context.h"
 #include "msg/op.h"
 #include "msg/rpc.h"
 #include "client/client.h"

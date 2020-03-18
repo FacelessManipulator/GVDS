@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include "context.h"
+#include "gvds_context.h"
 #include "msg/dispatcher.h"
 
 namespace gvds {

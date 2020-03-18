@@ -1,5 +1,5 @@
 #include "msg/server_session.h"
-#include "context.h"
+#include "gvds_context.h"
  #include "io_proxy/rpc_bindings.hpp"
 #include "io_proxy/rpc_types.h"
 #include "msg/udt_server.h"

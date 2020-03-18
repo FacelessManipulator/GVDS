@@ -1,5 +1,5 @@
 #include <csignal>
-#include "context.h"
+#include "gvds_context.h"
 #include "manager/manager.h"
 #include <boost/program_options.hpp>
 

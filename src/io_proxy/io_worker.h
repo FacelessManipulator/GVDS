@@ -27,7 +27,7 @@
 #include "op.grpc.pb.h"
 #include "op.pb.h"
 
-#include "context.h"
+#include "gvds_context.h"
 #include "msg/op.h"
 
 namespace gvds {

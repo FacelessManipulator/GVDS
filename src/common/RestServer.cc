@@ -1,7 +1,7 @@
 #include <signal.h>
 
 #include "common/RestServer.h"
-#include "context.h"
+#include "gvds_context.h"
 namespace gvds {
 
 void RestServer::init(size_t thr) {

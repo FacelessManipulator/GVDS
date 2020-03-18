@@ -2,7 +2,7 @@
  * @Author: Hanjie,Zhou
  * @Date: 2020-02-18 15:33:31
  * @Last Modified by: Hanjie,Zhou
- * @Last Modified time: 2020-02-20 00:38:24
+ * @Last Modified time: 2020-03-18 15:49:47
  */
 
 #pragma once
@@ -19,7 +19,7 @@
 
 // gvds related
 #include "common/Thread.h"
-#include "context.h"
+#include "gvds_context.h"
 
 namespace gvds {
 using grpc::Server;

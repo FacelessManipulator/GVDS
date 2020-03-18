@@ -8,7 +8,7 @@
 #include <sys/xattr.h>
 
 #include <utime.h>
-#include "context.h"
+#include "gvds_context.h"
 #include "io_proxy/fd_mgr.h"
 #include "io_proxy/io_proxy.h"
 #include "io_proxy/proxy_op.h"

@@ -2,7 +2,7 @@
 
 /* Global version of the stuff in common/dout.h
  */
-// #include "context.h"
+// #include "gvds_context.h"
 #ifndef GVDS_CONTEXT
 #error "include context.h before include debug.h"
 #endif

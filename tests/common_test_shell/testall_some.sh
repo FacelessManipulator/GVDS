@@ -17,7 +17,7 @@ test_1hs=true
 test_1hr=true
 
 runtime=10s 
-size=1G
+size=1024M
 direct=1
 nums_size=${#nums[*]}
 for ((k=0; k<$nums_size; k++));
@@ -98,7 +98,7 @@ do
     for ((i=0;i<$jlist_size;i++));
     do
     {
-        fio -filename=$testname -fallocate=none  -direct=$direct -iodepth 1 -thread -rw=write -ioengine=libaio -bs=128k -size=$size   -runtime=$runtime -numjobs=${job_list[$i]} -name=$testname  > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
+        fio -filename=$testname -fallocate=none  -direct=$direct -iodepth 1 -thread -rw=write -ioengine=libaio -bs=128k -size=$(( ${size:0:-1}/${job_list[$i]} ))M   -runtime=$runtime -numjobs=${job_list[$i]} -name=$testname  > $prefix/test_$testname\_${nums[$k]}_${job_list[$i]}
     }
     done
     echo test_$testname\_${nums[$k]} done

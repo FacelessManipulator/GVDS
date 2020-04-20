@@ -1,7 +1,7 @@
 #include <iostream>
 //#include <boost/program_options.hpp>
 #include "config/ConfigureSettings.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "gtest/gtest.h"
 #include <iomanip>
 

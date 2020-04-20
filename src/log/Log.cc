@@ -7,10 +7,10 @@
 #include <string.h>
 // #include <syslog.h>
 #include <iostream>
-#include <context.h>
 #include <assert.h>
 
 #include "log/Entry.h"
+#include "gvds_context.h"
 
 #define DEFAULT_MAX_NEW 100
 

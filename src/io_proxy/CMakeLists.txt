@@ -45,7 +45,7 @@ ADD_EXECUTABLE(gvds_ioproxy gvds_ioproxy_main.cc grpc_impl.cc
 )
 
 TARGET_LINK_LIBRARIES(gvds_ioproxy
-    ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF} io_proxy gvdscommon 
+    ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF} gvdscommon 
     ${GVDSCOMMOM_DEPENDS_ON} boost_program_options stdc++fs roaring
 )
 

@@ -1,4 +1,4 @@
-#include "context.h"
+#include "gvds_context.h"
 #include "datastore/datastore.h"
 #include "gtest/gtest.h"
 

@@ -5,7 +5,7 @@
 #include <grpcpp/grpcpp.h>
 #include <future>
 #include "common/Thread.h"
-#include "include/context.h"
+#include "gvds_context.h"
 #include "op.grpc.pb.h"
 
 namespace gvds {

@@ -5,7 +5,7 @@
  * @Last Modified time: 2020-02-20 00:40:58
  */
 #include "common/json.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "datastore/couchbase_helper.h"
 #include "gtest/gtest.h"
 

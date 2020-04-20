@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <atomic>
 #include <chrono>
-#include "context.h"
+#include "gvds_context.h"
 #include "gtest/gtest.h"
 #include "io_proxy/io_proxy.h"
 #include "msg/rpc.h"

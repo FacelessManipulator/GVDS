@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <atomic>
 #include <chrono>
-#include "context.h"
+#include "gvds_context.h"
 #include "gtest/gtest.h"
 #include "manager/manager.h"
 #include "aggregation_struct.h"

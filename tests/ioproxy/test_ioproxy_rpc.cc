@@ -3,7 +3,7 @@
 // 北航系统结构所-存储组
 //
 
-#include "context.h"
+#include "gvds_context.h"
 #include "gtest/gtest.h"
 #include "msg/rpc.h"
 #include <unistd.h>

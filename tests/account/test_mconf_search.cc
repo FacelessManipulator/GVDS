@@ -1,7 +1,7 @@
 //=============
 #include <iostream>
 #include "common/JsonSerializer.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "datastore/datastore.h"
 #include "common/json.h"
 #include "datastore/couchbase_helper.h"

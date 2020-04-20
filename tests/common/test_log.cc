@@ -1,5 +1,5 @@
 #include "common/Thread.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "gtest/gtest.h"
 #include "log/Log.h"
 

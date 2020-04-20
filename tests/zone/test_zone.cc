@@ -2,7 +2,7 @@
 #include "gvds_struct.h"
 #include "manager/zone/ZoneServer.h"
 #include "common/JsonSerializer.h"
-#include "context.h"
+#include "gvds_context.h"
 #include "datastore/datastore.h"
 #include "common/json.h"
 #include "datastore/couchbase_helper.h"

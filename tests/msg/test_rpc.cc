@@ -1,4 +1,4 @@
-#include "context.h"
+#include "gvds_context.h"
 #include "gtest/gtest.h"
 #include "msg/rpc.h"
 #include "msg/stat_demo.h"

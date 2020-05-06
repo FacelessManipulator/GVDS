@@ -99,7 +99,41 @@ if(HVS_BOOST_BUILTIN)
         ${CMAKE_BINARY_DIR}/lib/libboost_thread.so.1.68.0
         DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
+endif()
 
+if(HVS_LIBFUSE_BUILTIN)
+    if(EXISTS ${CMAKE_BINARY_DIR}/lib/libfuse_built_flag)
+        message(STATUS "libfuse already built, skip.")
+    else()
+        message(STATUS "Prebild libfuse.")
+        execute_process(COMMAND ${PROJECT_SOURCE_DIR}/boost/bootstrap.sh --with-libraries=${HVS_BOOST_COMP}
+                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/boost
+                        RESULT_VARIABLE HVS_BOOST_BUILD_RESULT)
+        execute_process(COMMAND ${PROJECT_SOURCE_DIR}/boost/b2 --stagedir=${CMAKE_BINARY_DIR} link=shared
+                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/boost
+                        RESULT_VARIABLE HVS_BOOST_BUILD_RESULT)
+        if(NOT HVS_BOOST_BUILD_RESULT EQUAL "0")
+            message(FATAL_ERROR "boost build failed with ${HVS_BOOST_BUILD_RESULT}")
+        else()
+            file(TOUCH ${CMAKE_BINARY_DIR}/lib/libfuse_built_flag)
+        endif()
+    endif()
+    ADD_LIBRARY(boost_system SHARED IMPORTED)
+    ADD_LIBRARY(boost_filesystem SHARED IMPORTED)
+    ADD_LIBRARY(boost_program_options SHARED IMPORTED)
+    ADD_LIBRARY(boost_thread SHARED IMPORTED)
+    set_target_properties(boost_system PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_system.so)
+    set_target_properties(boost_filesystem PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_filesystem.so)
+    set_target_properties(boost_program_options PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_program_options.so)
+    set_target_properties(boost_thread PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libboost_thread.so)
+
+    install(FILES
+        ${CMAKE_BINARY_DIR}/lib/libboost_system.so.1.68.0
+        ${CMAKE_BINARY_DIR}/lib/libboost_filesystem.so.1.68.0
+        ${CMAKE_BINARY_DIR}/lib/libboost_program_options.so.1.68.0
+        ${CMAKE_BINARY_DIR}/lib/libboost_thread.so.1.68.0
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
 endif()
 
 ADD_SUBDIRECTORY(googletest EXCLUDE_FROM_ALL)

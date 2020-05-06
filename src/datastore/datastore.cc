@@ -9,6 +9,8 @@ std::map<std::pair<long int, std::string>, std::shared_ptr<Datastore>>
     DatastoreFactory::_reuse_map = {};
 std::shared_ptr<Datastore> DatastoreFactory::create_datastore(
     std::string name, DatastoreType type, bool reuse) {
+      //TODO: currenly disable reuse of database instance
+      reuse = false;
   std::shared_ptr<Datastore> dsp = nullptr;
   long int tid;
   do {

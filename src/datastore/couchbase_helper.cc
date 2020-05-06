@@ -133,7 +133,7 @@ std::tuple<std::shared_ptr<std::string>, int> gvds::CouchbaseDatastore::_get(
 
 std::tuple<std::shared_ptr<std::string>, int> gvds::CouchbaseDatastore::_get(
     const std::string& key, const std::string& path) {
-  Couchbase::SubdocResponse rs = client->get_sub(key, path);
+  Couchbase::SubdocResponse&& rs = client->get_sub(key, path);
   std::shared_ptr<std::string> content;
   if (rs.status().success()) {
     content.reset(new std::string(rs.value().data(), rs.value().size()));

@@ -39,7 +39,7 @@
 #include "io_proxy/rpc_types.h"
 
 extern bool zonechecker_run;
-#define FUSE_DEBUG_LEVEL -1
+#define FUSE_DEBUG_LEVEL 30
 #define GVDS_FUSE_DATA \
   ((struct ::gvds::ClientFuseData *)fuse_get_context()->private_data)
 
@@ -856,7 +856,6 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
 
     int gvdsfs_getxattr(const char *path, const char* name, char* value, size_t size) {
         std::vector<std::string> namev = splitWithStl(path, "/");
-        int nvsize = static_cast<int>(namev.size());
         if (namev.size() <= 3) {
             return -ENODATA;
         }
@@ -865,7 +864,10 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
         if (!iop) {
             return -ENODATA;
         }
-        dout(FUSE_DEBUG_LEVEL) << "req-" << path << dendl;
+        dout(FUSE_DEBUG_LEVEL) << "req-" << path << " name:"<< name << dendl;
+        if (string(name).rfind("security.capability") == 0) {
+          return -ENODATA;
+        }
         //  auto res =
         //      GVDS_FUSE_DATA->client->rpc->call(iop, "ioproxy_create", rpath, mode);
         OpRequest request;

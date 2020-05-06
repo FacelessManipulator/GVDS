@@ -38,6 +38,9 @@ class ClientBufferQueue : public ClientModule, Thread {
     pthread_cond_init(&m_cond_dispatcher, nullptr);
     pthread_cond_init(&m_cond_ioproxy, nullptr);
     pthread_mutexattr_destroy(&mu_attr);
+    idle_worker_num = 0;
+    buf_onlink = 0;
+    buf_inqueue = 0;
   }
   friend class Client;
   

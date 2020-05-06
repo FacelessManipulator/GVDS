@@ -46,7 +46,6 @@ bool ClientBufferQueue::add_idle_worker(ClientWorker* worker) {
 bool ClientBufferQueue::queue_buffer(std::shared_ptr<Buffer> buf, bool block) {
   pthread_mutex_lock(&m_queue_mutex);
   m_queue_mutex_holder = pthread_self();
-
   // see if we can merge
       if (!buf_waiting_line.empty()){
         auto& last_buf = buf_waiting_line.back();

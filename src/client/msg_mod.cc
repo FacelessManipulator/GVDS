@@ -148,17 +148,17 @@ std::shared_ptr<Pistache::Http::Client> ClientRpc::rest_channel(
     std::string endpoint) {
   // Found, already established connection, maybe out-of-date.
   // Currently we not mantain the exists connection.
-  lock_guard<mutex> lock(rpc_mutex);
-  auto restc = rest_clients.find(endpoint);
-
-  if (restc != rest_clients.end()) {
-    return restc->second;
-  }
+//  lock_guard<mutex> lock(rpc_mutex);
+//  auto restc = rest_clients.find(endpoint);
+//
+//  if (restc != rest_clients.end()) {
+//    return restc->second;
+//  }
   // Just try create it
   auto restcp = make_shared<Http::Client>();
   auto opts = Http::Client::options().threads(1).maxConnectionsPerHost(8);
   restcp->init(opts);
-  rest_clients[endpoint] = restcp;
+//  rest_clients[endpoint] = restcp;
   return restcp;
 }
 
@@ -198,15 +198,19 @@ std::string ClientRpc::post_request(const std::string& endpoint,
     auto status = fu.wait_for(std::chrono::seconds(30));
     if (status == std::future_status::timeout) {
       dout(5) << "ERROR: Client connot connect to " << endpoint << dendl;
+      restc->shutdown();
       return {};
     } else if (status == std::future_status::ready) {
       auto res = fu.get();
+      restc->shutdown();
       return res;
     }
+    restc->shutdown();
   } catch (const exception& e) {
     dout(5) << "ERROR: connot connect to " << endpoint << url
             << " Reason: " << e.what() << dendl;
   }
+  return "";
 }
 
 string ClientRpc::get_request(const string& endpoint, const string& url) {
@@ -241,15 +245,19 @@ string ClientRpc::get_request(const string& endpoint, const string& url) {
     auto status = fu.wait_for(std::chrono::seconds(30));
     if (status == std::future_status::timeout) {
       dout(5) << "ERROR: Client connot connect to " << endpoint << dendl;
+      restc->shutdown();
       return {};
     } else if (status == std::future_status::ready) {
       auto res = fu.get();
+      restc->shutdown();
       return res;
     }
+    restc->shutdown();
   } catch (const exception& e) {
     dout(5) << "ERROR: connot connect to " << endpoint << url
             << " Reason: " << e.what() << dendl;
   }
+  return "";
 }
 
 string ClientRpc::delete_request(const string& endpoint, const string& url) {
@@ -282,13 +290,17 @@ string ClientRpc::delete_request(const string& endpoint, const string& url) {
     auto status = fu.wait_for(std::chrono::seconds(30));
     if (status == std::future_status::timeout) {
       dout(5) << "ERROR: Client connot connect to " << endpoint << dendl;
+      restc->shutdown();
       return {};
     } else if (status == std::future_status::ready) {
       auto res = fu.get();
+      restc->shutdown();
       return res;
     }
+    restc->shutdown();
   } catch (const exception& e) {
     dout(5) << "ERROR: connot connect to " << endpoint << url
             << " Reason: " << e.what() << dendl;
   }
+  return "";
 }

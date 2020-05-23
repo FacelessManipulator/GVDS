@@ -255,7 +255,41 @@ bool ZoneServer::GetZoneInfo(std::vector<Zone> &result_z,
   if (err2) {
     return false;
   }
-  vp->insert(vp->end(), vp2->begin(), vp2->end());
+  //如果是admin
+  char query3[256];
+  snprintf(query3, 256,
+           "select namelist from `%s` where \"%s\" "
+           "within namelist and META().id = \"adminwhitelist\"",
+           accountbucket.c_str(), clientID.c_str());
+  std::shared_ptr<gvds::Datastore> dbPtr3 =
+      gvds::DatastoreFactory::create_datastore(
+          accountbucket, gvds::DatastoreType::couchbase, true);
+  auto zonePtr3 = static_cast<CouchbaseDatastore *>(dbPtr3.get());
+  auto [vp3, err3] = zonePtr3->n1ql(string(query3));
+  if (err3) {
+    return false;
+  }
+
+  if (!vp3->empty())
+  {
+    char query4[256];
+    snprintf(query4, 256,
+           "select UUID, name, owner, members, spaces from `%s` where "
+           "META().id like '%s%%'",
+           zonebucket.c_str(), zone_prefix.c_str());
+    std::shared_ptr<gvds::Datastore> dbPtr4 =
+    gvds::DatastoreFactory::create_datastore(
+        zonebucket, gvds::DatastoreType::couchbase, true);
+    auto zonePtr4 = static_cast<CouchbaseDatastore *>(dbPtr4.get());
+    auto [vp4, err4] = zonePtr4->n1ql(string(query4));
+    if (err4) {
+      return false;
+    }
+    vp->clear();
+    vp->insert(vp->end(), vp4->begin(), vp4->end());
+  }
+  else
+    vp->insert(vp->end(), vp2->begin(), vp2->end());
 
     for (std::vector<std::string>::iterator it = vp->begin(); it != vp->end();
          it++) {

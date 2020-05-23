@@ -37,6 +37,8 @@
 #include "gvds_context.h"
 #include "gvds_struct.h"
 #include "io_proxy/rpc_types.h"
+#include "common/centerinfo.h"
+#include "OPTNode/opt_node.h"
 
 extern bool zonechecker_run;
 #define FUSE_DEBUG_LEVEL 30
@@ -67,6 +69,54 @@ std::vector<std::string> splitWithStl(const std::string str,
     pos = strs.find(pattern);
   }
   return resVec;
+}
+
+double getBandWidth(const string & sourceCenterName,const string & destCenterName)
+{
+  std::map<std::string,int> name2Id={{"Beijing",0},{"Changsha",1},{"Shanghai",2},{"Jinan",3},{"Guangzhou",4},{"Beihang",5}};
+  double bandWidth[6][6];
+  bandWidth[0][0]=400000000;
+  bandWidth[0][1]=4488693.75;
+  bandWidth[0][2]=82083585.13;
+  bandWidth[0][3]=112411237;
+  bandWidth[0][4]=694813;
+  bandWidth[0][5]=21775352.88;
+  
+  bandWidth[1][0]=30401278.5;
+  bandWidth[1][1]=400000000;
+  bandWidth[1][2]=16882664.13;
+  bandWidth[1][3]=9725215.625;
+  bandWidth[1][4]=4115036.125;
+  bandWidth[1][5]=27114583.25;
+  
+  bandWidth[2][0]=53982675.75;
+  bandWidth[2][1]=3843364.625;
+  bandWidth[2][2]=400000000;
+  bandWidth[2][3]=111804281.9;
+  bandWidth[2][4]=1855816.375;
+  bandWidth[2][5]=23148624;
+  
+  bandWidth[3][0]=112221802.6;
+  bandWidth[3][1]=6191293.5;
+  bandWidth[3][2]=25840320.13;
+  bandWidth[3][3]=400000000;
+  bandWidth[3][4]=3988432.875;
+  bandWidth[3][5]=41293390.13;
+  
+  bandWidth[4][0]=3243403.25;
+  bandWidth[4][1]=3609997.5;
+  bandWidth[4][2]=1161078.625;
+  bandWidth[4][3]=3481947.5;
+  bandWidth[4][4]=400000000;
+  bandWidth[4][5]=1292363.25;
+  
+  bandWidth[5][0]=28601205.88;
+  bandWidth[5][1]=6284871;
+  bandWidth[5][2]=6909725.5;
+  bandWidth[5][3]=110698.25;
+  bandWidth[5][4]=1618595;
+  bandWidth[5][5]=400000000;
+  return bandWidth[name2Id[sourceCenterName]][name2Id[destCenterName]];
 }
 
 void *gvdsfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
@@ -865,6 +915,107 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
             return -ENODATA;
         }
         dout(FUSE_DEBUG_LEVEL) << "req-" << path << " name:"<< name << dendl;
+
+        std::vector<std::string> attrlist = splitWithStl(name, ".");
+        if (attrlist.size()==3 && attrlist[0]=="gvds" && attrlist[1]=="attr" && attrlist[2]=="size")
+        {
+          OpRequest request;
+          OpReply reply;
+          request.set_type(OpType::getattr);
+          request.set_filepath(rpath);
+          auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
+          auto status = oper->Submit(request, reply);
+          if (!status.ok()) {
+            // timeout exception raised
+            return -ENOENT;
+          }
+          if (reply.err_code()) {
+            return reply.err_code();
+          }
+          std::string size_str=std::to_string(reply.attr().size());
+          if(value==NULL)
+          {
+            value=new char [size_str.size()];
+          }
+          memcpy(value, size_str.c_str(), size_str.size());
+          dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+          return size_str.size();
+        }
+        else if(attrlist.size()==4 && attrlist[0]=="gvds" && attrlist[1]=="migrate")
+        {
+          std::string destCenterName = attrlist[2];
+          std::string destCenterId;
+          std::string cinfor = GVDS_FUSE_DATA->client->optNode->getCenterInfo();
+          CenterInfo mycenter;
+          mycenter.deserialize(cinfor);
+          bool isin=false;
+          for(auto centertmp:mycenter.centerName)
+          {
+            if(centertmp.second == destCenterName)
+            {
+              isin=true;
+              destCenterId=centertmp.first;
+              break;
+            }
+          }
+          if(!isin)
+            return -ENODATA;
+          auto [zone, space, remotepath] = GVDS_FUSE_DATA->client->zone->locatePosition(path);
+          std::string sourceCenterName = space->hostCenterName;
+
+
+          if(attrlist[3]=="bandwidth")
+          {
+            std::string bandWidth=std::to_string(getBandWidth(sourceCenterName,destCenterName));
+            if(value==NULL)
+            {
+              value=new char [bandWidth.size()];
+            }
+            memcpy(value, bandWidth.c_str(), bandWidth.size());
+            return bandWidth.size();
+          }
+          else if(attrlist[3]=="time")
+          {
+            OpRequest request;
+            OpReply reply;
+            request.set_type(OpType::getattr);
+            request.set_filepath(rpath);
+            auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
+            auto status = oper->Submit(request, reply);
+            if (!status.ok()) {
+              // timeout exception raised
+              return -ENOENT;
+            }
+            if (reply.err_code()) {
+              return reply.err_code();
+            }
+            auto file_size=reply.attr().size();
+            double bandWidth=getBandWidth(sourceCenterName,destCenterName);
+            std::string mig_time=std::to_string(file_size/bandWidth);
+            if(value==NULL)
+            {
+              value=new char [mig_time.size()];
+            }
+            memcpy(value, mig_time.c_str(), mig_time.size());
+            dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+            return mig_time.size();
+          }
+          else if(attrlist[3]=="isok")
+          {
+            std::string isok="true";
+            if(value==NULL)
+            {
+              value=new char [isok.size()];
+              memcpy(value, isok.c_str(), isok.size());
+            }
+            else
+            {  
+              memcpy(value, isok.c_str(), isok.size());
+            }
+            return isok.size();
+          }
+        }
+
         if (string(name).rfind("security.capability") == 0) {
           return -ENODATA;
         }

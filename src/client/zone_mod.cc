@@ -192,9 +192,17 @@ int ClientZone::readdir(const char *path, void *buf, fuse_fill_dir_t filler) {
   int nvsize = static_cast<int>(namev.size());
   // access space level
   if (strcmp(path, "/") == 0) {
-    auto zones = client->graph->list_zone();
-    for (const auto &zone : zones) {
-      if (filler(buf, zone.c_str(), nullptr, 0,
+    std::vector<std::string> dirNames;
+    string endpoint = client->get_manager();
+    std::string routepath = "/users/isownerzone/" + client->user->getAccountID(); ///users/search/用戶id
+    std::string res = client->rpc->get_request(endpoint, routepath);
+    if(res=="true")
+      dirNames = client->graph->list_owner_zone();
+    else
+      dirNames = client->graph->list_zone();
+    
+    for (const auto &dirName : dirNames) {
+      if (filler(buf, dirName.c_str(), nullptr, 0,
                  static_cast<fuse_fill_dir_flags>(0)) != 0) {
         return -ENOMEM;
       }

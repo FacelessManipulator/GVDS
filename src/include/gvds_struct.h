@@ -176,6 +176,7 @@ struct Zone : public gvds::JsonSerializer {
   std::vector<std::string> memberID;  //区域成员ID，UUID
   std::vector<std::string> spaceID;   //区域映射空间ID，UUID
   std::vector<std::shared_ptr<Space>> spaceBicInfo;  //空间基本信息
+  // std::string ownerName; //添加拥有者姓名用于管理员
 
   // AuthType ownerType;
   // AuthType groupType;
@@ -185,6 +186,7 @@ struct Zone : public gvds::JsonSerializer {
   int otherAuth;
 
   bool contains_spaceinfo;
+  // bool contains_ownername;
 
  public:
   void serialize_impl() override {
@@ -205,6 +207,8 @@ struct Zone : public gvds::JsonSerializer {
       put("groupAuth", groupAuth);
       put("otherAuth", otherAuth);
     }
+    // if(contains_ownername)
+    //   put("GVDSAccountName",ownerName);
   }
 
   void deserialize_impl() override {
@@ -228,6 +232,7 @@ struct Zone : public gvds::JsonSerializer {
       // get("otherAuth", otherAuth);
       // otherType = static_cast<AuthType>(otherAuth);
     }
+    // get("GVDSAccountName",ownerName);
   }
   Zone& operator=(const Zone& oths) {
     zoneID = oths.zoneID;
@@ -237,6 +242,8 @@ struct Zone : public gvds::JsonSerializer {
     spaceID = oths.spaceID;
     spaceBicInfo = oths.spaceBicInfo;
     contains_spaceinfo = oths.contains_spaceinfo;
+    // ownerName=oths.ownerName;
+    // contains_ownername=oths.contains_ownername;
   }
 
  public:

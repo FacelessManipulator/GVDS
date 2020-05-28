@@ -63,6 +63,8 @@ public:
     void getMemberIDRest(const Rest::Request& request, Http::ResponseWriter response);
     bool getMemberID(std::vector<std::string> &memberName, std::vector<std::string> &memberID);
 
+    void isAdmin(const Rest::Request& request, Http::ResponseWriter response);
+
 //---------------------
     //管理员
     //管理员注册接口

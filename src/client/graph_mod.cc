@@ -78,6 +78,14 @@ std::vector<std::string> ClientGraph::list_zone() {
   return zones;
 }
 
+std::vector<std::string> ClientGraph::list_owner_zone() {
+  vector<string> owner_zones;
+  for (const auto& zo : client->zone->zonemap) {
+    owner_zones.push_back(zo.second->ownerID+"_"+zo.first);
+  }
+  return owner_zones;
+}
+
 void ClientGraph::fresh_ioproxy() {
   auto endpoints = client->optNode->getNode(1);
   char url[256];

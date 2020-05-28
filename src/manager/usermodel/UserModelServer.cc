@@ -53,6 +53,7 @@ void UserModelServer::router(Router& router){
     Routes::Get(router, "/users/exit/:id", Routes::bind(&UserModelServer::exitUserAccountRest, this));
     Routes::Get(router, "/users/cancel/:id", Routes::bind(&UserModelServer::cancellationUserAccountRest, this));
     Routes::Post(router, "/users/memberID", Routes::bind(&UserModelServer::getMemberIDRest, this));
+    Routes::Get(router, "/users/isownerzone/:name", Routes::bind(&UserModelServer::isAdmin, this));
 
     //管理员接口
     Routes::Post(router, "/users/adminregistration", Routes::bind(&UserModelServer::AdminUserRegisterRest, this)); //管理员注册
@@ -90,6 +91,39 @@ void UserModelServer::getMemberIDRest(const Rest::Request& request, Http::Respon
         response.send(Http::Code::Ok, "fail");
     }
     dout(-1) << "====== end UserModelServer function: getMemberIDRest ======"<< dendl;
+}
+
+void UserModelServer::isAdmin(const Rest::Request& request, Http::ResponseWriter response){
+    dout(-1) << "====== start UserModelServer function: isAdmin ======"<< dendl;
+        
+    auto uuid = request.param(":name").as<std::string>();
+    char query[256];
+    snprintf(query, 256,
+           "select namelist from `%s` where \"%s\" "
+           "within namelist and META().id = \"adminwhitelist\"",
+            bucket_account_info.c_str(), uuid.c_str());
+    std::shared_ptr<gvds::Datastore> dbPtr =
+        gvds::DatastoreFactory::create_datastore(
+            bucket_account_info, gvds::DatastoreType::couchbase, true);
+    auto zonePtr = static_cast<CouchbaseDatastore *>(dbPtr.get());
+    auto [vp, err] = zonePtr->n1ql(string(query));
+    if (err) {
+        response.send(Http::Code::Internal_Server_Error, "error");
+    }
+    dout(-1) << request.body() <<dendl;
+    dout(-1) << query <<dendl;
+    dout(-1) << vp->empty() <<dendl;
+
+    if (!vp->empty())
+    {
+        response.send(Http::Code::Ok, "true");
+    }
+    else
+    {
+        response.send(Http::Code::Ok, "false");
+    }
+
+    dout(-1) << "====== end UserModelServer function: isAdmin ======"<< dendl;
 }
 
 bool UserModelServer::getMemberID(vector<string> &memberName, vector<string> &memberID){

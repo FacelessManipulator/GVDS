@@ -35,6 +35,7 @@ class ClientGraph : public ClientModule, public Thread {
   int set_force_mapping(const std::string& path, const std::string& cid);
   std::vector<std::string> list_space(std::string zonename);
   std::vector<std::string> list_zone();
+  std::vector<std::string> list_owner_zone();
   void fresh_ioproxy();
   // 缓存空间路径到IO代理节点的映射
 //  void set_mapping(const std::string& path, std::shared_ptr<IOProxyNode> ion, const std::string& rpath) {

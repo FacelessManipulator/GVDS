@@ -272,11 +272,19 @@ bool ZoneServer::GetZoneInfo(std::vector<Zone> &result_z,
 
   if (!vp3->empty())
   {
-    char query4[256];
-    snprintf(query4, 256,
+    char query4[512];
+    snprintf(query4, 512,
            "select UUID, name, owner, members, spaces from `%s` where "
            "META().id like '%s%%'",
            zonebucket.c_str(), zone_prefix.c_str());
+    // snprintf(query4, 512,
+    //         "select t1.UUID, t1.name, t1.owner, t1.members, t1.spaces, t2.GVDSAccountName"
+    //         "from `%s` t1 use keys array s.id for s in (select META(t3).id from `%s` t3 where META(t3).id like '%s%%') end" 
+    //         "join `%s` t2 on keys array p.id for p in (select META(t4).id from `%s` t4 where META(t4).id like '%s%%') end where t1.owner = t2.GVDSAccountID",
+    //        zonebucket.c_str(), zonebucket.c_str(), zone_prefix.c_str(), accountbucket.c_str(), accountbucket.c_str(), user_prefix.c_str());
+    // "select t1.UUID, t1.name, t1.owner, t1.members, t1.spaces, t2.GVDSAccountName"
+    // "from test t1 use keys array s.id for s in (select META(t3).id from test t3 where META(t3).id like 'ZONE-%') end" 
+    // "join test t2 on keys array p.id for p in (select META(t4).id from test t4 where META(t4).id like 'USER-%') end where t1.owner = t2.GVDSAccountID";
     std::shared_ptr<gvds::Datastore> dbPtr4 =
     gvds::DatastoreFactory::create_datastore(
         zonebucket, gvds::DatastoreType::couchbase, true);
@@ -334,6 +342,8 @@ bool ZoneServer::GetZoneInfo(std::vector<Zone> &result_z,
       for (auto &sp : tmp_zi.spaceBicInfo) {
         tmp_zi.spaceID.push_back(sp->spaceID);
       }
+      // tmp_zi.contains_ownername=true;
+      // tmp_zi.ownerName=tmp.ownerName;
       result_z.push_back(tmp_zi);
     }
     return true;

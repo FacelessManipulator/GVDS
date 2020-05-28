@@ -906,6 +906,117 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
 
     int gvdsfs_getxattr(const char *path, const char* name, char* value, size_t size) {
         std::vector<std::string> namev = splitWithStl(path, "/");
+        if (namev.size() == 1) {
+          std::vector<std::string> attrlist = splitWithStl(name, ".");
+          if (attrlist.size() > 3 && attrlist[0] == "gvds" && attrlist[1] == "attr" && attrlist[2] == "size")
+          {
+            std::string fpath = "";
+            for(int i=3;i<attrlist.size();i++)
+            {
+              fpath+=attrlist[i];
+            }
+            
+            OpRequest request;
+            OpReply reply;
+            request.set_type(OpType::getattr);
+            request.set_filepath(rpath);
+            auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
+            auto status = oper->Submit(request, reply);
+            if (!status.ok())
+            {
+              // timeout exception raised
+              return -ENOENT;
+            }
+            if (reply.err_code())
+            {
+              return reply.err_code();
+            }
+            std::string size_str = std::to_string(reply.attr().size());
+            if (value == NULL)
+            {
+              value = new char[size_str.size()];
+            }
+            memcpy(value, size_str.c_str(), size_str.size());
+            dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+            return size_str.size();
+          }
+          else if (attrlist.size() == 4 && attrlist[0] == "gvds" && attrlist[1] == "migrate")
+          {
+            std::string destCenterName = attrlist[2];
+            std::string destCenterId;
+            std::string cinfor = GVDS_FUSE_DATA->client->optNode->getCenterInfo();
+            CenterInfo mycenter;
+            mycenter.deserialize(cinfor);
+            bool isin = false;
+            for (auto centertmp : mycenter.centerName)
+            {
+              if (centertmp.second == destCenterName)
+              {
+                isin = true;
+                destCenterId = centertmp.first;
+                break;
+              }
+            }
+            if (!isin)
+              return -ENODATA;
+            auto [zone, space, remotepath] = GVDS_FUSE_DATA->client->zone->locatePosition(path);
+            std::string sourceCenterName = space->hostCenterName;
+
+            if (attrlist[3] == "bandwidth")
+            {
+              std::string bandWidth = std::to_string(getBandWidth(sourceCenterName, destCenterName));
+              if (value == NULL)
+              {
+                value = new char[bandWidth.size()];
+              }
+              memcpy(value, bandWidth.c_str(), bandWidth.size());
+              return bandWidth.size();
+            }
+            else if (attrlist[3] == "time")
+            {
+              OpRequest request;
+              OpReply reply;
+              request.set_type(OpType::getattr);
+              request.set_filepath(rpath);
+              auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
+              auto status = oper->Submit(request, reply);
+              if (!status.ok())
+              {
+                // timeout exception raised
+                return -ENOENT;
+              }
+              if (reply.err_code())
+              {
+                return reply.err_code();
+              }
+              auto file_size = reply.attr().size();
+              double bandWidth = getBandWidth(sourceCenterName, destCenterName);
+              std::string mig_time = std::to_string(file_size / bandWidth);
+              if (value == NULL)
+              {
+                value = new char[mig_time.size()];
+              }
+              memcpy(value, mig_time.c_str(), mig_time.size());
+              dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
+              return mig_time.size();
+            }
+            else if (attrlist[3] == "isok")
+            {
+              std::string isok = "true";
+              if (value == NULL)
+              {
+                value = new char[isok.size()];
+                memcpy(value, isok.c_str(), isok.size());
+              }
+              else
+              {
+                memcpy(value, isok.c_str(), isok.size());
+              }
+              return isok.size();
+            }
+          }
+        }
+
         if (namev.size() <= 3) {
             return -ENODATA;
         }
@@ -915,106 +1026,6 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
             return -ENODATA;
         }
         dout(FUSE_DEBUG_LEVEL) << "req-" << path << " name:"<< name << dendl;
-
-        std::vector<std::string> attrlist = splitWithStl(name, ".");
-        if (attrlist.size()==3 && attrlist[0]=="gvds" && attrlist[1]=="attr" && attrlist[2]=="size")
-        {
-          OpRequest request;
-          OpReply reply;
-          request.set_type(OpType::getattr);
-          request.set_filepath(rpath);
-          auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
-          auto status = oper->Submit(request, reply);
-          if (!status.ok()) {
-            // timeout exception raised
-            return -ENOENT;
-          }
-          if (reply.err_code()) {
-            return reply.err_code();
-          }
-          std::string size_str=std::to_string(reply.attr().size());
-          if(value==NULL)
-          {
-            value=new char [size_str.size()];
-          }
-          memcpy(value, size_str.c_str(), size_str.size());
-          dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
-          return size_str.size();
-        }
-        else if(attrlist.size()==4 && attrlist[0]=="gvds" && attrlist[1]=="migrate")
-        {
-          std::string destCenterName = attrlist[2];
-          std::string destCenterId;
-          std::string cinfor = GVDS_FUSE_DATA->client->optNode->getCenterInfo();
-          CenterInfo mycenter;
-          mycenter.deserialize(cinfor);
-          bool isin=false;
-          for(auto centertmp:mycenter.centerName)
-          {
-            if(centertmp.second == destCenterName)
-            {
-              isin=true;
-              destCenterId=centertmp.first;
-              break;
-            }
-          }
-          if(!isin)
-            return -ENODATA;
-          auto [zone, space, remotepath] = GVDS_FUSE_DATA->client->zone->locatePosition(path);
-          std::string sourceCenterName = space->hostCenterName;
-
-
-          if(attrlist[3]=="bandwidth")
-          {
-            std::string bandWidth=std::to_string(getBandWidth(sourceCenterName,destCenterName));
-            if(value==NULL)
-            {
-              value=new char [bandWidth.size()];
-            }
-            memcpy(value, bandWidth.c_str(), bandWidth.size());
-            return bandWidth.size();
-          }
-          else if(attrlist[3]=="time")
-          {
-            OpRequest request;
-            OpReply reply;
-            request.set_type(OpType::getattr);
-            request.set_filepath(rpath);
-            auto oper = GVDS_FUSE_DATA->client->rpc->get_operator(iop);
-            auto status = oper->Submit(request, reply);
-            if (!status.ok()) {
-              // timeout exception raised
-              return -ENOENT;
-            }
-            if (reply.err_code()) {
-              return reply.err_code();
-            }
-            auto file_size=reply.attr().size();
-            double bandWidth=getBandWidth(sourceCenterName,destCenterName);
-            std::string mig_time=std::to_string(file_size/bandWidth);
-            if(value==NULL)
-            {
-              value=new char [mig_time.size()];
-            }
-            memcpy(value, mig_time.c_str(), mig_time.size());
-            dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
-            return mig_time.size();
-          }
-          else if(attrlist[3]=="isok")
-          {
-            std::string isok="true";
-            if(value==NULL)
-            {
-              value=new char [isok.size()];
-              memcpy(value, isok.c_str(), isok.size());
-            }
-            else
-            {  
-              memcpy(value, isok.c_str(), isok.size());
-            }
-            return isok.size();
-          }
-        }
 
         if (string(name).rfind("security.capability") == 0) {
           return -ENODATA;

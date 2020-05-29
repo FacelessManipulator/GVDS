@@ -48,6 +48,37 @@ std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping(
   return make_tuple(iop, lpath);
 }
 
+std::tuple<std::shared_ptr<IOProxyNode>, std::string> ClientGraph::get_mapping_admin(const std::string& path)
+{
+  auto [ownername, zone, space, rpath] = client->zone->parsePathForAdmin(path);
+  if (!zone || !space) {
+    return {nullptr, rpath};
+  }
+  // TODO: best node selection mod handle this
+  // TODO: 选择对应中心的IO代理
+  std::shared_ptr<IOProxyNode> iop;
+  std::string centerID = space->hostCenterID;
+  graph_mutex.lock_shared();
+  if (force_map.count(space->spaceID) != 0) {
+    centerID = force_map[space->spaceID];
+  }
+  if(ioproxy_list.count(centerID) == 0 || !ioproxy_list[centerID]) {
+    return {nullptr, rpath};
+  }
+  for (const auto& ioproxy : *(ioproxy_list[centerID])) {
+    if (ioproxy->status == IOProxyNode::Running) {
+        iop = ioproxy;
+        break;
+    }
+  }
+  graph_mutex.unlock_shared();
+  auto lpath = space->spacePath;
+  lpath.append(rpath);
+  return make_tuple(iop, lpath);
+
+}
+
+
 int ClientGraph::set_force_mapping(const std::string& path, const std::string& cid) {
   auto [zone, space, rpath] = client->zone->locatePosition(path);
   if (!zone || !space) {

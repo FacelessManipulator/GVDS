@@ -906,27 +906,42 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
 
     int gvdsfs_getxattr(const char *path, const char* name, char* value, size_t size) {
         std::vector<std::string> namev = splitWithStl(path, "/");
+        // std::string str_path=path;
+        // if (value == NULL)
+        // {
+        //   value = new char[str_path.size()];
+        // }
+        // memcpy(value, str_path.c_str(), str_path.size());
+        // return str_path.size();
 
-        if (namev.size() <= 3) {
-            return -ENODATA;
-        }
-        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
-        // not exists
-        if (!iop) {
-            return -ENODATA;
-        }
-        dout(FUSE_DEBUG_LEVEL) << "req-" << path << " name:"<< name << dendl;
-
-        // if (namev.size() == 1) {
+        if (namev.size() == 2) {
           std::vector<std::string> attrlist = splitWithStl(name, ".");
-          if (attrlist.size() == 3 && attrlist[0] == "gvds" && attrlist[1] == "attr" && attrlist[2] == "size")
+          if (attrlist.size() > 3 && attrlist[0] == "gvds" && attrlist[1] == "attr" && attrlist[2] == "size")
           {
-            // std::string fpath = "";
-            // for(int i=3;i<attrlist.size();i++)
+            //获取文件地址
+            std::string fpath = "";
+            for(int i=3;i<attrlist.size();i++)
+            {
+              if(i!=3)
+              {
+                fpath+=".";
+              }
+              fpath+=attrlist[i];
+            }
+
+            // if (value == NULL)
             // {
-            //   fpath+=attrlist[i];
+            //   value = new char[fpath.size()];
             // }
+            // memcpy(value, fpath.c_str(), fpath.size());
+            // return fpath.size();
+            //解析文件在哪个空间
+            auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping_admin(fpath);
             
+            if (!iop) {
+            return -ENOENT;
+            }
+
             OpRequest request;
             OpReply reply;
             request.set_type(OpType::getattr);
@@ -951,8 +966,20 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
             dout(FUSE_DEBUG_LEVEL) << "remote finish req: " << path << dendl;
             return size_str.size();
           }
-          else if (attrlist.size() == 4 && attrlist[0] == "gvds" && attrlist[1] == "migrate")
+          else if (attrlist.size() > 4 && attrlist[0] == "gvds" && attrlist[1] == "migrate")
           {
+            //获取文件地址
+            std::string fpath = "";
+            for(int i=4;i<attrlist.size();i++)
+            {
+              if(i!=4)
+              {
+                fpath+=".";
+              }
+              fpath+=attrlist[i];
+            }
+            
+            //获取迁移目标中心
             std::string destCenterName = attrlist[2];
             std::string destCenterId;
             std::string cinfor = GVDS_FUSE_DATA->client->optNode->getCenterInfo();
@@ -969,9 +996,20 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
               }
             }
             if (!isin)
-              return -ENODATA;
-            auto [zone, space, remotepath] = GVDS_FUSE_DATA->client->zone->locatePosition(path);
+              return -ENOENT;
+            
+            //解析文件地址，获取源中心
+            auto [ownerName, zone, space, remotepath] = GVDS_FUSE_DATA->client->zone->parsePathForAdmin(fpath);
+            
+            if (!zone || !space) {
+              return -ENOENT;
+            }
             std::string sourceCenterName = space->hostCenterName;
+
+            auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping_admin(fpath);
+            if (!iop) {
+              return -ENOENT;
+            }
 
             if (attrlist[3] == "bandwidth")
             {
@@ -1026,8 +1064,17 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
               return isok.size();
             }
           }
-        // }
+        }
 
+        if (namev.size() <= 3) {
+            return -ENODATA;
+        }
+        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
+        // not exists
+        if (!iop) {
+            return -ENODATA;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "req-" << path << " name:"<< name << dendl;
 
         if (string(name).rfind("security.capability") == 0) {
           return -ENODATA;

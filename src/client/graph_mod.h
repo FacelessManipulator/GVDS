@@ -32,6 +32,7 @@ class ClientGraph : public ClientModule, public Thread {
 
   // get global path of path
   std::tuple<std::shared_ptr<IOProxyNode>, std::string> get_mapping(const std::string& path);
+  std::tuple<std::shared_ptr<IOProxyNode>, std::string> get_mapping_admin(const std::string& path);
   int set_force_mapping(const std::string& path, const std::string& cid);
   std::vector<std::string> list_space(std::string zonename);
   std::vector<std::string> list_zone();

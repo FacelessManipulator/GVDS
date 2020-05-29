@@ -134,9 +134,11 @@ std::tuple<std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> gvds::Cli
   }
 }
 
-std::tuple<std::string, std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> gvds::ClientZone::parsePath(
+std::tuple<std::string, std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> gvds::ClientZone::parsePathForAdmin(
     const std::string& path) {
   std::vector<std::string> namev = splitWithStl(path, "/");
+  if(namev.size()<5)
+    return {"", nullptr, nullptr, ""};
   auto pos = path.find('/', 1);
   pos = path.find('/', pos + 1);
   pos = path.find('/', pos + 1);
@@ -151,7 +153,7 @@ std::tuple<std::string, std::shared_ptr<Zone>, std::shared_ptr<Space>, std::stri
     remotepath = path.substr(pos);
   }
   lock_guard<mutex> lock(zonemap_mutex);
-  auto mapping = zonemap.find(zonename);
+  auto mapping = zonemap.find(username+"_"+zonename);
   if (mapping != zonemap.end()) {
     auto zone = mapping->second;
     shared_ptr<Space> space;
@@ -245,14 +247,13 @@ int ClientZone::readdir(const char *path, void *buf, fuse_fill_dir_t filler) {
   int nvsize = static_cast<int>(namev.size());
   // access space level
   if (strcmp(path, "/") == 0) {
+    string endpoint = client->get_manager();
+    std::string routepath = "/users/isownerzone/" + client->user->getAccountID(); ///users/search/用戶id
+    std::string res = client->rpc->get_request(endpoint, routepath);
+    if(res=="true")
+      return 0;
     std::vector<std::string> dirNames;
-    // string endpoint = client->get_manager();
-    // std::string routepath = "/users/isownerzone/" + client->user->getAccountID(); ///users/search/用戶id
-    // std::string res = client->rpc->get_request(endpoint, routepath);
-    // if(res=="true")
-    //   dirNames = client->graph->list_owner_zone();
-    // else
-      dirNames = client->graph->list_zone();
+    dirNames = client->graph->list_zone();
     
     for (const auto &dirName : dirNames) {
       if (filler(buf, dirName.c_str(), nullptr, 0,

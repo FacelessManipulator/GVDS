@@ -49,7 +49,7 @@ class ClientZone : public ClientModule, public Thread {
   std::tuple<std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string>
   locatePosition(const std::string& path);
   std::tuple<std::string, std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string>
-  parsePath(const std::string& path);
+  parsePathForAdmin(const std::string& path);
   std::unordered_map<std::string, std::shared_ptr<Space>> spaceuuid_to_metadatamap;
   // 判断一个路径是否为区域、空间路径
   // <0, error; =0, not, >0 yes

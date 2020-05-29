@@ -906,15 +906,26 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
 
     int gvdsfs_getxattr(const char *path, const char* name, char* value, size_t size) {
         std::vector<std::string> namev = splitWithStl(path, "/");
-        if (namev.size() == 1) {
+
+        if (namev.size() <= 3) {
+            return -ENODATA;
+        }
+        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
+        // not exists
+        if (!iop) {
+            return -ENODATA;
+        }
+        dout(FUSE_DEBUG_LEVEL) << "req-" << path << " name:"<< name << dendl;
+
+        // if (namev.size() == 1) {
           std::vector<std::string> attrlist = splitWithStl(name, ".");
-          if (attrlist.size() > 3 && attrlist[0] == "gvds" && attrlist[1] == "attr" && attrlist[2] == "size")
+          if (attrlist.size() == 3 && attrlist[0] == "gvds" && attrlist[1] == "attr" && attrlist[2] == "size")
           {
-            std::string fpath = "";
-            for(int i=3;i<attrlist.size();i++)
-            {
-              fpath+=attrlist[i];
-            }
+            // std::string fpath = "";
+            // for(int i=3;i<attrlist.size();i++)
+            // {
+            //   fpath+=attrlist[i];
+            // }
             
             OpRequest request;
             OpReply reply;
@@ -1015,17 +1026,8 @@ int gvdsfs_utimens(const char *path, const struct timespec tv[2],
               return isok.size();
             }
           }
-        }
+        // }
 
-        if (namev.size() <= 3) {
-            return -ENODATA;
-        }
-        auto [iop, rpath] = GVDS_FUSE_DATA->client->graph->get_mapping(path);
-        // not exists
-        if (!iop) {
-            return -ENODATA;
-        }
-        dout(FUSE_DEBUG_LEVEL) << "req-" << path << " name:"<< name << dendl;
 
         if (string(name).rfind("security.capability") == 0) {
           return -ENODATA;

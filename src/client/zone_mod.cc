@@ -34,6 +34,8 @@ bool gvds::ClientZone::GetZoneInfo(std::string clientID) {
   string endpoint = client->get_manager();
   string inforesult =
       client->rpc->post_request(endpoint, "/zone/info", clientID);
+  std::string routepath = "/users/isownerzone/" + clientID; ///users/search/用戶id
+  std::string res = client->rpc->get_request(endpoint, routepath);
   if (!inforesult.empty()) {
     json_decode(inforesult, zoneinfores);  //获取返回的结果
   }
@@ -45,15 +47,34 @@ bool gvds::ClientZone::GetZoneInfo(std::string clientID) {
   spacemap_mutex.unlock_shared();
   zonemap_mutex.lock();
   zonemap.clear();
-  for (auto it : zoneinfores) {
-    // TODO: 获取空间信息对每个空间，并更新到内存中；
-    //        GetLocateInfo(clientID, it.zoneID, it.spaceBicInfo);
-    zonemap[it->zoneName] = it;
-    spacemap_mutex.lock_shared();
-    for (auto sp : it->spaceBicInfo) {
-      spaceuuid_to_metadatamap[sp->spaceID] = sp;
+  if(res=="true")
+  {
+    for (auto it : zoneinfores)
+    {
+      //TODO：admin获取所有空间信息，因为存在空间名重复，所以加入用户名标识唯一性
+      zonemap[it->ownerID +"_"+ it->zoneName] = it;
+      spacemap_mutex.lock_shared();
+      for (auto sp : it->spaceBicInfo)
+      {
+        spaceuuid_to_metadatamap[sp->spaceID] = sp;
+      }
+      spacemap_mutex.unlock_shared();
     }
-    spacemap_mutex.unlock_shared();
+  }
+  else
+  {
+    for (auto it : zoneinfores)
+    {
+      // TODO: 获取空间信息对每个空间，并更新到内存中；
+      //        GetLocateInfo(clientID, it.zoneID, it.spaceBicInfo);
+      zonemap[it->zoneName] = it;
+      spacemap_mutex.lock_shared();
+      for (auto sp : it->spaceBicInfo)
+      {
+        spaceuuid_to_metadatamap[sp->spaceID] = sp;
+      }
+      spacemap_mutex.unlock_shared();
+    }
   }
   zonemap_mutex.unlock();
   return true;
@@ -110,6 +131,38 @@ std::tuple<std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> gvds::Cli
     return {zone, space, remotepath};
   } else {
     return {nullptr, nullptr, remotepath};
+  }
+}
+
+std::tuple<std::string, std::shared_ptr<Zone>, std::shared_ptr<Space>, std::string> gvds::ClientZone::parsePath(
+    const std::string& path) {
+  std::vector<std::string> namev = splitWithStl(path, "/");
+  auto pos = path.find('/', 1);
+  pos = path.find('/', pos + 1);
+  pos = path.find('/', pos + 1);
+  std::string username = namev[1];
+  std::string zonename = namev[2];
+  std::string spacename = namev[3];
+  std::string remotepath;
+  std::string spaceuuid;
+  if (pos == -1) {
+    remotepath = "/";
+  } else {
+    remotepath = path.substr(pos);
+  }
+  lock_guard<mutex> lock(zonemap_mutex);
+  auto mapping = zonemap.find(zonename);
+  if (mapping != zonemap.end()) {
+    auto zone = mapping->second;
+    shared_ptr<Space> space;
+    for (auto it : zone->spaceBicInfo) {
+      if (it->spaceName == namev[3]) {
+        space = it;
+      }
+    }
+    return {username, zone, space, remotepath};
+  } else {
+    return {"", nullptr, nullptr, remotepath};
   }
 }
 
@@ -193,12 +246,12 @@ int ClientZone::readdir(const char *path, void *buf, fuse_fill_dir_t filler) {
   // access space level
   if (strcmp(path, "/") == 0) {
     std::vector<std::string> dirNames;
-    string endpoint = client->get_manager();
-    std::string routepath = "/users/isownerzone/" + client->user->getAccountID(); ///users/search/用戶id
-    std::string res = client->rpc->get_request(endpoint, routepath);
-    if(res=="true")
-      dirNames = client->graph->list_owner_zone();
-    else
+    // string endpoint = client->get_manager();
+    // std::string routepath = "/users/isownerzone/" + client->user->getAccountID(); ///users/search/用戶id
+    // std::string res = client->rpc->get_request(endpoint, routepath);
+    // if(res=="true")
+    //   dirNames = client->graph->list_owner_zone();
+    // else
       dirNames = client->graph->list_zone();
     
     for (const auto &dirName : dirNames) {

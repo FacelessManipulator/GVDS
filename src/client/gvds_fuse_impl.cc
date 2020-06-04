@@ -279,26 +279,26 @@ int gvdsfs_read(const char *path, char *buf, size_t size, off_t offset,
   if (GVDS_FUSE_DATA->fuse_client->readahead) {
     uint64_t cur_off = offset, size_left = size, read_size = 0,
              read_size_total = 0;
+    uint64_t on_link_try_left = 1;
     while (size_left > 0) {
       uint64_t cur_sec_left =
-          std::min(size_left, (((cur_off >> 18) + 1) << 18) - cur_off);
+          std::min(size_left, (((cur_off >> 17) + 1) << 17) - cur_off);
       auto cache_st = GVDS_FUSE_DATA->client->readahead->status(
           rpath, cur_off, cur_sec_left, buf, read_size);
       if (cache_st == ClientReadAhead::IN_BUFFER) {
-        dout(REAHAHEAD_DEBUG_LEVEL)
+        dout(READAHEAD_DEBUG_LEVEL)
             << "cache hit: " << rpath << " sector: " << (offset >> 18) << dendl;
         // TODO: this is not real size
         cur_off += cur_sec_left;
         size_left -= cur_sec_left;
         read_size_total += read_size;
         continue;
-      } else if (cache_st == ClientReadAhead::MAY_SEQ_READ) {
-        bool nt = GVDS_FUSE_DATA->client->readahead->set_task(
-            iop, rpath, 0, offset >> 18, GVDS_FUSE_DATA->fuse_client->readahead,
-            -1);
+      } else if (cache_st == ClientReadAhead::READAHEAD) {
+          bool nt = GVDS_FUSE_DATA->client->readahead->set_task(iop, rpath, offset >> 17, 4, -1);
         if (!nt) break;
       } else if (cache_st == ClientReadAhead::ON_LINK) {
-        break;
+        if (on_link_try_left-- == 0)
+          break;
       } else {
         break;
       }

@@ -56,6 +56,7 @@ class LRU {
   }
 
   bool empty() { return lruindex.empty(); }
+  bool full() { return (max_n == size()); }
   bool remove(const K& key) {
     auto indexIter = lruindex.find(key);
     if (indexIter == lruindex.end()) {
